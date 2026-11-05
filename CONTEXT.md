@@ -52,6 +52,22 @@ _Avoid_: Group, squad
 The kind of Hero that determines their skill tree and role.
 _Avoid_: Job, archetype
 
+**Branch**:
+One of the 3 themed sections of a Class's skill tree.
+_Avoid_: Path, spec, discipline
+
+**Oil**:
+The resource a Hero's skills burn.
+_Avoid_: Mana, energy
+
+**Row**:
+The front or back line a Unit stands in during a Battle.
+_Avoid_: Rank, line, position
+
+**Live Log**:
+The dashboard's rolling record of live play, combining Battle Logs with lines from other Rooms.
+_Avoid_: Activity feed, combat log
+
 ### Progress
 
 **Run**:
@@ -79,7 +95,7 @@ A player's return to the game to read the Away Report and act on it.
 _Avoid_: Session, visit
 
 **Away Report**:
-The summary of what a Party did while the game was closed.
+The summary of what a Party did while the player was away, with the game closed or its window covered or minimized.
 _Avoid_: Offline report, summary screen
 
 **Lamp**:
@@ -121,5 +137,5 @@ The Party's shared, capped supply of consumables.
 _Avoid_: Potion bag, quick slots
 
 **Town**:
-The menu where a Party refills its Belt and the player spends gold and Salvage.
+The menu where a Party refills its Belt and Oil, and the player spends gold and Salvage.
 _Avoid_: Hub, camp

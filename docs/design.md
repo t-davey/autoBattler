@@ -18,24 +18,71 @@ The Party descends on its own while the player is away. The player returns to ne
 
 ## Party and Heroes
 
-- A Party is 3 Heroes chosen from a pool of 4 Classes. Duplicates are allowed.
-- Heroes stand in the front or back row, which determines who they can reach and who can reach them.
-- Levels raise stats automatically and grant skill points. The level cap starts at 60, with about level 25 reached by the end of the first Difficulty Tier.
+- A Party is 3 Heroes chosen from a pool of 4 Classes. Duplicates are allowed, and every Class is available from the start.
+- Any trio can finish the game, though odd ones may need more farming. Walls reward answers such as resistances and never require a specific Class.
+- A Party is fixed once created. Heroes get generated names the player can edit.
+- Levels raise stats automatically, at rates that differ by Class, and grant one skill point each. The level cap starts at 60, with about level 25 reached by the end of the first Difficulty Tier.
 - XP falls off on floors well below a Hero's level.
+- Stats are health, Oil, power, armour, speed, critical chance, and the 5 resistances. Dodge, life steal, and similar effects come from specific skills and uniques.
 - One Party is active at a time. Others stay saved.
+
+### Rows
+
+- Any Class can stand in either row. Skills are tagged with the row they work from, so a misplaced Hero is weaker without being useless.
+- Melee skills reach only the enemy front row until it is cleared. Ranged skills and spells reach either row.
+- Most enemies target the front row first, and some enemy skills break this rule.
+- When a front row dies, the back row steps forward.
+
+## Classes
+
+Names are provisional.
+
+| Class | Usual row | Role | Damage | Core idea |
+|---|---|---|---|---|
+| **Sin-Eater** | Front | Tank and bruiser | Physical, holy | Takes harm into itself and turns it into power |
+| **Huntsman** | Either | Sustained damage | Physical, poison | Traps and bleeds, with skills that change by row |
+| **Hexer** | Back | Debuffs and damage over time | Cold, poison | Weakens enemies, with damage that builds slowly |
+| **Lamplighter** | Back | Support and burst | Holy, fire | Wards and heals, or burns with the same light |
+
+Each Class has 3 Branches. A starred Branch is that Class's survivability option.
+
+| Class | Branch | Focus |
+|---|---|---|
+| Sin-Eater | Flagellation | Spending health for damage |
+| Sin-Eater | Bulwark\* | Armour, shielding allies, drawing attacks |
+| Sin-Eater | Litany | Holy damage and auras |
+| Huntsman | Bloodletting | Physical bleeds, stronger from the front |
+| Huntsman | Snares | Poison traps and control, stronger from the back |
+| Huntsman | Fieldcraft\* | Evasion, self-healing, changing rows |
+| Hexer | Rime | Cold damage and slows |
+| Hexer | Rot | Stacking poison over time |
+| Hexer | Malediction\* | Curses that weaken enemies, health drain |
+| Lamplighter | Hearth\* | Healing and wards |
+| Lamplighter | Flame | Fire burst |
+| Lamplighter | Vigil | Holy damage, buffs, cleansing |
 
 ## Skills
 
-- Each Class has a skill tree of about 12–15 skills.
-- A Hero uses up to 3 active skills in an order the player sets, firing the first one available.
-- Respecs cost gold and stay cheap, to encourage experimenting.
+- Each Branch holds 5 skills, 2 active and 3 passive, with up to 5 ranks each. That is 75 possible points against 59 available at the level cap, and about 24 by the end of the first Difficulty Tier.
+- Deeper skills need 5 points spent in that Branch per step.
+- A new Hero starts with a free basic attack and one free Class skill.
+- A Hero uses up to 3 active skills in an order the player sets, firing the first one available. A skill counts as available only when its Oil, its cooldown, and a built-in usefulness condition all allow it, such as a heal needing a wounded ally.
+- Player-set conditions per skill may come later, if built-in ones feel limiting.
+- Respecs cost gold, rising gently with level, and stay cheap to encourage experimenting.
+
+### Oil
+
+- Each Hero carries a small lantern, and skills burn its Oil. Stronger skills also have cooldowns. Sin-Eater health-spending skills cost health instead.
+- Oil regenerates slowly during Battles and faster between rooms, carries between Battles, and refills fully in Town.
+- At zero Oil, a Hero uses the free basic attack. No consumable restores Oil.
 
 ## Gear
 
 - Each Hero has 6 slots: weapon, off-hand, helm, body, and two trinkets.
 - Items come in common, magic, rare, and unique rarities. Non-uniques roll random Affixes.
 - Uniques are hand-authored, and some change or grant skills.
-- Auto-salvage rules exist from day one, and loot comparison stays manual, with no upgrade button.
+- Any Hero can equip any item, subject to level requirements, except for a few Class-specific uniques. Melee skills need a melee weapon.
+- Auto-salvage rules exist from day one, and loot comparison stays manual, with no upgrade button for now.
 - Heroes only change gear when the player equips it. New gear waits in the Stash, so walls mostly fall at check-ins.
 - Later expansions, in order: sockets, then sets.
 
@@ -70,7 +117,7 @@ There are 3 Acts of 10 floors each. Names are provisional.
 
 - A Lamp sits every 3 floors, guarded by a Guardian. A Boss ends each Act, making 12 walls per Difficulty Tier.
 - Each Party relights Lamps for itself, and they go dark again at each new Difficulty Tier.
-- Each wall leans on a particular damage type or role.
+- Each wall leans on a particular damage type or role, without requiring a specific Class.
 - Guardians and Bosses respawn on each visit. The first kill guarantees a rare item.
 
 ### Why 2 weeks
@@ -85,9 +132,9 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 
 - Battles happen inside a dungeon crawl: the Party moves through a generated map of rooms.
 - Health carries between Battles and recovers slowly between rooms, so a floor wears the Party down.
-- The Party shares a Belt of healing potions, cleansing tonics, and escape scrolls. Each type has a maximum and refills free in Town.
+- The Party shares a Belt of healing potions, cleansing tonics, and escape scrolls. Each type has a maximum and, for now, refills free in Town.
 - The player can use consumables at any time, and rules use them when the player is away.
-- Loot goes straight to the Stash. When the Stash is full, the lowest-value items are salvaged.
+- Loot goes straight to the Stash, which holds 300 items, each taking one space. The player can lock items. When the Stash is full, the lowest-value unlocked items are salvaged.
 
 ## Battles
 
@@ -112,14 +159,18 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 ## Time and pacing
 
 - Offline progress runs at the full rate, capped at 12 hours.
+- A covered or minimized window counts the same way: the game catches up from elapsed time when the window returns, under the same cap.
 - Play runs in real time, with an optional 2x once balance holds up.
 - The target is about 2 weeks to finish the first Difficulty Tier, with 2–3 short check-ins a day.
 
 ## Presentation
 
-- UI-first: panels, text, icons, and a simple tile map, with room for pixel art later.
+- UI-first: panels, text, icons, and a simple tile map, with room for pixel art later. [ADR 0003](adr/0003-react-panels-dom-map.md) records the rendering stack.
 - A dashboard while the Party runs, tabs for planning, and an Away Report.
-- Grim gothic tone.
+- The Live Log shows the latest 1,000 lines of live play, and those lines are gone when the game closes.
+- Catch-up produces an Away Report rather than log lines. Saves keep the last 10 Away Reports.
+- The Stash can be sorted and filtered.
+- Grim gothic tone, for now.
 - Audio starts silent, with a few key effects such as a rare drop added later.
 - "autoBattler" is the working title.
 
@@ -131,9 +182,18 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 
 ## First playable
 
-The full loop, built thin, to test whether coming back to loot feels good: all of Act 1 with its 3 Guardians and Boss, placeholder Classes, rarity and Affix loot, auto-salvage, Town, and the Away Report. Judge it over a few real days of check-ins, since a single session can't show whether returning feels good.
+The full loop, built thin, to test whether coming back to loot feels good: all of Act 1 with its 3 Guardians and Boss, rarity and Affix loot, auto-salvage, Town, and the Away Report. Judge it over a few real days of check-ins, since a single session can't show whether returning feels good.
+
+All 4 Classes are in, each trimmed to 2 Branches of about 3 skills, about 24 skills in total:
+
+- **Sin-Eater:** Flagellation and Bulwark
+- **Huntsman:** Bloodletting and Fieldcraft
+- **Hexer:** Rot and Malediction
+- **Lamplighter:** Flame and Hearth
+
+Each Class also gets one Class-specific unique that visibly changes a skill, so 4 in total. An agent drafts the skills in their own file for the human to review, and numbers get tuned through play.
 
 ## Open questions
 
-- **Classes:** the roster and each Class's identity. Proposed and unconfirmed: Penitent (front, melee, trades health for power), Huntsman (either row, physical with traps and bleeds), Hexer (back, curses and damage over time), Lamplighter (back, wards and heals with light).
-- **Rendering technology:** the stack behind the UI-first presentation.
+- **Map animation:** how much animation the map needs. This is the main trigger for moving the map from the DOM to Canvas or PixiJS.
+- **Pixel-art scale on fractional displays:** whether to snap to whole device pixels or accept slight unevenness.
