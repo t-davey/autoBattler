@@ -34,12 +34,12 @@ Read [docs/pull-requests.md](docs/pull-requests.md) before creating a branch or 
 
 ### Issue tracker
 
-Issues live in GitHub Issues, used through the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues live in GitHub Issues, used through the `gh` CLI. See [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md).
 
 ### Triage labels
 
-The five triage roles use their default label names. See `docs/agents/triage-labels.md`.
+The five triage roles use their default label names. See [docs/agents/triage-labels.md](docs/agents/triage-labels.md).
 
 ### Domain docs
 
-Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See [docs/agents/domain.md](docs/agents/domain.md).
