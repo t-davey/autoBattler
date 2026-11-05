@@ -6,7 +6,7 @@ Research note, 2026-11-04. The human accepted its recommendation, recorded in [A
 
 ## Question and recommendation
 
-Which stack should draw the dashboard, planning tabs, away report, and tile map?
+Which stack should draw the dashboard, planning tabs, Away Report, and tile map?
 
 **Recommendation: React 19 for panels, with the tile map as a plain DOM/CSS grid behind a small map component.** Add Canvas 2D or PixiJS inside that component only if the map outgrows the DOM.
 
@@ -65,7 +65,7 @@ This applies whichever option is chosen, and it matters more than the renderer.
 - **Measured:** with [`backgroundThrottling: false`](https://www.electronjs.org/docs/latest/api/structures/web-preferences), the page stayed `visible` and `requestAnimationFrame` kept running at ~142 per second while minimized. Electron recommends [pausing expensive work when hidden](https://www.electronjs.org/docs/latest/api/browser-window#page-visibility) instead.
 - **Rendering libraries don't own game time.** [MDN](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame) says `requestAnimationFrame` pauses in most browsers' background tabs. [Pixi's ticker](https://github.com/pixijs/pixijs/blob/dev/src/ticker/Ticker.ts) clamps `deltaMS` to 100 ms by default, and [Phaser's docs](https://docs.phaser.io/api-documentation/event/core-events) say the pause can't be prevented.
 
-**Judgement:** drive the sim from elapsed wall-clock time, read in `src/ui` and passed in as input. ADR 0001 already takes elapsed time this way. A throttled timer then just delivers larger steps, in a browser tab as well as in Electron, and the render loop never affects game speed. See the open question on hidden windows below.
+**Judgement:** drive the sim from elapsed wall-clock time, read in `src/ui` and passed in as input. ADR 0001 already takes elapsed time this way. A throttled timer then just delivers larger steps, in a browser tab as well as in Electron, and the render loop never affects game speed. [docs/design.md](../design.md#time-and-pacing) has since adopted catch-up for hidden windows.
 
 ### Growing log and large lists
 
@@ -83,7 +83,7 @@ This applies whichever option is chosen, and it matters more than the renderer.
 - **Measured:** use `<ul>` or `<div>` for the log, not `<ol>`. Removing the first row of a 1,000-row `<ol>` took 4.3 ms p50, against 0.3 ms for `<ul>`, probably from renumbering (Judgement).
 - For large lists, [TanStack Virtual](https://tanstack.com/virtual/latest/docs/introduction) supports all four frameworks and plain JS. [`content-visibility: auto`](https://developer.mozilla.org/en-US/docs/Web/CSS/content-visibility) is a lighter option that keeps off-screen rows in the accessibility tree. I tested neither.
 
-**Judgement:** keep a bounded row window in the DOM. Keep older entries in a separate store with its own retention rule. Offline catch-up should produce a summary for the away report, and must not push 12 hours of events through the panels.
+**Judgement:** keep a bounded row window in the DOM. Keep older entries in a separate store with its own retention rule. Offline catch-up should produce a summary for the Away Report, and must not push 12 hours of events through the panels.
 
 ### Pixel art
 
@@ -156,7 +156,7 @@ The tracer `simulateBattle` runs to completion, and [ADR 0001](../adr/0001-deter
 Suggested flow (Judgement):
 
 1. A driver in `src/ui` reads the clock and passes elapsed time and player actions into the sim.
-2. It folds the reported events into one UI store: current snapshot plus bounded feeds for the Battle Log panel and loot.
+2. It folds the reported events into one UI store: current snapshot plus bounded feeds for the Live Log and loot.
 3. Components subscribe to the parts they show, at most once per render frame. A render frame is not a Tick.
 
 The store has no framework dependency, so changing framework later costs only the components. Each framework connects differently:
@@ -182,8 +182,8 @@ These are small checks on one machine, not settled benchmarks. No third-party be
 
 ### For the human
 
-- **Should a covered or minimized window keep playing in real time?** The design only covers closing the window. If play continues by catching up on elapsed time, does the 12-hour cap apply while the window is open? I recommend catching up, with no throttling override.
-- **How much log history should stay reachable, and how large can the Stash get?** The design gives no retention rule or Stash size, and both affect list design.
+Hidden-window behaviour, log retention, and Stash size have since been decided in [docs/design.md](../design.md). These remain open:
+
 - **How much animation does the map need?** This is the main trigger for moving from DOM to Canvas or Pixi.
 - **What should pixel-art scale do on fractional displays?** Options are snapping to whole device pixels, or accepting slight unevenness.
 
@@ -206,10 +206,9 @@ Build the dashboard against a stepping sim stub, plus one planning tab such as a
 
 ### Findings that touch existing docs
 
-- **[docs/design.md](../design.md):** it doesn't cover hidden-but-open windows, as above.
 - **[ADR 0001](../adr/0001-deterministic-sim-core.md):** supported. The throttling results strengthen the case for elapsed time as an input.
 - **[ADR 0002](../adr/0002-browser-first-electron-shell.md):** consistent. React runs on web APIs only. `backgroundThrottling` is desktop-only, which is another reason to prefer catching up, since that behaves the same in a browser tab.
-- **[CONTEXT.md](../../CONTEXT.md):** "Battle Log" covers one Battle, but the dashboard's log also carries flavour lines from chests, traps, and shrines. That panel and the loot feed may need terms once they settle.
+- **[CONTEXT.md](../../CONTEXT.md):** "Battle Log" covers one Battle, so the dashboard's log now has its own term, Live Log. The loot feed may need a term once it settles.
 - **Repo setup:** `electron/main.ts` uses `loadFile` and `index.html` has no CSP, while [Electron's guide](https://www.electronjs.org/docs/latest/tutorial/security) advises a CSP and a custom protocol over `file://`. This isn't urgent for a friends-only game with local content, but it should be decided before Pixi, because of the `unsafe-eval` import.
 
 ### Unverified

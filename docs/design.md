@@ -44,7 +44,7 @@ Names are provisional.
 | **Hexer** | Back | Debuffs and damage over time | Cold, poison | Weakens enemies, with damage that builds slowly |
 | **Lamplighter** | Back | Support and burst | Holy, fire | Wards and heals, or burns with the same light |
 
-Each Class has 3 branches. A starred branch is that Class's survivability option.
+Each Class has 3 Branches. A starred Branch is that Class's survivability option.
 
 | Class | Branch | Focus |
 |---|---|---|
@@ -63,8 +63,8 @@ Each Class has 3 branches. A starred branch is that Class's survivability option
 
 ## Skills
 
-- Each branch holds 5 skills, 2 active and 3 passive, with up to 5 ranks each. That is 75 possible points against 59 available at the level cap, and about 24 by the end of the first Difficulty Tier.
-- Deeper skills need 5 points spent in that branch per step.
+- Each Branch holds 5 skills, 2 active and 3 passive, with up to 5 ranks each. That is 75 possible points against 59 available at the level cap, and about 24 by the end of the first Difficulty Tier.
+- Deeper skills need 5 points spent in that Branch per step.
 - A new Hero starts with a free basic attack and one free Class skill.
 - A Hero uses up to 3 active skills in an order the player sets, firing the first one available. A skill counts as available only when its Oil, its cooldown, and a built-in usefulness condition all allow it, such as a heal needing a wounded ally.
 - Player-set conditions per skill may come later, if built-in ones feel limiting.
@@ -72,7 +72,7 @@ Each Class has 3 branches. A starred branch is that Class's survivability option
 
 ### Oil
 
-- Each Hero carries a small lamp, and skills burn its Oil. Stronger skills also have cooldowns. Sin-Eater health-spending skills cost health instead.
+- Each Hero carries a small lantern, and skills burn its Oil. Stronger skills also have cooldowns. Sin-Eater health-spending skills cost health instead.
 - Oil regenerates slowly during Battles and faster between rooms, carries between Battles, and refills fully in Town.
 - At zero Oil, a Hero uses the free basic attack. No consumable restores Oil.
 
@@ -82,7 +82,7 @@ Each Class has 3 branches. A starred branch is that Class's survivability option
 - Items come in common, magic, rare, and unique rarities. Non-uniques roll random Affixes.
 - Uniques are hand-authored, and some change or grant skills.
 - Any Hero can equip any item, subject to level requirements, except for a few Class-specific uniques. Melee skills need a melee weapon.
-- Auto-salvage rules exist from day one, and loot comparison stays manual, with no upgrade button.
+- Auto-salvage rules exist from day one, and loot comparison stays manual, with no upgrade button for now.
 - Heroes only change gear when the player equips it. New gear waits in the Stash, so walls mostly fall at check-ins.
 - Later expansions, in order: sockets, then sets.
 
@@ -117,7 +117,7 @@ There are 3 Acts of 10 floors each. Names are provisional.
 
 - A Lamp sits every 3 floors, guarded by a Guardian. A Boss ends each Act, making 12 walls per Difficulty Tier.
 - Each Party relights Lamps for itself, and they go dark again at each new Difficulty Tier.
-- Each wall leans on a particular damage type or role.
+- Each wall leans on a particular damage type or role, without requiring a specific Class.
 - Guardians and Bosses respawn on each visit. The first kill guarantees a rare item.
 
 ### Why 2 weeks
@@ -132,7 +132,7 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 
 - Battles happen inside a dungeon crawl: the Party moves through a generated map of rooms.
 - Health carries between Battles and recovers slowly between rooms, so a floor wears the Party down.
-- The Party shares a Belt of healing potions, cleansing tonics, and escape scrolls. Each type has a maximum and refills free in Town.
+- The Party shares a Belt of healing potions, cleansing tonics, and escape scrolls. Each type has a maximum and, for now, refills free in Town.
 - The player can use consumables at any time, and rules use them when the player is away.
 - Loot goes straight to the Stash, which holds 300 items, each taking one space. The player can lock items. When the Stash is full, the lowest-value unlocked items are salvaged.
 
@@ -167,10 +167,10 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 
 - UI-first: panels, text, icons, and a simple tile map, with room for pixel art later. [ADR 0003](adr/0003-react-panels-dom-map.md) records the rendering stack.
 - A dashboard while the Party runs, tabs for planning, and an Away Report.
-- The dashboard log shows the latest 1,000 lines of live play, and its history ends when the game closes.
+- The Live Log shows the latest 1,000 lines of live play, and those lines are gone when the game closes.
 - Catch-up produces an Away Report rather than log lines. Saves keep the last 10 Away Reports.
 - The Stash can be sorted and filtered.
-- Grim gothic tone.
+- Grim gothic tone, for now.
 - Audio starts silent, with a few key effects such as a rare drop added later.
 - "autoBattler" is the working title.
 
@@ -184,7 +184,7 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 
 The full loop, built thin, to test whether coming back to loot feels good: all of Act 1 with its 3 Guardians and Boss, rarity and Affix loot, auto-salvage, Town, and the Away Report. Judge it over a few real days of check-ins, since a single session can't show whether returning feels good.
 
-All 4 Classes are in, each trimmed to 2 branches of about 3 skills, about 24 skills in total:
+All 4 Classes are in, each trimmed to 2 Branches of about 3 skills, about 24 skills in total:
 
 - **Sin-Eater:** Flagellation and Bulwark
 - **Huntsman:** Bloodletting and Fieldcraft
@@ -195,4 +195,5 @@ Each Class also gets one Class-specific unique that visibly changes a skill, so 
 
 ## Open questions
 
-None right now.
+- **Map animation:** how much animation the map needs. This is the main trigger for moving the map from the DOM to Canvas or PixiJS.
+- **Pixel-art scale on fractional displays:** whether to snap to whole device pixels or accept slight unevenness.
