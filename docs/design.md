@@ -199,7 +199,7 @@ Each Class also gets one Class-specific unique that visibly changes a skill, so 
 
 A smaller build comes before the first playable, to test one thing: is it satisfying to come back to loot, make a build decision, and see that decision beat a Wall? It has a preset Party of Sin-Eater, Huntsman, and Lamplighter, one Branch each, and Floors 1–3 of Act 1 ending in one Guardian and one Lamp.
 
-[The demo plan](plans/poc-demo.md) holds its scope, its confirmed rules, and its milestones. Where it differs from this document, it applies to the demo only.
+[The demo plan](plans/poc-demo.md) holds its scope, its rules, and its milestones. Where it differs from this document, it applies to the demo only.
 
 ## Open questions
 

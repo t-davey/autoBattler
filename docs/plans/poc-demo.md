@@ -25,6 +25,8 @@ This table overrides [docs/design.md](../design.md) for the demo only. Build not
 
 Placeholder art: CSS tiles and text glyphs, all original, in the grim gothic tone.
 
+**Scope change:** G22, confirmed by the human, extends the Setbacks row: a build change also ends a fallback.
+
 **Milestone order:** kept as approved. Research found no dependency that forces a change.
 
 **Pacing:** the first Wall should take about 1–2 hours of Party time. This is a tunable value, separate from the design's 2-week pacing.
@@ -46,7 +48,7 @@ Build stops at each of these until the human answers.
 |---|---|---|
 | **S1: Gaps** | Before each of M1–M4 for G21, and whenever a new gap appears | That milestone's content tables, and any rule this plan leaves unsaid |
 | **S2: Skill review** | Milestone 2, after `docs/demo-skills.md` is drafted and before any skill code | Approve or change the 9 skills |
-| **S3: Risk fallback** | Whenever a [risk](#risks) threshold trips and number tuning hasn't fixed it | Whether to take a fallback that changes the design or scope |
+| **S3: Risk fallback** | Whenever a [risk](#risks) threshold trips or an M6 target is missed, and number tuning hasn't fixed it | Whether to take a fallback that changes the design or scope, or to accept the miss |
 | **S4: Rehearsal** | End of Milestone 6 | Whether the demo answers its question |
 
 The human alone merges each PR.
@@ -78,7 +80,7 @@ The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 ext
 | G19 | **Short absences.** The design counts a covered or minimized window as away, with no minimum. | A gap of 60 seconds or more gives catch-up and an Away Report. A shorter gap plays through live stepping, with its lines in the Live Log. | M5 |
 | G20 | **Saves in Electron.** _Contradicts [ADR 0002](../adr/0002-browser-first-electron-shell.md), which puts saves on disk in Electron, but the approved Milestone 5 brief specifies browser storage and the scope only needs the shell to launch._ | Use `localStorage` everywhere for the demo, behind a small `SaveStore` interface, and leave the ADR unchanged because disk saves remain the plan for release. | M5 |
 | G21 | **New content and numbers.** The human owns content, and `docs/first-playable-skills.md` leaves Class stat rates, crit multipliers, and the XP curve to set. This plan proposes those, plus enemies, the Guardian, item bases, Affixes, Rarity odds, and drop rates. | Use each milestone's tables as written, and confirm them at the start of that milestone. | M1, M2, M3, M4 |
-| G22 | **Build changes during fallback.** The approved rule retries only on a level-up, so a Party that has fallen back ignores a new build until the next level, up to about 30 minutes at level 6. That delays the moment this demo exists to test. _This extends the approved scope._ | Equipping an item or spending a skill point also ends the fallback and clears the count. | M3, M4 |
+| G22 | **Build changes during fallback.** The approved rule retries only on a level-up, so a Party that has fallen back ignores a new build until the next level, up to about 30 minutes at level 6. That delays the moment this demo exists to test. _This extends the approved scope._ | Equipping an item or spending a skill point also ends the fallback and clears the count. Other actions don't. | M3, M4 |
 
 ## Sim interface
 
@@ -156,6 +158,9 @@ export function applyAction(game: Game, action: PlayerAction): ActionResult;
 // ---- Reads ----
 export function viewGame(game: Game): GameView; // M1, growing each milestone
 export function viewStash(game: Game): readonly ItemView[]; // M4
+/** The Heroes as Units, as the next Battle would field them. Lets the balance script run
+ *  a real build through simulateBattle against stand-in enemies. */
+export function partyUnitSpecs(game: Game): readonly UnitSpec[]; // M2
 export const SAVE_VERSION: number;                          // M1
 export function serializeGame(game: Game): string;          // M1
 export function deserializeGame(text: string): Game | null; // M1; null on bad data or another SAVE_VERSION
@@ -336,7 +341,7 @@ Delete `src/ui/main.ts`. Use the versions the research tested: React 19.3.1 and 
 | Mire Bloat | Fungal growth | Front | Melee | 100 | 2 | 30 | Poison | 5 | 20% |
 | Sporeling | Fungal growth | Back | Ranged | 55 | 2 | 30 | Poison | 0 | 20% |
 
-A pack is 1–2 front enemies and 1–2 back enemies, drawn from one family. Hand-check: a level 1 Party deals about 15 damage a second, so a 240-health pack lasts about 16–20 seconds.
+Every enemy has 0% critical chance. A Pack is 1–2 front enemies and 1–2 back enemies, drawn from one family. Hand-check: a level 1 Party deals about 15 damage a second, so a 240-health Pack lasts about 16–20 seconds.
 
 **Tests** (through `src/sim/index.ts`; the existing `simulateBattle` tests carry over on the new `UnitSpec` fields, except the 1000-Tick cap. `battleEnded` is a `GameEvent`, so the Battle Log's existing shape holds)
 
@@ -357,7 +362,7 @@ A pack is 1–2 front enemies and 1–2 back enemies, drawn from one family. Han
 - `deserializeGame returns null for bad data and another SAVE_VERSION`
 - In `src/ui/store.test.ts`: `the Live Log keeps the newest 1,000 lines`, and `getSnapshot returns the same object until something changes`
 
-**In `npm run dev`:** the 3 Heroes and a pack stand in their Rows with health bars that move in real time, and the Live Log scrolls as Battles end and restart. Colours are grim gothic tokens in `style.css`.
+**In `npm run dev`:** the 3 Heroes and a Pack stand in their Rows with health bars that move in real time, and the Live Log scrolls as Battles end and restart. Colours are grim gothic tokens in `style.css`.
 
 **`npm run smoke:electron`:** applies, since the page entry and the script change.
 
@@ -457,14 +462,14 @@ Interval is `round(30 × 100 / speed)`. Until M4 adds items, the starter weapon'
 - `setSkillOrder is refused unless it lists exactly the learned active skills`
 - `renameHero trims the name and refuses empty names and names over 24 characters`
 - `a build change reaches the next Battle but not the current one`
-- `a lower maximum clamps health and Oil`
+- `partyUnitSpecs reflects a Hero's level, ranks, and skill order`
 - `serializeGame round-trips a Game with skills, effects, and cooldowns`
 
 **In `npm run dev`:** Oil bars move, skills appear by name in the Live Log, and points arrive with levels. The planning tab edits names, spends points, reorders skills with up and down buttons, and respecs. A changed order visibly changes what the Hero does in the next Battle.
 
 **`npm run smoke:electron`:** not required, since nothing in `electron/` changes.
 
-**`CONTEXT.md`:** add **Skill point**, **Skill rank** (bare "rank" stays on Row's _Avoid_ list), **Step**, **Skill order**, **Usefulness condition**, **Cooldown**, **Respec**, **Bleed**, **Poison**, **Ward**.
+**`CONTEXT.md`:** add **Skill point**, **Skill rank** (Row's _Avoid_ list still rules out "rank" for Rows), **Step**, **Skill order**, **Usefulness condition**, **Cooldown**, **Respec**, **Bleed**, **Poison**, **Ward**.
 
 **Acceptance:** the human approved `docs/demo-skills.md`. `npm run check` passes. `npm run balance -- builds` prints the [R2](#r2-9-skills-leave-no-real-build-decision) table and the threshold passes, or S3 has settled it. Renaming, spending a point, reordering, and respeccing have each been seen working in the running app.
 
@@ -484,7 +489,8 @@ Interval is `round(30 × 100 / speed)`. Until M4 adds items, the starter weapon'
 **Change**
 
 - `src/sim/game.ts`: replace the temporary Battle loop with Runs.
-- `src/sim/battle.ts`: separate `maxHealth` from `health`, so health can carry between Rooms, and let a Unit have several timed `actions`, each with its own interval and target (one front-Row Hero, or every Hero).
+- `src/sim/battle.ts`: separate `maxHealth` from `health`, so health can carry between Rooms, and let a Unit have several timed `actions`, each with its own interval and target (one front-Row Hero, or every Hero). A Unit with `actions` uses them instead of `power`, `actionInterval`, and `damageType`, and each action carries its own damage.
+- `src/sim/game.test.ts`: drop the temporary-loop test.
 - `src/sim/view.ts`, `src/sim/index.ts`
 - `src/ui/App.tsx`, `describeEvent.ts`, `style.css`
 
@@ -499,17 +505,17 @@ Interval is `round(30 × 100 / speed)`. Until M4 adds items, the starter weapon'
 - **Wipe:** all progress in the Run ends, with no XP, item, or level lost. The Party returns to Town instantly.
 - **Town:** restores all health and Oil. The Party leaves after 100 Ticks (G9), or at once on `sendParty`. `sendParty` is refused outside Town.
 - **Every Run starts at Floor 1.**
-- **Push:** G2 and G22, with a `fellBack` and a `retryingGuardian` event for the Live Log and Away Report.
+- **Push:** G2 and G22, with `fellBack` and `retryingGuardian` events for the Live Log. `fellBack` also sets the Away Report's fall-back note.
 - **Lamp:** a Guardian kill relights the Lamp, then the Party returns to Town. After that, G10.
 
-**Guardian:** the Mouldering Warden, alone, in the front Row.
+**Guardian:** the Mouldering Warden, alone, in the front Row, with 0% critical chance. Floor scale doesn't apply to it.
 
 | Health | Armour | Physical resistance | Action | Interval | Effect |
 |---|---|---|---|---|---|
 | 1,600 | 15 | 0% | Spore Breath | 60 Ticks | 1 Poison stack, worth 3 damage, on every Hero |
 | | | | Grave Slam | 80 Ticks | 12 physical to one front-Row Hero |
 
-Hand-check: at 5 stacks, Poison deals 7.5 damage a second to every Hero, so an unhealed level 6 Lamplighter (140 health) dies at about 30 seconds. A level 6 Party's basic attacks need about 85 seconds to kill the Warden. Poison resistance, healing, Wards, and damage all move this. Bar the Way doesn't stop Spore Breath, since it hits every Hero, so the answer can't be a single skill.
+Hand-check: at 5 stacks, Poison deals 7.5 damage a second to every Hero, so an unhealed level 6 Lamplighter (140 health) dies at about 37 seconds. A level 6 Party's basic attacks need about 85 seconds to kill the Warden. Poison resistance, healing, Wards, and damage all move this. Bar the Way doesn't stop Spore Breath, since it hits every Hero, so the answer can't be a single skill.
 
 **Pacing check** (by hand, before tuning): about 12.7 Floors and 84 Battles an hour give about 1,680 XP an hour. That is level 3 at the first Guardian attempt (15 minutes), level 6 at 1 hour, level 7 at 90 minutes, and level 8 at 2 hours.
 
@@ -530,6 +536,8 @@ Hand-check: at 5 stacks, Poison deals 7.5 damage a second to every Hero, so an u
 - `a level-up during fallback resumes Guardian attempts and clears the count`
 - `spending a skill point during fallback resumes Guardian attempts and clears the count`
 - `a Guardian kill clears the count`
+- `a Unit with several actions times each on its own interval`
+- `an action can hit every Hero`
 - `deeper Floors scale enemy health, power, and XP`
 - `level-ups before the 3rd Wipe don't clear the count`
 - `a level 40 Party kills the Guardian and relights the Lamp`
@@ -537,11 +545,11 @@ Hand-check: at 5 stacks, Poison deals 7.5 damage a second to every Hero, so an u
 - `the Guardian respawns on Runs after the Lamp is lit`
 - `serializeGame round-trips a Game mid-Run, and the copy plays on identically`
 
-**In `npm run dev`:** the CSS-grid map shows Rooms with glyphs and the Party moving through them. A dev build's `?seed=` query sets the Seed. The Town menu shows on a Wipe, with its button and a countdown. Reaching the Wall needs 15 minutes live, so verify the Guardian, Wipe, and Lamp with a dev-only `?start=guardian` query that passes `scenario` to `createGame`, and with `?level=40` for the kill.
+**In `npm run dev`:** the CSS-grid map shows Rooms with glyphs and the Party moving through them. A dev build's `?seed=` query sets the Seed. The Town menu shows on a Wipe, with its button, a countdown, and whether the Lamp is lit. Reaching the Wall needs 15 minutes live, so verify the Guardian, Wipe, and Lamp with a dev-only `?start=guardian` query that passes `scenario` to `createGame`, and with `?level=40` for the kill.
 
 **`npm run smoke:electron`:** not required.
 
-**`CONTEXT.md`:** add **Party time** and **Fall back**. **Lamp** needs no change.
+**`CONTEXT.md`:** add **Party time**, **Fall back**, and **Setback** (a Wipe or a draw that returns the Party to Town). **Lamp** needs no change.
 
 **Acceptance:** `npm run check` passes, and `npm run bench:catchup`, now through full Runs, is within the R1 limit. In the running app, the Party clears Floor 1 from a new game with no Wipe, a `?start=guardian` Party at low level Wipes and returns to Town, and a `?start=guardian&level=40` Party relights the Lamp and starts again from Floor 1.
 
@@ -609,6 +617,7 @@ Hand-check: at 5 stacks, Poison deals 7.5 damage a second to every Hero, so an u
 - `equipping an item during fallback resumes Guardian attempts`
 - `unequipItem returns the item to the Stash`
 - `equipped gear changes a Hero's stats in the next Battle`
+- `removing a Hale item clamps health to the lower maximum`
 - `a Sallow item reduces Poison damage in Battle`
 - `a ranged weapon makes melee skills unavailable`
 - `an unknown itemId is refused and changes nothing`
@@ -641,13 +650,13 @@ Sort and filter live in `src/ui/stashQuery.ts`: they are presentation, with no e
 **Change**
 
 - `src/sim/game.ts`, `src/sim/index.ts`
-- `src/ui/driver.ts`, `store.ts`, `main.tsx`, `App.tsx`, `TownMenu.tsx` (Lamp state)
+- `src/ui/driver.ts`, `store.ts`, `main.tsx`, `App.tsx`
 - `scripts/bench-catchup.mjs`
 
 **Sim rules**
 
 - Catch-up as in [How catch-up reuses live stepping](#how-catch-up-reuses-live-stepping), capped at 12 hours. The Away Report is a fold over `GameEvent`s and adds nothing to `Game`.
-- A Wipe's main damage type is the type that dealt the largest share of damage the Party took in that Battle, including damage a Ward absorbed.
+- A Setback's main damage type is the type that dealt the largest share of damage the Party took in that Battle, including damage a Ward absorbed. If it took none, the type is physical with a share of 0.
 - Elapsed time always comes in as an argument. `src/sim` never reads a clock.
 
 **UI rules**
@@ -657,7 +666,7 @@ Sort and filter live in `src/ui/stashQuery.ts`: they are presentation, with no e
 - **On load:** elapsed is `Date.now() − savedAt`. At 60 seconds or more, run catch-up and show the Away Report. Under that, step live. A clock moved backwards gives 0.
 - **Bad saves:** an unreadable or old save moves to `autobattler.save.bad`, the game starts new, and a notice says so. A `setItem` failure shows a visible warning and is never swallowed.
 - **Running catch-up:** call `continueCatchUp` in chunks of 5,000 Ticks, yield with `setTimeout(0)` after 16 ms of work, and show progress. Live stepping pauses and player actions wait until it finishes. Catch-up adds no Live Log lines, apart from one line pointing at the Away Report.
-- **Away Report contents:** elapsed and applied time, a note if capped, Floors cleared, deepest Floor, Wipes and causes ("2 Wipes at the Mouldering Warden, mostly poison damage"), Guardian kills, Lamp relit, fall-back note, levels gained, loot counts, rares by name, and unspent skill points, with links to the Stash and planning tabs. It's held in memory only, and dismissed by the player.
+- **Away Report contents:** elapsed and applied time, a note if capped, Floors cleared, deepest Floor, Wipes, draws, and causes ("2 Wipes at the Mouldering Warden, mostly poison damage"), Guardian kills, Lamp relit, fall-back note, levels gained, loot counts, rares by name, and unspent skill points, with links to the Stash and planning tabs. It's held in memory only, and dismissed by the player.
 - **Skip button:** a "Skip 1 hour" button, rendered only under `import.meta.env.DEV`, calls the same store method as a return from absence, with 3,600,000 ms.
 - **Start over:** a dev-only button clears the save, for rehearsals.
 - **Starting Seed:** a constant `DEMO_SEED` in `main.tsx`, which M6 chooses. `?seed=` overrides it in dev.
@@ -673,6 +682,7 @@ Sort and filter live in `src/ui/stashQuery.ts`: they are presentation, with no e
 - `the Away Report counts Floors, Wipes, levels, and loot from the same events as live play`
 - `the Away Report names poison as the main damage type of a Guardian Wipe`
 - `the Away Report notes a fall back and a relit Lamp`
+- `the Away Report lists a draw as a draw, with its main damage type`
 - `a Game restored from serializeGame plays on identically after a Wipe, in Town, and mid-Battle`
 - In `src/ui/driver.test.ts`, with the clock and window visibility injected, so `driver.ts` needs no DOM types: `a gap of 60 seconds or more runs catch-up`, `a shorter gap steps live`, `nothing steps while the window is hidden`, and `nothing saves during catch-up`
 - In `src/ui/save.test.ts`, with an in-memory `SaveStore`: `savedAt is the time state was last advanced to`, `an old version moves aside and starts a new game`, and `a failed write raises a warning`
@@ -761,7 +771,7 @@ Number tuning always comes first. A fallback that changes rules, scope, or desig
 
 Only 5 of the 9 skills are active, and the Sin-Eater has just 1, so skill order is a real choice for 2 Heroes at most.
 
-**Measured in M2**, re-measured in M6 against the real Guardian. `npm run balance -- builds` runs, for each Class, all legal 6-point allocations and skill orders with the other 2 Heroes on reference builds, over 200 Seeds, against 2 stand-in Battles: a 4-enemy physical pack and a poison-leaning single enemy. Stand-in numbers are set so the reference Party wins about half the time. A build is **viable** if its win rate is within 10 points of the Class's best in that Battle.
+**Measured in M2**, re-measured in M6 against the real Guardian. `npm run balance -- builds` sets builds with `scenario` and `setSkillOrder`, takes Units from `partyUnitSpecs`, and runs them through `simulateBattle` with stand-in enemy `UnitSpec`s. It covers, for each Class, all legal 6-point allocations and skill orders with the other 2 Heroes on reference builds, over 200 Seeds, against 2 stand-in Battles: a 4-enemy physical Pack and a poison-leaning single enemy. Stand-in numbers are set so the reference Party wins about half the time. A build is **viable** if its win rate is within 10 points of the Class's best in that Battle.
 
 **Fallback triggers if any of these holds:**
 
@@ -851,7 +861,7 @@ Only 5 of the 9 skills are active, and the Sin-Eater has just 1, so skill order 
 | 5. Lamp relights, guaranteed rare drops | M4 (Lamp: M3) | Yes |
 | 6. Close, reopen, Away Report from real elapsed time | M5 | Yes |
 
-**Cut column check:** nothing here builds a Cut item. No Hexer, Party creation, other Branches, gold, other damage types, Elites, other Floors, Boss, Difficulty Tiers, traps, shrines, side-room rules, uniques, other slots, Salvage, Stash cap, Stance toggle, Lamp selection, 2x speed, saved report history, merchant, gamble vendor, Belt, installer, auto-update, or audio. Free Class skills (G5) and XP falloff (G17) aren't in the Cut column, but the recommended answers leave them out too.
+**Cut column check:** nothing here builds a Cut item. No Hexer, Party creation, other Branches, gold, other damage types, Elites, other Floors, Boss, Difficulty Tiers, traps, shrines, side-room rules, uniques, other slots, Salvage, Stash cap, Stance toggle, Lamp selection, 2x speed, saved report history, merchant, gamble vendor, Belt, installer, auto-update, or audio. Free Class skills (G5) and XP falloff (G17) aren't in the Cut column, but the confirmed answers leave them out too.
 
 ## Each PR
 
