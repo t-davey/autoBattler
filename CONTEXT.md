@@ -52,6 +52,14 @@ _Avoid_: Group, squad
 The kind of Hero that determines their skill tree and role.
 _Avoid_: Job, archetype
 
+**Branch**:
+One of the 3 themed sections of a Class's skill tree.
+_Avoid_: Path, spec, discipline
+
+**Oil**:
+The resource a Hero's skills burn.
+_Avoid_: Mana, energy
+
 ### Progress
 
 **Run**:
@@ -121,5 +129,5 @@ The Party's shared, capped supply of consumables.
 _Avoid_: Potion bag, quick slots
 
 **Town**:
-The menu where a Party refills its Belt and the player spends gold and Salvage.
+The menu where a Party refills its Belt and Oil, and the player spends gold and Salvage.
 _Avoid_: Hub, camp
