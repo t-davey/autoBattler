@@ -49,7 +49,7 @@ The Party descends on its own while the player is away. The player returns to ne
 
 One town survives around the Last Lamp, which holds back a rising dark. Parties descend to relight old Lamps in the depths. The dark is flavour: it never advances on a timer, and light is not a resource to manage.
 
-The story reaches the player through short act introductions, boss lines, item descriptions, and away-report text.
+The story reaches the player through short act introductions, boss lines, item descriptions, and Away Report text.
 
 There are 3 Acts of 10 floors each. Names are provisional.
 
@@ -75,7 +75,7 @@ There are 3 Acts of 10 floors each. Names are provisional.
 
 ### Why 2 weeks
 
-Offline progress means about 300 hours of Party time in the first Difficulty Tier, while a clean pass through all 30 floors takes about 2 hours. Power walls fill the gap: most of that time goes to farming, and about 35 check-ins against 12 walls means breaking through one about every 3 check-ins. Farming going stale is the main risk, so loot and Elites have to stay interesting.
+Offline progress means about 300 hours of Party time in the first Difficulty Tier, while a clean pass through all 30 floors takes about 2.5 hours. Power walls fill the gap: most of that time goes to farming, and about 35 check-ins against 12 walls means breaking through one about every 3 check-ins. Farming going stale is the main risk, so loot and Elites have to stay interesting.
 
 ### Loot sources
 
@@ -89,7 +89,7 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 - The player can use consumables at any time, and rules use them when the player is away.
 - Loot goes straight to the Stash. When the Stash is full, the lowest-value items are salvaged.
 
-## Combat
+## Battles
 
 - Damage types are physical, fire, cold, poison, and holy, with matching resistances.
 - Enemies come in families with front and back-row roles, plus Elite packs with random modifiers and better loot, plus hand-designed bosses (simple at first).
@@ -100,7 +100,7 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 - Player rules or a wipe return the Party to Town. The trip is instant and free, and the Party resumes from the last Lamp.
 - The player sets a Stance and can choose any lit Lamp to work from:
   - **Farm** repeats from the chosen Lamp to the next one, including that Lamp's Guardian once beaten.
-  - **Push** falls back one Lamp after 3 wipes, farms there, and retries whenever a Hero levels up. The player sees a note on returning, and the away report explains failures, such as "2 wipes, mostly fire damage".
+  - **Push** falls back one Lamp after 3 wipes, farms there, and retries whenever a Hero levels up. The player sees a note on returning, and the Away Report explains failures, such as "2 wipes, mostly fire damage".
 
 ## Long term
 
@@ -118,7 +118,7 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 ## Presentation
 
 - UI-first: panels, text, icons, and a simple tile map, with room for pixel art later.
-- A dashboard while the Party runs, tabs for planning, and a "while you were away" report.
+- A dashboard while the Party runs, tabs for planning, and an Away Report.
 - Grim gothic tone.
 - Audio starts silent, with a few key effects such as a rare drop added later.
 - "autoBattler" is the working title.
@@ -131,7 +131,7 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 
 ## First playable
 
-The full loop, built thin, to test whether coming back to loot feels good: all of Act 1 with its 3 Guardians and Boss, placeholder Classes, rarity and Affix loot, auto-salvage, Town, and the offline report. Judge it over a few real days of check-ins, since a single session can't show whether returning feels good.
+The full loop, built thin, to test whether coming back to loot feels good: all of Act 1 with its 3 Guardians and Boss, placeholder Classes, rarity and Affix loot, auto-salvage, Town, and the Away Report. Judge it over a few real days of check-ins, since a single session can't show whether returning feels good.
 
 ## Open questions
 

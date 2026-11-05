@@ -24,10 +24,3 @@ app
     console.error(error);
     app.exit(1);
   });
-
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) void createWindow();
-});
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});

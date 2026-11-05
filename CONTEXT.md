@@ -4,10 +4,10 @@ An idle dungeon crawler: a Party descends on its own, fighting Battles and colle
 
 ## Language
 
-### Combat
+### Battles
 
 **Unit**:
-A single combatant in a Battle, on either side.
+A single fighter in a Battle, on either side.
 _Avoid_: Combatant, minion
 
 **Team**:
@@ -15,7 +15,7 @@ The Units fighting on one side of a Battle.
 _Avoid_: Squad, side
 
 **Battle**:
-One complete fight between two Teams, ending in a win for one Team or a draw.
+One complete clash between two Teams, ending in a win for one Team or a draw.
 _Avoid_: Match, fight, combat
 
 **Tick**:
@@ -41,7 +41,7 @@ _Avoid_: Champion, miniboss
 ### Party
 
 **Hero**:
-A player-owned character who levels up, equips gear, and fights as a Unit.
+A player-owned Unit who levels up and equips gear.
 _Avoid_: Character, adventurer, member
 
 **Party**:
@@ -49,7 +49,7 @@ The 3 Heroes the player sends down together.
 _Avoid_: Group, squad
 
 **Class**:
-The archetype that gives a Hero their skill tree and role.
+The kind of Hero that determines their skill tree and role.
 _Avoid_: Job, archetype
 
 ### Progress
@@ -61,6 +61,26 @@ _Avoid_: Delve, expedition, dive
 **Act**:
 A themed stretch of the descent, ending in a Boss.
 _Avoid_: Chapter, zone, region
+
+**Floor**:
+One generated level of an Act, made up of Rooms.
+_Avoid_: Level, stage
+
+**Room**:
+One space on a Floor, holding a Battle, chest, trap, or shrine.
+_Avoid_: Encounter, tile
+
+**Wall**:
+A Guardian or Boss that stops a Party until it grows stronger.
+_Avoid_: Gate, blocker
+
+**Check-in**:
+A player's return to the game to read the Away Report and act on it.
+_Avoid_: Session, visit
+
+**Away Report**:
+The summary of what a Party did while the game was closed.
+_Avoid_: Offline report, summary screen
 
 **Lamp**:
 A point in the descent that a Party relights by beating its Guardian, and where it can resume after returning to Town.
@@ -86,7 +106,7 @@ _Avoid_: Difficulty level, new game plus
 
 **Affix**:
 A randomly rolled property on an item.
-_Avoid_: Modifier, enchantment
+_Avoid_: Enchantment
 
 **Stash**:
 The storage where loot lands, shared by all of the player's Parties.
