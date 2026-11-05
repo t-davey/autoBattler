@@ -1,0 +1,28 @@
+{
+  "name": "autobattler",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "dist-electron/main.js",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "vite",
+    "dev:electron": "node scripts/dev-electron.mjs",
+    "build": "vite build && tsc -p tsconfig.electron.json",
+    "start:electron": "npm run build && electron .",
+    "smoke:electron": "npm run build && electron scripts/smoke-electron.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.sim.json --noEmit && tsc -p tsconfig.ui.json --noEmit && tsc -p tsconfig.electron.json --noEmit",
+    "check": "npm run typecheck && npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "electron": "^45.2.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.1.0"
+  }
+}
