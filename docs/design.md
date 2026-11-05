@@ -191,7 +191,9 @@ All 4 Classes are in, each trimmed to 2 Branches of about 3 skills, about 24 ski
 - **Hexer:** Rot and Malediction
 - **Lamplighter:** Flame and Hearth
 
-Each Class also gets one Class-specific unique that visibly changes a skill, so 4 in total. An agent drafts the skills in their own file for the human to review, and numbers get tuned through play.
+Deeper skills need 3 points spent in that Branch per step rather than 5, so a Hero can reach a Branch's third skill within Act 1.
+
+Each Class also gets one Class-specific unique that visibly changes a skill, so 4 in total. The skills are drafted in [First playable skills](first-playable-skills.md), and numbers get tuned through play.
 
 ## Open questions
 
