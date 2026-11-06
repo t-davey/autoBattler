@@ -116,7 +116,7 @@ The plan doesn't settle these, and the human accepted them on 2026-11-05.
 
 **Builds:** each Hero has 11 legal 6-point builds at level 7, and all 9 skills are reachable. Those builds reach rank 2 at most in a step 3 skill.
 
-**Oil:** the first-playable draft estimates that a Huntsman using The Long Cut and Bleeder's Cut runs dry after about 3 Battles, but at level 7 on 2/2/2 it [never fell under 10 Oil](plans/poc-demo-m2-review.md#estimates-to-compare) across 40 Seeds. A Lamplighter using Lantern Ward and Mend by Lamplight spends less than that draft's Hearth build, which also included Votive Spark and ran dry after about 4–5 Battles. That is a hand estimate, not yet measured.
+**Oil:** the first-playable draft estimates that a Huntsman using The Long Cut and Bleeder's Cut runs dry after about 3 Battles, which [the measurement](plans/poc-demo-m2-review.md#estimates-to-compare) didn't bear out. A Lamplighter using Lantern Ward and Mend by Lamplight spends less than that draft's Hearth build, which also included Votive Spark and ran dry after about 4–5 Battles. That is a hand estimate, not yet measured.
 
 **Lantern Ward:** its cooldown of 250 Ticks outlasts its 80-Tick Ward, so with one Lamplighter, "No Hero holds a Ward" never blocks it in the demo.
 
@@ -133,7 +133,7 @@ The human accepted these on 2026-11-05:
 
 ## The human's answers
 
-Settled on 2026-11-05. [The gaps](plans/poc-demo/gaps.md) keep the reasoning: G26, G27, G5, and G28, in this order.
+Settled on 2026-11-05. [The gaps](plans/poc-demo/gaps.md) keep the reasoning for answers 1, 2, and 4, in G26, G27, and G28.
 
 1. **Shared Burden and the Wall:** it also redirects Poison ticks on back-Row Heroes, so it does something against the Guardian.
 2. **Warm Hands in the build check:** R2's "a skill never appears" trigger leaves it out in Milestones 2 and 6. Milestone 6 judges it by comparing whole Runs with and without it.

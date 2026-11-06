@@ -1,6 +1,6 @@
 # Milestone 2 review: what M6 still needs
 
-The estimates, the R2 result, and the Watch list left by stops S1 and S2 of Milestone 2, settled by the human on 2026-11-05. [docs/demo-skills.md](../demo-skills.md) holds the rules, and [the gaps](poc-demo/gaps.md) hold the rulings (G23–G28). The [full review at 1af2dc0](https://github.com/t-davey/autoBattler/blob/1af2dc0b1d99a3928f209195bccbbca7f12b4a3c/docs/plans/poc-demo-m2-review.md) has the questions asked and the corrections to the first draft.
+The estimates, the R2 result, and the Watch list left by stops S1 and S2 of Milestone 2, settled by the human on 2026-11-05. [docs/demo-skills.md](../demo-skills.md) holds the rules, and [the gaps](poc-demo/gaps.md) hold the rulings (G23–G28). The [full review at 1af2dc0](https://github.com/t-davey/autoBattler/blob/1af2dc0b1d99a3928f209195bccbbca7f12b4a3c/docs/plans/poc-demo-m2-review.md) has everything cut from here, including the questions asked and the corrections to the first draft.
 
 **How to use it:** when a measurement arrives, fill in its row under [Estimates to compare](#estimates-to-compare). When a result differs enough to matter, check [Watch list](#watch-list) before tuning. Nothing here overrides the rules files.
 
@@ -16,6 +16,7 @@ All are hand estimates from 2026-11-05. Numbers will move with tuning, so a diff
 | Level 10 Lamplighter, without and with rank 5 Shared Burden | about 41 s and about 51 s | 176 health, 30% redirected | M6 | |
 | Basic attacks kill the Warden | about 85 s at level 6, about 80 s at level 7 | No skills, nobody falls, 1,600 health | M3, M6 | At 1,200 health (G29), no kill at level 10 or below, since the Party falls first. Level 12 wins every time, in 48 s |
 | Damage a second at level 7 | Sin-Eater 6.3, Huntsman 10.7, Lamplighter 6.7 | Basic attacks, no crit or armour | M6 | |
+| Live time to those levels | under 2 min, about 13 min, about 64 min | About 25 s per Battle | M2, M6 | 115 Battles (level 6) after about 42 min, so about 22 s per Battle |
 | Huntsman runs dry | About 3 Battles | The Long Cut and Bleeder's Cut, 120 Oil spent against 90 gained | M3, M6 | Never under 10 Oil across 40 Seeds at level 7, 2/2/2 |
 
 ## R2 result
@@ -44,6 +45,7 @@ Measured with `npm run balance -- builds`: level 7, 6 points, 200 Seeds per Batt
 Things to check when results arrive:
 
 - **Bulwark barely touches the Wall.** Bar the Way and Iron Penance only affect Grave Slam, about 1.5 damage a second before armour, and Shared Burden helps only the Lamplighter. If the Sin-Eater's points don't move the Guardian kill rate in M6, consider that a design question for S3, not only a tuning one.
+- **Shared Burden's gain is small.** Rank 2 buys the Lamplighter about 3 seconds against Poison. M6 can tune the share.
 - **R2 can't see a flat result.** If all Sin-Eater builds tie, they all count as viable, so R2 passes without showing a real decision. Read the `builds` table, not just its verdict.
 - **R2 starts Battles on full Oil.** Single Battles flatter builds that burn Oil faster than they regain it. M3's carried Oil is the real test.
 - **Warm Hands has no measure across builds.** R2 skips it, and M6's `wall` mode uses one reference build, so a with-and-without comparison has to be added to M6.

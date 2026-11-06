@@ -36,7 +36,7 @@ Facts in the bible and lines in the fragments files carry one of these:
 5. **Write Act 1 fully, then test it.** Friends' reactions over a few days of real Check-ins shape Acts 2 and 3. Hold off on detailed writing for later Acts until then.
 6. **Consider a turn at later Difficulty Tiers.** The reset into the second could change what the replay means. This depends on [where the reveal lands](bible.md#open-questions).
 
-The demo doesn't wait on any of this. The chest lines in [its plan](../plans/poc-demo.md) can use Fragments once they are ready, and anything more, such as a Guardian's line, is a demo scope change for the human to confirm.
+The demo doesn't wait on any of this. Its chest lines are provisional ([G33](../plans/poc-demo/gaps.md)) and can use Fragments once they are ready, and anything more, such as a Guardian's line, is a demo scope change for the human to confirm.
 
 ## Writing rules
 

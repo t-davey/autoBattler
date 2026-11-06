@@ -15,13 +15,11 @@ The demo tests one thing: is it satisfying to come back to loot, make a build de
 
 ## How to use this plan
 
-M6 is the last milestone, and every number is a starting value for it to tune. Read this file, [its file](poc-demo/m6-tuning-and-demo-run.md), [as-built.md](poc-demo/as-built.md), [the M2 review](poc-demo-m2-review.md), whose Watch list names M6 work, and the [ADR](../adr/) its **ADRs** line names, then reach further when one of these applies:
+M6 is the last milestone, and every number is a starting value for it to tune. Read this file, [M6's file](poc-demo/m6-tuning-and-demo-run.md), [as-built.md](poc-demo/as-built.md), [the M2 review](poc-demo-m2-review.md), whose Watch list names M6 work, and the [ADR](../adr/) M6's **ADRs** line names, then reach further when one of these applies:
 
 - **[gaps.md](poc-demo/gaps.md):** the rulings M6's **Needs** line names, or any settled answer that comes up again.
 - **[sim-interface.md](poc-demo/sim-interface.md):** Tick lengths, or which exports each step of the demo script uses.
 - **[risks.md](poc-demo/risks.md):** M6 names a risk, or a threshold trips.
-
-When a measurement arrives, fill in its row in the M2 review under Estimates to compare, and check the Watch list before tuning.
 
 ## Approved scope
 
