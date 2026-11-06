@@ -174,7 +174,9 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 - A dashboard while the Party runs, tabs for planning, and a [check-in](#check-ins) built around the Away Report.
 - The Live Log shows the latest 1,000 lines of live play, and those lines are gone when the game closes.
 - Catch-up produces an Away Report rather than log lines. Saves keep the last 10 Away Reports.
-- The Stash can be sorted and filtered.
+- **Stash:** it starts from the Party. Picking a Hero's Slot lists the Stash's items for that Slot with their stat changes for that Hero, and the picked item's changes for the whole Party sit beside the list. Empty Slots show changes without gain colours, since everything is a gain there.
+- Identical items list as one with a count, even when their level requirements differ, and equipping takes the lowest. The Stash can be sorted and filtered.
+- Items found since the Party was last sent back from a check-in are marked new.
 - Grim gothic tone, for now.
 - Audio starts silent, with a few key effects such as a rare drop added later.
 - "autoBattler" is the working title.

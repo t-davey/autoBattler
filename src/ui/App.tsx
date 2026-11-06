@@ -13,7 +13,7 @@ import { useUiScale } from './useUiScale';
 type Tab = 'dashboard' | 'planning' | 'stash';
 
 export function App({ store }: { store: Store }) {
-  const { view, log, stash, catchUpProgress, awayReport, saveNotice, saveWarning } = useGame(store);
+  const { view, log, stash, seenItemId, catchUpProgress, awayReport, saveNotice, saveWarning } = useGame(store);
   const [tab, setTab] = useState<Tab>('dashboard');
   useUiScale();
   const unspent = view.heroes.reduce((total, hero) => total + hero.unspentPoints, 0);
@@ -48,7 +48,7 @@ export function App({ store }: { store: Store }) {
             {saveNotice} <button type="button" onClick={store.dismissSaveNotice}>Dismiss</button>
           </p>
         )}
-        {awayReport && <CheckIn report={awayReport} view={view} stash={stash} dispatch={store.dispatch} onSendBack={sendBack} />}
+        {awayReport && <CheckIn report={awayReport} view={view} stash={stash} seenItemId={seenItemId} dispatch={store.dispatch} onSendBack={sendBack} />}
         {!awayReport && tab === 'dashboard' && view.phase !== 'town' && <BattleScreen view={view} log={log} store={store} />}
         {!awayReport && tab === 'dashboard' && view.phase === 'town' && (
           <main className="dashboard">
@@ -63,7 +63,7 @@ export function App({ store }: { store: Store }) {
             <PlanningTab heroes={view.heroes} dispatch={store.dispatch} />
           </main>
         )}
-        {!awayReport && tab === 'stash' && <StashTab stash={stash} heroes={view.heroes} dispatch={store.dispatch} />}
+        {!awayReport && tab === 'stash' && <StashTab stash={stash} heroes={view.heroes} dispatch={store.dispatch} seenItemId={seenItemId} />}
       </div>
       {catchUpProgress !== null && (
         <div className="catch-up" role="status">

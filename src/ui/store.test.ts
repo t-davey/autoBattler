@@ -122,6 +122,17 @@ describe('store', () => {
     expect(store.getSnapshot().stash.some((item) => item.id === found!.id)).toBe(false);
   });
 
+  it('counts items as new until the Party is sent back from a check-in', () => {
+    const store = createStore(createGame({ seed: 9, scenario: { heroLevel: 40 } }));
+    expect(store.getSnapshot().stash.some((item) => item.id > store.getSnapshot().seenItemId)).toBe(false);
+
+    while (store.getSnapshot().stash.length === 0) store.advance(1_000);
+    expect(store.getSnapshot().stash.every((item) => item.id > store.getSnapshot().seenItemId)).toBe(true);
+
+    store.sendPartyBack();
+    expect(store.getSnapshot().stash.some((item) => item.id > store.getSnapshot().seenItemId)).toBe(false);
+  });
+
   it('dispatch returns a refusal and publishes nothing', () => {
     const store = createStore(createGame({ seed: 1 }));
     const before = store.getSnapshot();

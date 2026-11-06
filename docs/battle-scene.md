@@ -88,6 +88,6 @@ Most of the scene has been watched in the running app, including Lantern Ward, B
 - Enemies crumble and appear in place, rather than walking in through a way.
 - Poison ticks that land together overlap, so two floating 3s can read as 33.
 - A very large Floor layout gets smaller map tiles, so the map stays clear of the wall.
-- Only the header scales on the Planning and Stash tabs and in Town, so their content looks small beside it on a large screen.
+- Only the header scales on the Planning tab and in Town, so their content looks small beside it on a large screen.
 - Below 1280 × 720, the overlays can cover the Room or each other.
 - The light sources are Provisional in [the lore bible](lore/bible.md#light-in-the-undercroft) until the human confirms them.

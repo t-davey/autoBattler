@@ -20,7 +20,7 @@ const DEMO_SEED = 8;
 const fresh: GameSetup = { seed: DEMO_SEED };
 const { saved, notice } = loadSave(localStorageSave);
 const game = saved?.game ?? createGame(import.meta.env.DEV ? devSetup(window.location.search, fresh) : fresh);
-const store = createStore(game, { saves: localStorageSave, saveNotice: notice });
+const store = createStore(game, { saves: localStorageSave, saveNotice: notice, ...(saved?.seenItemId === undefined ? {} : { seenItemId: saved.seenItemId }) });
 const driver = startDriver({ now: Date.now, isHidden: () => document.hidden, store, advancedTo: saved?.savedAt ?? Date.now() });
 
 document.addEventListener('visibilitychange', () => {
