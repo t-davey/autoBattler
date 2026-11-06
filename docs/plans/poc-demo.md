@@ -2,7 +2,7 @@
 
 The demo tests one thing: is it satisfying to come back to loot, make a build decision, and see that decision beat a Wall? Each milestone is a tracer bullet: one PR that leaves the demo runnable end to end.
 
-**Status: built.** Every milestone is done, and the human gave the S4 verdict on 2026-11-06: see [the results](poc-demo-results.md).
+**Status: built.** Every milestone is done, and the human gave the S4 verdict on 2026-11-06: see [the results](poc-demo-results.md). The demo's next stretch is [the second Wall](second-wall.md), which overrides this plan where they differ.
 
 | Milestone | State |
 |---|---|
@@ -44,7 +44,7 @@ Placeholder art: CSS tiles and text glyphs, all original, in the grim gothic ton
 
 **Scope change:** G22, confirmed by the human, extends the Setbacks row: a build change also ends a fallback.
 
-**Pacing:** the first Wall should take about 1–2 hours of Party time. This is a tunable value, separate from the design's 2-week pacing.
+**Pacing:** the first Wall should take about 1–2 hours of Party time. This is a tunable value, separate from the design's 2-week pacing. [G40](poc-demo/gaps.md) replaces it with 2–3 check-ins per Wall, which isn't tuned yet, and [G41](poc-demo/gaps.md) brings 2x, 5x, and 10x into the demo for testing.
 
 ## Demo script
 

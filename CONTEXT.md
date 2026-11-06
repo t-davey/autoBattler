@@ -100,6 +100,10 @@ _Avoid_: Range
 Which Row a Unit picks from among those its Reach allows: the front Row while it lives, or either.
 _Avoid_: Aggro, priority
 
+**XP falloff**:
+The smaller XP a Hero earns on a Floor well below its level.
+_Avoid_: XP penalty, level penalty
+
 **Skill point**:
 What a Hero earns each level and spends to raise a skill.
 _Avoid_: Talent point, ability point
@@ -166,6 +170,10 @@ _Avoid_: Level, stage
 One space on a Floor, holding a Battle, chest, trap, or shrine.
 _Avoid_: Encounter, tile
 
+**Floor level**:
+The level a Floor's enemies count as, which sets when XP falloff begins.
+_Avoid_: Stage level, zone level
+
 **Way in**:
 The side of a Room the Party entered by, shown in the Battle scene as a door or stairs.
 _Avoid_: Entrance, spawn point
@@ -181,6 +189,10 @@ _Avoid_: Gate, blocker
 **Catch-up**:
 Running a player's absence, or the time a check-in paused, through the same rules as live play, up to 12 hours, and reporting it in an Away Report.
 _Avoid_: Offline progress, fast-forward
+
+**Test speed**:
+A temporary control that runs live play at 2x, 5x, or 10x, for testing the demo.
+_Avoid_: Fast-forward, time skip
 
 **Party time**:
 The time a Party has spent playing, live or in catch-up, as opposed to time on the player's clock.

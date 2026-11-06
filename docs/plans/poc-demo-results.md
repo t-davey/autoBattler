@@ -117,3 +117,42 @@ The first 5 steps ran twice, with the same reports both times. Step 4 skipped ti
 ## S4: the human's verdict
 
 **Yes**, from the human on 2026-11-06: the demo answers its question of whether it is satisfying to come back to loot, make a build decision, and see that decision beat a Wall.
+
+## After the verdict: 12 hours of play
+
+Measured on 2026-11-06 with a throwaway script that isn't in the repo, over 60 Seeds and on these same numbers. The player spends points in step order and equips plain upgrades, either at every hour or at every 4 hours. [The second Wall's plan](second-wall.md) acts on this.
+
+| Hour, checking in hourly | Level | Wipes per hour | Guardian kills per hour | Median Battle length |
+|---|---|---|---|---|
+| 1 | 6 | 3.3 | 0 | 25.6 s |
+| 2 | 8 | 0.3 | 4.7 | 16.2 s |
+| 3 | 10 | 0 | 5.5 | 13.5 s |
+| 12 | 18 | 0 | 6.1 | 10.4 s |
+
+- **Nothing threatens the Party after the first Wall.** Hourly check-ins bring the first kill at a median of 67 minutes, and Wipes stop from hour 3.
+- **The Wall falls to levels alone.** With no tending, kills begin in hour 4, at level 10 and 0.3 kills an hour. [The M2 review](poc-demo-m2-review.md#estimates-to-compare) has level 11 winning every time on basic attacks. [The check-in baseline](#check-in-baseline) measures the full absence.
+- **Check-ins every 4 hours** bring the first kill at a median of 244 minutes, just after the first tending, with 60 of 60 Seeds killing the Guardian.
+- **Levels outrun the design:** level 18 in 12 hours, against about level 25 by the end of a roughly 300-hour Difficulty Tier.
+- **Floors add no pressure.** Wipes per Seed over 2 hours in `npm run balance -- wall` run 0.0 / 0.1 / 6.1 on Floors 1/2/3, and most of Floor 3's are at the Guardian.
+- **Loot outlives its purpose:** about 50 items an hour keep arriving, with the highest poison resistance levelling off around 36%.
+
+## Check-in baseline
+
+`npm run balance -- checkins`, measured on 2026-11-06 before any change for [the second Wall](second-wall.md), over 200 Seeds. Both targets miss, as expected: they are the ones the next PRs have to reach. Seeds 1001-1200 differ by at most 10 points, in the 4-hour row.
+
+| Measure | Target | Seeds 1-200 | Seeds 1001-1200 |
+|---|---|---|---|
+| Untended: Guardian killed by 12 hours | At most 10% | 100% | 100% |
+| Answer, 8-hour gap: first kill after 2–3 check-ins | At least 80% | 0% | 0% |
+
+First kill by check-ins made, on Seeds 1-200:
+
+| Gap | 0 check-ins | 1 check-in | 2–3 check-ins | No kill | Median first kill | Median level, with the kill's XP |
+|---|---|---|---|---|---|---|
+| 4 hours | 38% | 63% | 0% | 0% | 4.0 h | 10 |
+| 8 hours | 100% | 0% | 0% | 0% | 4.5 h | 11 |
+| 12 hours | 100% | 0% | 0% | 0% | 4.5 h | 11 |
+
+- **Routine and Answer players score the same.** Routine spends points in step order and equips plain upgrades, and Answer spends towards the reference build and equips the most poison resistance. Levels beat the Wall so early that their choices barely get a chance to matter, so this baseline can't yet tell them apart.
+- **The Party is Set back about 13 times at the Guardian** before the first kill, almost all of it while nobody is watching.
+- **Untended levels:** a median of 10 at 4 hours, 14 at 8 hours, 16 at 12 hours, and 22 at 24 hours.

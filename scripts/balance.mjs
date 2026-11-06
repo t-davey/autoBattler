@@ -1,6 +1,6 @@
 // Headless balance measurements. `builds` measures risk R2 and `drops` measures risk R3, both in
-// docs/plans/poc-demo/risks.md. `wall` measures the first Wall's targets and `demo-seed` finds Seeds that play the
-// demo script. docs/plans/poc-demo-results.md records them. Each exits non-zero if a trigger trips, a target misses, or none is found.
+// docs/plans/poc-demo/risks.md. `wall` measures the first Wall's targets, `demo-seed` finds Seeds that play the
+// demo script, and `checkins` plays the Wall on a schedule of check-ins. docs/plans/poc-demo-results.md records them. Each exits non-zero if a trigger trips, a target misses, or none is found.
 import { createServer } from 'vite';
 
 const SEEDS = 200;
@@ -92,7 +92,7 @@ function buildsFor(heroId) {
 }
 
 const server = await createServer({ configFile: false, server: { middlewareMode: true }, appType: 'custom' });
-const { advance, applyAction, beginCatchUp, continueCatchUp, createGame, deserializeGame, partyUnitSpecs, serializeGame, simulateBattle, SLOTS, TICK_MS, viewGame, viewStash } = await server.ssrLoadModule('/src/sim/index.ts');
+const { advance, applyAction, beginCatchUp, CATCH_UP_CAP_MS, continueCatchUp, createGame, deserializeGame, partyUnitSpecs, serializeGame, simulateBattle, SLOTS, TICK_MS, viewGame, viewStash } = await server.ssrLoadModule('/src/sim/index.ts');
 
 const referenceRanks = Object.fromEntries(
   Object.entries(REFERENCE_RANKS).map(([heroId, allocation]) => [heroId, ranksFrom(CLASSES[heroId].skills, allocation)]),
@@ -348,12 +348,14 @@ const canWear = (hero, item) => {
   return item.levelRequirement <= hero.level && (worn === null || item.reach === worn.reach);
 };
 
-/** Reaches the build in step order, then adds spare points one at a time across the Branch. */
+/** Reaches the build in step order from the Hero's current ranks, then adds spare points one at a time across the Branch. */
 function spendOnBuild(game, heroId, allocation) {
   const { skills } = CLASSES[heroId];
   const spend = (skillId) => applyAction(game, { type: 'spendSkillPoint', heroId, skillId }).ok;
+  const hero = viewGame(game).heroes.find(({ id }) => id === heroId);
   skills.forEach((skillId, index) => {
-    for (let rank = 0; rank < allocation[index]; rank++) spend(skillId);
+    const current = hero.skills.find(({ id }) => id === skillId).rank;
+    for (let rank = current; rank < allocation[index]; rank++) spend(skillId);
   });
   for (let spent = true; spent; ) {
     spent = false;
@@ -642,6 +644,123 @@ function searchDemoSeed(firstSeed) {
   if (found.length === 0) process.exitCode = 1;
 }
 
+const CHECK_IN_GAPS_HOURS = [4, 8, 12];
+const TUNED_GAP_HOURS = 8;
+const CHECK_INS = 3;
+const UNTENDED_HOURS = 24;
+const FULL_ABSENCE_HOURS = CATCH_UP_CAP_MS / HOUR_MS;
+const TICKS_PER_HOUR = 60 * TICKS_PER_MINUTE;
+
+/** Plays until endTick or the first Guardian kill, adding to the record. */
+function playToKill(game, record, endTick) {
+  for (let tick = viewGame(game).tick; tick < endTick && record.killTick === null; tick++) {
+    advance(game, TICK_MS, (event) => {
+      if (event.type === 'guardianFell') {
+        record.killTick = tick + 1;
+        record.killLevel = viewGame(game).heroes[0].level;
+      } else if ((event.type === 'wipe' || event.type === 'draw') && event.enemyName === GUARDIAN_NAME) {
+        record.guardianSetbacks++;
+      }
+    });
+  }
+}
+
+const newCheckInRecord = (guardianSetbacks = 0) => ({ checkIns: 0, killTick: null, killLevel: null, guardianSetbacks });
+
+/** Each acts at every check-in, on all the points and Stash they have by then. */
+const CHECK_IN_PLAYERS = {
+  Routine: (game) => {
+    spendPoints(game);
+    for (const item of viewStash(game)) equipUpgrade(game, item);
+  },
+  Answer: WALL_PLAYERS.Answer,
+};
+
+/** One tended player, from the end of the first absence that every player shares. */
+function playCheckIns(saved, setbacks, act, gapHours) {
+  const game = deserializeGame(saved);
+  const record = newCheckInRecord(setbacks);
+  for (let checkIns = 1; checkIns <= CHECK_INS && record.killTick === null; checkIns++) {
+    record.checkIns = checkIns;
+    act(game);
+    playToKill(game, record, (checkIns + 1) * gapHours * TICKS_PER_HOUR);
+  }
+  return record;
+}
+
+function runCheckIns(firstSeed) {
+  const results = { untended: [], tended: {} };
+  for (const gapHours of CHECK_IN_GAPS_HOURS) {
+    results.tended[gapHours] = Object.fromEntries(Object.keys(CHECK_IN_PLAYERS).map((name) => [name, []]));
+  }
+  const stops = [...new Set([...CHECK_IN_GAPS_HOURS, FULL_ABSENCE_HOURS, UNTENDED_HOURS])].sort((a, b) => a - b);
+  for (let seed = firstSeed; seed < firstSeed + SEEDS; seed++) {
+    const game = createGame({ seed });
+    const untended = { ...newCheckInRecord(), levels: {} };
+    for (const hours of stops) {
+      playToKill(game, untended, hours * TICKS_PER_HOUR);
+      // A kill ends the record, not the Party, so each hour's level still reads true.
+      for (let tick = viewGame(game).tick; tick < hours * TICKS_PER_HOUR; tick++) advance(game, TICK_MS);
+      untended.levels[hours] = viewGame(game).heroes[0].level;
+      if (!CHECK_IN_GAPS_HOURS.includes(hours)) continue;
+      for (const [name, act] of Object.entries(CHECK_IN_PLAYERS)) {
+        const record = untended.killTick !== null ? { ...untended } : playCheckIns(serializeGame(game), untended.guardianSetbacks, act, hours);
+        results.tended[hours][name].push(record);
+      }
+    }
+    results.untended.push(untended);
+  }
+  return results;
+}
+
+/** The share of Seeds whose first kill came after exactly this many check-ins. */
+const killedAfter = (records, checkIns) => (records.filter((record) => record.killTick !== null && record.checkIns === checkIns).length / records.length) * 100;
+const percent = (value) => `${value.toFixed(0)}%`;
+
+function printCheckIns(gapHours, name, records) {
+  const buckets = Array.from({ length: CHECK_INS + 1 }, (_, checkIns) => percent(killedAfter(records, checkIns)).padEnd(8));
+  const killed = records.filter(({ killTick }) => killTick !== null);
+  const never = percent(((records.length - killed.length) / records.length) * 100);
+  const hours = killed.length === 0 ? '-' : `${(medianOf(killed.map(({ killTick }) => killTick)) / TICKS_PER_HOUR).toFixed(1)} h`;
+  const level = killed.length === 0 ? '-' : String(medianOf(killed.map(({ killLevel }) => killLevel)));
+  const setbacks = (sum(records.map(({ guardianSetbacks }) => guardianSetbacks)) / records.length).toFixed(1);
+  console.log(`  ${`${gapHours} h`.padEnd(6)}${name.padEnd(10)}${buckets.join('')}${never.padEnd(8)}${hours.padEnd(10)}${level.padEnd(8)}${setbacks}`);
+}
+
+/** G40: a Wall takes 2-3 check-ins, and levels alone don't beat it within a full absence. */
+function measureCheckIns(firstSeed) {
+  const { untended, tended } = runCheckIns(firstSeed);
+  const killedBy = (hours) => (untended.filter(({ killTick }) => killTick !== null && killTick <= hours * TICKS_PER_HOUR).length / untended.length) * 100;
+  const levels = [...CHECK_IN_GAPS_HOURS, UNTENDED_HOURS].map((hours) => `${hours} h: ${medianOf(untended.map((record) => record.levels[hours]))}`);
+
+  console.log(`Check-ins: ${SEEDS} Seeds from ${firstSeed}. Each player acts at up to ${CHECK_INS} check-ins, and the last gets a full gap to play out.\n`);
+  console.log(`  Untended: killed by ${FULL_ABSENCE_HOURS} h ${percent(killedBy(FULL_ABSENCE_HOURS))}, by ${UNTENDED_HOURS} h ${percent(killedBy(UNTENDED_HOURS))}. Median level at ${levels.join(', ')}.\n`);
+  console.log(`  ${''.padEnd(16)}First kill, by check-ins made`);
+  console.log(`  ${'gap'.padEnd(6)}${'player'.padEnd(10)}${['0', '1', '2', '3', 'none'].map((label) => label.padEnd(8)).join('')}${'median'.padEnd(10)}${'level'.padEnd(8)}Guardian Setbacks`);
+  for (const gapHours of CHECK_IN_GAPS_HOURS) {
+    for (const [name, records] of Object.entries(tended[gapHours])) printCheckIns(gapHours, name, records);
+  }
+
+  const answer = tended[TUNED_GAP_HOURS].Answer;
+  const answerInTime = killedAfter(answer, 2) + killedAfter(answer, 3);
+  const targets = [
+    [`Untended: killed by ${FULL_ABSENCE_HOURS} h`, 'at most 10%', percent(killedBy(FULL_ABSENCE_HOURS)), killedBy(FULL_ABSENCE_HOURS) <= 10],
+    [`Answer, ${TUNED_GAP_HOURS} h gap: first kill after 2-3 check-ins`, 'at least 80%', percent(answerInTime), answerInTime >= 80],
+  ];
+  console.log('');
+  for (const [name, target, value, passed] of targets) {
+    console.log(`  ${passed ? 'PASS' : 'MISS'}  ${name.padEnd(48)}${target.padEnd(16)}${value}`);
+  }
+  const misses = targets.filter(([, , , passed]) => !passed);
+  console.log('');
+  if (misses.length === 0) {
+    console.log('Check-ins: PASS. Every target met.');
+  } else {
+    console.log(`Check-ins: MISSED ${misses.length} of ${targets.length} targets.`);
+    process.exitCode = 1;
+  }
+}
+
 const mode = process.argv[2];
 const firstSeed = Number(process.argv[3] ?? 1);
 try {
@@ -649,8 +768,9 @@ try {
   else if (mode === 'drops') measureDrops();
   else if (mode === 'wall') measureWall(firstSeed);
   else if (mode === 'demo-seed') searchDemoSeed(firstSeed);
+  else if (mode === 'checkins') measureCheckIns(firstSeed);
   else {
-    console.error('Usage: npm run balance -- builds | drops | wall [firstSeed] | demo-seed [firstSeed]');
+    console.error('Usage: npm run balance -- builds | drops | wall [firstSeed] | demo-seed [firstSeed] | checkins [firstSeed]');
     process.exitCode = 2;
   }
 } finally {
