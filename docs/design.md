@@ -96,7 +96,7 @@ Each Class has 3 Branches. A starred Branch is that Class's survivability option
 
 One town survives around the Last Lamp, which holds back a rising dark. Parties descend to relight old Lamps in the depths. The dark is flavour: it never advances on a timer, and light is not a resource to manage.
 
-The story reaches the player through short act introductions, boss lines, item descriptions, and Away Report text. [docs/lore/](lore/README.md) holds it, spoilers included.
+The story reaches the player through short act introductions, Guardian lines, item descriptions, and Away Report text. [docs/lore/](lore/README.md) holds it, spoilers included.
 
 There are 3 Acts of 10 floors each. Names are provisional.
 

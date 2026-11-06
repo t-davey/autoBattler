@@ -34,7 +34,7 @@ Facts in the bible and lines in the fragments files carry one of these:
 3. **Keep the bible short.** It records decisions, and the prose lives in the fragments files.
 4. **Budget words by channel.** See below.
 5. **Write Act 1 fully, then test it.** Friends' reactions over a few days of real Check-ins shape Acts 2 and 3. Hold off on detailed writing for later Acts until then.
-6. **Consider a turn at later Difficulty Tiers.** The reset into the second could change what the replay means. This depends on [where the reveal lands](bible.md#open-questions).
+6. **Let the reveal change the replay.** [The reveal](bible.md#the-reveal) lands before the reset into the second Difficulty Tier, so the replay means something new.
 
 The demo doesn't wait on any of this. Its chest lines are provisional ([G33](../plans/poc-demo/gaps.md)) and can use Fragments once they are ready, and anything more, such as a Guardian's line, is a demo scope change for the human to confirm.
 
@@ -48,16 +48,16 @@ The demo doesn't wait on any of this. Its chest lines are provisional ([G33](../
 - **Saved for the reveal.** What Oil is gets said outright only there.
 - **Any Party.** A line works for any trio of Classes, since a Party may not hold the Class a line names.
 - **The rules stand.** The story stays flavour, as [World](../design.md#world) requires.
-- **Stay original.** A dying flame and a rising dark sit close to *Dark Souls*. Lean on Oil and the physical detail of rendering, and avoid fire-linking or age-of-dark framing.
 
 ## Channel budget
 
-**Provisional**, for the first Difficulty Tier. Giving Guardians lines extends the "boss lines" in [docs/design.md](../design.md#world), and enemy descriptions aren't a channel yet.
+**Provisional**, for the first Difficulty Tier. Enemy descriptions aren't a channel yet.
 
 | Channel | Amount | Job |
 |---|---|---|
 | Act introductions | 3, a few sentences each | Set the place and the question |
-| Guardian and Boss lines | 12 Walls, 1–2 lines each | Main story beats, about one every 3 Check-ins |
+| Guardian lines | The Mouldering Warden's 1 line | The first Wall's story beat |
+| The reveal | 1 ledger Item | Says outright what Oil is |
 | Item descriptions | One line, uniques first | Optional deeper lore |
 | Away Report and Room lines | A small pool per Act | Atmosphere and hints that repay attention |
 
