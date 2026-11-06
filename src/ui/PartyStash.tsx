@@ -2,24 +2,14 @@ import { useMemo, useState } from 'react';
 import { itemBlocksLearnedSkill, RARITIES, SLOTS, type HeroView, type ItemStat, type ItemView, type Rarity, type Slot } from '../sim';
 import { REFUSAL_TEXT } from './describeHero';
 import { changedStats, formatChange, itemStatsText, SLOT_TEXT, STAT_TEXT, statChange } from './describeItem';
+import { PixelIcon } from './PixelIcon';
 import { groupItems, openingSlot, queryStash, type ItemGroup, type StashQuery, type StashSort } from './stashQuery';
 import type { Dispatch } from './store';
-
-/** Stand-ins until there is item art, drawn as 8 x 8 pixels to match the Battle scene. */
-const SLOT_ICONS: Readonly<Record<Slot, readonly string[]>> = {
-  weapon: ['00000011', '00000110', '00001100', '00011000', '10110000', '01100000', '01010000', '10001000'],
-  body: ['01100110', '11111111', '11111111', '01111110', '01111110', '01111110', '01111110', '01111110'],
-  trinket: ['00111100', '01000010', '01000010', '00111100', '00011000', '00111100', '01111110', '00111100'],
-};
 
 const SORTS: readonly (readonly [StashSort, string])[] = [['rarity', 'Rarity'], ['newest', 'Newest'], ['levelRequirement', 'Level']];
 
 function SlotIcon({ slot, rarity }: { slot: Slot; rarity: Rarity | null }) {
-  return (
-    <svg className={`slot-icon slot-icon-${rarity ?? 'empty'}`} viewBox="0 0 8 8" shapeRendering="crispEdges" aria-hidden="true">
-      {SLOT_ICONS[slot].flatMap((row, y) => [...row].map((pixel, x) => (pixel === '1' ? <rect key={`${x},${y}`} x={x} y={y} width="1" height="1" /> : null)))}
-    </svg>
-  );
+  return <PixelIcon name={slot} className={`slot-icon slot-icon-${rarity ?? 'empty'}`} />;
 }
 
 function StatChanges({ item, hero }: { item: ItemView; hero: HeroView }) {

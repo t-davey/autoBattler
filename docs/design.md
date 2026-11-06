@@ -196,6 +196,28 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 - Each consumable and Run call sits beside the rule that does its job while the player is away.
 - Rules are simple presets for now, and may need their own page if they grow too numerous.
 
+### Palette
+
+Starting values, in [the stylesheet](../src/ui/style.css). Every colour names something the Party could touch, and metal and blood match the Battle scene's art.
+
+| Colour | Hex | Used for |
+|---|---|---|
+| Dark |  | The scene's backdrop and overlays |
+| Soot |  | The page, and recesses |
+| Char |  | Plates |
+| Vellum |  | The Away Report's ledger page |
+| Iron |  | Edges, and anything structural |
+| Brass | , bright  | Headings, corner brackets, Guardian Rooms |
+| Flame |  | Only what is lit, selected, new, or rare |
+| Oil | , bright  | The Oil gauge and Catch-up |
+| Tallow | , dim  | Text |
+| Blood |  | Health bars |
+| Rust |  | Refusals and stat losses |
+| Verdigris |  | Stat gains, drawn from the scene's mould glow |
+| Rime |  | Magic items |
+
+Panels are iron-bound plates with brass corners, and the Away Report reads as a ledger page. That look is styling only, and [the ledger Fragment's form](lore/bible.md#open-questions) stays open. Headings use Pirata One and text uses EB Garamond, both bundled so the game looks the same offline.
+
 ## Release
 
 - Windows installer with auto-update through GitHub Releases. Friends see a one-time SmartScreen warning.

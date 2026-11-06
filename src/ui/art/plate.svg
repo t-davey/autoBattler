@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="25" height="25" viewBox="0 0 25 25" shape-rendering="crispEdges">
+  <!-- A 9-slice frame: iron edge, brass corner bracket, rivet. Colours are iron, brass-deep, brass, and brass-bright from style.css. -->
+  <defs>
+    <g id="c">
+      <path fill="#60461e" d="M1 1h9v3H4v6H1z"/>
+      <path fill="#b08a3e" d="M1 1h8v1H2v7H1z"/>
+      <path fill="#d6b460" d="M5 5h2v2H5z"/>
+      <path fill="#050508" d="M6 6h1v1H6z"/>
+    </g>
+  </defs>
+  <path fill="none" stroke="#3a3b42" d="M.5.5h24v24H.5z"/>
+  <use xlink:href="#c"/>
+  <use xlink:href="#c" transform="matrix(-1 0 0 1 25 0)"/>
+  <use xlink:href="#c" transform="matrix(1 0 0 -1 0 25)"/>
+  <use xlink:href="#c" transform="matrix(-1 0 0 -1 25 25)"/>
+</svg>
