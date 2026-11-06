@@ -15,6 +15,14 @@ export const STAT_TEXT: Readonly<Record<ItemStat, string>> = {
 
 const PERCENT_STATS: ReadonlySet<ItemStat> = new Set(['poisonResistance', 'critChance']);
 
+/** An item's stats, such as "+8 armour, +12% poison resistance". */
+export function itemStatsText(stats: ItemStats): string {
+  const parts = (Object.keys(STAT_TEXT) as ItemStat[])
+    .filter((stat) => stats[stat] !== 0)
+    .map((stat) => `+${stats[stat]}${PERCENT_STATS.has(stat) ? '%' : ''} ${STAT_TEXT[stat]}`);
+  return parts.length > 0 ? parts.join(', ') : 'No stats';
+}
+
 /** What equipping an item would change one stat by on this Hero, against what the Slot holds now. */
 export const statChange = (item: ItemView, hero: HeroView, stat: ItemStat): number => item.stats[stat] - (hero.equipment[item.slot]?.stats[stat] ?? 0);
 

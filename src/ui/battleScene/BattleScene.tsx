@@ -1,6 +1,6 @@
 import { memo, useEffect, useRef } from 'react';
 import type { Store } from '../store';
-import { drawScene, snappedDisplayWidth } from './draw';
+import { drawScene, sceneDisplayWidth } from './draw';
 import { ART_HEIGHT, ART_WIDTH } from './iso';
 import { bakeRoom, type BakedRoom } from './roomBake';
 import { createScene } from './scene';
@@ -24,8 +24,7 @@ export const BattleScene = memo(function BattleScene({ store }: { store: Store }
     const stopPlayed = store.onPlayed((batch) => scene.play(batch, store.getSnapshot().view));
 
     const fit = (): void => {
-      const available = Math.min(holder.clientWidth, (holder.clientHeight * ART_WIDTH) / ART_HEIGHT);
-      const width = snappedDisplayWidth(available, window.devicePixelRatio);
+      const width = sceneDisplayWidth(holder.clientWidth, holder.clientHeight, window.innerWidth, window.innerHeight, window.devicePixelRatio);
       element.style.width = `${width}px`;
       element.style.height = `${(width * ART_HEIGHT) / ART_WIDTH}px`;
     };

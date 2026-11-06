@@ -32,7 +32,7 @@ All are in `src/ui/battleScene`. Only `BattleScene.tsx` touches React or the DOM
 - **Art pixels:** the 320 × 170 picture.
 - **Scene units:** what `scene.ts` and `iso.ts` work in, 2 to each art pixel.
 - **Display size:** `snappedDisplayWidth` picks the largest width where each art pixel covers a whole number of device pixels. A window of another shape gets a margin rather than uneven pixels.
-- **UI scale:** `uiScale` compares the scene with its 1280 x 680 base and sets `--ui-scale`, which zooms the header and overlays with it. It never goes below 1, so a window under 1280 x 720 shrinks the scene but not the text. Size overlays for the base window.
+- **UI scale:** `uiScale` finds the largest whole-pixel scene that fits a 16:9 share of the window, compares it with 1280 wide, and sets `--ui-scale`, which zooms the header and overlays with it. It never goes below 1, so a window under 1280 x 720 shrinks the scene but not the text. Size overlays for the base window.
 
 ## Rooms
 
@@ -88,6 +88,6 @@ Most of the scene has been watched in the running app, including Lantern Ward, B
 - Enemies crumble and appear in place, rather than walking in through a way.
 - Poison ticks that land together overlap, so two floating 3s can read as 33.
 - A very large Floor layout gets smaller map tiles, so the map stays clear of the wall.
-- Only the header scales on the Planning tab and in Town, so their content looks small beside it on a large screen.
+- Only the header scales on the Planning tab, in Town, and in a check-in, so their content looks small beside it on a large screen.
 - Below 1280 × 720, the overlays can cover the Room or each other.
 - The light sources are Provisional in [the lore bible](lore/bible.md#light-in-the-undercroft) until the human confirms them.

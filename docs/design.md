@@ -177,6 +177,7 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 - **Stash:** it starts from the Party. Picking a Hero's Slot lists the Stash's items for that Slot with their stat changes for that Hero, and the picked item's changes for the whole Party sit beside the list. Empty Slots show changes without gain colours, since everything is a gain there.
 - Identical items list as one with a count, even when their level requirements differ, and equipping takes the lowest. The Stash can be sorted and filtered.
 - Items found since the Party was last sent back from a check-in are marked new.
+- A check-in uses the same Stash, opening filtered to its Finding's stat or rarity, on a Slot with a match.
 - Grim gothic tone, for now.
 - Audio starts silent, with a few key effects such as a rare drop added later.
 - "autoBattler" is the working title.

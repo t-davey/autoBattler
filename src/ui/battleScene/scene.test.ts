@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { advance, createGame, viewGame, type Game, type GameEvent, type GameView } from '../../sim';
 import { ART_HEIGHT, ART_WIDTH, wayPoint } from './iso';
-import { drawScene, snappedDisplayWidth, uiScale } from './draw';
+import { drawScene, sceneDisplayWidth, snappedDisplayWidth, uiScale } from './draw';
 import { roomLookOf } from './roomLook';
 import { bakeRoom } from './roomBake';
 import { createScene, type SceneFrame, type Scene, type UnitFrame } from './scene';
@@ -217,6 +217,12 @@ describe('the scene’s display size', () => {
     expect(uiScale(1366, 768, 1)).toBe(1);
     expect(uiScale(2560, 1000, 1)).toBe(1.25);
     expect(uiScale(1500, 1440, 1)).toBe(1);
+  });
+
+  it('keeps the scene in step with the UI just short of the next size', () => {
+    expect(uiScale(1920, 1079, 1)).toBe(1.25);
+    expect(sceneDisplayWidth(1920, 1029, 1920, 1079, 1)).toBe(1600);
+    expect(sceneDisplayWidth(1920, 1020, 1920, 1080, 1)).toBe(1920);
   });
 
   it('never scales the UI below its base size', () => {

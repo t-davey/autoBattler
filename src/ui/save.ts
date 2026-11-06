@@ -40,7 +40,7 @@ function parseEnvelope(text: string): LoadedSave | null {
   const { savedAt, game, seenItemId } = parsed as Record<string, unknown>;
   if (typeof savedAt !== 'number' || !Number.isFinite(savedAt) || typeof game !== 'string') return null;
   const restored = deserializeGame(game);
-  return restored && { game: restored, savedAt, ...(typeof seenItemId === 'number' ? { seenItemId } : {}) };
+  return restored && { game: restored, savedAt, ...(typeof seenItemId === 'number' && Number.isFinite(seenItemId) ? { seenItemId } : {}) };
 }
 
 /** Reads the save. An unreadable or old one moves to BAD_SAVE_KEY. */

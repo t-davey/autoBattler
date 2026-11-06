@@ -319,12 +319,6 @@ button:disabled {
   }
 }
 
-@media (max-width: 40rem) {
-  .battlefield {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 .rarity-common {
   color: var(--ink);
   font-weight: normal;
@@ -465,6 +459,17 @@ select {
 .check-in-scroll {
   min-height: 0;
   overflow-y: auto;
+}
+
+.compare-stats {
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+}
+
+.stash-row-warning {
+  flex: 1 1 100%;
+  margin: 0;
+  padding-left: calc(16px + 0.4rem);
 }
 
 .stat-gain {
@@ -861,22 +866,22 @@ select {
   font-size: 0.78rem;
 }
 
-.party-member {
+.compare-hero {
   padding: 0.4rem 0;
   border-top: 1px solid var(--iron);
 }
 
-.party-member > .hint {
+.compare-hero > .hint {
   font-size: 0.75rem;
 }
 
-.party-member-head {
+.compare-hero-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
 }
 
-.party-member-active .party-member-name {
+.compare-hero-active .compare-hero-name {
   color: var(--ember);
 }

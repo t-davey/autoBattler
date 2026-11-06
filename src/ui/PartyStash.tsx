@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { itemBlocksLearnedSkill, RARITIES, SLOTS, type HeroView, type ItemStat, type ItemView, type Rarity, type Slot } from '../sim';
 import { REFUSAL_TEXT } from './describeHero';
-import { changedStats, formatChange, SLOT_TEXT, STAT_TEXT, statChange } from './describeItem';
+import { changedStats, formatChange, itemStatsText, SLOT_TEXT, STAT_TEXT, statChange } from './describeItem';
 import { groupItems, openingSlot, queryStash, type ItemGroup, type StashQuery, type StashSort } from './stashQuery';
 import type { Dispatch } from './store';
 
@@ -63,7 +63,7 @@ function HeroGear({ hero, active, activeSlot, onPick, onUnequip }: HeroGearProps
   return (
     <section className={active ? 'hero-gear hero-gear-active' : 'hero-gear'} aria-label={`Gear of ${hero.name}`}>
       <h3>{hero.name}: level {hero.level}</h3>
-      <p className="hint">Health {maxHealth} · Power {power} · Armour {armour} · Crit {critChance}% · Poison {poisonResistance}%</p>
+      <p className="hint">Health {maxHealth} · Power {power} · Armour {armour} · Crit {critChance}% · Poison resistance {poisonResistance}%</p>
       <ul>
         {SLOTS.map((slot) => {
           const worn = hero.equipment[slot];
@@ -110,10 +110,11 @@ function PartyCompare({ group, heroes, activeHero, onEquip }: PartyCompareProps)
         {count > 1 && <span className="hint"> ×{count}</span>}
       </h3>
       <p className="hint">{SLOT_TEXT[item.slot]}{item.reach ? ` (${item.reach})` : ''} · {levels}</p>
+      <p className="compare-stats">{itemStatsText(item.stats)}</p>
       {heroes.map((hero) => (
-        <div key={hero.id} className={hero.id === activeHero.id ? 'party-member party-member-active' : 'party-member'}>
-          <div className="party-member-head">
-            <span className="party-member-name">{hero.name}</span>
+        <div key={hero.id} className={hero.id === activeHero.id ? 'compare-hero compare-hero-active' : 'compare-hero'}>
+          <div className="compare-hero-head">
+            <span className="compare-hero-name">{hero.name}</span>
             <EquipControl item={item} hero={hero} onEquip={onEquip} />
           </div>
           <p className="hint">Replaces {hero.equipment[item.slot]?.name ?? 'nothing'}</p>
@@ -188,7 +189,7 @@ export function PartyStash({ stash, heroes, dispatch, seenItemId, initial }: Par
         <section className="stash-list" aria-label="Stash">
           <div className="stash-list-head">
             <h2>{SLOT_TEXT[slot]} items for {hero.name}</h2>
-            <span className="hint">{stash.length} of 300 in the Stash</span>
+            <span className="hint">{stash.length} in the Stash</span>
             <div className="stash-controls">
               {SORTS.map(([id, label]) => (
                 <button key={id} type="button" aria-pressed={sort === id} onClick={() => setSort(id)}>{label}</button>
@@ -221,6 +222,7 @@ export function PartyStash({ stash, heroes, dispatch, seenItemId, initial }: Par
                       {count > 1 && <span className="hint">×{count}</span>}
                       {newestId > seenItemId && <span className="stash-new">new</span>}
                       <StatChanges item={item} hero={hero} />
+                      {itemBlocksLearnedSkill(item, hero) && <span className="hint skill-blocked stash-row-warning">Melee skills stop working</span>}
                     </button>
                     <EquipControl item={item} hero={hero} onEquip={equip} />
                   </li>

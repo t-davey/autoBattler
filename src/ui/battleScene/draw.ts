@@ -13,6 +13,23 @@ const BRACE_EDGE: Rgb = [176, 180, 190];
 const BLADE: Rgb = [230, 236, 240];
 const BLOW: Rgb = [220, 214, 196];
 const AMBIENT = 0.2;
+/** The window this game is laid out for: the scene at 1280 x 680, under a 40 px header. */
+const BASE_WINDOW_WIDTH = 1280;
+const BASE_WINDOW_HEIGHT = 720;
+
+/** How much larger than the base window the scene can be drawn, so the UI over it can grow with it.
+ *  Never below 1, because text overlaid on a smaller scene would be too small to read. */
+export function uiScale(windowWidth: number, windowHeight: number, devicePixelRatio: number): number {
+  const available = Math.min(windowWidth, (windowHeight * BASE_WINDOW_WIDTH) / BASE_WINDOW_HEIGHT);
+  return Math.max(1, snappedDisplayWidth(available, devicePixelRatio) / BASE_WINDOW_WIDTH);
+}
+
+/** The scene's width in its holder, never ahead of the UI scale, or a window just short of the next size would mix the two. */
+export function sceneDisplayWidth(holderWidth: number, holderHeight: number, windowWidth: number, windowHeight: number, devicePixelRatio: number): number {
+  const fits = snappedDisplayWidth(Math.min(holderWidth, (holderHeight * ART_WIDTH) / ART_HEIGHT), devicePixelRatio);
+  return Math.min(fits, uiScale(windowWidth, windowHeight, devicePixelRatio) * BASE_WINDOW_WIDTH);
+}
+
 /** A Unit is never darker than this, however far it stands from a flame. */
 const UNIT_MINIMUM_LIGHT = 0.32;
 const LANTERN_BASE_RADIUS = 65;
@@ -362,17 +379,6 @@ function drawText(put: Put, x: number, y: number, text: string, colour: Rgb): vo
 }
 
 /** The largest display width that keeps every art pixel a whole number of device pixels. */
-/** The window this game is laid out for: the scene at 1280 x 680, under a 40 px header. */
-const BASE_WINDOW_WIDTH = 1280;
-const BASE_WINDOW_HEIGHT = 720;
-
-/** How much larger than the base window the scene can be drawn, so the UI over it can grow with it.
- *  Never below 1, because text overlaid on a smaller scene would be too small to read. */
-export function uiScale(windowWidth: number, windowHeight: number, devicePixelRatio: number): number {
-  const available = Math.min(windowWidth, (windowHeight * BASE_WINDOW_WIDTH) / BASE_WINDOW_HEIGHT);
-  return Math.max(1, snappedDisplayWidth(available, devicePixelRatio) / BASE_WINDOW_WIDTH);
-}
-
 export function snappedDisplayWidth(availableCssWidth: number, devicePixelRatio: number): number {
   const scale = Math.max(1, Math.floor((availableCssWidth * devicePixelRatio) / ART_WIDTH));
   return (scale * ART_WIDTH) / devicePixelRatio;
