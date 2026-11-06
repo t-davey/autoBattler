@@ -23,7 +23,7 @@ What merged milestones left for later ones to know. The code holds their rules a
 - **Where events fire:** `floorEntered` comes on reaching a Floor's first Room, and so reaches a sink on a new game. Each Room's `roomEntered` comes first, then the Battle or chest. `levelUp` comes before the Room's recovery, so recovery uses the new max health.
 - **Timed actions:** the Warden fights by `UnitSpec.actions`. Its `power`, `actionInterval`, and `damageType` go unused.
 - **Between Battles:** the Battle panel shows the Party's carried health and Oil, so wear shows outside a Battle too. The Town menu also shows the Setback count from `GameView.wall`.
-- **Dev queries:** `src/ui/devSetup.ts` reads `?seed=`, `?start=guardian`, and `?level=`. `bench:catchup` now limits at M3's 2 s.
+- **Dev queries:** `src/ui/devSetup.ts` reads `?seed=`, `?start=guardian`, and `?level=`.
 
 **The Wall, measured over 2 hours of Party time on the human's machine, for M6 to tune.** None of it trips a risk, and all of it is before M4's gear.
 

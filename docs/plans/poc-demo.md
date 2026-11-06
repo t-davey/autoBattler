@@ -15,12 +15,11 @@ The demo tests one thing: is it satisfying to come back to loot, make a build de
 
 ## How to use this plan
 
-Build one milestone at a time, in order. Every number is a starting value for M6 to tune. Read this file, the next milestone's file, [as-built.md](poc-demo/as-built.md), and the [ADRs](../adr/) its **ADRs** line names, then reach further when one of these applies:
+M6 is the last milestone, and every number is a starting value for it to tune. Read this file, [M6's file](poc-demo/m6-tuning-and-demo-run.md), [as-built.md](poc-demo/as-built.md), [the M2 review](poc-demo-m2-review.md), whose Watch list names M6 work, and the [ADR](../adr/) M6's **ADRs** line names, then reach further when one of these applies:
 
-- **[gaps.md](poc-demo/gaps.md):** the rulings a milestone's **Needs** line names.
+- **[gaps.md](poc-demo/gaps.md):** the rulings M6's **Needs** line names, or any settled answer that comes up again.
 - **[sim-interface.md](poc-demo/sim-interface.md):** Tick lengths, or which exports each step of the demo script uses.
-- **[risks.md](poc-demo/risks.md):** a milestone names a risk, or a threshold trips.
-- **[The M2 review](poc-demo-m2-review.md):** starting M6, whose work its Watch list names, or a measurement arrives, so fill in its row under Estimates to compare and check the Watch list before tuning.
+- **[risks.md](poc-demo/risks.md):** M6 names a risk, or a threshold trips.
 
 ## Approved scope
 
@@ -43,8 +42,6 @@ Placeholder art: CSS tiles and text glyphs, all original, in the grim gothic ton
 
 **Scope change:** G22, confirmed by the human, extends the Setbacks row: a build change also ends a fallback.
 
-**Milestone order:** kept as approved. Research found no dependency that forces a change.
-
 **Pacing:** the first Wall should take about 1–2 hours of Party time. This is a tunable value, separate from the design's 2-week pacing.
 
 ## Demo script
@@ -62,7 +59,7 @@ Build stops at each of these until the human answers.
 
 | Stop | When | What the human decides |
 |---|---|---|
-| **S1: Gaps** | Before each of M1–M4 for G21, and whenever a new gap appears | That milestone's content tables, and any rule this plan leaves unsaid |
+| **S1: Gaps** | Whenever a new gap appears | Any rule this plan leaves unsaid |
 | **S2: Skill review** | Done in Milestone 2 | The 9 skills in [docs/demo-skills.md](../demo-skills.md) |
 | **S3: Risk fallback** | Whenever a [risk](poc-demo/risks.md) threshold trips or an M6 target is missed, and number tuning hasn't fixed it | Whether to take a fallback that changes the design or scope, or to accept the miss |
 | **S4: Rehearsal** | End of Milestone 6 | Whether the demo answers its question |
@@ -78,6 +75,6 @@ The human alone merges each PR.
 
 ## Each PR
 
-Follow [docs/pull-requests.md](../pull-requests.md) in full: branch from the latest `main`, reach Done, check scope, review with `mattpocock-skills:code-review`, and fill in the template, including its Saves, Gameplay, and Docs lines. No milestone before M5 has saves, so none needs `!`. Put "Closes" and the milestone's issue in the PR body. Ask before filing any new issue.
+Follow [docs/pull-requests.md](../pull-requests.md) in full: branch from the latest `main`, reach Done, check scope, review with `mattpocock-skills:code-review`, and fill in the template, including its Saves, Gameplay, and Docs lines. Put "Closes" and the milestone's issue in the PR body. Ask before filing any new issue.
 
-In the same PR, retire the milestone: move what later milestones need to know into [as-built.md](poc-demo/as-built.md), delete notes there that it settles, delete its file and its lines in [sim-interface.md](poc-demo/sim-interface.md), and link this PR from the table above. Keep its gaps, since they record the human's rulings.
+In the same PR, link it from the table above. Keep the gaps, since they record the human's rulings.

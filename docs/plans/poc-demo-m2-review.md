@@ -1,51 +1,8 @@
-# Milestone 2 review: skills and content tables
+# Milestone 2 review: what M6 still needs
 
-The record of stops S1 and S2 for [Milestone 2](https://github.com/t-davey/autoBattler/blob/1e595668bb8380e0d8f1f06b37c6d95e33fb3556/docs/plans/poc-demo.md#milestone-2-heroes-and-skills), settled by the human on 2026-11-05. Mentions of the plan's Milestone 2 section mean that linked text. [docs/demo-skills.md](../demo-skills.md) holds the rules themselves, and [the plan](poc-demo/gaps.md) holds the gaps (G23–G28). This file holds the reasoning, and the estimates to compare against real results.
+The estimates, the R2 result, and the Watch list left by stops S1 and S2 of Milestone 2, settled by the human on 2026-11-05. [docs/demo-skills.md](../demo-skills.md) holds the rules, and [the gaps](poc-demo/gaps.md) hold the rulings (G23–G28). The [full review at 1af2dc0](https://github.com/t-davey/autoBattler/blob/1af2dc0b1d99a3928f209195bccbbca7f12b4a3c/docs/plans/poc-demo-m2-review.md) has everything cut from here, including the questions asked and the corrections to the first draft.
 
 **How to use it:** when a measurement arrives, fill in its row under [Estimates to compare](#estimates-to-compare). When a result differs enough to matter, check [Watch list](#watch-list) before tuning. Nothing here overrides the rules files.
-
-## Questions and answers
-
-| # | Question | Answer | Why | Recorded in |
-|---|---|---|---|---|
-| 1 | Should Shared Burden also redirect Poison? | Yes, on back-Row Heroes | As written, it did nothing against the Guardian. The gain is small, but Milestone 6 can tune the share. | G26 |
-| 2 | Should R2's "a skill never appears" trigger judge Warm Hands? | No, in M2 or M6 | R2 runs single Battles, so Warm Hands never acts there. M6 compares whole Runs with and without it instead. | G27 |
-| 3 | Does the Sin-Eater need a skill order? | No change | It has 1 active skill, as G5 accepted. | [demo-skills.md](../demo-skills.md#the-humans-answers) |
-| 4 | Should the `reapplying Bleed replaces it` test stay? | Drop it, keep the rule | Bleeder's Cut only targets enemies that aren't Bleeding, so nothing in the demo can reapply a Bleed. | G28 |
-| 5 | Do lost or drawn Battles give XP? | No, only won Battles | A Wipe costs only time, and XP from a loss would reward losing. | G23 |
-| 6 | Is there a level cap? | 60, from the design | It won't bind. Points past level 16 sit unspent, since all ranks cost 15 points. | G24 |
-| 7 | Which reference builds does R2 use? | Sin-Eater 2/2/2, Huntsman 2/2/2, Lamplighter 4/0/2 | Only the measurement uses them, and players never see them. | G25 |
-
-The Class stat table and XP curve in the plan's Milestone 2 section were confirmed unchanged.
-
-## Corrections to the first draft
-
-The skill file's first draft came from an earlier session and hadn't been reviewed. Its 9 skills, costs, cooldowns, and rank values all matched the plan. These statements didn't hold:
-
-| Draft said | Problem | Now |
-|---|---|---|
-| A Chest Room adds no Oil | M3 gives +30 on leaving any Room | Follows M3 |
-| Open Veins boosts Bleeder's Cut's hit | That skill only hits enemies that aren't Bleeding | Removed from the list |
-| Redirecting Poison makes Shared Burden "a real answer" to the Wall | Rank 2 buys the Lamplighter about 3 seconds | Reworded, with the numbers |
-
-## Rules added during review
-
-The draft listed its own unsaid rules, and [demo-skills.md](../demo-skills.md#rules-the-source-leaves-unsaid) keeps them all. The review added:
-
-- The out-of-Row 60% cuts amounts, not durations.
-- Each Poison stack ticks on its own clock, and a refresh changes only when stacks expire.
-- Bonus armour counts gear once Milestone 4 adds it.
-- A newly learned active skill goes to the end of the order.
-
-## Checked and correct
-
-Worked through by hand or against the code:
-
-- **Builds:** 11 legal 6-point allocations per Hero, and a 6-point build reaches rank 2 at most in a step 3 skill.
-- **Rank values:** every row runs evenly from the plan's rank 1 value to its rank 5 value.
-- **Class stats:** power minus the starter weapon gives the plan's base, and every interval matches `round(30 × 100 / speed)`.
-- **XP curve:** the formula gives the plan's values, and its totals match the M3 pacing check at 1,680 XP an hour.
-- **Back-Row targeting:** `src/sim/content/enemies.ts` gives only the Bone Chanter `any` targeting.
 
 ## Estimates to compare
 
@@ -59,10 +16,8 @@ All are hand estimates from 2026-11-05. Numbers will move with tuning, so a diff
 | Level 10 Lamplighter, without and with rank 5 Shared Burden | about 41 s and about 51 s | 176 health, 30% redirected | M6 | 42 s and 50 s, across 40 Seeds. With it, the Lamplighter outlives the Battle in 6 of 40 |
 | Basic attacks kill the Warden | about 85 s at level 6, about 80 s at level 7 | No skills, nobody falls, 1,600 health | M3, M6 | At 1,200 health (G29), no kill at level 10 or below, since the Party falls first. Level 12 wins every time, in 48 s. M6, at 1,100 and 100 Seeds: none at level 9, 32% at level 10, every time at level 11, in 45 s |
 | Damage a second at level 7 | Sin-Eater 6.3, Huntsman 10.7, Lamplighter 6.7 | Basic attacks, no crit or armour | M6 | Against the Warden's 15 armour, averaged over each whole Battle, so a Hero's time dead counts: 5.3, 7.6, 4.4 |
-| Level reached in the M2 loop | Level 2 at 4 Battles, 4 at 32, 7 at 154 | 15 XP, won Battles only | M2 | Level 2 within about 2 minutes live |
-| Live time to those levels | under 2 min, about 13 min, about 64 min | About 25 s per Battle | M2 | 115 Battles (level 6) after about 42 min, so about 22 s per Battle |
+| Live time to those levels | under 2 min, about 13 min, about 64 min | About 25 s per Battle | M2, M6 | 115 Battles (level 6) after about 42 min, so about 22 s per Battle. M6, Seed 8: level 6 at 60 min, level 8 at 120 min, with longer Battles and Setbacks |
 | Huntsman runs dry | About 3 Battles | The Long Cut and Bleeder's Cut, 120 Oil spent against 90 gained | M3, M6 | M3: never under 10 Oil across 40 Seeds at level 7, 2/2/2. M6, with longer Battles: reaches 0 |
-| `npm run bench:catchup` | Under the 500 ms limit | 49 ms at M1, before effects and skills | M2 | 58–79 ms across runs |
 
 ## R2 result
 
@@ -90,6 +45,7 @@ Measured with `npm run balance -- builds`: level 7, 6 points, 200 Seeds per Batt
 Things to check when results arrive:
 
 - **Bulwark barely touches the Wall.** Bar the Way and Iron Penance only affect Grave Slam, about 1.5 damage a second before armour, and Shared Burden helps only the Lamplighter. If the Sin-Eater's points don't move the Guardian kill rate in M6, consider that a design question for S3, not only a tuning one.
+- **Shared Burden's gain is small.** Rank 2 buys the Lamplighter about 3 seconds against Poison. M6 can tune the share.
 - **R2 can't see a flat result.** If all Sin-Eater builds tie, they all count as viable, so R2 passes without showing a real decision. Read the `builds` table, not just its verdict.
 - **R2 starts Battles on full Oil.** Single Battles flatter builds that burn Oil faster than they regain it. M3's carried Oil is the real test.
 - **Warm Hands has no measure across builds.** R2 skips it, and M6's `wall` mode uses one reference build, so a with-and-without comparison has to be added to M6.

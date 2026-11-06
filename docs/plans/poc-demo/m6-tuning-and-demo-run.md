@@ -6,7 +6,7 @@
 
 **ADRs:** 0001 headless balance.
 
-**Risks:** [R2](risks.md#r2-9-skills-leave-no-real-build-decision), [R3](risks.md#r3-6-affixes-make-drops-feel-samey), and the demo Seed row of [Other risks](risks.md#other-risks-found-in-research).
+**Risks:** [R1](risks.md#r1-12-hours-of-catch-up-blocks-the-ui), [R2](risks.md#r2-9-skills-leave-no-real-build-decision), [R3](risks.md#r3-6-affixes-make-drops-feel-samey), and all of [Other risks](risks.md#other-risks-found-in-research).
 
 **Needs:** [gaps](gaps.md) G25, G27.
 
