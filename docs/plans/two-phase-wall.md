@@ -4,7 +4,7 @@ XP falloff slows levels, but the first check-in still wins, so choices barely ma
 
 **The question:** does "I got further this time, and now I know what to fix" make coming back feel better?
 
-**Status: decided on 2026-11-06, in progress.** The human approved these values, which are starting values to tune. It covers step 6 of [the second Wall's plan](second-wall.md) for the first Wall, and comes before Floors 4–6. It needs XP falloff merged before tuning.
+**Status: decided on 2026-11-06, in progress.** The human approved these values, which are starting values to tune. It covers step 6 of [the second Wall's plan](second-wall.md) for the first Wall, and comes before Floors 4–6.
 
 ## What the player sees
 
@@ -19,8 +19,8 @@ XP falloff slows levels, but the first check-in still wins, so choices barely ma
 |---|---|
 | Phase change | At 50% of the Warden's health, once per Battle |
 | Phase 1 | Today's Spore Breath and Grave Slam |
-| Phase 2 | No Spore Breath, though Poison already landed keeps ticking. Grave Slam gets faster and harder, plus a slow, big hit on one front-Row Hero |
-| Phase 2 answer | Armour and health, on any Hero in front |
+| Phase 2 | A weaker, slower Spore Breath, so poison gear still counts. Grave Slam gets faster and harder, plus a slow, big hit on one front-Row Hero |
+| Phase 2 answer | Armour and health on any Hero in front, on top of poison resistance |
 | The big hit's name | "Grave Maul" is a placeholder for the human to replace |
 | Best attempt | The lowest Guardian health in an Away Report, shown beside the previous report's |
 | Finding | Facts only, such as "Reached Phase 2 in 3 of 5 attempts. Best: 31% health left, was 62%. Mostly physical damage." It opens the Stash on the stat for the Phase that caused the most Setbacks |
@@ -40,7 +40,7 @@ Each is its own PR and leaves the game runnable.
 | 5 | Tune numbers only, in order: Warden health, Phase 2 damage, threshold, then XP. Confirm on Seeds 1001-1200, then retire the `wall` targets that assume one action at minute 60, and find a new demo Seed | Not started |
 | 6 | Rehearse, record results, and get the human's verdict over real days | Not started |
 
-Phase 2 as first written drops the Warden's Poison, so before tuning it makes the Wall easier: without XP falloff, the median untended kill moved from 4.5 hours to 1.7 hours. Step 5 has to raise its danger.
+Dropping Spore Breath from Phase 2 made the Wall easier: the median first kill moved from 8 hours to 1.7 hours at the 8-hour gap, because Poison is what kills the Party. So Phase 2 keeps a weaker Poison, and step 5 tunes it.
 
 ## Targets
 

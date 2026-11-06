@@ -21,6 +21,7 @@ export const MOULDERING_WARDEN: UnitSpec = {
   secondPhase: {
     atHealthShare: 0.5,
     actions: [
+      { name: 'Spore Breath', interval: 90, target: 'every', damage: 0, damageType: 'poison', poisonStack: 2 },
       { name: 'Grave Slam', interval: 50, target: 'oneFront', damage: 18, damageType: 'physical' },
       // A placeholder name, for the human to replace.
       { name: 'Grave Maul', interval: 120, target: 'oneFront', damage: 40, damageType: 'physical' },
