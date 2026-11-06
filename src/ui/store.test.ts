@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { advance, createGame, type GameEvent } from '../sim';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { advance, createGame, serializeGame, type GameEvent } from '../sim';
 import { describeEvent } from './describeEvent';
 import { createStore } from './store';
 
@@ -102,5 +102,112 @@ describe('store', () => {
     expect(store.dispatch({ type: 'renameHero', heroId: 'huntsman', name: ' ' })).toEqual({ ok: false, reason: 'emptyName' });
     expect(calls).toBe(0);
     expect(store.getSnapshot()).toBe(before);
+  });
+
+  describe('catch-up', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const HOUR_MS = 3_600_000;
+
+    it('catch-up adds one Live Log line, pointing at the Away Report', () => {
+      const store = createStore(createGame({ seed: 2 }));
+      store.advance(30_000);
+      const before = store.getSnapshot().log;
+
+      store.catchUp(HOUR_MS);
+      vi.advanceTimersByTime(0);
+
+      const { log, awayReport } = store.getSnapshot();
+      expect(log.length).toBe(before.length + 1);
+      expect(log.at(-1)!.text).toContain('Away Report');
+      expect(log.at(-1)!.id).toBeGreaterThan(before.at(-1)!.id);
+      expect(awayReport?.appliedMs).toBe(HOUR_MS);
+    });
+
+    it('catch-up reaches the same state as stepping, and publishes it', () => {
+      const caughtUp = createGame({ seed: 2 });
+      const liveGame = createGame({ seed: 2 });
+      const store = createStore(caughtUp);
+      const live = createStore(liveGame);
+      store.catchUp(HOUR_MS);
+      vi.advanceTimersByTime(0);
+      live.advance(HOUR_MS);
+
+      expect(serializeGame(caughtUp)).toBe(serializeGame(liveGame));
+      expect(store.getSnapshot().view.tick).toBe(live.getSnapshot().view.tick);
+      expect(store.getSnapshot().stash.length).toBe(live.getSnapshot().stash.length);
+      expect(store.getSnapshot().stash.length).toBeGreaterThan(0);
+    });
+
+    it('catch-up yields between chunks and reports its progress', () => {
+      let time = 0;
+      const store = createStore(createGame({ seed: 2 }), { workClock: () => (time += 100) });
+      const progress: (number | null)[] = [];
+      store.subscribe(() => progress.push(store.getSnapshot().catchUpProgress));
+
+      store.catchUp(HOUR_MS);
+      expect(store.getSnapshot().view.tick).toBe(0);
+      expect(progress).toEqual([0]);
+
+      while (store.isCatchingUp()) vi.advanceTimersByTime(1);
+
+      expect(progress.at(-1)).toBeNull();
+      const during = progress.slice(0, -1) as number[];
+      expect(during.length).toBe(8);
+      expect(during).toEqual([...during].sort((a, b) => a - b));
+      expect(during.at(-1)!).toBeLessThan(1);
+    });
+
+    it('stepping, player actions, and a second catch-up wait until catch-up finishes', () => {
+      const store = createStore(createGame({ seed: 2 }));
+      store.catchUp(60_000);
+
+      store.advance(10_000);
+      store.catchUp(HOUR_MS);
+      expect(store.dispatch({ type: 'renameHero', heroId: 'huntsman', name: 'Old Marrow' })).toEqual({ ok: false, reason: 'catchingUp' });
+      expect(store.getSnapshot().view.tick).toBe(0);
+
+      vi.advanceTimersByTime(0);
+      expect(store.getSnapshot().view.tick).toBe(600);
+      expect(store.dispatch({ type: 'renameHero', heroId: 'huntsman', name: 'Old Marrow' })).toEqual({ ok: true });
+    });
+
+    it('a second absence adds to an undismissed Away Report', () => {
+      const store = createStore(createGame({ seed: 2 }));
+      store.catchUp(HOUR_MS);
+      vi.advanceTimersByTime(0);
+      store.catchUp(60_000);
+      vi.advanceTimersByTime(1);
+      expect(store.getSnapshot().awayReport?.elapsedMs).toBe(HOUR_MS + 60_000);
+
+      store.dismissAwayReport();
+      store.catchUp(60_000);
+      vi.advanceTimersByTime(1);
+      expect(store.getSnapshot().awayReport?.elapsedMs).toBe(60_000);
+    });
+
+    it('the Away Report stays until the player dismisses it', () => {
+      const store = createStore(createGame({ seed: 2 }));
+      store.catchUp(60_000);
+      vi.advanceTimersByTime(0);
+      store.advance(10_000);
+      expect(store.getSnapshot().awayReport).not.toBeNull();
+
+      store.dismissAwayReport();
+      expect(store.getSnapshot().awayReport).toBeNull();
+    });
+
+    it('a save notice shows until dismissed', () => {
+      const store = createStore(createGame({ seed: 2 }), { saveNotice: 'The save could not be read.' });
+      expect(store.getSnapshot().saveNotice).toBe('The save could not be read.');
+      store.dismissSaveNotice();
+      expect(store.getSnapshot().saveNotice).toBeNull();
+    });
   });
 });

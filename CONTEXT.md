@@ -166,6 +166,10 @@ _Avoid_: Encounter, tile
 A Guardian or Boss that stops a Party until it grows stronger.
 _Avoid_: Gate, blocker
 
+**Catch-up**:
+Running a player's absence through the same rules as live play, up to 12 hours, and reporting it as an Away Report.
+_Avoid_: Offline progress, fast-forward
+
 **Party time**:
 The time a Party has spent playing, live or in catch-up, as opposed to time on the player's clock.
 _Avoid_: Game time, play time

@@ -146,18 +146,28 @@ export function applyAction(game: Game, action: PlayerAction, sink: EventSink = 
   }
 }
 
-/** Banks elapsedMs and runs each whole Tick, reporting events to the sink.
- *  Values that aren't finite and positive bank nothing. */
-export function advance(game: Game, elapsedMs: number, sink: EventSink = ignore): void {
-  if (!Number.isFinite(elapsedMs) || elapsedMs <= 0) return;
-  const state = stateOf(game);
-  state.bankMs += elapsedMs;
+/** Values that aren't finite and positive count as no time at all. */
+export const usableElapsed = (elapsedMs: number): number => (Number.isFinite(elapsedMs) && elapsedMs > 0 ? elapsedMs : 0);
+
+/** Adds elapsedMs to the bank and removes the whole Ticks it now holds. */
+export function bankElapsed(state: GameState, elapsedMs: number): number {
+  state.bankMs += usableElapsed(elapsedMs);
   const ticks = Math.floor(state.bankMs / TICK_MS);
   state.bankMs -= ticks * TICK_MS;
-  for (let i = 0; i < ticks; i++) {
-    state.tick++;
-    stepRun(state, sink);
-  }
+  return ticks;
+}
+
+/** One Tick. The only way the Game moves, so live play and catch-up run the same rules. */
+export function stepTick(state: GameState, sink: EventSink): void {
+  state.tick++;
+  stepRun(state, sink);
+}
+
+/** Banks elapsedMs and runs each whole Tick, reporting events to the sink. */
+export function advance(game: Game, elapsedMs: number, sink: EventSink = ignore): void {
+  const state = stateOf(game);
+  const ticks = bankElapsed(state, elapsedMs);
+  for (let i = 0; i < ticks; i++) stepTick(state, sink);
 }
 
 export function serializeGame(game: Game): string {

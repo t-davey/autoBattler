@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { AFFIXES, RARITIES, SLOTS, type ActionResult, type HeroView, type ItemStat, type ItemView, type Rarity, type Slot } from '../sim';
+import { AFFIXES, RARITIES, SLOTS, type HeroView, type ItemStat, type ItemView, type Rarity, type Slot } from '../sim';
 import { REFUSAL_TEXT } from './describeHero';
 import { itemFacts, itemStatsText, SLOT_TEXT, STAT_TEXT, statSheet } from './describeItem';
 import { queryStash, type StashQuery, type StashSort } from './stashQuery';
-import type { Dispatch } from './store';
+import type { Dispatch, DispatchResult } from './store';
 
 const SORT_TEXT: Readonly<Record<StashSort, string>> = { newest: 'Newest', rarity: 'Rarity', levelRequirement: 'Level requirement' };
 
@@ -64,7 +64,7 @@ export function StashTab({ stash, heroes, dispatch }: { stash: readonly ItemView
   const [refusal, setRefusal] = useState('');
   const shown = useMemo(() => queryStash(stash, query), [stash, query]);
 
-  const report = (result: ActionResult) => setRefusal(result.ok ? '' : REFUSAL_TEXT[result.reason]);
+  const report = (result: DispatchResult) => setRefusal(result.ok ? '' : REFUSAL_TEXT[result.reason]);
   const equip = (hero: HeroView, item: ItemView) => report(dispatch({ type: 'equipItem', heroId: hero.id, itemId: item.id }));
   const unequip = (hero: HeroView, slot: Slot) => report(dispatch({ type: 'unequipItem', heroId: hero.id, slot }));
 
