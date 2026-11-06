@@ -92,7 +92,7 @@ function buildsFor(heroId) {
 }
 
 const server = await createServer({ configFile: false, server: { middlewareMode: true }, appType: 'custom' });
-const { advance, applyAction, beginCatchUp, continueCatchUp, createGame, deserializeGame, partyUnitSpecs, serializeGame, simulateBattle, SLOTS, TICK_MS, viewGame, viewStash } = await server.ssrLoadModule('/src/sim/index.ts');
+const { advance, applyAction, beginCatchUp, CATCH_UP_CAP_MS, continueCatchUp, createGame, deserializeGame, partyUnitSpecs, serializeGame, simulateBattle, SLOTS, TICK_MS, viewGame, viewStash } = await server.ssrLoadModule('/src/sim/index.ts');
 
 const referenceRanks = Object.fromEntries(
   Object.entries(REFERENCE_RANKS).map(([heroId, allocation]) => [heroId, ranksFrom(CLASSES[heroId].skills, allocation)]),
@@ -348,12 +348,14 @@ const canWear = (hero, item) => {
   return item.levelRequirement <= hero.level && (worn === null || item.reach === worn.reach);
 };
 
-/** Reaches the build in step order, then adds spare points one at a time across the Branch. */
+/** Reaches the build in step order from the Hero's current ranks, then adds spare points one at a time across the Branch. */
 function spendOnBuild(game, heroId, allocation) {
   const { skills } = CLASSES[heroId];
   const spend = (skillId) => applyAction(game, { type: 'spendSkillPoint', heroId, skillId }).ok;
+  const hero = viewGame(game).heroes.find(({ id }) => id === heroId);
   skills.forEach((skillId, index) => {
-    for (let rank = 0; rank < allocation[index]; rank++) spend(skillId);
+    const current = hero.skills.find(({ id }) => id === skillId).rank;
+    for (let rank = current; rank < allocation[index]; rank++) spend(skillId);
   });
   for (let spent = true; spent; ) {
     spent = false;
@@ -646,7 +648,7 @@ const CHECK_IN_GAPS_HOURS = [4, 8, 12];
 const TUNED_GAP_HOURS = 8;
 const CHECK_INS = 3;
 const UNTENDED_HOURS = 24;
-const FULL_ABSENCE_HOURS = 12;
+const FULL_ABSENCE_HOURS = CATCH_UP_CAP_MS / HOUR_MS;
 const TICKS_PER_HOUR = 60 * TICKS_PER_MINUTE;
 
 /** Plays until endTick or the first Guardian kill, adding to the record. */
@@ -671,10 +673,7 @@ const CHECK_IN_PLAYERS = {
     spendPoints(game);
     for (const item of viewStash(game)) equipUpgrade(game, item);
   },
-  Answer: (game) => {
-    spendReferencePoints(game);
-    equipPoisonAnswer(game);
-  },
+  Answer: WALL_PLAYERS.Answer,
 };
 
 /** One tended player, from the end of the first absence that every player shares. */

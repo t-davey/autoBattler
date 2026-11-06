@@ -147,12 +147,12 @@ Measured on 2026-11-06 with a throwaway script that isn't in the repo, over 60 S
 
 First kill by check-ins made, on Seeds 1-200:
 
-| Gap | 0 check-ins | 1 check-in | 2–3 check-ins | No kill | Median first kill | Median level at it |
+| Gap | 0 check-ins | 1 check-in | 2–3 check-ins | No kill | Median first kill | Median level, with the kill's XP |
 |---|---|---|---|---|---|---|
 | 4 hours | 38% | 63% | 0% | 0% | 4.0 h | 10 |
 | 8 hours | 100% | 0% | 0% | 0% | 4.5 h | 11 |
 | 12 hours | 100% | 0% | 0% | 0% | 4.5 h | 11 |
 
-- **Routine and Answer players score the same.** Routine spends points in step order and equips plain upgrades, and Answer spends on the reference build and equips the most poison resistance. Levels beat the Wall so early that their choices barely get a chance to matter, so this baseline can't yet tell them apart.
+- **Routine and Answer players score the same.** Routine spends points in step order and equips plain upgrades, and Answer spends towards the reference build and equips the most poison resistance. Levels beat the Wall so early that their choices barely get a chance to matter, so this baseline can't yet tell them apart.
 - **The Party is Set back about 13 times at the Guardian** before the first kill, almost all of it while nobody is watching.
 - **Untended levels:** a median of 10 at 4 hours, 14 at 8 hours, 16 at 12 hours, and 22 at 24 hours.

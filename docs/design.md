@@ -249,4 +249,4 @@ The demo's answer was yes. It now grows by [a second Wall](plans/second-wall.md)
 
 ## Open questions
 
-None right now.
+None for the game as a whole. [The second Wall](plans/second-wall.md#still-open) lists those for its slice of the demo.

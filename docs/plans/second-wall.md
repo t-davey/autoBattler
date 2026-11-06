@@ -2,7 +2,7 @@
 
 The [proof-of-concept demo](poc-demo.md) answered its question with yes, but it holds about an hour of game: [after the first Wall falls, nothing threatens the Party again](poc-demo-results.md#after-the-verdict-12-hours-of-play). This slice tests the next question: **does the loop still hold when a player meets a second Wall, needing a different answer, over several days of real check-ins?**
 
-**Status: decided, not built.** The human made the decisions below on 2026-11-06. Only the Wall module is done. Where this plan differs from [the demo plan](poc-demo.md), this plan applies.
+**Status: decided, not built.** The human made the decisions below on 2026-11-06. Only the Wall module and the check-in measurement are done. Some questions stay [open](#still-open), including parts of falling back. Where this plan differs from [the demo plan](poc-demo.md), this plan applies.
 
 ## Decisions
 
@@ -10,7 +10,7 @@ Numbered with [the demo's gaps](poc-demo/gaps.md), where each has its row.
 
 | # | Decision | What it means |
 |---|---|---|
-| G40 | **A Wall takes 2–3 check-ins, tuned to an 8-hour gap and tested at 4 and 12 hours.** | Replaces the demo's 1–2 hours of Party time. At 8 hours, a Wall takes about 16–24 hours of Party time, near the design's roughly 25 hours per Wall (about 300 hours across 12 Walls). |
+| G40 | **A Wall takes 2–3 check-ins, tuned to an 8-hour gap and tested at 4 and 12 hours.** | Replaces the demo's 1–2 hours of Party time. At 8 hours, a first kill after the 2nd or 3rd check-in lands at 16–32 hours of Party time, around the design's roughly 25 hours per Wall (about 300 hours across 12 Walls). |
 | G41 | **Test speed: 2x, 5x, and 10x, for friends too.** | Walls now take too long to rehearse live. See [Test speed](#test-speed). |
 | G42 | **The second Guardian starts as placeholders.** | The human fills in [its sheet](#second-guardian) before it's built. |
 | G43 | **Falling back follows the design.** | After 3 Setbacks, the Party falls back one Lamp and farms there, as [Setbacks](../design.md#setbacks) says. |
@@ -23,29 +23,31 @@ Each is its own PR and leaves the demo runnable.
 | # | Work | State |
 |---|---|---|
 | 1 | Make the Wall a module | Merged in [PR #33](https://github.com/t-davey/autoBattler/pull/33) |
-| 2 | Balance players who check in on a schedule: `npm run balance -- checkins`, with [its baseline](poc-demo-results.md#check-in-baseline) | Built, not merged |
+| 2 | Balance players who check in on a schedule: `npm run balance -- checkins`, with [its baseline](poc-demo-results.md#check-in-baseline) | Added with this plan |
 | 3 | Test speed | Not started |
 | 4 | XP falloff, as [option B](#xp-falloff-options) | Not started |
 | 5 | Floors 4–6, the second Guardian and Lamp, and falling back between Lamps | Not started; needs the Guardian sheet |
 | 6 | Tune both Walls to the new target, then search for a new demo Seed | Not started |
-| 7 | Fix the weak skills found in [the results](poc-demo-results.md#findings-for-the-human) | Not started; rule changes go to the human first |
+| 7 | Change the weak skills found in [the results](poc-demo-results.md#findings-for-the-human), if the human chooses to | Not started; [still open](#still-open) |
 
 Step 2 comes first so that each balance PR can show its numbers before and after, because the old targets can't see the problem. Step 7 comes last because Bulwark can only be judged against a Wall where armour matters.
 
 ## Test speed
 
-A control that runs live play at 1x, 2x, 5x, or 10x, so a tester can watch a whole Wall without jumping past it. The human chose those speeds, and that friends testing the demo get it too. "Skip 1 hour" stays development-only, and only shows the result.
+A control that runs live play at 1x, 2x, 5x, or 10x, so a tester can watch a whole Wall without jumping past it. The human chose those speeds, and that friends testing the demo get it too.
 
-- **In builds,** so it sits in the Battle screen's header rather than in `DevTools.tsx`, which builds leave out. It stands in for the design's optional 2x until balance holds up.
+The rest is proposed, for the human to change:
+
+- **In builds,** so it sits in the Battle screen's header rather than in `DevTools.tsx`, which builds leave out. "Skip 1 hour" stays development-only. Test speed stands in for the design's optional 2x until balance holds up.
 - **The sim doesn't change.** `driver.ts` owns the clock and can multiply the time it passes to `store.advance`. The sim already [runs the same Ticks however time is sliced](poc-demo/risks.md#r1-12-hours-of-catch-up-blocks-the-ui).
 - **Multiply after the catch-up check,** so a sped-up step isn't mistaken for an absence of 60 seconds or more (G19).
-- **Absences stay real time.** Catch-up, and the time a check-in pauses, run at 1x whatever the speed.
+- **Absences stay real time.** Catch-up, and the time a check-in pauses, run at 1x whatever the speed. So does a gap under 60 seconds after a hidden window, which `store.advance` plays live, so only steps while the window shows get multiplied.
 - **The Battle scene should keep animating.** At 10x, the driver sends 10 Ticks per step, under the 20 that make the scene jump to the result. Whether 10x stays readable has to be seen in the running app.
-- **Assumed:** each launch starts at 1x, and the choice isn't saved.
+- **Each launch starts at 1x,** and the choice isn't saved.
 
 ## XP falloff options
 
-**The human picked option B on 2026-11-06.** These are starting values to tune. Falloff needs Floor levels, which the demo lacks, so all of these suppose **Floor level = Floor number + 3**: Floors 1–3 are levels 4–6, and Floors 4–6 would be levels 7–9. A kill's Guardian XP falls off like its Floor's Battle XP.
+**The human picked option B on 2026-11-06.** These are starting values to tune. Falloff needs Floor levels, which the demo lacks, so all of these suppose **Floor level = Floor number + 3**: Floors 1–3 are levels 4–6, and Floors 4–6 would be levels 7–9. The tests also assumed a kill's Guardian XP falls off like its Floor's Battle XP. "−25% a level" takes 25 points off 100% for each level past the grace, so B reaches its 10% minimum at 4 levels past it. Option C halves instead. The XP falloff PR re-measures B on 200 Seeds with a mode in the repo.
 
 Measured on 2026-11-06 with a throwaway script that isn't in the repo: 30 Seeds, 24 hours, first Wall only, and a player who spends points in step order and equips plain upgrades every 8 hours.
 
@@ -106,11 +108,11 @@ The human decides these. Each suggestion is only a starting point.
 
 ## Targets to replace
 
-[The M6 targets](poc-demo-results.md#targets) measure a player who acts once at minute 60. These replace the ones that assume that, at the 8-hour gap. `npm run balance -- checkins` measures the first two, whose 10% and 80% carry over from the M6 targets and are the human's to change. `npm run balance -- wall` keeps its old targets until XP falloff breaks them, and that PR retires them.
+[The M6 targets](poc-demo-results.md#targets) measure a player who acts once at minute 60. These replace the ones that assume that. `npm run balance -- checkins` measures the first two, whose 10% and 80% carry over from the M6 targets and are the human's to change. `npm run balance -- wall` keeps its old targets until XP falloff breaks them, and that PR retires them.
 
 - **Untended:** at most 10% of Seeds beat a Wall within a full 12-hour absence.
-- **A player with the answer:** at least 80% of Seeds make the first kill after the 2nd or 3rd check-in.
-- **Routine play:** finding 1 of the results shows plain upgrades beat the first Wall without looking for the answer. Whether that's acceptable, and how long it should take, is for the human to set.
+- **A player with the answer, at the 8-hour gap:** at least 80% of Seeds make the first kill after the 2nd or 3rd check-in.
+- **Routine play, not measured as a target:** finding 1 of the results shows plain upgrades beat the first Wall without looking for the answer. Whether that's acceptable, and how long it should take, is for the human to set.
 - **Second Wall:** the first Wall's answer alone doesn't beat it.
 
 The Battle, Floor, early Wipe, and first rare targets stay.
