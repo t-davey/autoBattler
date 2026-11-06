@@ -1,4 +1,4 @@
-import type { AffixId, ItemView, Rarity, Slot } from '../sim';
+import type { ItemStat, ItemView, Rarity, Slot } from '../sim';
 
 export type StashSort = 'newest' | 'rarity' | 'levelRequirement';
 
@@ -6,7 +6,8 @@ export interface StashQuery {
   readonly sort: StashSort;
   readonly slot: Slot | 'all';
   readonly rarity: Rarity | 'all';
-  readonly affix: AffixId | 'all';
+  /** Matches any item with this stat, built in or from an Affix. */
+  readonly stat: ItemStat | 'all';
 }
 
 const RARITY_RANK: Readonly<Record<Rarity, number>> = { rare: 0, magic: 1, common: 2 };
@@ -20,13 +21,13 @@ const COMPARE: Readonly<Record<StashSort, (a: ItemView, b: ItemView) => number>>
 };
 
 /** What the Stash tab lists. Presentation only: it has no effect on rules. */
-export function queryStash(items: readonly ItemView[], { sort, slot, rarity, affix }: StashQuery): readonly ItemView[] {
+export function queryStash(items: readonly ItemView[], { sort, slot, rarity, stat }: StashQuery): readonly ItemView[] {
   return items
     .filter(
       (item) =>
         (slot === 'all' || item.slot === slot) &&
         (rarity === 'all' || item.rarity === rarity) &&
-        (affix === 'all' || item.affixes.includes(affix)),
+        (stat === 'all' || item.stats[stat] > 0),
     )
     .sort(COMPARE[sort]);
 }

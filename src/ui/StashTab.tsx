@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { AFFIXES, RARITIES, SLOTS, type ActionResult, type AffixId, type HeroView, type ItemView, type Rarity, type Slot } from '../sim';
+import { AFFIXES, RARITIES, SLOTS, type ActionResult, type HeroView, type ItemStat, type ItemView, type Rarity, type Slot } from '../sim';
 import { REFUSAL_TEXT } from './describeHero';
 import { itemFacts, itemStatsText, SLOT_TEXT, STAT_TEXT, statSheet } from './describeItem';
 import { queryStash, type StashQuery, type StashSort } from './stashQuery';
@@ -60,7 +60,7 @@ function EquippedSlot({ hero, slot, onUnequip }: { hero: HeroView; slot: Slot; o
 }
 
 export function StashTab({ stash, heroes, dispatch }: { stash: readonly ItemView[]; heroes: readonly HeroView[]; dispatch: Dispatch }) {
-  const [query, setQuery] = useState<StashQuery>({ sort: 'newest', slot: 'all', rarity: 'all', affix: 'all' });
+  const [query, setQuery] = useState<StashQuery>({ sort: 'newest', slot: 'all', rarity: 'all', stat: 'all' });
   const [refusal, setRefusal] = useState('');
   const shown = useMemo(() => queryStash(stash, query), [stash, query]);
 
@@ -100,11 +100,11 @@ export function StashTab({ stash, heroes, dispatch }: { stash: readonly ItemView
             </select>
           </label>
           <label>
-            Affix
-            <select value={query.affix} onChange={(event) => setQuery({ ...query, affix: event.target.value as AffixId | 'all' })}>
+            Stat
+            <select value={query.stat} onChange={(event) => setQuery({ ...query, stat: event.target.value as ItemStat | 'all' })}>
               <option value="all">All</option>
               {AFFIXES.map((affix) => (
-                <option key={affix.id} value={affix.id}>{affix.name}: {STAT_TEXT[affix.stat]}</option>
+                <option key={affix.stat} value={affix.stat}>{STAT_TEXT[affix.stat]} ({affix.name})</option>
               ))}
             </select>
           </label>

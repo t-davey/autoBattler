@@ -47,7 +47,7 @@ The hand estimates assumed nobody Wipes on the way down. Three Setbacks on Floor
 - **`scenario`:** adds `equipped`, as planned, and `stash` for tests. `rollItem(seed, floor)` rolls one item alone, without a Game. Scenario tests assert against extremes, such as level 1 or level 40, so that tuning doesn't break them.
 - **First kill:** the guaranteed rare hangs on `wall.lampLit`, so a `lampLit` scenario gets ordinary drops.
 - **Saves:** `SAVE_VERSION` stayed at 1, since nothing writes saves until M5.
-- **Stash filter:** the Affix filter matches Affixes alone, so "Sallow: poison resistance" leaves out a plain Waxed Shroud.
+- **Stash filter:** G39 filters by stat, and `ItemView.affixes` now serves only `balance -- drops` and M5.
 - **Stash speed:** the list has no `content-visibility` yet. M5's 12-hour Stash measures it.
 
 **R3, measured with `npm run balance -- drops` on 2026-11-06, for M6 to re-measure.** It passes, spending points and equipping plain upgrades.

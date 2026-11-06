@@ -2,7 +2,7 @@
 
 Rulings the [design](../../design.md) leaves unsaid. Each row is one line, so a milestone's **Needs** can be fetched alone: `rg "^\| G(2|7|8) " docs/plans/poc-demo/gaps.md`.
 
-The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 extends the approved scope, by the human's choice. G23–G28 came from [Milestone 2's review](../poc-demo-m2-review.md). G29–G34 came from Milestone 3's stop S1. G35–G38 came from Milestone 4's, on 2026-11-06.
+The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 extends the approved scope, by the human's choice. G23–G28 came from [Milestone 2's review](../poc-demo-m2-review.md). G29–G34 came from Milestone 3's stop S1. G35–G39 came from Milestone 4's, on 2026-11-06.
 
 | # | Gap | Confirmed answer | Needed by |
 |---|---|---|---|
@@ -44,3 +44,4 @@ The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 ext
 | G36 | **No weapon.** `unequipItem` can empty the weapon Slot, and G14 defines only melee and ranged weapons. | The Hero fights in melee with no weapon power, so melee skills still work. | M4 |
 | G37 | **Item names.** The plan names no format. | Affix names in table order, then the base, such as "Keen Sallow Rust Mail". | M4 |
 | G38 | **Rules M4 leaves unsaid.** | Roll Rarity, then a base evenly. Any Affix can land on any Slot. Roll a whole number, scale by Floor, then round. Stairs Battles use the Battle chance, only won Battles drop, and the Guardian uses Floor 3's table. The Flensing Knife's +2% crit raises the Huntsman's crit from M2's value. | M4 |
+| G39 | **Stash filter and built-in stats.** The plan's Affix filter would leave out a plain Waxed Shroud when the player looks for poison resistance. | The filter matches a stat, whether built in or from an Affix. Each option also names its Affix. | M4 |
