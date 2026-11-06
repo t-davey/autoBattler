@@ -178,7 +178,7 @@ function viewHero(hero: HeroState): HeroView {
     row: CLASSES[hero.id].row,
     reach: heroReach(hero),
     level: hero.level,
-    xp: hero.xp,
+    xp: Math.floor(hero.xp),
     xpToNext: xpToNextLevel(hero.level),
     stats: heroStats(hero),
     health: hero.health,

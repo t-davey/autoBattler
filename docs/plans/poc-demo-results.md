@@ -156,3 +156,23 @@ First kill by check-ins made, on Seeds 1-200:
 - **Routine and Answer players score the same.** Routine spends points in step order and equips plain upgrades, and Answer spends towards the reference build and equips the most poison resistance. Levels beat the Wall so early that their choices barely get a chance to matter, so this baseline can't yet tell them apart.
 - **The Party is Set back about 13 times at the Guardian** before the first kill, almost all of it while nobody is watching.
 - **Untended levels:** a median of 10 at 4 hours, 14 at 8 hours, 16 at 12 hours, and 22 at 24 hours.
+
+### With XP falloff
+
+The same mode and Seeds, with [option B](second-wall.md#xp-falloff-options) built and no other number changed. Both targets still miss, and step 6 has to reach them. Seeds 1001-1200 differ by at most 2 points.
+
+| Measure | Target | Baseline | With XP falloff |
+|---|---|---|---|
+| Untended: Guardian killed by 12 hours | At most 10% | 100% | 71% |
+| Answer, 8-hour gap: first kill after 2–3 check-ins | At least 80% | 0% | 0% |
+
+| Gap | 0 check-ins | 1 check-in | 2–3 check-ins | No kill | Median first kill | Median level, with the kill's XP |
+|---|---|---|---|---|---|---|
+| 4 hours | 0% | 100% | 0% | 0% | 4.1 h | 9 |
+| 8 hours | 44% | 56% | 0% | 0% | 8.0 h | 10 |
+| 12 hours | 71% | 30% | 0% | 0% | 11.9 h | 11 |
+
+- **Levels slow sharply:** untended medians are 9, 10, 11, and 12 at 4, 8, 12, and 24 hours, against 10, 14, 16, and 22. By 24 hours, every Seed still kills the Guardian.
+- **The first check-in still wins,** so no record reaches a second one. Routine and Answer players still score the same.
+- **The 30-Seed estimate ran slow:** it had 60% killed by 12 hours and 27% before the first 8-hour check-in, where 200 Seeds give 71% and 44%.
+- **The first 2 hours barely change:** every `npm run balance -- wall` target still passes, with Answer at 82% rather than 85%, and so does `drops`.

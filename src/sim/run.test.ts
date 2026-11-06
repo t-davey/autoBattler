@@ -200,7 +200,47 @@ describe('carrying over', () => {
     expect(risen.health).toBeCloseTo(risen.stats.maxHealth * 0.35);
     // Same XP as a Hero who stood.
     expect(risen.xp - xpBefore).toBe(hero(viewGame(fallen), 'sin-eater').xp - xpBefore);
-    expect(risen.xp - xpBefore).toBe(15);
+    expect(risen.xp - xpBefore).toBe(1); // XP falloff's 10% of 15, rounded down in the view.
+  });
+
+  describe('XP falloff', () => {
+    /** The whole XP one Hero holds after winning one Battle, from a level's start. */
+    function xpFromWin(heroLevel: number, room: 'guardian' | 'battle' = 'battle', floor: 1 | 3 = 1): number {
+      for (let seed = 1; seed < 500; seed++) {
+        const played = game(seed, { heroLevel, startAt: room === 'guardian' ? atGuardian.startAt : { floor, room: 0 } });
+        const entered = stepUntil(played, (event) => event.type === 'battleStarted' || event.type === 'chestOpened');
+        if (entered.type !== 'battleStarted') continue;
+        const saved = JSON.parse(serializeGame(played)) as { game: { battle: { units: { team: string; health: number; ticksToAction: number }[] } } };
+        for (const unit of saved.game.battle.units) if (unit.team === 'b') Object.assign(unit, { health: 0.01, ticksToAction: 100_000 });
+        const fighting = deserializeGame(JSON.stringify(saved))!;
+        stepUntil(fighting, 'battleEnded');
+        return hero(viewGame(fighting), 'sin-eater').xp;
+      }
+      throw new Error('no Battle');
+    }
+
+    it.each([
+      [1, 15],
+      [5, 15],
+      [6, 11],
+      [7, 7],
+      [8, 3],
+      [9, 1],
+      [30, 1],
+    ])('on Floor 1, a level %i Hero earns %i of its 15 XP', (level, xp) => {
+      expect(xpFromWin(level)).toBe(xp);
+    });
+
+    it('a deeper Floor keeps its full XP for longer', () => {
+      expect(xpFromWin(7, 'battle', 3)).toBe(25);
+      expect(xpFromWin(8, 'battle', 3)).toBe(18);
+    });
+
+    it("a Guardian's XP falls off like its Floor's", () => {
+      expect(xpFromWin(7, 'guardian')).toBe(100);
+      expect(xpFromWin(8, 'guardian')).toBe(75);
+    });
+
   });
 
   it('a level-up raises max health but heals nothing', () => {
@@ -264,7 +304,8 @@ describe('Enemy scale', () => {
       expect(powerOf[floor]! / powerOf[1]!).toBeCloseTo(scale);
       expect(stackOf[floor]! / stackOf[1]!).toBeCloseTo(scale);
     }
-    expect([xpOf[1], xpOf[2], xpOf[3]]).toEqual([15, 20, 25]);
+    // XP falloff's 10% of 15, 20, and 25, rounded down in the view.
+    expect([xpOf[1], xpOf[2], xpOf[3]]).toEqual([1, 2, 2]);
   });
 });
 
@@ -433,7 +474,7 @@ describe('the Guardian', () => {
     const types = seen.map((event) => event.type);
     expect(types.indexOf('guardianFell')).toBeLessThan(types.indexOf('lampRelit'));
     expect(seen.at(-1)).toMatchObject({ type: 'returnedToTown', reason: 'lampRelit' });
-    expect(hero(viewGame(played), 'huntsman').xp - xpBefore).toBe(100);
+    expect(hero(viewGame(played), 'huntsman').xp - xpBefore).toBe(10); // XP falloff's 10%.
     expect(viewGame(played)).toMatchObject({ phase: 'town', wall: { lampLit: true } });
   });
 

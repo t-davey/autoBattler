@@ -6,7 +6,7 @@ import { OIL_BETWEEN_ROOMS } from './content/party';
 import type { Rarity } from './content/items';
 import { BATTLE_DROP_CHANCE, CHEST_DROP_CHANCE } from './content/items';
 import { rankValue, type HeroId } from './content/skills';
-import { BATTLE_XP, FLOOR_SCALE, generateFloor, type FloorLayout, type FloorNumber, type RoomKind, type RoomLayout } from './floors';
+import { BATTLE_XP, FLOOR_SCALE, generateFloor, xpShare, type FloorLayout, type FloorNumber, type RoomKind, type RoomLayout } from './floors';
 import { clampToMaximums, gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
 import { rollItemSpec, viewItem, type ItemState, type ItemView } from './items';
 import { nextFloat, nextInt, type Rng } from './rng';
@@ -198,7 +198,7 @@ function setback(world: RunWorld, type: 'wipe' | 'draw', battle: BattleState, si
 
 function reward(world: RunWorld, xp: number, sink: EventSink): void {
   for (const hero of world.heroes) {
-    const levels = gainXp(hero, xp);
+    const levels = gainXp(hero, xp * xpShare(hero.level, world.run.floor!));
     for (const level of levels) sink({ type: 'levelUp', heroId: hero.id, heroName: hero.name, level });
     if (levels.length > 0) recordGrowth(world.wall, sink);
   }
