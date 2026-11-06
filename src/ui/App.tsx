@@ -56,7 +56,7 @@ export function App({ store }: { store: Store }) {
               ) : (
                 <>
                   <FloorMap view={view} />
-                  <BattlePanel view={view} />
+                  <BattlePanel view={view} store={store} />
                 </>
               )}
             </div>

@@ -4,6 +4,26 @@ import { describeEvent } from './describeEvent';
 import { createStore } from './store';
 
 describe('store', () => {
+  it('tells the Battle scene what each step played, and that catch-up jumped', () => {
+    vi.useFakeTimers();
+    try {
+      const store = createStore(createGame({ seed: 2 }));
+      const batches: { events: number; ticks: number | null }[] = [];
+      store.onPlayed(({ events, ticks }) => batches.push({ events: events.length, ticks }));
+
+      store.advance(50);
+      expect(batches).toEqual([]);
+      store.advance(50);
+      expect(batches.at(-1)).toMatchObject({ ticks: 1 });
+
+      store.catchUp(120_000);
+      vi.runAllTimers();
+      expect(batches.at(-1)).toEqual({ events: 0, ticks: null });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('the Live Log keeps the newest 1,000 lines', () => {
     const elapsedMs = 3_600_000;
     const events: GameEvent[] = [];

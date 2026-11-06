@@ -13,6 +13,7 @@ export interface UnitView {
   readonly id: string;
   readonly name: string;
   readonly row: Row;
+  readonly reach: Reach;
   readonly health: number;
   readonly maxHealth: number;
   readonly oil: number;
@@ -116,6 +117,7 @@ function viewTeam(battle: BattleState, team: TeamId): readonly UnitView[] {
       id: unit.spec.id,
       name: unit.spec.name,
       row: unit.row,
+      reach: unit.spec.reach,
       health: unit.health,
       maxHealth: maxHealthOf(unit),
       oil: unit.oil,

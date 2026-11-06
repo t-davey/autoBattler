@@ -83,13 +83,26 @@ ul {
   gap: 1rem;
 }
 
+/* Wide enough for the scene at 2x, counting the panel's padding and border. */
 .dashboard-main > .battle-panel {
-  flex: 1 1 28rem;
+  flex: 1 1 calc(640px + 2rem + 2px);
   min-width: 0;
 }
 
 .battle-panel {
   min-height: 15rem;
+}
+
+.battle-scene {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  background: #050508;
+}
+
+.battle-scene canvas {
+  display: block;
+  image-rendering: pixelated;
 }
 
 .floor-map {
@@ -129,8 +142,14 @@ ul {
   border-color: var(--ember);
 }
 
-.party-status {
+.row-units.party-status {
+  flex-direction: row;
+  flex-wrap: wrap;
   margin-top: 0.75rem;
+}
+
+.party-status > .unit {
+  flex: 1 1 10rem;
 }
 
 .town-menu {

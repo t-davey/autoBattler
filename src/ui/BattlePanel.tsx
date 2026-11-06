@@ -1,4 +1,6 @@
 import type { GameView, HeroView, Row, UnitView } from '../sim';
+import { BattleScene } from './battleScene/BattleScene';
+import type { Store } from './store';
 
 function UnitEffects({ unit }: { unit: UnitView }) {
   const effects = [
@@ -67,6 +69,7 @@ function PartyStatus({ heroes }: { heroes: readonly HeroView[] }) {
     id: hero.id,
     name: hero.name,
     row: 'front',
+    reach: 'melee',
     health: hero.health,
     maxHealth: hero.stats.maxHealth,
     oil: hero.oil,
@@ -84,11 +87,12 @@ function PartyStatus({ heroes }: { heroes: readonly HeroView[] }) {
   );
 }
 
-export function BattlePanel({ view }: { view: GameView }) {
+export function BattlePanel({ view, store }: { view: GameView; store: Store }) {
   const { battle, phase } = view;
   return (
     <section className="panel battle-panel" aria-label="Battle">
       <h2>Battle</h2>
+      <BattleScene store={store} />
       {battle ? (
         <div className="battlefield">
           <RowColumn label="Party back Row" row="back" units={battle.party} />

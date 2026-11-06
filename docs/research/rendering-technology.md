@@ -182,10 +182,7 @@ These are small checks on one machine, not settled benchmarks. No third-party be
 
 ### For the human
 
-Hidden-window behaviour, log retention, and Stash size have since been decided in [docs/design.md](../design.md). These remain open:
-
-- **How much animation does the map need?** This is the main trigger for moving from DOM to Canvas or Pixi.
-- **What should pixel-art scale do on fractional displays?** Options are snapping to whole device pixels, or accepting slight unevenness.
+Hidden-window behaviour, log retention, Stash size, animation, and pixel-art scale have since been decided. The first three are in [docs/design.md](../design.md), and the last two in [ADR 0004](../adr/0004-battle-scene-canvas.md): the Floor map stays in the DOM, a separate Canvas scene carries the animation, and art pixels snap to whole device pixels.
 
 ### What a small prototype should check
 

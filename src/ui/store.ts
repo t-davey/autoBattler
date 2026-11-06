@@ -45,6 +45,12 @@ export interface Snapshot {
   readonly saveWarning: string | null;
 }
 
+/** What one step of the Game did. ticks is how far it moved, or null after catch-up. */
+export interface PlayedBatch {
+  readonly events: readonly GameEvent[];
+  readonly ticks: number | null;
+}
+
 export type DispatchRefusal = ActionRefusal | 'catchingUp';
 export type DispatchResult = { readonly ok: true } | { readonly ok: false; readonly reason: DispatchRefusal };
 
@@ -72,6 +78,8 @@ export interface Store {
   save(savedAt: number): void;
   /** Hears the end of a check-in, so the driver can run the time it paused. */
   onSentBack(listener: () => void): () => void;
+  /** Hears what the Game just did, for the Battle scene. Catch-up reports only that it jumped. */
+  onPlayed(listener: (batch: PlayedBatch) => void): () => void;
   /** Hears when state changed apart from the clock: an accepted action, or catch-up finishing. */
   onSettled(listener: () => void): () => void;
   /** Removes the save and writes no more, for a reload to start over. */
@@ -94,6 +102,7 @@ const writeFailure = (error: unknown): string =>
 export function createStore(game: Game, { saves, saveNotice = null, workClock = () => performance.now() }: StoreOptions = {}): Store {
   const listeners = new Set<() => void>();
   const settledListeners = new Set<() => void>();
+  const playedListeners = new Set<(batch: PlayedBatch) => void>();
   const sentBackListeners = new Set<() => void>();
   let snapshot: Snapshot = { view: viewGame(game), log: [], stash: viewStash(game), catchUpProgress: null, awayReport: null, saveNotice, saveWarning: null };
   let nextLineId = 0;
@@ -125,6 +134,10 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
     replace({ view, log: withLines(snapshot.log, events), stash: stashFor(view) });
   };
 
+  const played = (batch: PlayedBatch): void => {
+    for (const listener of playedListeners) listener(batch);
+  };
+
   const settled = (): void => {
     for (const listener of settledListeners) listener();
   };
@@ -141,6 +154,7 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
     const awayReport = holdReport ? snapshot.awayReport : merged(snapshot.awayReport ?? heldReport, report);
     heldReport = holdReport ? merged(heldReport, report) : null;
     replace({ view, stash: stashFor(view), log, catchUpProgress: null, awayReport });
+    played({ events: [], ticks: null });
     settled();
   };
 
@@ -174,9 +188,11 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
       const events: GameEvent[] = [];
       advance(game, elapsedMs, (event) => events.push(event));
       const view = viewGame(game);
-      if (view.tick === snapshot.view.tick) return;
+      const ticks = view.tick - snapshot.view.tick;
+      if (ticks === 0) return;
 
       publish(view, events);
+      played({ events, ticks });
     },
     dispatch(action) {
       if (catchingUp()) return { ok: false, reason: 'catchingUp' };
@@ -219,6 +235,10 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
       } catch (error) {
         replace({ saveWarning: writeFailure(error) });
       }
+    },
+    onPlayed(listener) {
+      playedListeners.add(listener);
+      return () => playedListeners.delete(listener);
     },
     onSettled(listener) {
       settledListeners.add(listener);
