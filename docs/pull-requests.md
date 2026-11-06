@@ -10,7 +10,7 @@ Every change reaches `main` through a PR that carries one concern. PRs land as a
 4. **Review** the branch against `main` with `mattpocock-skills:code-review`, docs-only PRs included. Fix every confirmed finding, then repeat Done on the new final commit. Findings you leave unfixed go on the template's Review line, with the reason.
 5. **Write the title** in the format below.
 6. **Write the body** from [the template](../.github/pull_request_template.md), replacing every comment with real content. `gh pr create` skips the template when given a body, so read the file, fill it in, and pass the result with `--body-file`.
-7. **Open the PR and hand over** its link. CI runs `npm run check` on Windows, and a failing check blocks the merge, so fix any failure you can.
+7. **Open the PR and hand over** its link. CI doesn't run on PRs, so the `npm run check` you ran for Done is the only check before merge. CI runs it on Windows when a release is published, which is too late to stop that release.
 
 ## Title
 
