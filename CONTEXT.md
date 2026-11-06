@@ -212,6 +212,10 @@ _Avoid_: Difficulty level, new game plus
 
 ### Story
 
+**Entity**:
+An old being who put the Lamps out on purpose. Every Guardian is one.
+_Avoid_: Keeper, spirit
+
 **The Rendering**:
 The hidden truth at the heart of the story: Oil is rendered from the dead.
 _Avoid_: The twist, the secret
