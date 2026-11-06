@@ -1,20 +1,21 @@
 import { useState } from 'react';
-import { BattlePanel } from './BattlePanel';
+import { BattleScreen } from './BattleScreen';
 import { CheckIn } from './CheckIn';
 import { DevTools } from './DevTools';
-import { FloorMap } from './FloorMap';
 import { LiveLog } from './LiveLog';
 import { PlanningTab } from './PlanningTab';
 import { StashTab } from './StashTab';
 import type { Store } from './store';
 import { TownMenu } from './TownMenu';
 import { useGame } from './useGame';
+import { useUiScale } from './useUiScale';
 
 type Tab = 'dashboard' | 'planning' | 'stash';
 
 export function App({ store }: { store: Store }) {
   const { view, log, stash, catchUpProgress, awayReport, saveNotice, saveWarning } = useGame(store);
   const [tab, setTab] = useState<Tab>('dashboard');
+  useUiScale();
   const unspent = view.heroes.reduce((total, hero) => total + hero.unspentPoints, 0);
   const sendBack = () => {
     store.sendPartyBack();
@@ -48,17 +49,11 @@ export function App({ store }: { store: Store }) {
           </p>
         )}
         {awayReport && <CheckIn report={awayReport} view={view} stash={stash} dispatch={store.dispatch} onSendBack={sendBack} />}
-        {!awayReport && tab === 'dashboard' && (
+        {!awayReport && tab === 'dashboard' && view.phase !== 'town' && <BattleScreen view={view} log={log} store={store} />}
+        {!awayReport && tab === 'dashboard' && view.phase === 'town' && (
           <main className="dashboard">
             <div className="dashboard-main">
-              {view.phase === 'town' ? (
-                <TownMenu view={view} dispatch={store.dispatch} />
-              ) : (
-                <>
-                  <FloorMap view={view} />
-                  <BattlePanel view={view} store={store} />
-                </>
-              )}
+              <TownMenu view={view} dispatch={store.dispatch} />
             </div>
             <LiveLog lines={log} />
           </main>

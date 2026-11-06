@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { advance, createGame, viewGame, type Game, type GameEvent, type GameView } from '../../sim';
 import { ART_HEIGHT, ART_WIDTH, wayPoint } from './iso';
-import { drawScene, snappedDisplayWidth } from './draw';
+import { drawScene, snappedDisplayWidth, uiScale } from './draw';
 import { roomLookOf } from './roomLook';
 import { bakeRoom } from './roomBake';
 import { createScene, type SceneFrame, type Scene, type UnitFrame } from './scene';
@@ -206,6 +206,23 @@ describe('the Battle scene', () => {
 });
 
 describe('the scene’s display size', () => {
+  it('scales the UI with the scene, in step with whole device pixels', () => {
+    expect(uiScale(1280, 720, 1)).toBe(1);
+    expect(uiScale(1920, 1080, 1)).toBe(1.5);
+    expect(uiScale(2560, 1440, 1)).toBe(2);
+    expect(uiScale(2048, 1152, 1.25)).toBe(1.6);
+  });
+
+  it('waits for the next whole scale, whichever side of the window limits it', () => {
+    expect(uiScale(1366, 768, 1)).toBe(1);
+    expect(uiScale(2560, 1000, 1)).toBe(1.25);
+    expect(uiScale(1500, 1440, 1)).toBe(1);
+  });
+
+  it('never scales the UI below its base size', () => {
+    expect(uiScale(900, 600, 1)).toBe(1);
+  });
+
   it('keeps each art pixel a whole number of device pixels', () => {
     for (const ratio of [1, 1.25, 1.5, 2]) {
       for (const available of [400, 640, 700, 1000]) {

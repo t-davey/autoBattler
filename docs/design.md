@@ -167,7 +167,7 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 
 ## Presentation
 
-- UI-first: panels, text, icons, and a simple tile map, plus an animated Battle scene. [ADR 0003](adr/0003-react-panels-dom-map.md) and [ADR 0004](adr/0004-battle-scene-canvas.md) record the rendering stack.
+- UI-first: panels, text, icons, and a simple tile map, plus an animated Battle scene as the main element of the Dashboard during a Run. [ADR 0003](adr/0003-react-panels-dom-map.md) and [ADR 0004](adr/0004-battle-scene-canvas.md) record the rendering stack.
 - **Battle scene:** low-resolution pixel art at 320 × 170, showing an isometric Room with the Party and Pack in their Rows. Sprites are generated from simple shapes in code for now, and hand-drawn art can replace them later. Its animation is presentation only, and catch-up jumps to the current state. [The Battle scene guide](battle-scene.md) covers how it works.
 - **Light:** every Room's shadows are lifted enough to read, and a Unit is never drawn darker than a set minimum. Each Room then rolls a random mix of Spigot burners, Tallow candles, and Foxfire, with at least 4 of a lone source or 2 of each in a mix. The look stays the same for that Room. A Hero's lantern dims as their Oil falls, which changes only the picture.
 - **Ways through:** a Room shows its way in and way out, on the edges that match the Floor map. A way out is always flame-lit, and stairs lead onto a Floor and out of its Stairs Room.
@@ -179,6 +179,7 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 - Audio starts silent, with a few key effects such as a rare drop added later.
 - "autoBattler" is the working title.
 - The window is usually large, with a minimum of 1280x720, so panels can sit side by side.
+- **During a Run,** the Battle scene fills the window under the header. The Floor map, Pack bar, Party status, and Live Log lie over its corners without panels, and grow with it so the layout holds on any screen. The top-right corner is kept for the Belt, Run calls, and rules. Town keeps its own menu.
 
 ### Check-ins
 

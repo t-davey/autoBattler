@@ -1,8 +1,8 @@
 # Battle scene
 
-How the animated Room in the Battle panel works, and how to change it. What it should look like is in [Presentation](design.md#presentation), and why it is a Canvas is in [ADR 0004](adr/0004-battle-scene-canvas.md).
+How the animated Room on the Battle screen works, and how to change it. What it should look like is in [Presentation](design.md#presentation), and why it is a Canvas is in [ADR 0004](adr/0004-battle-scene-canvas.md).
 
-The scene is presentation only. It adds no game rules, and it reads the sim only through `GameView` and `GameEvent`. The DOM unit cards stay beneath it as the readable record of health, Oil, and Effects.
+The scene is presentation only. It adds no game rules, and it reads the sim only through `GameView` and `GameEvent`. `BattleScreen.tsx` lays the DOM Floor map, Pack bar, Party status, and Live Log over its corners. Those are the readable record of the Party's health, Oil, and Effects. Enemies show theirs on their sprites, with the details in a visually hidden list.
 
 ## How a frame gets drawn
 
@@ -31,7 +31,8 @@ All are in `src/ui/battleScene`. Only `BattleScene.tsx` touches React or the DOM
 
 - **Art pixels:** the 320 × 170 picture.
 - **Scene units:** what `scene.ts` and `iso.ts` work in, 2 to each art pixel.
-- **Display size:** `snappedDisplayWidth` picks the largest width where each art pixel covers a whole number of device pixels. A narrower panel gets a margin rather than uneven pixels. The panel asks for room for 2x.
+- **Display size:** `snappedDisplayWidth` picks the largest width where each art pixel covers a whole number of device pixels. A window of another shape gets a margin rather than uneven pixels.
+- **UI scale:** `uiScale` compares the scene with its 1280 x 680 base and sets `--ui-scale`, which zooms the header and overlays with it. It never goes below 1, so a window under 1280 x 720 shrinks the scene but not the text. Size overlays for the base window.
 
 ## Rooms
 
@@ -86,5 +87,7 @@ Most of the scene has been watched in the running app, including Lantern Ward, B
 - The Party's Rows between Battles come from the last Battle, or a default before the first one.
 - Enemies crumble and appear in place, rather than walking in through a way.
 - Poison ticks that land together overlap, so two floating 3s can read as 33.
-- Below about 1,030 px wide, the Floor map wraps above the Battle panel and pushes the scene down the page.
+- A very large Floor layout gets smaller map tiles, so the map stays clear of the wall.
+- Only the header scales on the Planning and Stash tabs and in Town, so their content looks small beside it on a large screen.
+- Below 1280 × 720, the overlays can cover the Room or each other.
 - The light sources are Provisional in [the lore bible](lore/bible.md#light-in-the-undercroft) until the human confirms them.

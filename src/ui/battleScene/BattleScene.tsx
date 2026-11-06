@@ -24,7 +24,8 @@ export const BattleScene = memo(function BattleScene({ store }: { store: Store }
     const stopPlayed = store.onPlayed((batch) => scene.play(batch, store.getSnapshot().view));
 
     const fit = (): void => {
-      const width = snappedDisplayWidth(holder.clientWidth, window.devicePixelRatio);
+      const available = Math.min(holder.clientWidth, (holder.clientHeight * ART_WIDTH) / ART_HEIGHT);
+      const width = snappedDisplayWidth(available, window.devicePixelRatio);
       element.style.width = `${width}px`;
       element.style.height = `${(width * ART_HEIGHT) / ART_WIDTH}px`;
     };

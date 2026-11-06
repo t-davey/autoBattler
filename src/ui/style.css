@@ -8,6 +8,8 @@
   --blood: #8e2a2a;
   --ember: #c58a3a;
   --magic: #7f9fc9;
+  --ui-scale: 1;
+  --header-height: calc(40px * var(--ui-scale));
   font-family: Georgia, 'Times New Roman', serif;
   color: var(--ink);
   background: var(--soot);
@@ -28,7 +30,7 @@ body {
   height: 100vh;
   max-width: 90rem;
   margin: 0 auto;
-  padding: 1rem;
+  padding: calc(var(--header-height) + 1rem) 1rem 1rem;
   gap: 1rem;
 }
 
@@ -84,72 +86,26 @@ ul {
 }
 
 /* Wide enough for the scene at 2x, counting the panel's padding and border. */
-.dashboard-main > .battle-panel {
-  flex: 1 1 calc(640px + 2rem + 2px);
-  min-width: 0;
-}
-
-.battle-panel {
-  min-height: 15rem;
-}
-
-.battle-scene {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 0.75rem;
-  background: #050508;
-}
-
-.battle-scene canvas {
-  display: block;
-  image-rendering: pixelated;
-}
-
-.floor-map {
-  flex: 0 0 auto;
-}
-
-.room-grid {
-  display: grid;
-  width: 18rem;
-  height: 14rem;
-  gap: 2px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
 .room {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
   border: 1px solid var(--iron);
   background: var(--soot);
 }
 
 .room-ahead {
-  color: var(--ink-faint);
+  color: var(--ink);
 }
 
 .room-cleared {
-  color: var(--iron);
+  color: var(--ink-faint);
 }
 
 .room-current {
   color: var(--soot);
   background: var(--ember);
   border-color: var(--ember);
-}
-
-.row-units.party-status {
-  flex-direction: row;
-  flex-wrap: wrap;
-  margin-top: 0.75rem;
-}
-
-.party-status > .unit {
-  flex: 1 1 10rem;
 }
 
 .town-menu {
@@ -173,55 +129,10 @@ ul {
   color: var(--ember);
 }
 
-.battlefield {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.row-units {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.unit {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  background: var(--soot);
-  border: 1px solid var(--iron);
-}
-
-.unit-fallen {
-  opacity: 0.45;
-}
-
-.unit-fallen .unit-name {
-  text-decoration: line-through;
-}
-
-.health-bar {
-  height: 0.5rem;
-  background: var(--iron);
-}
-
 .health-fill {
   height: 100%;
   background: var(--blood);
   transition: width 100ms linear;
-}
-
-.unit-health {
-  font-size: 0.8rem;
-  color: var(--ink-faint);
-}
-
-.travelling {
-  margin: 0;
-  font-style: italic;
-  color: var(--ink-faint);
 }
 
 .live-log {
@@ -239,27 +150,25 @@ ul {
   line-height: 1.5;
 }
 
-.oil-bar {
-  height: 0.25rem;
-  background: var(--iron);
-}
-
 .oil-fill {
   height: 100%;
   background: var(--ember);
   transition: width 100ms linear;
 }
 
-.unit-effects {
-  font-size: 0.75rem;
-  color: var(--ember);
-}
-
 .app-header {
+  position: fixed;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  left: 0;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: 1rem;
+  height: 40px;
+  padding: 0 1rem;
+  background: var(--soot);
+  zoom: var(--ui-scale);
 }
 
 .tabs {
@@ -535,6 +444,8 @@ select {
 }
 
 .save-banner {
+  position: relative;
+  z-index: 2;
   margin: 0;
   padding: 0.5rem 1rem;
   border: 1px solid var(--blood);
@@ -699,4 +610,132 @@ select {
 /* Only groups what catch-up makes inert, so the page keeps its layout. */
 .app-body {
   display: contents;
+}
+
+/* The Battle scene fills the window under the header, with the rest of the screen laid over its corners. */
+.battle-screen {
+  position: fixed;
+  inset: var(--header-height) 0 0;
+  overflow: hidden;
+  background: #050508;
+}
+
+.battle-scene {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.battle-scene canvas {
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* Sized for the base window, then zoomed with the scene so its layout holds on any screen. */
+.battle-overlay {
+  position: absolute;
+  inset: 0;
+  text-shadow: 0 1px 2px #000, 0 0 4px #000;
+  pointer-events: none;
+  zoom: var(--ui-scale);
+}
+
+.floor-map {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+}
+
+.floor-map h2 {
+  margin-bottom: 0.25rem;
+  font-size: 1.2rem;
+}
+
+.room-grid {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pack-status,
+.travelling {
+  position: absolute;
+  top: 0.3rem;
+  left: 50%;
+  width: 28rem;
+  margin: 0;
+  font-size: 0.95rem;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.travelling {
+  font-style: italic;
+  color: var(--ink-faint);
+}
+
+.party-status {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 21rem;
+  font-size: 1rem;
+}
+
+.unit-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.unit-health {
+  color: var(--ink-faint);
+}
+
+.unit-fallen {
+  opacity: 0.45;
+}
+
+.unit-fallen .unit-name {
+  text-decoration: line-through;
+}
+
+.unit-effects {
+  font-size: 0.875rem;
+  color: var(--ember);
+}
+
+.health-bar {
+  height: 0.5rem;
+  background: rgb(0 0 0 / 70%);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 12%);
+}
+
+.oil-bar {
+  height: 0.25rem;
+  margin-top: 2px;
+  background: rgb(0 0 0 / 70%);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 12%);
+}
+
+.live-log-bare {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  width: 26rem;
+  height: 12.5rem;
+  text-align: right;
+  mask-image: linear-gradient(to bottom, transparent, #000 2.5rem);
+  pointer-events: auto;
+}
+
+.live-log-bare .log-lines {
+  font-size: 0.975rem;
+  line-height: 1.35;
 }
