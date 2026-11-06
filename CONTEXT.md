@@ -195,7 +195,7 @@ The summary of what a Party did while the player was away, with the game closed 
 _Avoid_: Offline report, summary screen
 
 **Finding**:
-One entry in an Away Report that the player can act on, such as a Setback, the loot found, or unspent skill points.
+One entry in an Away Report that gives the player something to act on, such as Setbacks, the loot found, or unspent skill points.
 _Avoid_: Alert, task
 
 **Run call**:

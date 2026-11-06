@@ -83,6 +83,7 @@ Each Class has 3 Branches. A starred Branch is that Class's survivability option
 - Uniques are hand-authored, and some change or grant skills.
 - Any Hero can equip any item, subject to level requirements, except for a few Class-specific uniques. Melee skills need a melee weapon.
 - Auto-salvage rules exist from day one, and loot comparison stays manual, with no upgrade button for now.
+- Comparing an item shows its stat changes for each Hero, and never calls it better.
 - Heroes only change gear when the player equips it. New gear waits in the Stash, so walls mostly fall at check-ins.
 - Later expansions, in order: sockets, then sets.
 
@@ -160,34 +161,33 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 
 - Offline progress runs at the full rate, capped at 12 hours.
 - A covered or minimized window counts the same way: the game catches up from elapsed time when the window returns, under the same cap.
+- The Party pauses during a [check-in](#check-ins), until the player sends it back.
 - Play runs in real time, with an optional 2x once balance holds up.
 - The target is about 2 weeks to finish the first Difficulty Tier, with 2–3 short check-ins a day.
 
 ## Presentation
 
 - UI-first: panels, text, icons, and a simple tile map, with room for pixel art later. [ADR 0003](adr/0003-react-panels-dom-map.md) records the rendering stack.
-- A live view while the Party runs, and a [check-in](#check-ins) built around the Away Report.
+- A dashboard while the Party runs, tabs for planning, and a [check-in](#check-ins) built around the Away Report.
 - The Live Log shows the latest 1,000 lines of live play, and those lines are gone when the game closes.
 - Catch-up produces an Away Report rather than log lines. Saves keep the last 10 Away Reports.
 - The Stash can be sorted and filtered.
 - Grim gothic tone, for now.
 - Audio starts silent, with a few key effects such as a rare drop added later.
 - "autoBattler" is the working title.
-- The window is at least 1280x720, so panels can sit side by side.
+- The window is usually large, with a minimum of 1280x720, so panels can sit side by side.
 
 ### Check-ins
 
-- A check-in opens on the Away Report, a short list of Findings. Each one opens its fix beside the list, so the report stays in view while the player acts.
-- The Party pauses during a check-in, until the player sends it back.
-- A Finding has a fixed icon by kind and no tick, because a change can't be known to work until the Party tries it. Its text states facts that update as the player acts, such as each Hero's poison resistance, and never judges whether a change was enough.
+- A check-in opens on the Away Report, which leads with a short list of Findings. Each one opens its fix beside the list, so the report stays in view while the player acts.
+- For now, a Finding has a fixed icon by kind and no checkmark, because a change can't be known to work until the Party tries it. Its text states facts, some of which update during the check-in, such as each Hero's poison resistance. It never judges whether a change was enough.
 - A Finding about Setbacks can open the Stash filtered to the stat that answers them.
-- Comparing an item shows its stat changes for each Hero, and never calls it better.
 
-### Live view
+### Dashboard
 
 - The player tends the Party through the Belt and Run calls, such as returning to Town or skipping side rooms.
-- Each Belt item and Run call sits beside the rule that does its job while the player is away.
-- Rules are simple presets. They move to their own page if they grow too numerous.
+- Each consumable and Run call sits beside the rule that does its job while the player is away.
+- Rules are simple presets for now, and may need their own page if they grow too numerous.
 
 ## Release
 
@@ -220,4 +220,5 @@ A smaller build comes before the first playable, to test one thing: is it satisf
 
 - **Map animation:** how much animation the map needs. This is the main trigger for moving the map from the DOM to Canvas or PixiJS.
 - **Pixel-art scale on fractional displays:** whether to snap to whole device pixels or accept slight unevenness.
-- **A check-in left open:** whether the Party loses that time, or the time counts towards Catch-up when it's sent back.
+- **A check-in left open or closed:** whether the Party loses that time, or the time counts towards Catch-up when it's sent back or the game next opens.
+- **Sending the Party back:** whether it resumes where it paused, or a check-in during a Run ends that Run.
