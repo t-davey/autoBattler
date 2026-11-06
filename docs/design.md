@@ -245,6 +245,8 @@ A smaller build comes before the first playable, to test one thing: is it satisf
 
 [The demo plan](plans/poc-demo.md) holds its scope, its rules, and its milestones. Where it differs from this document, it applies to the demo only.
 
+The demo's answer was yes. It now grows by [a second Wall](plans/second-wall.md): Floors 4–6, a second Guardian and Lamp, XP falloff, falling back between Lamps, and 2–3 check-ins per Wall. That plan holds what's decided and what's still open.
+
 ## Open questions
 
 None right now.

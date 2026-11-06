@@ -100,6 +100,10 @@ _Avoid_: Range
 Which Row a Unit picks from among those its Reach allows: the front Row while it lives, or either.
 _Avoid_: Aggro, priority
 
+**XP falloff**:
+The smaller XP a Hero earns on a Floor well below its level.
+_Avoid_: XP penalty, level penalty
+
 **Skill point**:
 What a Hero earns each level and spends to raise a skill.
 _Avoid_: Talent point, ability point

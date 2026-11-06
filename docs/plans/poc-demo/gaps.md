@@ -2,7 +2,7 @@
 
 Rulings the [design](../../design.md) leaves unsaid. Each row is one line, so a milestone's **Needs** can be fetched alone: `rg "^\| G(2|7|8) " docs/plans/poc-demo/gaps.md`.
 
-The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 extends the approved scope, by the human's choice. G23–G28 came from [Milestone 2's review](../poc-demo-m2-review.md). G29–G34 came from Milestone 3's stop S1. G35–G39 came from Milestone 4's, on 2026-11-06.
+The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 extends the approved scope, by the human's choice. G23–G28 came from [Milestone 2's review](../poc-demo-m2-review.md). G29–G34 came from Milestone 3's stop S1. G35–G39 came from Milestone 4's, on 2026-11-06. G40–G44 came from the review after the S4 verdict, also on 2026-11-06, and [the second Wall's plan](../second-wall.md) holds their detail.
 
 | # | Gap | Confirmed answer | Needed by |
 |---|---|---|---|
@@ -22,7 +22,7 @@ The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 ext
 | G14 | **Weapon reach.** "Melee skills need a melee weapon" and "reach set by the weapon" need a rule for the back Row. | Weapons are melee or ranged. Melee weapons can be used from either Row, but reach only the enemy front Row. The basic attack has no out-of-Row penalty. A Huntsman holding a ranged weapon can't use its 2 melee skills, and the planning tab says so. The Lamplighter starts with a ranged weapon. | M1 (reach), M4 (equip) |
 | G15 | **Poison on Heroes.** The drafted rule says "up to 5 per enemy". | The same rule applies per Unit. Heroes have no way to cure Poison except healing through it and outliving it. | M2 |
 | G16 | **Health recovery.** The design says "slowly between rooms" with no number, and doesn't say whether Town heals. | 15% of max health between Rooms. Town restores all health and Oil. | M3 |
-| G17 | **XP falloff.** The design has it and the scope doesn't mention it. With only 3 Floors, falloff could stop levelling, and then a fallen-back Party would never retry. | No falloff in the demo. | M2 |
+| G17 | **XP falloff.** The design has it and the scope doesn't mention it. With only 3 Floors, falloff could stop levelling, and then a fallen-back Party would never retry. | No falloff in the demo. _G44 replaces this._ | M2 |
 | G18 | **Gold.** Respec cost, merchant, and gamble vendor are all cut, so gold buys nothing. | No gold. Chests hold only items. | M3 |
 | G19 | **Short absences.** The design counts a covered or minimized window as away, with no minimum. | A gap of 60 seconds or more gives catch-up and an Away Report. A shorter gap plays through live stepping, with its lines in the Live Log. | M5 |
 | G20 | **Saves in Electron.** _Contradicts [ADR 0002](../../adr/0002-browser-first-electron-shell.md), which puts saves on disk in Electron, but the approved Milestone 5 brief specifies browser storage and the scope only needs the shell to launch._ | Use `localStorage` everywhere for the demo, behind a small `SaveStore` interface, and leave the ADR unchanged because disk saves remain the plan for release. | M5 |
@@ -45,3 +45,8 @@ The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 ext
 | G37 | **Item names.** The plan names no format. | Affix names in table order, then the base, such as "Keen Sallow Rust Mail". | M4 |
 | G38 | **Rules M4 leaves unsaid.** | Roll Rarity, then a base evenly. Any Affix can land on any Slot. Roll a whole number, scale by Floor, then round. Stairs Battles use the Battle chance, only won Battles drop, and the Guardian uses Floor 3's table. The Flensing Knife's +2% crit raises the Huntsman's crit from M2's value. | M4 |
 | G39 | **Stash filter and built-in stats.** The plan's Affix filter would leave out a plain Waxed Shroud when the player looks for poison resistance. | The filter matches a stat, whether built in or from an Affix. Each option also names its Affix. | M4 |
+| G40 | **Time per Wall.** The Wall falls to levels alone within hours, so a player checking in 2–3 times a day may never need a decision. | A Wall takes 2–3 check-ins, tuned to an 8-hour gap and tested at 4 and 12 hours. This replaces the 1–2 hours of Party time. | Second Wall |
+| G41 | **Testing longer Walls.** At 2–3 check-ins per Wall, live rehearsal takes days. | Live play can run at 2x, 5x, or 10x, in builds, so friends testing the demo have it too. | Second Wall |
+| G42 | **The second Guardian.** It has no design yet. | The docs hold placeholders, for the human to fill in before it's built. | Second Wall |
+| G43 | **Falling back with 2 Lamps.** G2 had no earlier Lamp to fall back to. | Follow the design: after 3 Setbacks at the second Wall, the Party falls back one Lamp and farms there. | Second Wall |
+| G44 | **XP falloff.** Levels dissolve the Wall, and G17 left them unchecked. | Build the design's falloff into the demo, using [option B](../second-wall.md#xp-falloff-options): full XP up to Floor level + 1, then 25% less per level, down to 10%, with Floor level as Floor number + 3. It has to leave a fallen-back Party able to level. | Second Wall |
