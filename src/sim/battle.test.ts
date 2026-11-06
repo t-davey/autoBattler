@@ -113,7 +113,7 @@ describe('simulateBattle', () => {
       for (const event of simulateBattle(setup(seed)).log) {
         if (event.type === 'death') {
           dead.add(event.unitId);
-        } else {
+        } else if (event.type === 'attack') {
           expect(dead).not.toContain(event.attackerId);
           expect(dead).not.toContain(event.targetId);
         }

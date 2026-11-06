@@ -1,4 +1,13 @@
-import { advance, viewGame, type Game, type GameEvent, type GameView } from '../sim';
+import {
+  advance,
+  applyAction,
+  viewGame,
+  type ActionResult,
+  type Game,
+  type GameEvent,
+  type GameView,
+  type PlayerAction,
+} from '../sim';
 import { describeEvent } from './describeEvent';
 
 const LIVE_LOG_CAP = 1_000;
@@ -18,6 +27,8 @@ export interface Store {
   subscribe(listener: () => void): () => void;
   getSnapshot(): Snapshot;
   advance(elapsedMs: number): void;
+  /** Sends a player's choice to the sim, publishing any change. */
+  dispatch(action: PlayerAction): ActionResult;
 }
 
 export function createStore(game: Game): Store {
@@ -46,6 +57,13 @@ export function createStore(game: Game): Store {
 
       snapshot = { view, log: [...snapshot.log, ...lines].slice(-LIVE_LOG_CAP) };
       for (const listener of listeners) listener();
+    },
+    dispatch(action) {
+      const result = applyAction(game, action);
+      if (!result.ok) return result;
+      snapshot = { ...snapshot, view: viewGame(game) };
+      for (const listener of listeners) listener();
+      return result;
     },
   };
 }

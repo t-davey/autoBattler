@@ -1,0 +1,361 @@
+import { describe, expect, it } from 'vitest';
+import {
+  advance,
+  applyAction,
+  createGame,
+  deserializeGame,
+  partyUnitSpecs,
+  serializeGame,
+  TICK_MS,
+  viewGame,
+  type Game,
+  type GameEvent,
+  type GameSetup,
+  type HeroId,
+  type HeroView,
+  type SkillId,
+} from './index';
+
+const heroIn = (game: Game, id: HeroId): HeroView => {
+  const hero = viewGame(game).heroes.find((candidate) => candidate.id === id);
+  if (!hero) throw new Error(`no Hero ${id}`);
+  return hero;
+};
+
+const specOf = (game: Game, id: HeroId) => {
+  const spec = partyUnitSpecs(game).find((candidate) => candidate.id === id);
+  if (!spec) throw new Error(`no Unit ${id}`);
+  return spec;
+};
+
+const rankOf = (game: Game, id: HeroId, skillId: SkillId): number =>
+  heroIn(game, id).skills.find((skill) => skill.id === skillId)?.rank ?? 0;
+
+const atLevel = (heroLevel: number, extra: Omit<NonNullable<GameSetup['scenario']>, 'heroLevel'> = {}): Game =>
+  createGame({ seed: 1, scenario: { heroLevel, ...extra } });
+
+const spend = (game: Game, heroId: HeroId, skillId: SkillId) =>
+  applyAction(game, { type: 'spendSkillPoint', heroId, skillId });
+
+/** Steps one Tick at a time until the predicate sees an event. */
+const stepUntil = (game: Game, wanted: (event: GameEvent) => boolean, limit = 200_000): GameEvent => {
+  for (let i = 0; i < limit; i++) {
+    let found: GameEvent | undefined;
+    advance(game, TICK_MS, (event) => {
+      if (!found && wanted(event)) found = event;
+    });
+    if (found) return found;
+  }
+  throw new Error('event never came');
+};
+
+const STRONG: GameSetup['scenario'] = { heroLevel: 40 };
+
+describe('levels', () => {
+  it('a new Hero is level 1 with no points, skills, or order', () => {
+    expect(heroIn(createGame({ seed: 1 }), 'huntsman')).toMatchObject({
+      name: 'Huntsman',
+      level: 1,
+      xp: 0,
+      xpToNext: 60,
+      unspentPoints: 0,
+      order: [],
+      oil: 100,
+    });
+  });
+
+  it('a Hero gains a level and a skill point at the XP threshold', () => {
+    const game = createGame({ seed: 1, scenario: STRONG });
+    const before = heroIn(game, 'sin-eater');
+    const events: GameEvent[] = [];
+    advance(game, TICK_MS, (event) => events.push(event));
+    const needed = Math.ceil(before.xpToNext / 15);
+    let wins = 0;
+    while (wins < needed) {
+      stepUntil(game, (event) => event.type === 'battleEnded' && event.outcome === 'won');
+      wins++;
+      if (wins < needed) expect(heroIn(game, 'sin-eater').level).toBe(40);
+    }
+    expect(heroIn(game, 'sin-eater')).toMatchObject({ level: 41, unspentPoints: before.unspentPoints + 1 });
+  });
+
+  it('every Hero gets the full XP of a won Battle, and a levelUp is reported', () => {
+    const game = createGame({ seed: 1 });
+    for (let wins = 0; wins < 3; wins++) stepUntil(game, (event) => event.type === 'battleEnded');
+    expect(viewGame(game).heroes.map((hero) => hero.xp)).toEqual([45, 45, 45]);
+    const level = stepUntil(game, (event) => event.type === 'levelUp');
+    expect(level).toMatchObject({ type: 'levelUp', level: 2 });
+  });
+
+  it('only won Battles give XP', () => {
+    // A new Party rarely loses, so a saved Game is edited to make it fall.
+    const game = createGame({ seed: 1 });
+    advance(game, TICK_MS);
+    const saved = JSON.parse(serializeGame(game));
+    for (const unit of saved.game.battle.units) if (unit.team === 'a') unit.health = 0.01;
+    for (const unit of saved.game.battle.units) if (unit.team === 'b') unit.spec = { ...unit.spec, power: 500 };
+    const losing = deserializeGame(JSON.stringify(saved))!;
+    const ended = stepUntil(losing, (event) => event.type === 'battleEnded');
+    expect(ended).toMatchObject({ outcome: 'lost' });
+    expect(heroIn(losing, 'huntsman').xp).toBe(0);
+  });
+
+  it('a drawn Battle gives no XP', () => {
+    const game = createGame({ seed: 1 });
+    advance(game, TICK_MS);
+    const saved = JSON.parse(serializeGame(game));
+    saved.game.battle.maxTicks = saved.game.battle.tick + 1;
+    const drawing = deserializeGame(JSON.stringify(saved))!;
+    expect(stepUntil(drawing, (event) => event.type === 'battleEnded')).toMatchObject({ outcome: 'draw' });
+    expect(heroIn(drawing, 'huntsman').xp).toBe(0);
+  });
+
+  it('stats rise by Class rates, and speed and crit stay fixed', () => {
+    const game = atLevel(7);
+    expect(specOf(game, 'sin-eater')).toMatchObject({ health: 256, power: 20, armour: 38, actionInterval: 32, critChance: 3, maxOil: 100 });
+    expect(specOf(game, 'huntsman')).toMatchObject({ health: 170, power: 29, armour: 14, actionInterval: 27, critChance: 8 });
+    expect(specOf(game, 'lamplighter')).toMatchObject({ health: 149, power: 20, armour: 11, actionInterval: 30, critChance: 5 });
+  });
+
+  it('stops at the level cap of 60', () => {
+    const game = atLevel(60);
+    stepUntil(game, (event) => event.type === 'battleEnded');
+    expect(heroIn(game, 'sin-eater')).toMatchObject({ level: 60, xp: 0 });
+  });
+});
+
+describe('spending points', () => {
+  it('spending a point raises a rank and uses the point', () => {
+    const game = atLevel(2);
+    expect(spend(game, 'huntsman', 'bleeders-cut')).toEqual({ ok: true });
+    expect(rankOf(game, 'huntsman', 'bleeders-cut')).toBe(1);
+    expect(heroIn(game, 'huntsman').unspentPoints).toBe(0);
+  });
+
+  it('spending a point is refused below a step\'s requirement', () => {
+    const game = atLevel(7);
+    expect(spend(game, 'huntsman', 'open-veins')).toEqual({ ok: false, reason: 'stepLocked' });
+    spend(game, 'huntsman', 'bleeders-cut');
+    expect(spend(game, 'huntsman', 'open-veins')).toEqual({ ok: false, reason: 'stepLocked' });
+    spend(game, 'huntsman', 'bleeders-cut');
+    expect(spend(game, 'huntsman', 'open-veins')).toEqual({ ok: true });
+    expect(spend(game, 'huntsman', 'the-long-cut')).toEqual({ ok: false, reason: 'stepLocked' });
+    spend(game, 'huntsman', 'open-veins');
+    expect(spend(game, 'huntsman', 'the-long-cut')).toEqual({ ok: true });
+  });
+
+  it('spending a point is refused with no points', () => {
+    expect(spend(createGame({ seed: 1 }), 'huntsman', 'bleeders-cut')).toEqual({ ok: false, reason: 'noPoints' });
+  });
+
+  it('spending a point is refused above rank 5', () => {
+    const game = atLevel(10);
+    for (let i = 0; i < 5; i++) expect(spend(game, 'huntsman', 'bleeders-cut')).toEqual({ ok: true });
+    expect(spend(game, 'huntsman', 'bleeders-cut')).toEqual({ ok: false, reason: 'maxRank' });
+  });
+
+  it("spending a point is refused on another Class's skill", () => {
+    expect(spend(atLevel(5), 'huntsman', 'mend-by-lamplight')).toEqual({ ok: false, reason: 'otherClass' });
+  });
+
+  it('an unknown Hero or skill is refused', () => {
+    const game = atLevel(5);
+    expect(applyAction(game, { type: 'spendSkillPoint', heroId: 'nobody' as HeroId, skillId: 'bleeders-cut' })).toEqual({ ok: false, reason: 'unknownHero' });
+    expect(spend(game, 'huntsman', 'constructor' as SkillId)).toEqual({ ok: false, reason: 'unknownSkill' });
+  });
+
+  it('learning an active skill adds it to the end of the order', () => {
+    const game = atLevel(7);
+    spend(game, 'huntsman', 'bleeders-cut');
+    expect(heroIn(game, 'huntsman').order).toEqual(['bleeders-cut']);
+    spend(game, 'huntsman', 'bleeders-cut');
+    spend(game, 'huntsman', 'open-veins');
+    spend(game, 'huntsman', 'open-veins');
+    spend(game, 'huntsman', 'the-long-cut');
+    expect(heroIn(game, 'huntsman').order).toEqual(['bleeders-cut', 'the-long-cut']);
+  });
+});
+
+describe('skill order and respec', () => {
+  const builtHuntsman = (): Game =>
+    atLevel(7, { skillRanks: { huntsman: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
+
+  it('setSkillOrder changes the order', () => {
+    const game = builtHuntsman();
+    const order = ['the-long-cut', 'bleeders-cut'] as const;
+    expect(applyAction(game, { type: 'setSkillOrder', heroId: 'huntsman', order })).toEqual({ ok: true });
+    expect(heroIn(game, 'huntsman').order).toEqual(order);
+  });
+
+  it('setSkillOrder is refused unless it lists exactly the learned active skills', () => {
+    const game = builtHuntsman();
+    const refused = { ok: false, reason: 'badOrder' };
+    const tryOrder = (order: readonly SkillId[]) => applyAction(game, { type: 'setSkillOrder', heroId: 'huntsman', order });
+    expect(tryOrder(['bleeders-cut'])).toEqual(refused);
+    expect(tryOrder(['bleeders-cut', 'bleeders-cut'])).toEqual(refused);
+    expect(tryOrder(['bleeders-cut', 'open-veins'])).toEqual(refused);
+    expect(tryOrder(['bleeders-cut', 'the-long-cut', 'open-veins'])).toEqual(refused);
+    expect(heroIn(game, 'huntsman').order).toEqual(['bleeders-cut', 'the-long-cut']);
+  });
+
+  it('respec refunds every point and clears unlearned skills from the order', () => {
+    const game = builtHuntsman();
+    expect(applyAction(game, { type: 'respec', heroId: 'huntsman' })).toEqual({ ok: true });
+    expect(heroIn(game, 'huntsman')).toMatchObject({ unspentPoints: 6, order: [] });
+    expect(rankOf(game, 'huntsman', 'bleeders-cut')).toBe(0);
+  });
+});
+
+describe('renameHero', () => {
+  const rename = (game: Game, name: string) => applyAction(game, { type: 'renameHero', heroId: 'huntsman', name });
+
+  it('renameHero trims the name', () => {
+    const game = createGame({ seed: 1 });
+    expect(rename(game, '  Old Marrow  ')).toEqual({ ok: true });
+    expect(heroIn(game, 'huntsman').name).toBe('Old Marrow');
+    expect(specOf(game, 'huntsman').name).toBe('Old Marrow');
+  });
+
+  it('renameHero refuses empty names and names over 24 characters', () => {
+    const game = createGame({ seed: 1 });
+    expect(rename(game, '   ')).toEqual({ ok: false, reason: 'emptyName' });
+    expect(rename(game, 'x'.repeat(25))).toEqual({ ok: false, reason: 'nameTooLong' });
+    expect(rename(game, 'x'.repeat(24))).toEqual({ ok: true });
+  });
+});
+
+describe('between Battles', () => {
+  const builtGame = (): Game =>
+    atLevel(40, { skillRanks: { huntsman: { 'bleeders-cut': 2 } } });
+
+  it('a build change reaches the next Battle but not the current one', () => {
+    const game = atLevel(7);
+    advance(game, TICK_MS);
+    spend(game, 'huntsman', 'bleeders-cut');
+    let usedInCurrent = false;
+    while (viewGame(game).phase === 'battle') {
+      advance(game, TICK_MS, (event) => {
+        if (event.type === 'skill') usedInCurrent = true;
+      });
+    }
+    expect(usedInCurrent).toBe(false);
+    const nextUse = stepUntil(game, (event) => event.type === 'skill');
+    expect(nextUse).toMatchObject({ skillId: 'bleeders-cut' });
+  });
+
+  it('a changed order changes what the Hero does in the next Battle', () => {
+    const skillsWith = (order: readonly SkillId[]): SkillId[] => {
+      const game = atLevel(7, { skillRanks: { huntsman: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
+      applyAction(game, { type: 'setSkillOrder', heroId: 'huntsman', order });
+      const used: SkillId[] = [];
+      advance(game, 600_000, (event) => {
+        if (event.type === 'skill' && event.unitId === 'huntsman') used.push(event.skillId);
+      });
+      return used;
+    };
+    expect(skillsWith(['the-long-cut', 'bleeders-cut'])).not.toEqual(skillsWith(['bleeders-cut', 'the-long-cut']));
+  });
+
+  it('Oil carries between Battles, with 30 more between them, up to the maximum', () => {
+    const saved = JSON.parse(serializeGame(createGame({ seed: 1 })));
+    saved.game.heroes[1].oil = 10;
+    const game = deserializeGame(JSON.stringify(saved))!;
+    advance(game, TICK_MS);
+    while (viewGame(game).phase === 'battle') advance(game, TICK_MS);
+    // The Battle began on Tick 1, and a Hero with no skills spends nothing.
+    const battleTicks = viewGame(game).tick - 1;
+    const expected = 10 + Math.floor(battleTicks / 5) + 30;
+    expect(expected).toBeLessThan(100);
+    expect(heroIn(game, 'huntsman').oil).toBe(expected);
+
+    const full = createGame({ seed: 1 });
+    stepUntil(full, (event) => event.type === 'battleEnded');
+    expect(heroIn(full, 'huntsman').oil).toBe(100);
+  });
+
+  it('cooldowns end with the Battle', () => {
+    const game = atLevel(7, { skillRanks: { huntsman: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
+    const battleUnits = () => JSON.parse(serializeGame(game)).game.battle?.units ?? [];
+    let cooling = false;
+    for (let i = 0; i < 20_000 && !cooling; i++) {
+      advance(game, TICK_MS);
+      cooling = battleUnits().some((unit: { skillReadyAt: object }) => Object.keys(unit.skillReadyAt).length > 0);
+    }
+    expect(cooling).toBe(true);
+    stepUntil(game, (event) => event.type === 'battleEnded');
+    stepUntil(game, (event) => event.type === 'battleStarted');
+    expect(battleUnits().every((unit: { skillReadyAt: object }) => Object.keys(unit.skillReadyAt).length === 0)).toBe(true);
+  });
+
+  it('health is restored and effects end with the Battle', () => {
+    const game = builtGame();
+    advance(game, TICK_MS);
+    stepUntil(game, (event) => event.type === 'battleEnded');
+    stepUntil(game, (event) => event.type === 'battleStarted');
+    const huntsman = viewGame(game).battle?.party.find((unit) => unit.id === 'huntsman');
+    expect(huntsman).toMatchObject({ health: huntsman?.maxHealth, poisonStacks: 0, wardAmount: 0 });
+  });
+
+  it('partyUnitSpecs reflects a Hero\'s level, ranks, and skill order', () => {
+    const game = atLevel(7, { skillRanks: { huntsman: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
+    applyAction(game, { type: 'setSkillOrder', heroId: 'huntsman', order: ['the-long-cut', 'bleeders-cut'] });
+    const spec = specOf(game, 'huntsman');
+    expect(spec.power).toBe(29);
+    expect(spec.skills).toEqual([
+      { id: 'the-long-cut', rank: 1 },
+      { id: 'bleeders-cut', rank: 2 },
+      { id: 'open-veins', rank: 2 },
+    ]);
+  });
+});
+
+describe('saves', () => {
+  const inFight = (): Game => {
+    const game = atLevel(7, {
+      skillRanks: {
+        'sin-eater': { 'bar-the-way': 2, 'iron-penance': 2, 'shared-burden': 2 },
+        huntsman: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 2 },
+        lamplighter: { 'mend-by-lamplight': 4, 'lantern-ward': 2 },
+      },
+    });
+    // Runs until a Bleed and a Ward are both live, so the round trip carries them.
+    for (let i = 0; i < 20_000; i++) {
+      advance(game, TICK_MS);
+      const units = viewGame(game).battle;
+      if (units?.enemies.some((enemy) => enemy.bleeding && enemy.health > 0) && units.party.some((hero) => hero.wardAmount > 0)) return game;
+    }
+    throw new Error('no Battle with live effects');
+  };
+
+  it('serializeGame round-trips a Game with skills, effects, and cooldowns', () => {
+    const game = inFight();
+    const copy = deserializeGame(serializeGame(game));
+    expect(copy).not.toBeNull();
+    expect(serializeGame(copy!)).toBe(serializeGame(game));
+    advance(game, 100_000);
+    advance(copy!, 100_000);
+    expect(serializeGame(copy!)).toBe(serializeGame(game));
+  });
+
+  it.each<[string, (save: { game: Record<string, any> }) => void]>([
+    ['a Hero with no name', (save) => { save.game['heroes'][0].name = 3; }],
+    ['an unknown Hero', (save) => { save.game['heroes'][0].id = 'nobody'; }],
+    ['a level below 1', (save) => { save.game['heroes'][0].level = 0; }],
+    ['bad XP', (save) => { save.game['heroes'][0].xp = 'lots'; }],
+    ['bad Oil', (save) => { save.game['heroes'][0].oil = null; }],
+    ['an unknown skill rank', (save) => { save.game['heroes'][0].ranks = { nonsense: 1 }; }],
+    ['a rank above the limit', (save) => { save.game['heroes'][0].ranks = { 'bar-the-way': 6 }; }],
+    ['an order with an unlearned skill', (save) => { save.game['heroes'][0].order = ['lantern-ward']; }],
+    ['missing Heroes', (save) => { delete save.game['heroes']; }],
+    ['a Unit with bad Oil', (save) => { save.game['battle'].units[0].oil = 'full'; }],
+    ['a Unit with a bad Bleed', (save) => { save.game['battle'].units[0].bleed = { perTick: 'x' }; }],
+    ['a Unit with bad Poison', (save) => { save.game['battle'].units[0].poison = [{ damage: 1 }]; }],
+    ['a Unit with a bad Ward', (save) => { save.game['battle'].units[0].ward = { amount: 1 }; }],
+    ['a Unit with a bad cooldown', (save) => { save.game['battle'].units[0].skillReadyAt = { 'bar-the-way': 'soon' }; }],
+    ['a Unit with an unknown skill', (save) => { save.game['battle'].units[0].spec.skills = [{ id: 'nonsense', rank: 1 }]; }],
+  ])('deserializeGame returns null for %s', (_name, corrupt) => {
+    const save = JSON.parse(serializeGame(inFight()));
+    corrupt(save);
+    expect(deserializeGame(JSON.stringify(save))).toBeNull();
+  });
+});

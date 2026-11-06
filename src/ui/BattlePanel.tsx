@@ -1,5 +1,15 @@
 import type { BattleView, Row, UnitView } from '../sim';
 
+function UnitEffects({ unit }: { unit: UnitView }) {
+  const effects = [
+    unit.bleeding && 'Bleeding',
+    unit.poisonStacks > 0 && `Poison ×${unit.poisonStacks}`,
+    unit.wardAmount > 0 && `Ward ${Math.ceil(unit.wardAmount)}`,
+  ].filter((effect) => effect !== false);
+  if (effects.length === 0) return null;
+  return <span className="unit-effects">{effects.join(' · ')}</span>;
+}
+
 function UnitCard({ unit }: { unit: UnitView }) {
   const health = Math.ceil(unit.health);
   const fallen = unit.health <= 0;
@@ -17,6 +27,19 @@ function UnitCard({ unit }: { unit: UnitView }) {
         <div className="health-fill" style={{ width: `${(unit.health / unit.maxHealth) * 100}%` }} />
       </div>
       <span className="unit-health">{fallen ? 'Fallen' : `${health} / ${unit.maxHealth}`}</span>
+      {unit.maxOil > 0 && (
+        <div
+          className="oil-bar"
+          role="progressbar"
+          aria-label={`${unit.name} Oil`}
+          aria-valuemin={0}
+          aria-valuemax={unit.maxOil}
+          aria-valuenow={Math.floor(unit.oil)}
+        >
+          <div className="oil-fill" style={{ width: `${(unit.oil / unit.maxOil) * 100}%` }} />
+        </div>
+      )}
+      {!fallen && <UnitEffects unit={unit} />}
     </li>
   );
 }

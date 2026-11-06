@@ -1,3 +1,19 @@
+import {
+  BAR_THE_WAY_BELOW,
+  BAR_THE_WAY_DURATION,
+  BLEED_INTERVAL,
+  BLEED_TICKS,
+  LANTERN_WARD_DURATION,
+  MEND_BELOW,
+  OUT_OF_ROW_FACTOR,
+  POISON_DURATION,
+  POISON_INTERVAL,
+  POISON_STACK_LIMIT,
+  rankValue,
+  SKILLS,
+  type ActiveSkillId,
+  type SkillId,
+} from './content/skills';
 import { createRng, nextFloat, nextInt, shuffled, type Rng } from './rng';
 
 export type TeamId = 'a' | 'b';
@@ -6,6 +22,12 @@ export type Reach = 'melee' | 'ranged';
 export type DamageType = 'physical' | 'poison';
 /** Which reachable Row a Unit picks from: the front Row while it lives, or either. */
 export type Targeting = 'frontFirst' | 'any';
+export type DamageEffect = 'bleed' | 'poison';
+
+export interface LearnedSkill {
+  readonly id: SkillId;
+  readonly rank: number;
+}
 
 export interface UnitSpec {
   readonly id: string;
@@ -23,6 +45,14 @@ export interface UnitSpec {
   readonly resistances: Readonly<Partial<Record<DamageType, number>>>;
   /** A percentage. */
   readonly critChance: number;
+  /** Oil at the start of the Battle. Defaults to maxOil. */
+  readonly oil?: number;
+  /** Defaults to 0: a Unit with no lantern. */
+  readonly maxOil?: number;
+  /** Active skills in the order the Unit tries them. Passives can sit anywhere. */
+  readonly skills?: readonly LearnedSkill[];
+  /** The damage of a Poison stack added with each attack. */
+  readonly poisonOnHit?: number;
 }
 
 export interface BattleSetup {
@@ -39,9 +69,53 @@ export type BattleEvent =
       readonly attackerName: string;
       readonly targetId: string;
       readonly targetName: string;
+      /** Health lost. A Ward's share is in absorbed. */
       readonly damage: number;
+      readonly absorbed: number;
       readonly damageType: DamageType;
       readonly crit: boolean;
+      /** Set when this is the share of a hit that Shared Burden moved from that Unit. */
+      readonly redirectedFromName: string | null;
+    }
+  | {
+      readonly type: 'effectDamage';
+      readonly tick: number;
+      readonly effect: DamageEffect;
+      readonly targetId: string;
+      readonly targetName: string;
+      readonly damage: number;
+      readonly absorbed: number;
+      readonly damageType: DamageType;
+      readonly redirectedFromName: string | null;
+    }
+  | {
+      readonly type: 'skill';
+      readonly tick: number;
+      readonly unitId: string;
+      readonly unitName: string;
+      readonly skillId: SkillId;
+      readonly skillName: string;
+    }
+  | {
+      readonly type: 'heal';
+      readonly tick: number;
+      readonly targetId: string;
+      readonly targetName: string;
+      readonly amount: number;
+    }
+  | {
+      readonly type: 'effect';
+      readonly tick: number;
+      readonly effect: DamageEffect;
+      readonly targetId: string;
+      readonly targetName: string;
+    }
+  | {
+      readonly type: 'ward';
+      readonly tick: number;
+      readonly targetId: string;
+      readonly targetName: string;
+      readonly amount: number;
     }
   | { readonly type: 'death'; readonly tick: number; readonly unitId: string; readonly unitName: string };
 
@@ -52,12 +126,39 @@ export interface BattleResult {
   readonly log: readonly BattleEvent[];
 }
 
+export interface BleedState {
+  perTick: number;
+  ticksLeft: number;
+  nextTickAt: number;
+}
+
+export interface PoisonStack {
+  readonly damage: number;
+  nextTickAt: number;
+  expiresAt: number;
+}
+
+export interface WardState {
+  amount: number;
+  readonly expiresAt: number;
+}
+
 interface UnitState {
   readonly spec: UnitSpec;
   readonly team: TeamId;
   row: Row;
   health: number;
-  cooldown: number;
+  /** Ticks until this Unit next acts. */
+  ticksToAction: number;
+  oil: number;
+  /** The Tick each used skill is ready again. */
+  skillReadyAt: Partial<Record<SkillId, number>>;
+  bleed: BleedState | null;
+  poison: PoisonStack[];
+  ward: WardState | null;
+  /** Bar the Way holds until this Tick, and its armour bonus as a percentage. */
+  barUntil: number;
+  barArmour: number;
 }
 
 /** A Battle in progress, as plain data. stepBattle mutates it, and JSON carries it whole. */
@@ -75,11 +176,13 @@ const DEFAULT_MAX_TICKS = 1200;
 const CRIT_MULTIPLIER = 1.5;
 const RESISTANCE_CAP = 75;
 const MIN_HIT_DAMAGE = 1;
+const OIL_REGEN_INTERVAL = 5;
 
 const isAlive = (unit: UnitState): boolean => unit.health > 0;
 const otherTeam = (team: TeamId): TeamId => (team === 'a' ? 'b' : 'a');
 const livingOn = (battle: BattleState, team: TeamId): UnitState[] =>
   battle.units.filter((unit) => unit.team === team && isAlive(unit));
+const healthShare = (unit: UnitState): number => unit.health / unit.spec.health;
 
 function stepForwardIfFrontEmpty(battle: BattleState, team: TeamId): void {
   const living = livingOn(battle, team);
@@ -102,7 +205,14 @@ export function createBattle(setup: BattleSetup): BattleState {
       team,
       row: spec.row,
       health: spec.health,
-      cooldown: spec.actionInterval,
+      ticksToAction: spec.actionInterval,
+      oil: spec.oil ?? spec.maxOil ?? 0,
+      skillReadyAt: {},
+      bleed: null,
+      poison: [],
+      ward: null,
+      barUntil: 0,
+      barArmour: 0,
     }));
   const battle: BattleState = {
     rng: createRng(setup.seed),
@@ -118,57 +228,316 @@ export function createBattle(setup: BattleSetup): BattleState {
   return battle;
 }
 
-function chooseTarget(battle: BattleState, attacker: UnitState): UnitState | undefined {
-  const enemies = livingOn(battle, otherTeam(attacker.team));
-  const anyRow = attacker.spec.reach === 'ranged' && attacker.spec.targeting === 'any';
-  const reachable = anyRow ? enemies : enemies.filter((unit) => unit.row === 'front');
-  return reachable[nextInt(battle.rng, reachable.length)];
+const rankIn = (unit: UnitState, id: SkillId): number =>
+  unit.spec.skills?.find((skill) => skill.id === id)?.rank ?? 0;
+
+/** How much of a skill's numeric effects a Unit gets from where it stands. */
+function rowFactor(unit: UnitState, id: SkillId): number {
+  const { row } = SKILLS[id];
+  return row === 'either' || row === unit.row ? 1 : OUT_OF_ROW_FACTOR;
 }
 
-function hitDamage(attacker: UnitSpec, target: UnitSpec, crit: boolean): number {
-  const resistance = Math.min(target.resistances[attacker.damageType] ?? 0, RESISTANCE_CAP);
-  const armourFactor = attacker.damageType === 'physical' ? 100 / (100 + target.armour) : 1;
-  const critFactor = crit ? CRIT_MULTIPLIER : 1;
-  return Math.max(MIN_HIT_DAMAGE, attacker.power * armourFactor * (1 - resistance / 100) * critFactor);
+/** A skill's value at a rank as a fraction, from where the Unit stands. */
+const rankFraction = (unit: UnitState, id: SkillId, rank: number, index = 0): number =>
+  (rankValue(id, rank, index) * rowFactor(unit, id)) / 100;
+
+/** A passive's value as a fraction, or 0 if the Unit hasn't learned it. */
+function passiveValue(unit: UnitState, id: SkillId): number {
+  const rank = rankIn(unit, id);
+  return rank > 0 ? rankFraction(unit, id, rank) : 0;
+}
+
+function armourOf(battle: BattleState, unit: UnitState): number {
+  const bar = battle.tick < unit.barUntil ? unit.barArmour : 0;
+  return unit.spec.armour * (1 + passiveValue(unit, 'iron-penance') + bar);
+}
+
+/** Reduces damage by what the target has against its type. Damage over time ignores armour. */
+function reducedDamage(battle: BattleState, target: UnitState, raw: number, type: DamageType, ignoresArmour: boolean): number {
+  const resistance = Math.min(target.spec.resistances[type] ?? 0, RESISTANCE_CAP);
+  const armourFactor = type === 'physical' && !ignoresArmour ? 100 / (100 + armourOf(battle, target)) : 1;
+  return raw * armourFactor * (1 - resistance / 100);
+}
+
+/** Takes damage through any Ward, and reports how it split. */
+function loseHealth(battle: BattleState, target: UnitState, amount: number): { damage: number; absorbed: number } {
+  let absorbed = 0;
+  if (target.ward) {
+    if (battle.tick < target.ward.expiresAt) {
+      absorbed = Math.min(target.ward.amount, amount);
+      target.ward.amount -= absorbed;
+    }
+    if (target.ward.amount <= 0 || battle.tick >= target.ward.expiresAt) target.ward = null;
+  }
+  const damage = amount - absorbed;
+  target.health = Math.max(0, target.health - damage);
+  return { damage, absorbed };
+}
+
+function settleDeath(battle: BattleState, unit: UnitState, events: BattleEvent[]): void {
+  if (isAlive(unit)) return;
+  unit.bleed = null;
+  unit.poison = [];
+  unit.ward = null;
+  events.push({ type: 'death', tick: battle.tick, unitId: unit.spec.id, unitName: unit.spec.name });
+  stepForwardIfFrontEmpty(battle, unit.team);
+}
+
+/** The living teammate who takes a share of damage to this Unit, and how much. */
+function burdenFor(battle: BattleState, target: UnitState): { holder: UnitState; share: number } | null {
+  if (target.row !== 'back') return null;
+  for (const holder of battle.units) {
+    if (holder.team !== target.team || holder === target || !isAlive(holder)) continue;
+    const share = passiveValue(holder, 'shared-burden');
+    if (share > 0) return { holder, share };
+  }
+  return null;
+}
+
+interface Strike {
+  readonly attacker: UnitState;
+  readonly target: UnitState;
+  /** Damage before anything reduces it, critical hit included. */
+  readonly raw: number;
+  readonly damageType: DamageType;
+  readonly crit: boolean;
+  readonly ignoresArmour: boolean;
+  readonly hasMinimum: boolean;
+}
+
+function landStrike(battle: BattleState, strike: Strike, events: BattleEvent[]): void {
+  const { attacker, target, raw, damageType, crit, ignoresArmour, hasMinimum } = strike;
+  const land = (receiver: UnitState, share: number, redirectedFromName: string | null, minimum: number): void => {
+    const reduced = Math.max(minimum, reducedDamage(battle, receiver, raw * share, damageType, ignoresArmour));
+    const { damage, absorbed } = loseHealth(battle, receiver, reduced);
+    events.push({
+      type: 'attack',
+      tick: battle.tick,
+      attackerId: attacker.spec.id,
+      attackerName: attacker.spec.name,
+      targetId: receiver.spec.id,
+      targetName: receiver.spec.name,
+      damage,
+      absorbed,
+      damageType,
+      crit,
+      redirectedFromName,
+    });
+  };
+
+  const burden = burdenFor(battle, target);
+  land(target, 1 - (burden?.share ?? 0), null, hasMinimum ? MIN_HIT_DAMAGE : 0);
+  if (burden) land(burden.holder, burden.share, target.spec.name, 0);
+
+  const poison = attacker.spec.poisonOnHit;
+  if (poison !== undefined && isAlive(target)) addPoisonStack(battle, target, poison, events);
+  settleDeath(battle, target, events);
+  if (burden) settleDeath(battle, burden.holder, events);
+}
+
+function addPoisonStack(battle: BattleState, target: UnitState, damage: number, events: BattleEvent[]): void {
+  const expiresAt = battle.tick + POISON_DURATION;
+  for (const stack of target.poison) stack.expiresAt = expiresAt;
+  if (target.poison.length < POISON_STACK_LIMIT) {
+    target.poison.push({ damage, nextTickAt: battle.tick + POISON_INTERVAL, expiresAt });
+  }
+  events.push({ type: 'effect', tick: battle.tick, effect: 'poison', targetId: target.spec.id, targetName: target.spec.name });
+}
+
+/** Damage over time has no minimum, and only Poison can be shared. */
+function tickDamage(battle: BattleState, target: UnitState, effect: DamageEffect, raw: number, damageType: DamageType, events: BattleEvent[]): void {
+  const land = (receiver: UnitState, share: number, redirectedFromName: string | null): void => {
+    const reduced = reducedDamage(battle, receiver, raw * share, damageType, true);
+    const { damage, absorbed } = loseHealth(battle, receiver, reduced);
+    events.push({
+      type: 'effectDamage',
+      tick: battle.tick,
+      effect,
+      targetId: receiver.spec.id,
+      targetName: receiver.spec.name,
+      damage,
+      absorbed,
+      damageType,
+      redirectedFromName,
+    });
+  };
+  const burden = effect === 'poison' ? burdenFor(battle, target) : null;
+  land(target, 1 - (burden?.share ?? 0), null);
+  if (burden) {
+    land(burden.holder, burden.share, target.spec.name);
+    settleDeath(battle, burden.holder, events);
+  }
+  settleDeath(battle, target, events);
+}
+
+function runEffects(battle: BattleState, unit: UnitState, events: BattleEvent[]): void {
+  const { bleed } = unit;
+  if (bleed && battle.tick >= bleed.nextTickAt) {
+    bleed.ticksLeft--;
+    bleed.nextTickAt += BLEED_INTERVAL;
+    const { perTick } = bleed;
+    if (bleed.ticksLeft <= 0) unit.bleed = null;
+    tickDamage(battle, unit, 'bleed', perTick, 'physical', events);
+  }
+  if (unit.poison.length === 0) return;
+  for (const stack of unit.poison) {
+    if (!isAlive(unit)) return;
+    if (battle.tick < stack.nextTickAt) continue;
+    stack.nextTickAt += POISON_INTERVAL;
+    tickDamage(battle, unit, 'poison', stack.damage, 'poison', events);
+  }
+  if (unit.poison.some((stack) => battle.tick >= stack.expiresAt)) {
+    unit.poison = unit.poison.filter((stack) => battle.tick < stack.expiresAt);
+  }
+}
+
+function reachableEnemies(battle: BattleState, unit: UnitState): UnitState[] {
+  const enemies = livingOn(battle, otherTeam(unit.team));
+  const anyRow = unit.spec.reach === 'ranged' && unit.spec.targeting === 'any';
+  return anyRow ? enemies : enemies.filter((enemy) => enemy.row === 'front');
+}
+
+function pick<T>(battle: BattleState, options: readonly T[]): T | undefined {
+  return options[nextInt(battle.rng, options.length)];
+}
+
+function chooseTarget(battle: BattleState, attacker: UnitState): UnitState | undefined {
+  const barring = livingOn(battle, otherTeam(attacker.team)).filter((enemy) => battle.tick < enemy.barUntil);
+  return pick(battle, barring.length > 0 ? barring : reachableEnemies(battle, attacker));
+}
+
+/** More damage from this Unit if the target is Bleeding, from Open Veins. */
+const openVeinsFactor = (unit: UnitState, target: UnitState): number =>
+  target.bleed ? 1 + passiveValue(unit, 'open-veins') : 1;
+
+const rollCrit = (battle: BattleState, unit: UnitState): boolean =>
+  nextFloat(battle.rng) * 100 < unit.spec.critChance;
+
+function basicAttack(battle: BattleState, unit: UnitState, events: BattleEvent[]): void {
+  const target = chooseTarget(battle, unit);
+  if (!target) return;
+  const crit = rollCrit(battle, unit);
+  const raw = unit.spec.power * openVeinsFactor(unit, target) * (crit ? CRIT_MULTIPLIER : 1);
+  landStrike(battle, { attacker: unit, target, raw, damageType: unit.spec.damageType, crit, ignoresArmour: false, hasMinimum: true }, events);
+}
+
+/** A skill's strength against the Unit's power, from where it stands. */
+const skillAmount = (unit: UnitState, id: SkillId, rank: number, index = 0): number =>
+  unit.spec.power * rankFraction(unit, id, rank, index);
+
+const notBleeding = (battle: BattleState, unit: UnitState): UnitState[] =>
+  reachableEnemies(battle, unit).filter((enemy) => !enemy.bleed);
+const bleeding = (battle: BattleState, unit: UnitState): UnitState[] =>
+  reachableEnemies(battle, unit).filter((enemy) => enemy.bleed);
+
+interface ActiveRule {
+  /** The built-in usefulness condition. */
+  isUseful(battle: BattleState, unit: UnitState): boolean;
+  use(battle: BattleState, unit: UnitState, rank: number, events: BattleEvent[]): void;
+}
+
+const ACTIVE_RULES: Readonly<Record<ActiveSkillId, ActiveRule>> = {
+  'bar-the-way': {
+    isUseful: (battle, unit) =>
+      livingOn(battle, unit.team).some((ally) => ally !== unit && healthShare(ally) < BAR_THE_WAY_BELOW),
+    use(battle, unit, rank) {
+      unit.barUntil = battle.tick + BAR_THE_WAY_DURATION;
+      unit.barArmour = rankFraction(unit, 'bar-the-way', rank);
+    },
+  },
+  'bleeders-cut': {
+    isUseful: (battle, unit) => notBleeding(battle, unit).length > 0,
+    use(battle, unit, rank, events) {
+      const target = pick(battle, notBleeding(battle, unit));
+      if (!target) return;
+      const crit = rollCrit(battle, unit);
+      const raw = skillAmount(unit, 'bleeders-cut', rank) * (crit ? CRIT_MULTIPLIER : 1);
+      const perTick = skillAmount(unit, 'bleeders-cut', rank, 1) / BLEED_TICKS;
+      landStrike(battle, { attacker: unit, target, raw, damageType: 'physical', crit, ignoresArmour: false, hasMinimum: true }, events);
+      if (!isAlive(target)) return;
+      target.bleed = { perTick, ticksLeft: BLEED_TICKS, nextTickAt: battle.tick + BLEED_INTERVAL };
+      events.push({ type: 'effect', tick: battle.tick, effect: 'bleed', targetId: target.spec.id, targetName: target.spec.name });
+    },
+  },
+  'the-long-cut': {
+    isUseful: (battle, unit) => bleeding(battle, unit).length > 0,
+    use(battle, unit, rank, events) {
+      const target = pick(battle, bleeding(battle, unit));
+      if (!target?.bleed) return;
+      const remaining = target.bleed.perTick * target.bleed.ticksLeft;
+      const multiplier = rankFraction(unit, 'the-long-cut', rank);
+      const raw = remaining * multiplier * openVeinsFactor(unit, target);
+      target.bleed = null;
+      landStrike(battle, { attacker: unit, target, raw, damageType: 'physical', crit: false, ignoresArmour: true, hasMinimum: false }, events);
+    },
+  },
+  'mend-by-lamplight': {
+    isUseful: (battle, unit) => livingOn(battle, unit.team).some((ally) => healthShare(ally) < MEND_BELOW),
+    use(battle, unit, rank, events) {
+      const allies = livingOn(battle, unit.team);
+      const target = allies.reduce((lowest, ally) => (healthShare(ally) < healthShare(lowest) ? ally : lowest));
+      const amount = Math.min(skillAmount(unit, 'mend-by-lamplight', rank), target.spec.health - target.health);
+      target.health += amount;
+      events.push({ type: 'heal', tick: battle.tick, targetId: target.spec.id, targetName: target.spec.name, amount });
+    },
+  },
+  'lantern-ward': {
+    isUseful: (battle, unit) =>
+      !livingOn(battle, unit.team).some((ally) => ally.ward && battle.tick < ally.ward.expiresAt),
+    use(battle, unit, rank, events) {
+      const amount = skillAmount(unit, 'lantern-ward', rank);
+      for (const ally of livingOn(battle, unit.team)) {
+        ally.ward = { amount, expiresAt: battle.tick + LANTERN_WARD_DURATION };
+        events.push({ type: 'ward', tick: battle.tick, targetId: ally.spec.id, targetName: ally.spec.name, amount });
+      }
+    },
+  },
+};
+
+function firstAvailableSkill(battle: BattleState, unit: UnitState): LearnedSkill | undefined {
+  return unit.spec.skills?.find(({ id }) => {
+    const skill = SKILLS[id];
+    if (skill.kind !== 'active' || unit.oil < skill.oil) return false;
+    if ((unit.skillReadyAt[id] ?? 0) > battle.tick) return false;
+    if (skill.reach === 'melee' && unit.spec.reach !== 'melee') return false;
+    return ACTIVE_RULES[id as ActiveSkillId].isUseful(battle, unit);
+  });
 }
 
 function act(battle: BattleState, unit: UnitState, events: BattleEvent[]): void {
-  unit.cooldown = unit.spec.actionInterval;
-  const target = chooseTarget(battle, unit);
-  if (!target) return;
-
-  const crit = nextFloat(battle.rng) * 100 < unit.spec.critChance;
-  const damage = hitDamage(unit.spec, target.spec, crit);
-  target.health = Math.max(0, target.health - damage);
-  events.push({
-    type: 'attack',
-    tick: battle.tick,
-    attackerId: unit.spec.id,
-    attackerName: unit.spec.name,
-    targetId: target.spec.id,
-    targetName: target.spec.name,
-    damage,
-    damageType: unit.spec.damageType,
-    crit,
-  });
-  if (isAlive(target)) return;
-  events.push({ type: 'death', tick: battle.tick, unitId: target.spec.id, unitName: target.spec.name });
-  stepForwardIfFrontEmpty(battle, target.team);
+  unit.ticksToAction = unit.spec.actionInterval;
+  const learned = firstAvailableSkill(battle, unit);
+  if (!learned) {
+    basicAttack(battle, unit, events);
+    return;
+  }
+  const skill = SKILLS[learned.id];
+  unit.oil -= skill.oil;
+  if (skill.cooldown > 0) unit.skillReadyAt[skill.id] = battle.tick + skill.cooldown;
+  events.push({ type: 'skill', tick: battle.tick, unitId: unit.spec.id, unitName: unit.spec.name, skillId: skill.id, skillName: skill.name });
+  ACTIVE_RULES[learned.id as ActiveSkillId].use(battle, unit, learned.rank, events);
 }
 
 /** Runs one Tick and reports what happened in it. Does nothing once the Battle is over. */
 export function stepBattle(battle: BattleState): readonly BattleEvent[] {
   if (battle.over) return [];
   battle.tick++;
+  const events: BattleEvent[] = [];
+  const regenerates = battle.tick % OIL_REGEN_INTERVAL === 0;
+
+  for (const unit of battle.units) {
+    if (!isAlive(unit)) continue;
+    runEffects(battle, unit, events);
+    if (regenerates && isAlive(unit)) unit.oil = Math.min(unit.spec.maxOil ?? 0, unit.oil + 1);
+  }
 
   const acting: UnitState[] = [];
   for (const unit of battle.units) {
     if (!isAlive(unit)) continue;
-    unit.cooldown--;
-    if (unit.cooldown <= 0) acting.push(unit);
+    unit.ticksToAction--;
+    if (unit.ticksToAction <= 0) acting.push(unit);
   }
 
-  const events: BattleEvent[] = [];
   // Shuffled so neither Team gets a first strike from its position in the setup.
   for (const unit of shuffled(battle.rng, acting)) {
     if (isAlive(unit)) act(battle, unit, events);

@@ -1,6 +1,6 @@
 # Proof-of-concept demo: implementation plan
 
-**Status: gaps confirmed by the human on 2026-11-05.** Milestone 1 is in [PR #12](https://github.com/t-davey/autoBattler/pull/12), and its tables are confirmed. Milestones 2–6 aren't built. S2, S3, and S4 under [Human stops](#human-stops) still lie ahead, and G21 still needs each milestone's tables confirmed as it starts.
+**Status: gaps confirmed by the human on 2026-11-05.** Milestone 1 is in [PR #12](https://github.com/t-davey/autoBattler/pull/12), and its tables are confirmed. Milestone 2's skill file and tables are confirmed, with [its review](poc-demo-m2-review.md) recording the reasoning and the estimates to compare. Milestone 2 is built and awaiting its PR. Milestones 3–6 aren't built. S3 and S4 under [Human stops](#human-stops) still lie ahead, and G21 still needs each later milestone's tables confirmed as it starts.
 
 The demo tests one thing: is it satisfying to come back to loot, make a build decision, and see that decision beat a Wall? Each milestone is a tracer bullet: one PR that leaves the demo runnable end to end.
 
@@ -55,7 +55,7 @@ The human alone merges each PR.
 
 ### Gaps
 
-The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 extends the approved scope, by the human's choice.
+The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 extends the approved scope, by the human's choice. G23–G28 came from [Milestone 2's review](poc-demo-m2-review.md).
 
 | # | Gap | Confirmed answer | Needed by |
 |---|---|---|---|
@@ -81,6 +81,12 @@ The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 ext
 | G20 | **Saves in Electron.** _Contradicts [ADR 0002](../adr/0002-browser-first-electron-shell.md), which puts saves on disk in Electron, but the approved Milestone 5 brief specifies browser storage and the scope only needs the shell to launch._ | Use `localStorage` everywhere for the demo, behind a small `SaveStore` interface, and leave the ADR unchanged because disk saves remain the plan for release. | M5 |
 | G21 | **New content and numbers.** The human owns content, and `docs/first-playable-skills.md` leaves Class stat rates, crit multipliers, and the XP curve to set. This plan proposes those, plus enemies, the Guardian, item bases, Affixes, Rarity odds, and drop rates. | Use each milestone's tables as written, and confirm them at the start of that milestone. | M1, M2, M3, M4 |
 | G22 | **Build changes during fallback.** The approved rule retries only on a level-up, so a Party that has fallen back ignores a new build until the next level, up to about 30 minutes at level 6. That delays the moment this demo exists to test. _This extends the approved scope._ | Equipping an item or spending a skill point also ends the fallback and clears the count. Other actions don't. | M3, M4 |
+| G23 | **XP from lost and drawn Battles.** "Each Battle's full XP" doesn't say whether a Battle has to be won. | Only won Battles give XP. | M2 |
+| G24 | **Level cap.** The plan doesn't say. | 60, from the design. It won't bind. Points past level 16 sit unspent, since all ranks cost 15 points. | M2 |
+| G25 | **R2's reference builds.** R2 needs them but doesn't set them. | Sin-Eater 2/2/2, Huntsman 2/2/2, Lamplighter 4/0/2, in step order. Only the measurement uses them. | M2 |
+| G26 | **Shared Burden and Poison.** Direct hits alone never reach the back Row at the Guardian, so the skill did nothing there. | It redirects Poison ticks on back-Row Heroes as well as direct hits. This replaces the first wording of the Milestone 2 rule. | M2 |
+| G27 | **Warm Hands in R2.** R2 runs single Battles, so Warm Hands never acts. | R2's "a skill never appears" trigger leaves it out in M2 and M6. M6 judges it by comparing whole Runs with and without it. Until M3, the planning tab says it has no effect yet. | M2, M6 |
+| G28 | **Reapplying Bleed.** Bleeder's Cut only targets enemies that aren't Bleeding, so nothing in the demo can reapply a Bleed. | Keep the rule for later Branches, and drop the test. | M2 |
 
 ## Sim interface
 
@@ -386,7 +392,7 @@ Every enemy has 0% critical chance. A Pack is 1–2 front enemies and 1–2 back
 
 **Issue:** [#6](https://github.com/t-davey/autoBattler/issues/6)
 
-**Needs:** G5, G6, G11, G15, G17, G21.
+**Needs:** G5, G6, G11, G15, G17, G21, G23–G28.
 
 **Order within the milestone**
 
@@ -418,7 +424,7 @@ Every enemy has 0% critical chance. A Pack is 1–2 front enemies and 1–2 back
 | Bloodletting | 1 | Bleeder's Cut | Active | Front | Melee | 10 | | 80% → 110% of power as physical, plus Bleed for 60% → 100% of power over 60 Ticks | A reachable enemy isn't Bleeding |
 | Bloodletting | 2 | Open Veins | Passive | Front | | | | +10% → +30% damage to Bleeding enemies | |
 | Bloodletting | 3 | The Long Cut | Active | Front | Melee | 20 | 150 | Ends a target's Bleed, dealing all its remaining damage × 150% → 200% | A reachable enemy is Bleeding |
-| Hearth | 1 | Mend by Lamplight | Active | Back | Spell | 12 | 60 | Heals the lowest-health-percentage Hero for 120% → 200% of power | A Hero is below 70% health |
+| Hearth | 1 | Mend by Lamplight | Active | Back | Spell | 12 | 60 | Heals the lowest-health-percentage Hero for 150% → 170% of power (120% → 200% until [R2 tuning](poc-demo-m2-review.md#r2-result)) | A Hero is below 70% health |
 | Hearth | 2 | Warm Hands | Passive | Either | | | | The Party recovers 20% → 60% more health between Rooms; only the highest in the Party counts | |
 | Hearth | 3 | Lantern Ward | Active | Back | Spell | 20 | 250 | Wards every Hero for 60% → 120% of power for 80 Ticks | No Hero holds a Ward |
 
@@ -435,7 +441,7 @@ Every enemy has 0% critical chance. A Pack is 1–2 front enemies and 1–2 back
 - **Points:** step 2 needs 2 points spent in the Branch and step 3 needs 4 (G6). A skill has 5 ranks.
 - **Respec:** free, at any time. It refunds every point and removes unlearned skills from the order.
 - **Build changes:** G11.
-- **Shared Burden:** redirects direct hits only, not Poison or Bleed damage. Record this in `docs/demo-skills.md` as an adaptation.
+- **Shared Burden:** redirects direct hits and Poison ticks on back-Row Heroes (G26).
 - **Temporary between Battles until M3:** health fully restored.
 
 **Class stats** (without gear; the M1 Units' power includes a starter weapon of +4, +3, and +3)
@@ -459,14 +465,16 @@ Interval is `round(30 × 100 / speed)`. Until M4 adds items, the starter weapon'
 - `Bleeder's Cut doesn't fire when every reachable enemy is Bleeding`
 - `The Long Cut ends a Bleed and deals its remaining damage multiplied`
 - `Bleed ignores armour`
-- `reapplying Bleed replaces it`
 - `Poison stops at 5 stacks and a new stack refreshes them all`
 - `poison resistance reduces Poison damage`
 - `a Ward absorbs damage before health`
 - `Bar the Way forces single-target enemy attacks onto the Hero`
-- `Shared Burden redirects part of the damage to back-Row Heroes`
+- `Shared Burden redirects part of a direct hit on a back-Row Hero`
+- `Shared Burden redirects part of a Poison tick on a back-Row Hero`
+- `only won Battles give XP`
 - `a skill used from the wrong Row has 60% of its effects`
 - `a Hero gains a level and a skill point at the XP threshold`
+- `learning an active skill adds it to the end of the order`
 - `spending a point is refused below a step's requirement`, `with no points`, and `above rank 5`
 - `respec refunds every point and clears unlearned skills from the order`
 - `setSkillOrder is refused unless it lists exactly the learned active skills`
@@ -482,6 +490,15 @@ Interval is `round(30 × 100 / speed)`. Until M4 adds items, the starter weapon'
 **`CONTEXT.md`:** add **Skill point**, **Skill rank** (Row's _Avoid_ list still rules out "rank" for Rows), **Step**, **Skill order**, **Usefulness condition**, **Cooldown**, **Respec**, **Bleed**, **Poison**, **Ward**.
 
 **Acceptance:** the human approved `docs/demo-skills.md`. `npm run check` passes. `npm run balance -- builds` prints the [R2](#r2-9-skills-leave-no-real-build-decision) table and the threshold passes, or S3 has settled it. Renaming, spending a point, reordering, and respeccing have each been seen working in the running app.
+
+**As built, for later milestones:**
+
+- `UnitSpec`'s `oil`, `maxOil`, `skills`, and `poisonOnHit` are optional, so enemies and stand-ins don't need them.
+- `attack` events report `damage` as health lost, with `absorbed` beside it, and a new `effectDamage` event covers Bleed and Poison ticks. M5's main damage type can fold over both. Shared Burden adds a second event, with `redirectedFromName` set.
+- On a shared hit, the 1-damage minimum applies only to the original target's share.
+- A Hero's Oil carries from a fallen Hero's Unit too. M3 needs to settle this with G7 if it matters.
+- `Warm Hands` is learnable but does nothing until M3, and its summary says so. M3 removes that sentence.
+- `scripts/balance.mjs` calibrates its stand-in enemies by bisection, so the reference Party stays near 50% as numbers change.
 
 ## Milestone 3: Floors and the Wall
 
@@ -787,7 +804,7 @@ Only 5 of the 9 skills are active, and the Sin-Eater has just 1, so skill order 
 
 - A Class has fewer than 2 viable builds whose highest-ranked skills differ.
 - Every Class's best build is the same in both Battles.
-- A skill never appears with a rank in any viable build.
+- A skill never appears with a rank in any viable build. Warm Hands doesn't count (G27).
 
 **Fallback, in order:**
 

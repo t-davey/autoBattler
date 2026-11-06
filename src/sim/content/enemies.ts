@@ -6,11 +6,14 @@ type EnemyTemplate = Omit<UnitSpec, 'id' | 'row' | 'critChance'>;
 const melee = { reach: 'melee', targeting: 'frontFirst' } as const;
 const ranged = { reach: 'ranged', targeting: 'frontFirst' } as const;
 
+/** The damage of the Poison stack that fungal growth adds with each attack. */
+const FUNGAL_STACK = 1;
+
 const SODDEN_THRALL: EnemyTemplate = { name: 'Sodden Thrall', ...melee, health: 90, power: 3, actionInterval: 30, damageType: 'physical', armour: 5, resistances: {} };
 const TALLOW_WIGHT: EnemyTemplate = { name: 'Tallow Wight', ...melee, health: 130, power: 4, actionInterval: 35, damageType: 'physical', armour: 15, resistances: { physical: 10 } };
 const BONE_CHANTER: EnemyTemplate = { name: 'Bone Chanter', ...ranged, targeting: 'any', health: 60, power: 3, actionInterval: 30, damageType: 'physical', armour: 0, resistances: {} };
-const MIRE_BLOAT: EnemyTemplate = { name: 'Mire Bloat', ...melee, health: 100, power: 2, actionInterval: 30, damageType: 'poison', armour: 5, resistances: { physical: 20 } };
-const SPORELING: EnemyTemplate = { name: 'Sporeling', ...ranged, health: 55, power: 2, actionInterval: 30, damageType: 'poison', armour: 0, resistances: { physical: 20 } };
+const MIRE_BLOAT: EnemyTemplate = { name: 'Mire Bloat', ...melee, health: 100, power: 2, actionInterval: 30, damageType: 'poison', poisonOnHit: FUNGAL_STACK, armour: 5, resistances: { physical: 20 } };
+const SPORELING: EnemyTemplate = { name: 'Sporeling', ...ranged, health: 55, power: 2, actionInterval: 30, damageType: 'poison', poisonOnHit: FUNGAL_STACK, armour: 0, resistances: { physical: 20 } };
 
 interface Family {
   readonly front: readonly EnemyTemplate[];

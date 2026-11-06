@@ -1,19 +1,42 @@
+import { useState } from 'react';
 import { BattlePanel } from './BattlePanel';
 import { LiveLog } from './LiveLog';
+import { PlanningTab } from './PlanningTab';
 import type { Store } from './store';
 import { useGame } from './useGame';
 
+type Tab = 'dashboard' | 'planning';
+
 export function App({ store }: { store: Store }) {
   const { view, log } = useGame(store);
+  const [tab, setTab] = useState<Tab>('dashboard');
+  const unspent = view.heroes.reduce((total, hero) => total + hero.unspentPoints, 0);
+
+  const tabButton = (id: Tab, label: string) => (
+    <button type="button" role="tab" aria-selected={tab === id} className="tab" onClick={() => setTab(id)}>
+      {label}
+    </button>
+  );
+
   return (
     <>
       <header className="app-header">
         <h1>autoBattler</h1>
+        <nav className="tabs" role="tablist" aria-label="Screens">
+          {tabButton('dashboard', 'Dashboard')}
+          {tabButton('planning', unspent > 0 ? `Planning (${unspent} unspent)` : 'Planning')}
+        </nav>
       </header>
-      <main className="dashboard">
-        <BattlePanel battle={view.battle} />
-        <LiveLog lines={log} />
-      </main>
+      {tab === 'dashboard' ? (
+        <main className="dashboard">
+          <BattlePanel battle={view.battle} />
+          <LiveLog lines={log} />
+        </main>
+      ) : (
+        <main className="planning">
+          <PlanningTab heroes={view.heroes} dispatch={store.dispatch} />
+        </main>
+      )}
     </>
   );
 }
