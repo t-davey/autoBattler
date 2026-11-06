@@ -15,26 +15,36 @@ export function describeDuration(ms: number): string {
 
 const MOSTLY_ABOVE = 0.5;
 
-const mostly = ({ mainDamageType, mainDamageShare }: AwaySetback): string | null => (mainDamageShare > MOSTLY_ABOVE ? mainDamageType : null);
+/** The Damage type that did over half the damage, if one did. */
+export const mainDamageOf = ({ mainDamageType, mainDamageShare }: AwaySetback): string | null => (mainDamageShare > MOSTLY_ABOVE ? mainDamageType : null);
 
 /** "The Mouldering Warden" and "Sodden Thrall" both read as "the ..." mid-sentence. */
 const enemyPhrase = (name: string): string => `the ${name.replace(/^The /, '')}`;
 
-/** One line for each kind of Setback at each enemy, such as "2 Wipes at the Mouldering Warden, mostly poison damage". */
-export function describeSetbacks(setbacks: readonly AwaySetback[]): readonly string[] {
+export interface SetbackGroup {
+  readonly setback: AwaySetback;
+  readonly count: number;
+  /** Such as "2 Wipes at the Mouldering Warden, mostly poison damage". */
+  readonly text: string;
+}
+
+/** One group for each kind of Setback at each enemy, in the order they first happened. */
+export function groupSetbacks(setbacks: readonly AwaySetback[]): readonly SetbackGroup[] {
   const groups = new Map<string, { setback: AwaySetback; count: number }>();
   for (const setback of setbacks) {
-    const key = JSON.stringify([setback.kind, setback.enemyName, mostly(setback)]);
+    const key = JSON.stringify([setback.kind, setback.enemyName, mainDamageOf(setback)]);
     const group = groups.get(key);
     if (group) group.count++;
     else groups.set(key, { setback, count: 1 });
   }
   return [...groups.values()].map(({ setback, count }) => {
-    const main = mostly(setback);
+    const main = mainDamageOf(setback);
     const kind = plural(count, setback.kind === 'wipe' ? 'Wipe' : 'draw');
-    return `${kind} at ${enemyPhrase(setback.enemyName)}${main ? `, mostly ${main} damage` : ''}`;
+    return { setback, count, text: `${kind} at ${enemyPhrase(setback.enemyName)}${main ? `, mostly ${main} damage` : ''}` };
   });
 }
+
+export const describeSetbacks = (setbacks: readonly AwaySetback[]): readonly string[] => groupSetbacks(setbacks).map((group) => group.text);
 
 /** One report for two absences in a row, so an unread one isn't lost. */
 export function mergeAwayReports(earlier: AwayReport, later: AwayReport): AwayReport {

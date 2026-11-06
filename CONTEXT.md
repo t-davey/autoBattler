@@ -171,7 +171,7 @@ A Guardian that stops a Party until it grows stronger.
 _Avoid_: Gate, blocker
 
 **Catch-up**:
-Running a player's absence, or the time a check-in paused, through the same rules as live play, up to 12 hours, and reporting it as an Away Report.
+Running a player's absence, or the time a check-in paused, through the same rules as live play, up to 12 hours, and reporting it in an Away Report.
 _Avoid_: Offline progress, fast-forward
 
 **Party time**:

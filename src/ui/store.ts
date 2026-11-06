@@ -37,7 +37,7 @@ export interface Snapshot {
   readonly stash: readonly ItemView[];
   /** 0-1 while catch-up runs, else null. */
   readonly catchUpProgress: number | null;
-  /** Held in memory only, until the player dismisses it. A further absence adds to it. */
+  /** Held in memory only. Set means a check-in is under way, until the player sends the Party back. A further absence adds to it. */
   readonly awayReport: AwayReport | null;
   /** Something the player should know about their save. */
   readonly saveNotice: string | null;
@@ -60,8 +60,13 @@ export interface Store {
   dispatch: Dispatch;
   /** A return from absence: runs elapsedMs in chunks, then publishes the Away Report. */
   catchUp(elapsedMs: number): void;
+  /** Runs time a check-in paused. Its results wait for the next Away Report, so no new check-in opens. */
+  catchUpPausedTime(elapsedMs: number): void;
   isCatchingUp(): boolean;
-  dismissAwayReport(): void;
+  /** Whether an Away Report is up, which pauses the Party. */
+  inCheckIn(): boolean;
+  /** Ends the check-in, and sends the Party out if it's in Town. */
+  sendPartyBack(): void;
   dismissSaveNotice(): void;
   /** Writes the state, as of the time it was last advanced to. Does nothing during catch-up, which has already banked its time. */
   save(savedAt: number): void;
@@ -90,6 +95,8 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
   let snapshot: Snapshot = { view: viewGame(game), log: [], stash: viewStash(game), catchUpProgress: null, awayReport: null, saveNotice, saveWarning: null };
   let nextLineId = 0;
   let savingStopped = false;
+  /** Results of a check-in's paused time, waiting for the next Away Report. */
+  let heldReport: AwayReport | null = null;
 
   /** Lines beyond the cap never reach the log, so their text isn't built. Ids still count them. */
   const withLines = (log: readonly LogLine[], events: readonly GameEvent[]): readonly LogLine[] => {
@@ -119,12 +126,37 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
     for (const listener of settledListeners) listener();
   };
 
+  const merged = (earlier: AwayReport | null, later: AwayReport): AwayReport => (earlier ? mergeAwayReports(earlier, later) : later);
+
   /** Catch-up reports nothing to the Live Log but this one line. */
-  const finishCatchUp = (awayReport: AwayReport): void => {
+  const finishCatchUp = (report: AwayReport, holdReport: boolean): void => {
     const view = viewGame(game);
-    const line: LogLine = { id: nextLineId++, text: `${describeDuration(awayReport.appliedMs)} passed. See the Away Report.`, rarity: null };
-    replace({ view, stash: stashFor(view), log: keepNewest([...snapshot.log, line]), catchUpProgress: null, awayReport: snapshot.awayReport ? mergeAwayReports(snapshot.awayReport, awayReport) : awayReport });
+    const passed = describeDuration(report.appliedMs);
+    const line: LogLine = { id: nextLineId++, text: holdReport ? `${passed} passed during the check-in.` : `${passed} passed. See the Away Report.`, rarity: null };
+    const earlier = snapshot.awayReport ?? heldReport;
+    heldReport = holdReport ? merged(earlier, report) : null;
+    const awayReport = holdReport ? snapshot.awayReport : merged(earlier, report);
+    replace({ view, stash: stashFor(view), log: keepNewest([...snapshot.log, line]), catchUpProgress: null, awayReport });
     settled();
+  };
+
+  const runCatchUp = (elapsedMs: number, holdReport: boolean): void => {
+    if (catchingUp()) return;
+    const running = beginCatchUp(game, elapsedMs);
+    const work = (): void => {
+      const started = workClock();
+      do {
+        const report = continueCatchUp(game, running, CATCH_UP_CHUNK_TICKS);
+        if (report) {
+          finishCatchUp(report, holdReport);
+          return;
+        }
+      } while (workClock() - started < CATCH_UP_WORK_MS);
+      replace({ catchUpProgress: 1 - running.ticksLeft / running.ticksTotal });
+      setTimeout(work, 0);
+    };
+    replace({ catchUpProgress: 0 });
+    setTimeout(work, 0);
   };
 
   return {
@@ -152,26 +184,20 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
       return result;
     },
     catchUp(elapsedMs) {
-      if (catchingUp()) return;
-      const running = beginCatchUp(game, elapsedMs);
-      const work = (): void => {
-        const started = workClock();
-        do {
-          const report = continueCatchUp(game, running, CATCH_UP_CHUNK_TICKS);
-          if (report) {
-            finishCatchUp(report);
-            return;
-          }
-        } while (workClock() - started < CATCH_UP_WORK_MS);
-        replace({ catchUpProgress: 1 - running.ticksLeft / running.ticksTotal });
-        setTimeout(work, 0);
-      };
-      replace({ catchUpProgress: 0 });
-      setTimeout(work, 0);
+      runCatchUp(elapsedMs, false);
+    },
+    catchUpPausedTime(elapsedMs) {
+      runCatchUp(elapsedMs, true);
     },
     isCatchingUp: catchingUp,
-    dismissAwayReport() {
+    inCheckIn: () => snapshot.awayReport !== null,
+    sendPartyBack() {
+      if (catchingUp()) return;
+      const events: GameEvent[] = [];
+      if (snapshot.view.phase === 'town') applyAction(game, { type: 'sendParty' }, (event) => events.push(event));
+      publish(viewGame(game), events);
       replace({ awayReport: null });
+      settled();
     },
     dismissSaveNotice() {
       replace({ saveNotice: null });

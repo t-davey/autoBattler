@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { AwayReportPanel } from './AwayReportPanel';
 import { BattlePanel } from './BattlePanel';
+import { CheckIn } from './CheckIn';
 import { DevTools } from './DevTools';
 import { FloorMap } from './FloorMap';
 import { LiveLog } from './LiveLog';
@@ -16,6 +16,10 @@ export function App({ store }: { store: Store }) {
   const { view, log, stash, catchUpProgress, awayReport, saveNotice, saveWarning } = useGame(store);
   const [tab, setTab] = useState<Tab>('dashboard');
   const unspent = view.heroes.reduce((total, hero) => total + hero.unspentPoints, 0);
+  const sendBack = () => {
+    store.sendPartyBack();
+    setTab('dashboard');
+  };
 
   const tabButton = (id: Tab, label: string) => (
     <button type="button" role="tab" aria-selected={tab === id} className="tab" onClick={() => setTab(id)}>
@@ -28,11 +32,13 @@ export function App({ store }: { store: Store }) {
       <div className="app-body" inert={catchUpProgress !== null}>
         <header className="app-header">
           <h1>autoBattler</h1>
-          <nav className="tabs" role="tablist" aria-label="Screens">
-            {tabButton('dashboard', 'Dashboard')}
-            {tabButton('planning', unspent > 0 ? `Planning (${unspent} unspent)` : 'Planning')}
-            {tabButton('stash', `Stash (${stash.length})`)}
-          </nav>
+          {!awayReport && (
+            <nav className="tabs" role="tablist" aria-label="Screens">
+              {tabButton('dashboard', 'Dashboard')}
+              {tabButton('planning', unspent > 0 ? `Planning (${unspent} unspent)` : 'Planning')}
+              {tabButton('stash', `Stash (${stash.length})`)}
+            </nav>
+          )}
           {import.meta.env.DEV ? <DevTools store={store} /> : null}
         </header>
         {saveWarning && <p className="save-banner" role="alert">{saveWarning}</p>}
@@ -41,16 +47,8 @@ export function App({ store }: { store: Store }) {
             {saveNotice} <button type="button" onClick={store.dismissSaveNotice}>Dismiss</button>
           </p>
         )}
-        {awayReport && (
-          <AwayReportPanel
-            report={awayReport}
-            heroes={view.heroes}
-            onDismiss={store.dismissAwayReport}
-            onOpenStash={() => setTab('stash')}
-            onOpenPlanning={() => setTab('planning')}
-          />
-        )}
-        {tab === 'dashboard' && (
+        {awayReport && <CheckIn report={awayReport} view={view} stash={stash} dispatch={store.dispatch} onSendBack={sendBack} />}
+        {!awayReport && tab === 'dashboard' && (
           <main className="dashboard">
             <div className="dashboard-main">
               {view.phase === 'town' ? (
@@ -65,12 +63,12 @@ export function App({ store }: { store: Store }) {
             <LiveLog lines={log} />
           </main>
         )}
-        {tab === 'planning' && (
+        {!awayReport && tab === 'planning' && (
           <main className="planning">
             <PlanningTab heroes={view.heroes} dispatch={store.dispatch} />
           </main>
         )}
-        {tab === 'stash' && <StashTab stash={stash} heroes={view.heroes} dispatch={store.dispatch} />}
+        {!awayReport && tab === 'stash' && <StashTab stash={stash} heroes={view.heroes} dispatch={store.dispatch} />}
       </div>
       {catchUpProgress !== null && (
         <div className="catch-up" role="status">

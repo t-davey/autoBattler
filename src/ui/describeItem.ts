@@ -1,4 +1,4 @@
-import type { HeroStats, ItemStat, ItemStats, ItemView, Slot } from '../sim';
+import type { HeroStats, HeroView, ItemStat, ItemStats, ItemView, Slot } from '../sim';
 import { seconds } from './describeHero';
 
 export const SLOT_TEXT: Readonly<Record<Slot, string>> = { weapon: 'Weapon', body: 'Body', trinket: 'Trinket' };
@@ -22,6 +22,23 @@ export function itemStatsText(stats: ItemStats): string {
     .map((stat) => `+${stats[stat]}${PERCENT_STATS.has(stat) ? '%' : ''} ${STAT_TEXT[stat]}`);
   return parts.length > 0 ? parts.join(', ') : 'No stats';
 }
+
+/** What equipping an item would change one stat by on this Hero, against what the Slot holds now. */
+export const statChange = (item: ItemView, hero: HeroView, stat: ItemStat): number => item.stats[stat] - (hero.equipment[item.slot]?.stats[stat] ?? 0);
+
+/** The stats an item would change for any of these Heroes. */
+export const changedStats = (item: ItemView, heroes: readonly HeroView[]): readonly ItemStat[] =>
+  (Object.keys(STAT_TEXT) as ItemStat[]).filter((stat) => heroes.some((hero) => statChange(item, hero, stat) !== 0));
+
+/** A stat change, such as "+24%" or "-4". */
+export function formatChange(stat: ItemStat, change: number): string {
+  if (change === 0) return '0';
+  return `${change > 0 ? '+' : ''}${change}${PERCENT_STATS.has(stat) ? '%' : ''}`;
+}
+
+/** Whether a ranged weapon would stop a skill this Hero has learned. */
+export const losesMeleeSkills = (item: ItemView, hero: HeroView): boolean =>
+  item.reach === 'ranged' && hero.skills.some((skill) => skill.rank > 0 && skill.reach === 'melee');
 
 /** An item's fixed facts: its Slot, its Reach if it is a weapon, and its level requirement. */
 export function itemFacts(item: ItemView): string {
