@@ -12,6 +12,8 @@ function UnitEffects({ unit }: { unit: UnitView }) {
 
 function UnitCard({ unit }: { unit: UnitView }) {
   const health = Math.ceil(unit.health);
+  // Floor scale can leave a long fraction here, such as 206.99999999999997.
+  const maxHealth = Math.ceil(unit.maxHealth);
   const fallen = unit.health <= 0;
   return (
     <li className={fallen ? 'unit unit-fallen' : 'unit'}>
@@ -21,12 +23,12 @@ function UnitCard({ unit }: { unit: UnitView }) {
         role="progressbar"
         aria-label={`${unit.name} health`}
         aria-valuemin={0}
-        aria-valuemax={unit.maxHealth}
+        aria-valuemax={maxHealth}
         aria-valuenow={health}
       >
         <div className="health-fill" style={{ width: `${(unit.health / unit.maxHealth) * 100}%` }} />
       </div>
-      <span className="unit-health">{fallen ? 'Fallen' : `${health} / ${unit.maxHealth}`}</span>
+      <span className="unit-health">{fallen ? 'Fallen' : `${health} / ${maxHealth}`}</span>
       {unit.maxOil > 0 && (
         <div
           className="oil-bar"

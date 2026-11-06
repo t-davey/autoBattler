@@ -252,7 +252,7 @@ describe('between Battles', () => {
   });
 
   it('Oil carries out of a Battle, with 30 more on leaving the Room, up to the maximum', () => {
-    const started = createGame({ seed: 1 });
+    const started = atLevel(20);
     stepUntil(started, (event) => event.type === 'battleStarted');
     const saved = JSON.parse(serializeGame(started));
     saved.game.battle.units[1].oil = 10;

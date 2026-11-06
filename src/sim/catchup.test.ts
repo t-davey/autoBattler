@@ -223,7 +223,7 @@ describe('the Away Report', () => {
   });
 
   it('the Away Report lists a draw as a draw, with its main damage type', () => {
-    const report = catchUp(newGame(1, { ...atGuardian, heroLevel: 40, battleTicks: 200 }), 30_000);
+    const report = catchUp(newGame(1, { ...atGuardian, heroLevel: 40, battleTicks: 100 }), 30_000);
     const [first] = report.setbacks;
     expect(first).toMatchObject({ kind: 'draw', floor: 3, enemyName: 'The Mouldering Warden', mainDamageType: 'poison' });
     expect(first!.mainDamageShare).toBeGreaterThan(0.5);

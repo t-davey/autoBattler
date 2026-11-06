@@ -12,8 +12,8 @@ import './style.css';
 const root = document.querySelector<HTMLElement>('#app');
 if (!root) throw new Error('#app element missing from index.html');
 
-/** The Seed of every new game. M6 chooses it. */
-const DEMO_SEED = 1;
+/** The Seed of every new game. `npm run balance -- demo-seed` finds Seeds that play the demo script. */
+const DEMO_SEED = 8;
 
 // Started outside React, so effects and Strict Mode can't start a second loop.
 // A save wins over ?seed= and the rest, which take effect after "Start over".

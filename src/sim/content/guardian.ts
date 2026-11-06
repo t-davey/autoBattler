@@ -4,7 +4,7 @@ import type { UnitSpec } from '../battle';
 export const MOULDERING_WARDEN: UnitSpec = {
   id: 'guardian',
   name: 'The Mouldering Warden',
-  health: 1_200,
+  health: 1_100,
   power: 0,
   actionInterval: 0,
   row: 'front',

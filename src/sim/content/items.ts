@@ -62,9 +62,9 @@ export const AFFIXES: readonly AffixDefinition[] = [
 
 /** Percentages of common and magic. The rest is rare. */
 export const RARITY_ODDS: Readonly<Record<FloorNumber, { readonly common: number; readonly magic: number }>> = {
-  1: { common: 80, magic: 18 },
-  2: { common: 72, magic: 23 },
-  3: { common: 62, magic: 28 },
+  1: { common: 78, magic: 19 },
+  2: { common: 70, magic: 23 },
+  3: { common: 60, magic: 28 },
 };
 
 export const AFFIX_COUNTS: Readonly<Record<Rarity, { readonly min: number; readonly max: number }>> = {
