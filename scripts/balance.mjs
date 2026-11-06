@@ -1,6 +1,6 @@
 // Headless balance measurements. `builds` measures risk R2 and `drops` measures risk R3, both in
 // docs/plans/poc-demo/risks.md. `wall` measures the first Wall's targets and `demo-seed` finds Seeds that play the
-// demo script, from the demo plan's Milestone 6. Each exits non-zero if a trigger trips, a target misses, or none is found.
+// demo script. docs/plans/poc-demo-results.md records them. Each exits non-zero if a trigger trips, a target misses, or none is found.
 import { createServer } from 'vite';
 
 const SEEDS = 200;

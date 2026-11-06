@@ -1,4 +1,4 @@
-# Milestone 2 review: what M6 still needs
+# Milestone 2 review
 
 The estimates, the R2 result, and the Watch list left by stops S1 and S2 of Milestone 2, settled by the human on 2026-11-05. [docs/demo-skills.md](../demo-skills.md) holds the rules, and [the gaps](poc-demo/gaps.md) hold the rulings (G23–G28). The [full review at 1af2dc0](https://github.com/t-davey/autoBattler/blob/1af2dc0b1d99a3928f209195bccbbca7f12b4a3c/docs/plans/poc-demo-m2-review.md) has everything cut from here, including the questions asked and the corrections to the first draft.
 

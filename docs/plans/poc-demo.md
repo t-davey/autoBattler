@@ -2,7 +2,7 @@
 
 The demo tests one thing: is it satisfying to come back to loot, make a build decision, and see that decision beat a Wall? Each milestone is a tracer bullet: one PR that leaves the demo runnable end to end.
 
-**Status: gaps confirmed by the human on 2026-11-05.** S4 under [Human stops](#human-stops) still lies ahead.
+**Status: built.** Every milestone is done, and the human gave the S4 verdict on 2026-11-06: see [the results](poc-demo-results.md).
 
 | Milestone | State |
 |---|---|
@@ -11,15 +11,17 @@ The demo tests one thing: is it satisfying to come back to loot, make a build de
 | M3: Floors and the Wall | Merged in [PR #16](https://github.com/t-davey/autoBattler/pull/16) |
 | M4: Loot and gear | Merged in [PR #17](https://github.com/t-davey/autoBattler/pull/17) |
 | M5: Catch-up and Away Report | Merged in [PR #18](https://github.com/t-davey/autoBattler/pull/18) |
-| M6: Tuning and demo run | Tuned and rehearsed, waiting on S4: [m6-tuning-and-demo-run.md](poc-demo/m6-tuning-and-demo-run.md), [results](poc-demo-results.md) |
+| M6: Tuning and demo run | Merged in PR_LINK, with [results](poc-demo-results.md) |
 
 ## How to use this plan
 
-M6 is the last milestone, and every number is a starting value for it to tune. Read this file, [M6's file](poc-demo/m6-tuning-and-demo-run.md), [as-built.md](poc-demo/as-built.md), [the M2 review](poc-demo-m2-review.md), whose Watch list names M6 work, and the [ADR](../adr/) M6's **ADRs** line names, then reach further when one of these applies:
+The plan is finished, and it stays as the record of what the demo is. Reach for these when one applies:
 
-- **[gaps.md](poc-demo/gaps.md):** the rulings M6's **Needs** line names, or any settled answer that comes up again.
+- **[results](poc-demo-results.md):** the tuned numbers and what they showed.
+- **[as-built.md](poc-demo/as-built.md):** what each milestone left behind.
+- **[gaps.md](poc-demo/gaps.md):** any settled answer that comes up again.
 - **[sim-interface.md](poc-demo/sim-interface.md):** Tick lengths, or which exports each step of the demo script uses.
-- **[risks.md](poc-demo/risks.md):** M6 names a risk, or a threshold trips.
+- **[risks.md](poc-demo/risks.md):** a rule change could trip a threshold or break the demo Seed.
 
 ## Approved scope
 

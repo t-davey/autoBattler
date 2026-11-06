@@ -1,6 +1,6 @@
 # Demo results
 
-The balance tables and rehearsal record for [Milestone 6](poc-demo/m6-tuning-and-demo-run.md), measured on 2026-11-06. **The S4 verdict is still the human's:** see [S4](#s4-the-humans-verdict).
+The balance tables and rehearsal record for [Milestone 6](https://github.com/t-davey/autoBattler/blob/8b9377cc055dac40c25c625679e2bd48c6a61257/docs/plans/poc-demo/m6-tuning-and-demo-run.md), measured on 2026-11-06.
 
 ## Targets
 
@@ -65,7 +65,7 @@ Poison gear and points together beat the Wall most reliably, and each alone fall
 
 No target misses and no risk trips, and none of these is changed here, since each is a design question or a Watch list item. **Finding 1 bears directly on the demo's question.**
 
-1. **Routine play also beats the Wall.** `npm run balance -- drops`, which spends points as they come in step order and equips plain upgrades with no eye on poison, relights the Lamp on 200 of 200 Seeds, median 58 minutes. A one-time spend at minute 60 on 5/1/0 builds kills in about half of Seeds with no gear at all. So the Wall rewards a player who keeps tending, whichever choices they make, and the 81.5-point gap in the targets measures not gearing up against gearing up, for a player who does nothing for an hour. Whether that's a real decision is the S4 question. Raising Guardian health would make it harder, at the cost of the Answer's target.
+1. **Routine play also beats the Wall.** `npm run balance -- drops`, which spends points as they come in step order and equips plain upgrades with no eye on poison, relights the Lamp on 200 of 200 Seeds, median 58 minutes. A one-time spend at minute 60 on 5/1/0 builds kills in about half of Seeds with no gear at all. So the Wall rewards a player who keeps tending, whichever choices they make, and the 81.5-point gap in the targets measures not gearing up against gearing up, for a player who does nothing for an hour. Raising Guardian health would make it harder, at the cost of the Answer's target.
 2. **Bulwark points don't help overall.** A Sin-Eater who spends nothing does better than the reference build, 93% against 85%. Against the Warden alone, its builds run from 66% to 86% and Shared Burden is what helps, so the likely cost is the actions Bar the Way uses. The [Watch list](poc-demo-m2-review.md#watch-list) calls this a design question for S3.
 3. **The Long Cut lowers the kill rate.** Skipping it raises the Answer from 85% to 100%. The likely reason, not measured: it fires as soon as a target is Bleeding, so it ends a nearly full Bleed, along with Open Veins' bonus, and spends Oil and an action doing so.
 4. **Warm Hands shows no effect on the Wall**, as G27 asked: 86% at 2/2/2, 85% at 4/0/2, with the same Wipes. This is a weak test: the 2 builds also differ in Mend and Lantern Ward ranks, which could offset it, and it only spends at minute 60.
@@ -116,4 +116,4 @@ The first 5 steps ran twice, with the same reports both times. Step 4 skipped ti
 
 ## S4: the human's verdict
 
-**Not given yet.** Does the demo answer its question: is it satisfying to come back to loot, make a build decision, and see that decision beat a Wall?
+**Yes**, from the human on 2026-11-06: the demo answers its question of whether it is satisfying to come back to loot, make a build decision, and see that decision beat a Wall.
