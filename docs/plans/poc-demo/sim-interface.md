@@ -1,6 +1,6 @@
 # Sim interface
 
-The contract for what M5 adds. [`src/sim/index.ts`](../../../src/sim/index.ts) holds what M1–M4 built.
+The numbers and links behind the sim's interface. [`src/sim/index.ts`](../../../src/sim/index.ts) holds the interface itself.
 
 ## Tick length: 100 ms
 
@@ -17,69 +17,9 @@ The contract for what M5 adds. [`src/sim/index.ts`](../../../src/sim/index.ts) h
 
 100 ms keeps Room timing inside the design's 25–35 seconds, turns seconds into Ticks by multiplying by 10, and gives speed about 3% resolution. **Measured** on the human's machine on 2026-11-05: the tracer `simulateBattle` ran 432,000 Ticks with 7 Units and 100,800 Battle Log entries in 67–81 ms under Node. That is a floor, since it has none of the real rules. [R1](risks.md#r1-12-hours-of-catch-up-blocks-the-ui) tracks the real cost.
 
-## What later milestones add to `src/sim/index.ts`
+## The Game
 
 `Game` is plain JSON-safe data that the sim mutates in place, because copying it every Tick would make 432,000 Ticks too slow. The UI never reads inside it: the type is branded, and all reads go through view functions, which return fresh immutable objects.
-
-```ts
-// ---- Catch-up (M5) ----
-export interface CatchUp { ticksLeft: number; readonly ticksTotal: number; /* plain-data tally; continueCatchUp mutates it */ }
-/** Caps elapsedMs at CATCH_UP_CAP_MS and banks it. Runs nothing yet. */
-export function beginCatchUp(game: Game, elapsedMs: number): CatchUp;
-/** Runs up to maxTicks. Returns the Away Report once ticksLeft reaches 0, else null. */
-export function continueCatchUp(game: Game, catchUp: CatchUp, maxTicks: number): AwayReport | null;
-
-// ---- Away Report (M5) ----
-export interface AwayReport {
-  readonly elapsedMs: number;
-  readonly appliedMs: number;
-  readonly capped: boolean;
-  readonly floorsCleared: number;
-  readonly deepestFloor: number;
-  readonly setbacks: readonly {
-    readonly kind: 'wipe' | 'draw'; // G8
-    readonly floor: number;
-    readonly enemyName: string;     // the Guardian or the Pack's leading enemy
-    readonly mainDamageType: DamageType;
-    readonly mainDamageShare: number; // 0-1 of damage the Party took; the text says "mostly" above 0.5
-  }[];
-  readonly guardianKills: number;
-  readonly lampRelit: boolean;
-  readonly fellBack: boolean;
-  readonly levels: readonly { readonly heroId: HeroId; readonly from: number; readonly to: number }[];
-  readonly loot: { readonly common: number; readonly magic: number; readonly rare: number; readonly notable: readonly ItemView[] };
-  readonly unspentSkillPoints: number;
-}
-```
-
-## How catch-up reuses live stepping
-
-Only one function steps the game, and all rules live beneath it. Live play and catch-up differ only in how they slice time and where events go.
-
-```ts
-function stepTick(game: GameState, sink: EventSink): void { /* every rule, reached from here */ }
-
-export function advance(game, elapsedMs, sink = ignore) {
-  const ticks = bankElapsed(game, elapsedMs); // adds to game.bankMs, removes whole Ticks
-  for (let i = 0; i < ticks; i++) stepTick(game, sink);
-}
-
-export function beginCatchUp(game, elapsedMs) {
-  const appliedMs = Math.min(sanitise(elapsedMs), CATCH_UP_CAP_MS);
-  const ticks = bankElapsed(game, appliedMs);
-  return { ticksLeft: ticks, ticksTotal: ticks, elapsedMs, appliedMs, tally: emptyTally() };
-}
-
-export function continueCatchUp(game, catchUp, maxTicks) {
-  const sink = foldInto(catchUp.tally); // the Away Report is a fold over the same GameEvents
-  const n = Math.min(maxTicks, catchUp.ticksLeft);
-  for (let i = 0; i < n; i++) stepTick(game, sink);
-  catchUp.ticksLeft -= n;
-  return catchUp.ticksLeft === 0 ? toAwayReport(catchUp) : null;
-}
-```
-
-Because the sub-Tick remainder lives in `game.bankMs`, any way of slicing the same elapsed time runs the same Ticks. Catch-up lives in chunks from the start, so the UI can yield between them.
 
 ## Demo script to exports
 
@@ -95,8 +35,7 @@ Because the sub-Tick remainder lives in `game.bankMs`, any way of slicing the sa
 | Edit a Hero's name | Planning tab | `applyAction(renameHero)` |
 | Re-send the Party | Town menu | `viewGame().phase`, `applyAction(sendParty)` |
 
-## UI rules for later milestones
+## UI rules
 
-- **Store snapshot:** M5 adds the current `AwayReport` and catch-up progress to what `src/ui/store.ts` publishes.
 - **Hidden windows:** the driver doesn't step while `document.hidden` is true, since throttled timers fire too rarely and unevenly to tell apart from a real absence. When the window returns, it applies the whole gap under G19.
 - **Readable by agents:** the map and panels carry text or `aria-label`s, so the accessibility tree can verify them.

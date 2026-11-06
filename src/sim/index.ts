@@ -14,6 +14,8 @@ export type {
   UnitAction,
   UnitSpec,
 } from './battle';
+export { beginCatchUp, continueCatchUp } from './catchup';
+export type { AwayLevels, AwayReport, AwaySetback, CatchUp } from './catchup';
 export { AFFIXES, RARITIES, SLOTS } from './content/items';
 export type { AffixDefinition, AffixId, BaseId, ItemStat, ItemStats, Rarity, Slot } from './content/items';
 export { rollItem } from './items';

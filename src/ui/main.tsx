@@ -4,16 +4,29 @@ import { createGame, type GameSetup } from '../sim';
 import { App } from './App';
 import { devSetup } from './devSetup';
 import { startDriver } from './driver';
+import { localStorageSave } from './localStorageSave';
+import { loadSave } from './save';
 import { createStore } from './store';
 import './style.css';
 
 const root = document.querySelector<HTMLElement>('#app');
 if (!root) throw new Error('#app element missing from index.html');
 
+/** The Seed of every new game. M6 chooses it. */
+const DEMO_SEED = 1;
+
 // Started outside React, so effects and Strict Mode can't start a second loop.
-const fresh: GameSetup = { seed: Date.now() >>> 0 };
-const store = createStore(createGame(import.meta.env.DEV ? devSetup(window.location.search, fresh) : fresh));
-startDriver({ now: Date.now, isHidden: () => document.hidden, step: store.advance });
+// A save wins over ?seed= and the rest, which take effect after "Start over".
+const fresh: GameSetup = { seed: DEMO_SEED };
+const { saved, notice } = loadSave(localStorageSave);
+const game = saved?.game ?? createGame(import.meta.env.DEV ? devSetup(window.location.search, fresh) : fresh);
+const store = createStore(game, { saves: localStorageSave, saveNotice: notice });
+const driver = startDriver({ now: Date.now, isHidden: () => document.hidden, store, advancedTo: saved?.savedAt ?? Date.now() });
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) driver.save();
+});
+window.addEventListener('pagehide', driver.save);
 
 createRoot(root).render(
   <StrictMode>

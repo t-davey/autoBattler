@@ -10,15 +10,15 @@ The demo tests one thing: is it satisfying to come back to loot, make a build de
 | M2: Heroes and skills | Merged in [PR #14](https://github.com/t-davey/autoBattler/pull/14) |
 | M3: Floors and the Wall | Merged in [PR #16](https://github.com/t-davey/autoBattler/pull/16) |
 | M4: Loot and gear | Merged in [PR #17](https://github.com/t-davey/autoBattler/pull/17) |
-| M5: Catch-up and Away Report | Next: [m5-catch-up-and-away-report.md](poc-demo/m5-catch-up-and-away-report.md) |
-| M6: Tuning and demo run | [m6-tuning-and-demo-run.md](poc-demo/m6-tuning-and-demo-run.md) |
+| M5: Catch-up and Away Report | Built for [issue #9](https://github.com/t-davey/autoBattler/issues/9), PR to follow |
+| M6: Tuning and demo run | Next: [m6-tuning-and-demo-run.md](poc-demo/m6-tuning-and-demo-run.md) |
 
 ## How to use this plan
 
 Build one milestone at a time, in order. Every number is a starting value for M6 to tune. Read this file, the next milestone's file, [as-built.md](poc-demo/as-built.md), and the [ADRs](../adr/) its **ADRs** line names, then reach further when one of these applies:
 
 - **[gaps.md](poc-demo/gaps.md):** the rulings a milestone's **Needs** line names.
-- **[sim-interface.md](poc-demo/sim-interface.md):** adding to `src/sim/index.ts` or the catch-up path.
+- **[sim-interface.md](poc-demo/sim-interface.md):** Tick lengths, or which exports each step of the demo script uses.
 - **[risks.md](poc-demo/risks.md):** a milestone names a risk, or a threshold trips.
 - **[The M2 review](poc-demo-m2-review.md):** starting M6, whose work its Watch list names, or a measurement arrives, so fill in its row under Estimates to compare and check the Watch list before tuning.
 

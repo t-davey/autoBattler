@@ -1,4 +1,5 @@
-import { TICK_MS, type ActionRefusal, type SkillReach, type SkillView } from '../sim';
+import { TICK_MS, type SkillReach, type SkillView } from '../sim';
+import type { DispatchRefusal } from './store';
 
 const REACH_TEXT: Readonly<Record<SkillReach, string>> = {
   self: 'Self',
@@ -9,8 +10,9 @@ const REACH_TEXT: Readonly<Record<SkillReach, string>> = {
 
 const ROW_TEXT = { front: 'Front Row', back: 'Back Row', either: 'Either Row' } as const;
 
-/** Words for an action the sim refused. */
-export const REFUSAL_TEXT: Readonly<Record<ActionRefusal, string>> = {
+/** Words for a refused action. */
+export const REFUSAL_TEXT: Readonly<Record<DispatchRefusal, string>> = {
+  catchingUp: 'Wait for the Party to catch up.',
   notInTown: 'The Party can only be sent from Town.',
   unknownHero: 'No such Hero.',
   unknownSkill: 'No such skill.',

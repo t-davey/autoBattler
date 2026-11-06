@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { AwayReportPanel } from './AwayReportPanel';
 import { BattlePanel } from './BattlePanel';
+import { DevTools } from './DevTools';
 import { FloorMap } from './FloorMap';
 import { LiveLog } from './LiveLog';
 import { PlanningTab } from './PlanningTab';
@@ -11,7 +13,7 @@ import { useGame } from './useGame';
 type Tab = 'dashboard' | 'planning' | 'stash';
 
 export function App({ store }: { store: Store }) {
-  const { view, log, stash } = useGame(store);
+  const { view, log, stash, catchUpProgress, awayReport, saveNotice, saveWarning } = useGame(store);
   const [tab, setTab] = useState<Tab>('dashboard');
   const unspent = view.heroes.reduce((total, hero) => total + hero.unspentPoints, 0);
 
@@ -30,7 +32,29 @@ export function App({ store }: { store: Store }) {
           {tabButton('planning', unspent > 0 ? `Planning (${unspent} unspent)` : 'Planning')}
           {tabButton('stash', `Stash (${stash.length})`)}
         </nav>
+        {import.meta.env.DEV ? <DevTools store={store} /> : null}
       </header>
+      {saveWarning && <p className="save-banner" role="alert">{saveWarning}</p>}
+      {saveNotice && (
+        <p className="save-banner" role="status">
+          {saveNotice} <button type="button" onClick={store.dismissSaveNotice}>Dismiss</button>
+        </p>
+      )}
+      {catchUpProgress !== null && (
+        <div className="catch-up" role="status">
+          <p>The Party presses on without you...</p>
+          <progress aria-label="Catch-up progress" value={catchUpProgress} />
+        </div>
+      )}
+      {awayReport && (
+        <AwayReportPanel
+          report={awayReport}
+          heroes={view.heroes}
+          onDismiss={store.dismissAwayReport}
+          onOpenStash={() => setTab('stash')}
+          onOpenPlanning={() => setTab('planning')}
+        />
+      )}
       {tab === 'dashboard' && (
         <main className="dashboard">
           <div className="dashboard-main">
