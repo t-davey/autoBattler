@@ -1,8 +1,10 @@
 import type { BattleState, Row, TeamId } from './battle';
+import { GRID_HEIGHT, GRID_WIDTH, type FloorNumber, type RoomKind } from './floors';
 import { xpToNextLevel } from './content/party';
 import { MAX_SKILL_RANK, rankValue, SKILL_IDS, SKILLS, type HeroId, type SkillId, type SkillKind, type SkillReach } from './content/skills';
-import { ENEMY_TEAM, heroesOf, PARTY_TEAM, stateOf, type Game } from './game';
+import { heroesOf, stateOf, type Game } from './game';
 import { heroStats, unspentPoints, type HeroState, type HeroStats } from './heroes';
+import { ENEMY_TEAM, PARTY_TEAM, type Phase, type RunState } from './run';
 import { pointsToOpen, spendRefusal, spentPoints, type SpendRefusal } from './skills';
 
 export interface UnitView {
@@ -57,6 +59,7 @@ export interface HeroView {
   readonly xp: number;
   readonly xpToNext: number;
   readonly stats: HeroStats;
+  readonly health: number;
   readonly oil: number;
   readonly pointsSpent: number;
   readonly unspentPoints: number;
@@ -64,10 +67,36 @@ export interface HeroView {
   readonly order: readonly SkillId[];
 }
 
+export interface RoomView {
+  readonly x: number;
+  readonly y: number;
+  readonly kind: RoomKind;
+  /** Current is the Room the Party is in or travelling to. */
+  readonly state: 'cleared' | 'current' | 'ahead';
+}
+
+export interface FloorMapView {
+  readonly width: number;
+  readonly height: number;
+  /** In the order the Party visits them. */
+  readonly rooms: readonly RoomView[];
+}
+
+export interface WallView {
+  readonly lampLit: boolean;
+  readonly setbacksTowardsFallback: number;
+  readonly fallenBack: boolean;
+}
+
 export interface GameView {
   readonly tick: number;
-  readonly phase: 'travelling' | 'battle';
+  readonly phase: Phase;
   readonly battle: BattleView | null;
+  readonly map: FloorMapView | null;
+  readonly floor: FloorNumber | null;
+  /** The countdown until the Party leaves Town. */
+  readonly townTicksLeft: number | null;
+  readonly wall: WallView;
   readonly heroes: readonly HeroView[];
 }
 
@@ -79,7 +108,7 @@ function viewTeam(battle: BattleState, team: TeamId): readonly UnitView[] {
       name: unit.spec.name,
       row: unit.row,
       health: unit.health,
-      maxHealth: unit.spec.health,
+      maxHealth: unit.spec.maxHealth ?? unit.spec.health,
       oil: unit.oil,
       maxOil: unit.spec.maxOil ?? 0,
       bleeding: unit.bleed !== null,
@@ -122,6 +151,7 @@ function viewHero(hero: HeroState): HeroView {
     xp: hero.xp,
     xpToNext: xpToNextLevel(hero.level),
     stats: heroStats(hero),
+    health: hero.health,
     oil: hero.oil,
     pointsSpent: spentPoints(hero.ranks),
     unspentPoints: unspentPoints(hero),
@@ -130,11 +160,29 @@ function viewHero(hero: HeroState): HeroView {
   };
 }
 
+function viewMap({ layout, room }: RunState): FloorMapView | null {
+  if (!layout) return null;
+  return {
+    width: GRID_WIDTH,
+    height: GRID_HEIGHT,
+    rooms: layout.rooms.map((cell, index) => ({
+      x: cell.x,
+      y: cell.y,
+      kind: cell.kind,
+      state: index < room ? 'cleared' : index === room ? 'current' : 'ahead',
+    })),
+  };
+}
+
 export function viewGame(game: Game): GameView {
-  const { tick, battle } = stateOf(game);
+  const { tick, battle, run, wall } = stateOf(game);
   return {
     tick,
-    phase: battle ? 'battle' : 'travelling',
+    phase: run.phase,
+    map: viewMap(run),
+    floor: run.floor,
+    townTicksLeft: run.phase === 'town' ? run.ticksLeft : null,
+    wall: { lampLit: wall.lampLit, setbacksTowardsFallback: wall.setbacks, fallenBack: wall.fallenBack },
     battle: battle && { party: viewTeam(battle, PARTY_TEAM), enemies: viewTeam(battle, ENEMY_TEAM) },
     heroes: heroesOf(game).map(viewHero),
   };

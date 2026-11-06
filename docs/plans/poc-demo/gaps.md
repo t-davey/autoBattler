@@ -2,7 +2,7 @@
 
 Rulings the [design](../../design.md) leaves unsaid. Each row is one line, so a milestone's **Needs** can be fetched alone: `rg "^\| G(2|7|8) " docs/plans/poc-demo/gaps.md`.
 
-The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 extends the approved scope, by the human's choice. G23–G28 came from [Milestone 2's review](../poc-demo-m2-review.md).
+The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 extends the approved scope, by the human's choice. G23–G28 came from [Milestone 2's review](../poc-demo-m2-review.md). G29–G34 came from Milestone 3's stop S1.
 
 | # | Gap | Confirmed answer | Needed by |
 |---|---|---|---|
@@ -34,3 +34,9 @@ The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 ext
 | G26 | **Shared Burden and Poison.** Direct hits alone never reach the back Row at the Guardian, so the skill did nothing there. | It redirects Poison ticks on back-Row Heroes as well as direct hits. This replaces the first wording of the Milestone 2 rule. | M2 |
 | G27 | **Warm Hands in R2.** R2 runs single Battles, so Warm Hands never acts. | R2's "a skill never appears" trigger leaves it out in M2 and M6. M6 judges it by comparing whole Runs with and without it. Until M3, the planning tab says it has no effect yet. | M2, M6 |
 | G28 | **Reapplying Bleed.** Bleeder's Cut only targets enemies that aren't Bleeding, so nothing in the demo can reapply a Bleed. | Keep the rule for later Branches, and drop the test. | M2 |
+| G29 | **The Warden's health.** The plan's 1,600 needs about 80 s of level 7 basic attacks, while Poison kills its Heroes at about 40 s. | 1,200 health, softened by the human before building. The rest of the Guardian table stands. | M3 |
+| G30 | **Warm Hands' sum.** "+20% more health" could add to the 15% or multiply it. | It multiplies: 15% × (1 + bonus), so 18% at rank 1 and 24% at rank 5. | M3 |
+| G31 | **Warm Hands' "only the highest counts".** The demo has one Lamplighter, so no legal Party has two. | Keep the rule for later, and drop that clause from the test. The sim reads the Lamplighter's rank alone. | M3 |
+| G32 | **Poison stacks by Floor.** Enemy scale names health and power only. | A stack's damage scales with power: 1, 1.4, and 1.9, unrounded. The Guardian's doesn't, since Floor scale doesn't apply to it. | M3 |
+| G33 | **Chest lines.** The plan names no text. | A random one of 5 provisional lines from [the Act 1 Fragments](../../lore/act-1-fragments.md). | M3 |
+| G34 | **Rules M3 leaves unsaid.** | A Hero who fell in a won Battle rises at 20%, then gets the usual recovery for leaving the Room, so 35%. A level-up raises max health but heals nothing. Spending a point before the 3rd Setback doesn't clear the count. A Setback during a fallback keeps it on, with the count at 3. Every Hero falling is a Wipe, even if every enemy falls on the same Tick. A new game goes straight to Floor 1. `lampRelit` fires on the first kill only, and every kill returns the Party to Town. | M3 |

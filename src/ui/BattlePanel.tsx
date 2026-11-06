@@ -1,4 +1,4 @@
-import type { BattleView, Row, UnitView } from '../sim';
+import type { GameView, HeroView, Row, UnitView } from '../sim';
 
 function UnitEffects({ unit }: { unit: UnitView }) {
   const effects = [
@@ -59,7 +59,31 @@ function RowColumn({ label, row, units }: { label: string; row: Row; units: read
   );
 }
 
-export function BattlePanel({ battle }: { battle: BattleView | null }) {
+/** The Party between Battles, with the health and Oil that carried out of the last one. */
+function PartyStatus({ heroes }: { heroes: readonly HeroView[] }) {
+  const asUnit = (hero: HeroView): UnitView => ({
+    id: hero.id,
+    name: hero.name,
+    row: 'front',
+    health: hero.health,
+    maxHealth: hero.stats.maxHealth,
+    oil: hero.oil,
+    maxOil: hero.stats.maxOil,
+    bleeding: false,
+    poisonStacks: 0,
+    wardAmount: 0,
+  });
+  return (
+    <ul className="row-units party-status" aria-label="Party">
+      {heroes.map((hero) => (
+        <UnitCard key={hero.id} unit={asUnit(hero)} />
+      ))}
+    </ul>
+  );
+}
+
+export function BattlePanel({ view }: { view: GameView }) {
+  const { battle, phase } = view;
   return (
     <section className="panel battle-panel" aria-label="Battle">
       <h2>Battle</h2>
@@ -71,7 +95,10 @@ export function BattlePanel({ battle }: { battle: BattleView | null }) {
           <RowColumn label="Enemy back Row" row="back" units={battle.enemies} />
         </div>
       ) : (
-        <p className="travelling">The Party presses on into the dark…</p>
+        <>
+          <p className="travelling">{phase === 'chest' ? 'The Party searches a chest…' : 'The Party presses on into the dark…'}</p>
+          <PartyStatus heroes={view.heroes} />
+        </>
       )}
     </section>
   );

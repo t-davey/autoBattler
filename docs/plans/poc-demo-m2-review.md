@@ -53,15 +53,15 @@ All are hand estimates from 2026-11-05. Numbers will move with tuning, so a diff
 
 | Estimate | Expected | Assumes | Compare in | Measured |
 |---|---|---|---|---|
-| Level 7 Lamplighter dies to Poison alone | about 38 s | 149 health, no healing, Guardian's Spore Breath | M3, M6 | |
-| Level 7 Huntsman dies to Poison alone | about 41 s | 170 health, same | M3, M6 | |
-| Same Lamplighter with rank 2 Shared Burden | about 41 s | 15% redirected | M3, M6 | |
+| Level 7 Lamplighter dies to Poison alone | about 38 s | 149 health, no healing, Guardian's Spore Breath | M3, M6 | 38.0 s |
+| Level 7 Huntsman dies to Poison alone | about 41 s | 170 health, same | M3, M6 | 38.7 s |
+| Same Lamplighter with rank 2 Shared Burden | about 41 s | 15% redirected | M3, M6 | 42.0 s |
 | Level 10 Lamplighter, without and with rank 5 Shared Burden | about 41 s and about 51 s | 176 health, 30% redirected | M6 | |
-| Basic attacks kill the Warden | about 85 s at level 6, about 80 s at level 7 | No skills, nobody falls | M3, M6 | |
+| Basic attacks kill the Warden | about 85 s at level 6, about 80 s at level 7 | No skills, nobody falls, 1,600 health | M3, M6 | At 1,200 health (G29), no kill at level 10 or below, since the Party falls first. Level 12 wins every time, in 48 s |
 | Damage a second at level 7 | Sin-Eater 6.3, Huntsman 10.7, Lamplighter 6.7 | Basic attacks, no crit or armour | M6 | |
 | Level reached in the M2 loop | Level 2 at 4 Battles, 4 at 32, 7 at 154 | 15 XP, won Battles only | M2 | Level 2 within about 2 minutes live |
 | Live time to those levels | under 2 min, about 13 min, about 64 min | About 25 s per Battle | M2 | 115 Battles (level 6) after about 42 min, so about 22 s per Battle |
-| Huntsman runs dry | About 3 Battles | The Long Cut and Bleeder's Cut, 120 Oil spent against 90 gained | M3, M6 | |
+| Huntsman runs dry | About 3 Battles | The Long Cut and Bleeder's Cut, 120 Oil spent against 90 gained | M3, M6 | Never under 10 Oil across 40 Seeds at level 7, 2/2/2 |
 | `npm run bench:catchup` | Under the 500 ms limit | 49 ms at M1, before effects and skills | M2 | 58–79 ms across runs |
 
 ## R2 result
@@ -93,5 +93,3 @@ Things to check when results arrive:
 - **R2 can't see a flat result.** If all Sin-Eater builds tie, they all count as viable, so R2 passes without showing a real decision. Read the `builds` table, not just its verdict.
 - **R2 starts Battles on full Oil.** Single Battles flatter builds that burn Oil faster than they regain it. M3's carried Oil is the real test.
 - **Warm Hands has no measure across builds.** R2 skips it, and M6's `wall` mode uses one reference build, so a with-and-without comparison has to be added to M6.
-- **The Warm Hands "highest in the Party" rule can't apply.** The demo has only one Lamplighter, so M3's test for it needs another route or dropping.
-- **Poison stack damage on deeper Floors.** The plan scales enemy health and power by Floor but doesn't say whether the 1-damage stack scales too. Raise this at M3's S1.

@@ -65,7 +65,7 @@ No Hero applies Poison in the demo. It comes from enemies: Mire Bloats and Spore
 
 ## Oil
 
-A Hero holds 100 Oil and regenerates 1 every 5 Ticks in a Battle. It carries between Battles. Each Battle in Milestone 2 is followed by +30. From Milestone 3 the +30 comes on leaving any Room, chests included, and Town refills it.
+A Hero holds 100 Oil and regenerates 1 every 5 Ticks in a Battle. It carries between Rooms, with +30 on leaving any Room, chests included, and Town refills it.
 
 ## Adaptations
 
@@ -129,12 +129,13 @@ The human accepted these on 2026-11-05:
 - **The Long Cut has no minimum damage.** It works like Bleed, so the 1-damage minimum on direct hits doesn't apply.
 - **On a shared hit, the 1-damage minimum** applies only to the original target's share.
 - **A fallen Hero's Oil carries** into the next Battle, with the same +30.
+- **Warm Hands multiplies** the 15% recovered between Rooms, so rank 1 gives 18% and rank 5 gives 24% (G30). With one Lamplighter, "only the highest" never comes up (G31).
 
 ## The human's answers
 
 Settled on 2026-11-05. [The M2 review](plans/poc-demo-m2-review.md#questions-and-answers) keeps the reasoning.
 
 1. **Shared Burden and the Wall:** it also redirects Poison ticks on back-Row Heroes, so it does something against the Guardian.
-2. **Warm Hands in the build check:** R2's "a skill never appears" trigger leaves it out in Milestones 2 and 6. Milestone 6 judges it by comparing whole Runs with and without it. Until Milestone 3, the planning tab says it has no effect yet.
+2. **Warm Hands in the build check:** R2's "a skill never appears" trigger leaves it out in Milestones 2 and 6. Milestone 6 judges it by comparing whole Runs with and without it. Until Milestone 3, the planning tab said it had no effect yet.
 3. **The Sin-Eater's skill order:** unchanged. It has 1 active skill and no order to set, as G5 accepted.
 4. **Reapplying Bleed:** Bleeder's Cut keeps its targeting, the rule stays for later Branches, and the test is dropped, since nothing in the demo can reapply a Bleed.

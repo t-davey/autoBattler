@@ -71,6 +71,12 @@ describe('store', () => {
     expect(store.getSnapshot().view.heroes.find((hero) => hero.id === 'huntsman')?.name).toBe('Old Marrow');
   });
 
+  it('dispatch adds the lines of what an action caused to the Live Log', () => {
+    const store = createStore(createGame({ seed: 1, scenario: { heroLevel: 2, setbacks: 3 } }));
+    store.dispatch({ type: 'spendSkillPoint', heroId: 'huntsman', skillId: 'bleeders-cut' });
+    expect(store.getSnapshot().log.map((line) => line.text)).toEqual([describeEvent({ type: 'retryingGuardian' })]);
+  });
+
   it('dispatch returns a refusal and publishes nothing', () => {
     const store = createStore(createGame({ seed: 1 }));
     const before = store.getSnapshot();

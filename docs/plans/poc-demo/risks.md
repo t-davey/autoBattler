@@ -7,7 +7,7 @@ Number tuning always comes first. A fallback that changes rules, scope, or desig
 | When | Measurement | Threshold that triggers action |
 |---|---|---|
 | M1 | `npm run bench:catchup`: 432,000 Ticks of continuous Battles under Node, median of 3 runs (the bare tracer was 67–81 ms) | Over 500 ms: remove per-Tick allocation before starting M2 |
-| M3 | The same, through full Runs | Over 2 s: profile and fix before starting M4 |
+| M3 | The same, through full Runs (measured at M3: 92 ms median, within 57–124 ms) | Over 2 s: profile and fix before starting M4 |
 | M5 | In a browser, with `PerformanceObserver` on `longtask`, from a 12-hour save | Total over 10 s, or any task over 100 ms: take the fallback |
 
 **Fallback:** move catch-up to a Web Worker. The sim has no DOM, so the Worker runs `deserializeGame`, `beginCatchUp`, and `continueCatchUp`, and posts back the state and the Away Report. It costs one new file and a Vite worker import. Never approximate 12 hours with a summary formula, since [ADR 0001](../../adr/0001-deterministic-sim-core.md) requires that catch-up run the same rules.

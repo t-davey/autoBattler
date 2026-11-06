@@ -97,7 +97,7 @@ export const SKILLS: Readonly<Record<SkillId, SkillDefinition>> = {
   'warm-hands': {
     id: 'warm-hands', name: 'Warm Hands', heroId: 'lamplighter', branch: 'Hearth', step: 2,
     ...passive, row: 'either',
-    summary: 'The Party recovers more health between Rooms; only the highest in the Party counts. No effect until Rooms arrive.',
+    summary: 'The Party recovers more health between Rooms; only the highest in the Party counts.',
     values: [{ label: 'More health', rank1: 20, rank5: 60 }],
   },
   'lantern-ward': {

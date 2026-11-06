@@ -162,6 +162,18 @@ _Avoid_: Encounter, tile
 A Guardian or Boss that stops a Party until it grows stronger.
 _Avoid_: Gate, blocker
 
+**Party time**:
+The time a Party has spent playing, live or in catch-up, as opposed to time on the player's clock.
+_Avoid_: Game time, play time
+
+**Setback**:
+A Wipe or a draw that returns the Party to Town.
+_Avoid_: Defeat, loss, failure
+
+**Fall back**:
+To stop challenging a Wall after 3 Setbacks, and farm until the Party grows stronger or its build changes.
+_Avoid_: Retreat, regroup
+
 **Check-in**:
 A player's return to the game to read the Away Report and act on it.
 _Avoid_: Session, visit

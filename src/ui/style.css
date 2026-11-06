@@ -76,8 +76,81 @@ ul {
   border: 1px solid var(--iron);
 }
 
+.dashboard-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.dashboard-main > .battle-panel {
+  flex: 1 1 28rem;
+  min-width: 0;
+}
+
 .battle-panel {
   min-height: 15rem;
+}
+
+.floor-map {
+  flex: 0 0 auto;
+}
+
+.room-grid {
+  display: grid;
+  width: 18rem;
+  height: 14rem;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.room {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  border: 1px solid var(--iron);
+  background: var(--soot);
+}
+
+.room-ahead {
+  color: var(--ink-faint);
+}
+
+.room-cleared {
+  color: var(--iron);
+}
+
+.room-current {
+  color: var(--soot);
+  background: var(--ember);
+  border-color: var(--ember);
+}
+
+.party-status {
+  margin-top: 0.75rem;
+}
+
+.town-menu {
+  flex: 1;
+  min-height: 15rem;
+}
+
+.town-menu p {
+  margin: 0 0 0.75rem;
+}
+
+.town-menu button {
+  margin-bottom: 0.75rem;
+}
+
+.lamp {
+  color: var(--ink-faint);
+}
+
+.lamp-lit {
+  color: var(--ember);
 }
 
 .battlefield {

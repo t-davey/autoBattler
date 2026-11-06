@@ -8,8 +8,8 @@ The demo tests one thing: is it satisfying to come back to loot, make a build de
 |---|---|
 | M1: Live Battle on screen | Merged in [PR #12](https://github.com/t-davey/autoBattler/pull/12) |
 | M2: Heroes and skills | Merged in [PR #14](https://github.com/t-davey/autoBattler/pull/14) |
-| M3: Floors and the Wall | Next: [m3-floors-and-the-wall.md](poc-demo/m3-floors-and-the-wall.md) |
-| M4: Loot and gear | [m4-loot-and-gear.md](poc-demo/m4-loot-and-gear.md) |
+| M3: Floors and the Wall | Merged in PR_LINK |
+| M4: Loot and gear | Next: [m4-loot-and-gear.md](poc-demo/m4-loot-and-gear.md) |
 | M5: Catch-up and Away Report | [m5-catch-up-and-away-report.md](poc-demo/m5-catch-up-and-away-report.md) |
 | M6: Tuning and demo run | [m6-tuning-and-demo-run.md](poc-demo/m6-tuning-and-demo-run.md) |
 
@@ -20,7 +20,7 @@ Build one milestone at a time, in order. Every number is a starting value for M6
 - **[gaps.md](poc-demo/gaps.md):** the rulings a milestone's **Needs** line names.
 - **[sim-interface.md](poc-demo/sim-interface.md):** adding to `src/sim/index.ts` or the catch-up path.
 - **[risks.md](poc-demo/risks.md):** a milestone names a risk, or a threshold trips.
-- **[The M2 review](poc-demo-m2-review.md):** starting M3 or M6, whose work its Watch list names, or a measurement arrives, so fill in its row under Estimates to compare and check the Watch list before tuning.
+- **[The M2 review](poc-demo-m2-review.md):** starting M6, whose work its Watch list names, or a measurement arrives, so fill in its row under Estimates to compare and check the Watch list before tuning.
 
 ## Approved scope
 

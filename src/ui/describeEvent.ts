@@ -1,8 +1,8 @@
 import type { GameEvent } from '../sim';
 
 const OUTCOME_LINES = {
-  won: 'The Pack is broken. The Party stands.',
-  lost: 'A Wipe. The dark closes in.',
+  won: 'The enemy is broken. The Party stands.',
+  lost: 'The dark closes in.',
   draw: 'Neither side yields. The Battle gutters out.',
 } as const;
 
@@ -14,6 +14,20 @@ const EFFECT_LINES = {
 const TICK_VERBS = {
   bleed: 'bleeds',
   poison: 'sickens',
+} as const;
+
+const ROOM_LINES = {
+  battle: 'Something stirs in the next Room.',
+  chest: 'A chest in the next Room. The Party searches it.',
+  stairs: 'The stairs lie ahead, and something waits by them.',
+  guardian: 'The Guardian waits in the next Room. The air is thick with spores.',
+} as const;
+
+const TOWN_LINES = {
+  setback: 'The Party wakes in Town.',
+  turnedBack: 'The Party turns back before the Guardian, and returns to Town.',
+  lampRelit: 'The Party returns to Town by the new light.',
+  guardianFell: 'The Party returns to Town. The Lamp still burns.',
 } as const;
 
 const amount = (damage: number, absorbed: number): string => {
@@ -46,11 +60,37 @@ export function describeEvent(event: GameEvent): string {
       return `${event.targetName} is warded for ${Math.round(event.amount)}.`;
     case 'death':
       return `${event.unitName} falls.`;
+    case 'action':
+      return `${event.unitName} uses ${event.actionName}.`;
     case 'battleStarted':
       return `From the dark: ${event.enemyNames.join(', ')}.`;
     case 'battleEnded':
       return OUTCOME_LINES[event.outcome];
     case 'levelUp':
       return `${event.heroName} reaches level ${event.level}. A skill point waits.`;
+    case 'heroRose':
+      return `${event.heroName} rises, barely.`;
+    case 'floorEntered':
+      return `Floor ${event.floor} of the Undercroft.`;
+    case 'roomEntered':
+      return ROOM_LINES[event.kind];
+    case 'chestOpened':
+      return event.line;
+    case 'wipe':
+      return `A Wipe on Floor ${event.floor}, before ${event.enemyName}.`;
+    case 'draw':
+      return `A draw on Floor ${event.floor}, against ${event.enemyName}. The Party withdraws.`;
+    case 'returnedToTown':
+      return TOWN_LINES[event.reason];
+    case 'partySent':
+      return 'The Party goes down again.';
+    case 'fellBack':
+      return 'Three Setbacks. The Party will turn back before the Guardian until it grows stronger.';
+    case 'retryingGuardian':
+      return 'Stronger now. The Party will try the Guardian again.';
+    case 'guardianFell':
+      return 'The way to the Lamp is clear.';
+    case 'lampRelit':
+      return 'The Lamp is relit.';
   }
 }

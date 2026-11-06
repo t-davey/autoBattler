@@ -226,3 +226,83 @@ describe('damage', () => {
     expect(firstHit({ power: 3 }, { resistances: { physical: 50 } })).toBe(1.5);
   });
 });
+
+describe('carried health', () => {
+  it('a Unit can start a Battle below its max health', () => {
+    const hurt = unit('hurt', { health: 5, maxHealth: 20, actionInterval: NEVER_ACTS });
+    const battle = createBattle({ seed: 1, teams: { a: [hurt], b: [unit('foe', { power: 5, actionInterval: 1 })] } });
+    expect(battle.units[0]).toMatchObject({ health: 5 });
+    const { log } = simulateBattle({ seed: 1, teams: { a: [hurt], b: [unit('foe', { power: 5, actionInterval: 1 })] } });
+    expect(log.filter((event) => event.type === 'attack')).toHaveLength(1);
+  });
+
+  it('healing stops at max health, not at the health a Unit started with', () => {
+    const healer = unit('healer', {
+      row: 'back',
+      power: 10,
+      actionInterval: 1,
+      maxOil: 100,
+      skills: [{ id: 'mend-by-lamplight', rank: 1 }],
+    });
+    const hurt = unit('hurt', { health: 5, maxHealth: 20, actionInterval: NEVER_ACTS });
+    const foe = unit('foe', { health: 10_000, actionInterval: NEVER_ACTS });
+    const battle = createBattle({ seed: 1, teams: { a: [hurt, healer], b: [foe] } });
+    for (let i = 0; i < 200; i++) stepBattle(battle);
+    expect(battle.units[0]).toMatchObject({ health: 20 });
+  });
+});
+
+describe('timed actions', () => {
+  const slam = { name: 'Slam', interval: 8, target: 'oneFront', damage: 4, damageType: 'physical' } as const;
+  const breath = { name: 'Breath', interval: 6, target: 'every', damage: 0, damageType: 'poison', poisonStack: 3 } as const;
+  const warden = (overrides: Partial<UnitSpec> = {}) =>
+    unit('warden', { health: 100_000, actions: [slam, breath], ...overrides });
+  const dummy = (id: string, row: 'front' | 'back' = 'front') =>
+    unit(id, { health: 100_000, actionInterval: NEVER_ACTS, row });
+
+  const eventsOver = (ticks: number, teams: BattleSetup['teams']) => {
+    const battle = createBattle({ seed: 1, teams });
+    const events: BattleEvent[] = [];
+    for (let i = 0; i < ticks; i++) events.push(...stepBattle(battle));
+    return events;
+  };
+
+  it('a Unit with several actions times each on its own interval', () => {
+    const events = eventsOver(24, { a: [dummy('a1')], b: [warden()] });
+    const ticksOf = (name: string) =>
+      events.flatMap((event) => (event.type === 'action' && event.actionName === name ? [event.tick] : []));
+    expect(ticksOf('Slam')).toEqual([8, 16, 24]);
+    expect(ticksOf('Breath')).toEqual([6, 12, 18, 24]);
+  });
+
+  it('a Unit with actions ignores its power and actionInterval', () => {
+    const events = eventsOver(24, { a: [dummy('a1')], b: [warden({ power: 999, actionInterval: 1 })] });
+    const hits = events.flatMap((event) => (event.type === 'attack' ? [event] : []));
+    expect(hits).toHaveLength(3);
+    for (const hit of hits) expect(hit).toMatchObject({ damage: 4, damageType: 'physical' });
+  });
+
+  it('an action can hit every Hero', () => {
+    const events = eventsOver(6, { a: [dummy('a1'), dummy('a2'), dummy('a3', 'back')], b: [warden()] });
+    const poisoned = events.flatMap((event) => (event.type === 'effect' && event.effect === 'poison' ? [event.targetId] : []));
+    expect(poisoned).toEqual(['a1', 'a2', 'a3']);
+  });
+
+  it('an action with direct damage on every Hero hits each of them', () => {
+    const blast = { name: 'Blast', interval: 5, target: 'every', damage: 2, damageType: 'physical' } as const;
+    const events = eventsOver(5, { a: [dummy('a1'), dummy('a3', 'back')], b: [warden({ actions: [blast] })] });
+    expect(events.flatMap((event) => (event.type === 'attack' ? [event.targetId] : []))).toEqual(['a1', 'a3']);
+  });
+
+  it('a single-target action reaches only the front Row', () => {
+    const events = eventsOver(80, { a: [dummy('a1'), dummy('a3', 'back')], b: [warden()] });
+    const targets = new Set(events.flatMap((event) => (event.type === 'attack' ? [event.targetId] : [])));
+    expect(targets).toEqual(new Set(['a1']));
+  });
+
+  it("an action's Poison stack deals its own damage", () => {
+    const events = eventsOver(26, { a: [dummy('a1')], b: [warden({ actions: [breath] })] });
+    const tick = events.find((event) => event.type === 'effectDamage');
+    expect(tick).toMatchObject({ tick: 26, damage: 3, damageType: 'poison' });
+  });
+});

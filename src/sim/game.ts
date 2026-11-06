@@ -1,9 +1,10 @@
-import { createBattle, stepBattle, type BattleEvent, type BattleState, type TeamId, type UnitSpec } from './battle';
-import { rollPack } from './content/enemies';
-import { HERO_IDS, MAX_NAME_LENGTH, OIL_BETWEEN_BATTLES, XP_PER_BATTLE } from './content/party';
+import type { UnitSpec } from './battle';
+import { HERO_IDS, MAX_NAME_LENGTH } from './content/party';
 import { isSkillId, MAX_SKILL_RANK, SKILLS, type HeroId, type SkillId } from './content/skills';
-import { createParty, gainXp, heroStats, heroUnitSpec, unspentPoints, type HeroState } from './heroes';
-import { createRng, nextInt, type Rng } from './rng';
+import { isFloorNumber } from './floors';
+import { createParty, heroUnitSpec, unspentPoints, type HeroState } from './heroes';
+import { createRng, type Rng } from './rng';
+import { createRun, endFallback, sendParty, SETBACKS_TO_FALL_BACK, stepRun, type EventSink, type RunState, type RunWorld, type StartAt, type WallState } from './run';
 import { isLegalOrder, spendRefusal, type SkillRanks, type SpendRefusal } from './skills';
 
 export const TICK_MS = 100;
@@ -11,103 +12,52 @@ export const TICK_MS = 100;
 export const CATCH_UP_CAP_MS = 43_200_000;
 export const SAVE_VERSION = 1;
 
-/** Temporary until Floors arrive: the Party travels this long between Battles. */
-const TICKS_BETWEEN_BATTLES = 50;
-const SEED_RANGE = 2 ** 32;
-/** The Team the Party fights on. */
-export const PARTY_TEAM = 'a' satisfies TeamId;
-export const ENEMY_TEAM = 'b' satisfies TeamId;
-
-export type BattleOutcome = 'won' | 'lost' | 'draw';
-
-export type GameEvent =
-  | BattleEvent
-  | { readonly type: 'battleStarted'; readonly enemyNames: readonly string[] }
-  | { readonly type: 'battleEnded'; readonly outcome: BattleOutcome }
-  | { readonly type: 'levelUp'; readonly heroId: HeroId; readonly heroName: string; readonly level: number };
-
-export type EventSink = (event: GameEvent) => void;
-
 export interface GameSetup {
   readonly seed: number;
   /** Starts part-way through, for tests and the balance script. */
   readonly scenario?: {
     readonly heroLevel?: number;
     readonly skillRanks?: Readonly<Partial<Record<HeroId, SkillRanks>>>;
+    readonly startAt?: StartAt;
+    readonly lampLit?: boolean;
+    /** Setbacks already counted towards falling back. 3 starts the Game fallen back. */
+    readonly setbacks?: number;
+    /** Battles draw after this many Ticks, instead of the usual limit. */
+    readonly battleTicks?: number;
   };
 }
 
 export type PlayerAction =
+  | { readonly type: 'sendParty' }
   | { readonly type: 'renameHero'; readonly heroId: HeroId; readonly name: string }
   | { readonly type: 'spendSkillPoint'; readonly heroId: HeroId; readonly skillId: SkillId }
   | { readonly type: 'setSkillOrder'; readonly heroId: HeroId; readonly order: readonly SkillId[] }
   | { readonly type: 'respec'; readonly heroId: HeroId };
 
-export type ActionRefusal = 'unknownHero' | 'emptyName' | 'nameTooLong' | 'badOrder' | SpendRefusal;
+export type ActionRefusal = 'notInTown' | 'unknownHero' | 'emptyName' | 'nameTooLong' | 'badOrder' | SpendRefusal;
 export type ActionResult = { readonly ok: true } | { readonly ok: false; readonly reason: ActionRefusal };
 
 /** A running game. The UI never reads inside it: reads go through the view functions. */
 export type Game = { readonly __brand: 'Game' };
 
 /** Everything that carries between Ticks, as plain JSON-safe data. */
-interface GameState {
-  readonly rng: Rng;
+interface GameState extends RunWorld {
   tick: number;
   /** Elapsed time banked towards the next whole Tick. */
   bankMs: number;
-  battle: BattleState | null;
-  ticksUntilBattle: number;
-  readonly heroes: HeroState[];
 }
 
 export const stateOf = (game: Game): GameState => game as unknown as GameState;
 const gameOf = (state: GameState): Game => state as unknown as Game;
 const ignore: EventSink = () => {};
 
-function startBattle(state: GameState, sink: EventSink): void {
-  const pack = rollPack(state.rng);
-  // Units take their stats and skills here, so a build change reaches the next Battle.
-  const teams = { [PARTY_TEAM]: state.heroes.map(heroUnitSpec), [ENEMY_TEAM]: pack };
-  state.battle = createBattle({ seed: nextInt(state.rng, SEED_RANGE), teams });
-  sink({ type: 'battleStarted', enemyNames: pack.map((enemy) => enemy.name) });
-}
-
-const outcomeOf = (battle: BattleState): BattleOutcome =>
-  battle.winner === null ? 'draw' : battle.winner === PARTY_TEAM ? 'won' : 'lost';
-
-/** Oil carries out of the Battle. Effects and cooldowns end with it, and health is restored until Floors arrive. */
-function finishBattle(state: GameState, battle: BattleState, sink: EventSink): void {
-  const outcome = outcomeOf(battle);
-  sink({ type: 'battleEnded', outcome });
-  for (const hero of state.heroes) {
-    const unit = battle.units.find((candidate) => candidate.spec.id === hero.id);
-    if (unit) hero.oil = Math.min(heroStats(hero).maxOil, unit.oil + OIL_BETWEEN_BATTLES);
-    if (outcome !== 'won') continue;
-    for (const level of gainXp(hero, XP_PER_BATTLE)) sink({ type: 'levelUp', heroId: hero.id, heroName: hero.name, level });
-  }
-}
-
-/** The one function that moves the game forward. Every rule is reached from here. */
-function stepTick(state: GameState, sink: EventSink): void {
-  state.tick++;
-  if (state.battle) {
-    for (const event of stepBattle(state.battle)) sink(event);
-    if (state.battle.over) {
-      finishBattle(state, state.battle, sink);
-      state.battle = null;
-      state.ticksUntilBattle = TICKS_BETWEEN_BATTLES;
-    }
-    return;
-  }
-  state.ticksUntilBattle--;
-  if (state.ticksUntilBattle <= 0) startBattle(state, sink);
-}
-
-/** The first Battle starts on the first Tick, so its battleStarted reaches a sink like any other. */
 export function createGame(setup: GameSetup): Game {
-  const { heroLevel, skillRanks } = setup.scenario ?? {};
+  const { heroLevel, skillRanks, startAt, lampLit, setbacks, battleTicks } = setup.scenario ?? {};
   const heroes = createParty((id) => ({ level: heroLevel, ranks: skillRanks?.[id] }));
-  return gameOf({ rng: createRng(setup.seed), tick: 0, bankMs: 0, battle: null, ticksUntilBattle: 1, heroes });
+  const rng = createRng(setup.seed);
+  const counted = Math.min(setbacks ?? 0, SETBACKS_TO_FALL_BACK);
+  const wall: WallState = { lampLit: lampLit ?? false, setbacks: counted, fallenBack: counted >= SETBACKS_TO_FALL_BACK };
+  return gameOf({ rng, tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), wall, battleTicks: battleTicks ?? null, heroes });
 }
 
 export const heroesOf = (game: Game): readonly HeroState[] => stateOf(game).heroes;
@@ -119,8 +69,14 @@ const refused = (reason: ActionRefusal): ActionResult => ({ ok: false, reason })
 const ACCEPTED: ActionResult = { ok: true };
 
 /** Applies a player's choice at any time. A build change reaches the next Battle. */
-export function applyAction(game: Game, action: PlayerAction): ActionResult {
-  const hero = stateOf(game).heroes.find((candidate) => candidate.id === action.heroId);
+export function applyAction(game: Game, action: PlayerAction, sink: EventSink = ignore): ActionResult {
+  const state = stateOf(game);
+  if (action.type === 'sendParty') {
+    if (state.run.phase !== 'town') return refused('notInTown');
+    sendParty(state, sink);
+    return ACCEPTED;
+  }
+  const hero = state.heroes.find((candidate) => candidate.id === action.heroId);
   if (!hero) return refused('unknownHero');
   switch (action.type) {
     case 'renameHero': {
@@ -137,6 +93,7 @@ export function applyAction(game: Game, action: PlayerAction): ActionResult {
       const rank = hero.ranks[skillId] ?? 0;
       hero.ranks[skillId] = rank + 1;
       if (rank === 0 && SKILLS[skillId].kind === 'active') hero.order.push(skillId);
+      endFallback(state.wall, sink);
       return ACCEPTED;
     }
     case 'setSkillOrder':
@@ -158,7 +115,10 @@ export function advance(game: Game, elapsedMs: number, sink: EventSink = ignore)
   state.bankMs += elapsedMs;
   const ticks = Math.floor(state.bankMs / TICK_MS);
   state.bankMs -= ticks * TICK_MS;
-  for (let i = 0; i < ticks; i++) stepTick(state, sink);
+  for (let i = 0; i < ticks; i++) {
+    state.tick++;
+    stepRun(state, sink);
+  }
 }
 
 export function serializeGame(game: Game): string {
@@ -180,17 +140,28 @@ const isRank = (value: unknown): value is number =>
 const isLearnedSkill = (value: unknown): boolean =>
   isRecord(value) && isSkillId(value['id']) && isRank(value['rank']);
 
+const isDamageType = (value: unknown): boolean => value === 'physical' || value === 'poison';
+const isUnitAction = (value: unknown): boolean =>
+  isRecord(value) &&
+  isString(value['name']) &&
+  isNumber(value['interval']) &&
+  (value['target'] === 'oneFront' || value['target'] === 'every') &&
+  isNumber(value['damage']) &&
+  isDamageType(value['damageType']) &&
+  isOptionalNumber(value['poisonStack']);
+
 const isUnitSpec = (value: unknown): boolean =>
   isRecord(value) &&
   isString(value['id']) &&
   isString(value['name']) &&
   isNumber(value['health']) &&
+  isOptionalNumber(value['maxHealth']) &&
   isNumber(value['power']) &&
   isNumber(value['actionInterval']) &&
   isRow(value['row']) &&
   (value['reach'] === 'melee' || value['reach'] === 'ranged') &&
   (value['targeting'] === 'frontFirst' || value['targeting'] === 'any') &&
-  (value['damageType'] === 'physical' || value['damageType'] === 'poison') &&
+  isDamageType(value['damageType']) &&
   isNumber(value['armour']) &&
   isRecord(value['resistances']) &&
   Object.values(value['resistances']).every(isNumber) &&
@@ -198,7 +169,8 @@ const isUnitSpec = (value: unknown): boolean =>
   isOptionalNumber(value['oil']) &&
   isOptionalNumber(value['maxOil']) &&
   isOptionalNumber(value['poisonOnHit']) &&
-  (value['skills'] === undefined || (Array.isArray(value['skills']) && value['skills'].every(isLearnedSkill)));
+  (value['skills'] === undefined || (Array.isArray(value['skills']) && value['skills'].every(isLearnedSkill))) &&
+  (value['actions'] === undefined || (Array.isArray(value['actions']) && value['actions'].every(isUnitAction)));
 
 const isBleed = (value: unknown): boolean =>
   isRecord(value) && isNumber(value['perTick']) && isNumber(value['ticksLeft']) && isNumber(value['nextTickAt']);
@@ -216,6 +188,8 @@ const isUnitState = (value: unknown): boolean =>
   isRow(value['row']) &&
   isNumber(value['health']) &&
   isNumber(value['ticksToAction']) &&
+  Array.isArray(value['actionTicks']) &&
+  value['actionTicks'].every(isNumber) &&
   isNumber(value['oil']) &&
   isSkillTicks(value['skillReadyAt']) &&
   (value['bleed'] === null || isBleed(value['bleed'])) &&
@@ -247,6 +221,7 @@ function isHeroState(value: unknown): boolean {
     Number.isInteger(level) &&
     level >= 1 &&
     isNumber(value['xp']) &&
+    isNumber(value['health']) &&
     isNumber(value['oil']) &&
     isRanks(ranks) &&
     Array.isArray(order) &&
@@ -255,12 +230,34 @@ function isHeroState(value: unknown): boolean {
   );
 }
 
+const ROOM_KINDS: readonly unknown[] = ['battle', 'chest', 'stairs', 'guardian'];
+const isRoom = (value: unknown): boolean =>
+  isRecord(value) && isNumber(value['x']) && isNumber(value['y']) && ROOM_KINDS.includes(value['kind']);
+
+function isRunState(value: unknown): value is RunState {
+  if (!isRecord(value) || !isNumber(value['ticksLeft']) || !isNumber(value['room'])) return false;
+  const { phase, floor, layout, room } = value;
+  if (phase === 'town') return floor === null && layout === null;
+  if (phase !== 'travelling' && phase !== 'battle' && phase !== 'chest') return false;
+  if (!isFloorNumber(floor) || !isRecord(layout) || !Array.isArray(layout['rooms']) || !layout['rooms'].every(isRoom)) return false;
+  return Number.isInteger(room) && (room as number) >= 0 && (room as number) < layout['rooms'].length;
+}
+
+const isWallState = (value: unknown): boolean =>
+  isRecord(value) &&
+  typeof value['lampLit'] === 'boolean' &&
+  isNumber(value['setbacks']) &&
+  typeof value['fallenBack'] === 'boolean';
+
 const isGameState = (value: unknown): boolean =>
   isRecord(value) &&
   isRng(value['rng']) &&
   isNumber(value['tick']) &&
   isNumber(value['bankMs']) &&
-  isNumber(value['ticksUntilBattle']) &&
+  isRunState(value['run']) &&
+  isWallState(value['wall']) &&
+  (value['battleTicks'] === null || isNumber(value['battleTicks'])) &&
+  (value['run'].phase === 'battle') === (value['battle'] !== null) &&
   Array.isArray(value['heroes']) &&
   value['heroes'].length === HERO_IDS.length &&
   value['heroes'].every(isHeroState) &&
