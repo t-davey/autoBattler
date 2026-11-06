@@ -40,7 +40,7 @@ What merged milestones left for later ones to know. The code holds their rules a
 
 The hand estimates assumed nobody Wipes on the way down. Three Setbacks on Floor 3 can trigger a fallback before the Party has met the Guardian, and it wins only at a sharp level cliff. Check both against the demo script in M6.
 
-## Milestone 4 ([#8](https://github.com/t-davey/autoBattler/issues/8))
+## Milestone 4 ([PR #17](https://github.com/t-davey/autoBattler/pull/17))
 
 - **Item ids:** `ItemId` is a number that counts up from `nextItemId`, so a higher id is a newer item. Starter gear takes the first ids.
 - **Item views:** `itemFound` carries an `ItemView`, ready for M5's `AwayReport.loot`. `itemFound` follows the Room's `chestOpened` or `battleEnded`, or a Guardian kill's `guardianFell`, and its `lampRelit` on the first kill.
