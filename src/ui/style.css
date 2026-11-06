@@ -1,10 +1,153 @@
 :root {
-  color-scheme: light dark;
-  font-family: system-ui, sans-serif;
+  color-scheme: dark;
+  --ink: #d9d2c0;
+  --ink-faint: #8d8574;
+  --soot: #121014;
+  --ash: #1d1a20;
+  --iron: #3a343c;
+  --blood: #8e2a2a;
+  --ember: #c58a3a;
+  font-family: Georgia, 'Times New Roman', serif;
+  color: var(--ink);
+  background: var(--soot);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--soot);
 }
 
 #app {
-  max-width: 40rem;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1rem;
+  gap: 1rem;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: normal;
+  letter-spacing: 0.04em;
+}
+
+h1 {
+  font-size: 1.4rem;
+  color: var(--ember);
+}
+
+h2 {
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+  color: var(--ember);
+}
+
+h3 {
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+  color: var(--ink-faint);
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 1rem;
+}
+
+.panel {
+  padding: 1rem;
+  background: var(--ash);
+  border: 1px solid var(--iron);
+}
+
+.battle-panel {
+  min-height: 15rem;
+}
+
+.battlefield {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.row-units {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.unit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: var(--soot);
+  border: 1px solid var(--iron);
+}
+
+.unit-fallen {
+  opacity: 0.45;
+}
+
+.unit-fallen .unit-name {
+  text-decoration: line-through;
+}
+
+.health-bar {
+  height: 0.5rem;
+  background: var(--iron);
+}
+
+.health-fill {
+  height: 100%;
+  background: var(--blood);
+  transition: width 100ms linear;
+}
+
+.unit-health {
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
+.travelling {
+  margin: 0;
+  font-style: italic;
+  color: var(--ink-faint);
+}
+
+.live-log {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.log-lines {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 40rem) {
+  .battlefield {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

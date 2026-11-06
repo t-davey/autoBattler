@@ -21,8 +21,10 @@ import('../dist-electron/main.js')
       await new Promise((resolve) => webContents.once('did-stop-loading', resolve));
     }
 
-    const rendered = await webContents.executeJavaScript("document.querySelector('#app').childElementCount");
-    if (rendered === 0) return fail('#app is empty');
+    // React renders on its own schedule, so poll until it has. The 15s limit above still applies.
+    while ((await webContents.executeJavaScript("document.querySelector('#app').childElementCount")) === 0) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
     const nodeAccess = await webContents.executeJavaScript("typeof require !== 'undefined'");
     if (nodeAccess) return fail('renderer has Node access');
 
