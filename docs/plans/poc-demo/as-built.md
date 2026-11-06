@@ -16,7 +16,7 @@ What merged milestones left for later ones to know. The code holds their rules a
 - On a shared hit, the 1-damage minimum applies only to the original target's share.
 - `scripts/balance.mjs` calibrates its stand-in enemies by bisection, so the reference Party stays near 50% as numbers change.
 
-## Milestone 3 (PR_LINK)
+## Milestone 3 ([PR #16](https://github.com/t-davey/autoBattler/pull/16))
 
 - **Setbacks:** `battleEnded` still says how a Battle went, then a `wipe` or `draw` event follows with `floor` and `enemyName`. Count Setbacks from those two events alone, so none counts twice. M5's Setback kind comes from the event's type, and `fellBack` sets the Away Report's fall-back note.
 - **Actions can report:** `applyAction` takes an optional sink, because spending a point can end a fallback. The store adds those lines to the Live Log. M4's `equipItem` calls `endFallback` the same way (G22).
