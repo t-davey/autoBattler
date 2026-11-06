@@ -14,7 +14,7 @@ export type {
   UnitAction,
   UnitSpec,
 } from './battle';
-export { AFFIXES, SLOTS } from './content/items';
+export { AFFIXES, RARITIES, SLOTS } from './content/items';
 export type { AffixDefinition, AffixId, BaseId, ItemStat, ItemStats, Rarity, Slot } from './content/items';
 export { rollItem } from './items';
 export type { ItemId, ItemSpec, ItemView, RolledAffix } from './items';

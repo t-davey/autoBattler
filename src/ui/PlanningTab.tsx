@@ -1,9 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { SLOTS, type ActionResult, type HeroView, type PlayerAction, type SkillId } from '../sim';
+import { SLOTS, type HeroView, type SkillId } from '../sim';
 import { lockText, REFUSAL_TEXT, skillFacts, skillValues } from './describeHero';
 import { SLOT_TEXT, statSheet } from './describeItem';
-
-type Dispatch = (action: PlayerAction) => ActionResult;
+import type { Dispatch } from './store';
 
 function NameEditor({ hero, dispatch, onRefused }: { hero: HeroView; dispatch: Dispatch; onRefused: (text: string) => void }) {
   const [draft, setDraft] = useState(hero.name);

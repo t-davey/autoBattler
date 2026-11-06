@@ -26,6 +26,7 @@ export interface ItemBase {
 }
 
 export const SLOTS: readonly Slot[] = ['weapon', 'body', 'trinket'];
+export const RARITIES: readonly Rarity[] = ['common', 'magic', 'rare'];
 
 export const ITEM_BASES: Readonly<Record<BaseId, ItemBase>> = {
   'iron-cudgel': { name: 'Iron Cudgel', slot: 'weapon', reach: 'melee', builtIn: { power: 4 } },

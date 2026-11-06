@@ -1,5 +1,5 @@
 import type { UnitSpec } from './battle';
-import { AFFIXES, ITEM_BASES, SLOTS, type Slot } from './content/items';
+import { AFFIXES, ITEM_BASES, RARITIES, SLOTS, type Rarity, type Slot } from './content/items';
 import { CLASSES, HERO_IDS, MAX_NAME_LENGTH } from './content/party';
 import { isSkillId, MAX_SKILL_RANK, SKILLS, type HeroId, type SkillId } from './content/skills';
 import { isFloorNumber, ROOM_KINDS } from './floors';
@@ -265,7 +265,7 @@ function isItem(value: unknown): value is ItemState {
   return (
     isNumber(id) &&
     Number.isInteger(id) &&
-    (rarity === 'common' || rarity === 'magic' || rarity === 'rare') &&
+    RARITIES.includes(rarity as Rarity) &&
     Array.isArray(affixes) &&
     affixes.every(isAffix) &&
     isNumber(levelRequirement)

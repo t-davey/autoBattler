@@ -29,13 +29,16 @@ export interface Snapshot {
   readonly stash: readonly ItemView[];
 }
 
+/** Sends a player's choice to the sim. */
+export type Dispatch = (action: PlayerAction) => ActionResult;
+
 /** Holds the Game and publishes immutable Snapshots. Free of React and the DOM. */
 export interface Store {
   subscribe(listener: () => void): () => void;
   getSnapshot(): Snapshot;
   advance(elapsedMs: number): void;
   /** Sends a player's choice to the sim, publishing any change. */
-  dispatch(action: PlayerAction): ActionResult;
+  dispatch: Dispatch;
 }
 
 export function createStore(game: Game): Store {

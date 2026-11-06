@@ -19,7 +19,7 @@ What merged milestones left for later ones to know. The code holds their rules a
 ## Milestone 3 ([PR #16](https://github.com/t-davey/autoBattler/pull/16))
 
 - **Setbacks:** `battleEnded` still says how a Battle went, then a `wipe` or `draw` event follows with `floor` and `enemyName`. Count Setbacks from those two events alone, so none counts twice. M5's Setback kind comes from the event's type, and `fellBack` sets the Away Report's fall-back note.
-- **Actions can report:** `applyAction` takes an optional sink, because spending a point can end a fallback. The store adds those lines to the Live Log. M4's `equipItem` calls `endFallback` the same way (G22).
+- **Actions can report:** `applyAction` takes an optional sink, because spending a point can end a fallback. The store adds those lines to the Live Log.
 - **`scenario`:** adds `startAt` and `lampLit`, as planned, and two more for tests that tuning mustn't break: `setbacks` (3 starts fallen back) and `battleTicks` (draws Battles early).
 - **Where events fire:** `floorEntered` comes on reaching a Floor's first Room, and so reaches a sink on a new game. Each Room's `roomEntered` comes first, then the Battle or chest. `levelUp` comes before the Room's recovery, so recovery uses the new max health.
 - **Timed actions:** the Warden fights by `UnitSpec.actions`. Its `power`, `actionInterval`, and `damageType` go unused.
@@ -43,7 +43,7 @@ The hand estimates assumed nobody Wipes on the way down. Three Setbacks on Floor
 ## Milestone 4 ([#8](https://github.com/t-davey/autoBattler/issues/8))
 
 - **Item ids:** `ItemId` is a number that counts up from `nextItemId`, so a higher id is a newer item. Starter gear takes the first ids.
-- **Item views:** `itemFound` carries an `ItemView`, ready for M5's `AwayReport.loot`. `itemFound` follows the Room's `chestOpened`, `battleEnded`, or `lampRelit`.
+- **Item views:** `itemFound` carries an `ItemView`, ready for M5's `AwayReport.loot`. `itemFound` follows the Room's `chestOpened` or `battleEnded`, or a Guardian kill's `guardianFell`, and its `lampRelit` on the first kill.
 - **`scenario`:** adds `equipped`, as planned, and `stash` for tests. `rollItem(seed, floor)` rolls one item alone, without a Game. Scenario tests assert against extremes, such as level 1 or level 40, so that tuning doesn't break them.
 - **First kill:** the guaranteed rare hangs on `wall.lampLit`, so a `lampLit` scenario gets ordinary drops.
 - **Saves:** `SAVE_VERSION` stayed at 1, since nothing writes saves until M5.

@@ -286,6 +286,7 @@ describe('equipping', () => {
     expect(partyUnitSpecs(start).find((unit) => unit.id === 'huntsman')?.reach).toBe('ranged');
     expect(cuts(start)).toBe(0);
     expect(blocked(start)).toBe(true);
+    expect(heroIn(start, 'huntsman').skills.filter((skill) => skill.blockedByWeapon).map((skill) => skill.id)).toEqual(['bleeders-cut', 'the-long-cut']);
   });
 });
 
@@ -310,6 +311,7 @@ describe('item saves', () => {
     ['an item in the wrong Slot', (save: any) => { save.game.heroes[0].equipped.body = save.game.heroes[0].equipped.weapon; }],
     ['a missing Stash', (save: any) => { delete save.game.stash; }],
     ['a repeated item id', (save: any) => { save.game.stash[0].id = save.game.heroes[0].equipped.weapon.id; }],
+    ['an item id not yet handed out', (save: any) => { save.game.stash[0].id = save.game.nextItemId; }],
   ])('deserializeGame refuses %s', (_name, damage) => {
     const save = JSON.parse(serializeGame(game({ stash: [SALLOW_MAIL] })));
     damage(save);
@@ -372,6 +374,24 @@ describe('drops', () => {
     const later = Array.from({ length: 30 }, (_, seed) => killRarity({ ...atGuardian, lampLit: true }, seed));
     expect(new Set(first)).toEqual(new Set(['rare']));
     expect(new Set(later).has('common')).toBe(true);
+  });
+
+  it('only the first kill in a Game is sure to drop a rare', () => {
+    const rarities: Rarity[][] = Array.from({ length: 10 }, (_, seed) => {
+      const kills: Rarity[] = [];
+      let killed = false;
+      advance(game(strong, seed), 14_400_000, (event) => {
+        if (event.type === 'guardianFell') killed = true;
+        if (event.type === 'itemFound' && killed) kills.push(event.item.rarity);
+        if (event.type === 'returnedToTown') killed = false;
+      });
+      return kills;
+    });
+    for (const kills of rarities) {
+      expect(kills.length).toBeGreaterThan(1);
+      expect(kills[0]).toBe('rare');
+    }
+    expect(rarities.flatMap((kills) => kills.slice(1))).toContain('common');
   });
 
   it('a rare from the first Guardian kill can be equipped and changes the stat sheet', () => {

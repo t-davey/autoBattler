@@ -1,12 +1,10 @@
 import { useMemo, useState } from 'react';
-import { AFFIXES, SLOTS, type ActionResult, type AffixId, type HeroView, type ItemView, type PlayerAction, type Rarity, type Slot } from '../sim';
+import { AFFIXES, RARITIES, SLOTS, type ActionResult, type AffixId, type HeroView, type ItemView, type Rarity, type Slot } from '../sim';
 import { REFUSAL_TEXT } from './describeHero';
 import { itemFacts, itemStatsText, SLOT_TEXT, STAT_TEXT, statSheet } from './describeItem';
 import { queryStash, type StashQuery, type StashSort } from './stashQuery';
+import type { Dispatch } from './store';
 
-type Dispatch = (action: PlayerAction) => ActionResult;
-
-const RARITIES: readonly Rarity[] = ['common', 'magic', 'rare'];
 const SORT_TEXT: Readonly<Record<StashSort, string>> = { newest: 'Newest', rarity: 'Rarity', levelRequirement: 'Level requirement' };
 
 function ItemName({ item }: { item: ItemView }) {

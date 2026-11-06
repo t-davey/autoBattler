@@ -75,7 +75,7 @@ export interface RunWorld {
   battle: BattleState | null;
   readonly run: RunState;
   readonly wall: WallState;
-  /** Unequipped items, in no set order. */
+  /** Unequipped items, in the order they arrived here. */
   readonly stash: ItemState[];
   /** The id the next item takes. */
   nextItemId: number;
