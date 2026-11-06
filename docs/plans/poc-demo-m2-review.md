@@ -56,9 +56,9 @@ All are hand estimates from 2026-11-05. Numbers will move with tuning, so a diff
 | Level 7 Lamplighter dies to Poison alone | about 38 s | 149 health, no healing, Guardian's Spore Breath | M3, M6 | 38.0 s |
 | Level 7 Huntsman dies to Poison alone | about 41 s | 170 health, same | M3, M6 | 38.7 s |
 | Same Lamplighter with rank 2 Shared Burden | about 41 s | 15% redirected | M3, M6 | 42.0 s |
-| Level 10 Lamplighter, without and with rank 5 Shared Burden | about 41 s and about 51 s | 176 health, 30% redirected | M6 | 42 s and 50 s, across 40 Seeds. With it, the Lamplighter outlives the fight in 6 of 40 |
-| Basic attacks kill the Warden | about 85 s at level 6, about 80 s at level 7 | No skills, nobody falls, 1,600 health | M3, M6 | At 1,200 health (G29), no kill at level 10 or below, since the Party falls first. Level 12 wins every time, in 48 s |
-| Damage a second at level 7 | Sin-Eater 6.3, Huntsman 10.7, Lamplighter 6.7 | Basic attacks, no crit or armour | M6 | Against the Warden's 15 armour, averaged over each whole fight, so a Hero's time dead counts: 5.3, 7.6, 4.4 |
+| Level 10 Lamplighter, without and with rank 5 Shared Burden | about 41 s and about 51 s | 176 health, 30% redirected | M6 | 42 s and 50 s, across 40 Seeds. With it, the Lamplighter outlives the Battle in 6 of 40 |
+| Basic attacks kill the Warden | about 85 s at level 6, about 80 s at level 7 | No skills, nobody falls, 1,600 health | M3, M6 | At 1,200 health (G29), no kill at level 10 or below, since the Party falls first. Level 12 wins every time, in 48 s. M6, at 1,100 and 100 Seeds: none at level 9, 32% at level 10, every time at level 11, in 45 s |
+| Damage a second at level 7 | Sin-Eater 6.3, Huntsman 10.7, Lamplighter 6.7 | Basic attacks, no crit or armour | M6 | Against the Warden's 15 armour, averaged over each whole Battle, so a Hero's time dead counts: 5.3, 7.6, 4.4 |
 | Level reached in the M2 loop | Level 2 at 4 Battles, 4 at 32, 7 at 154 | 15 XP, won Battles only | M2 | Level 2 within about 2 minutes live |
 | Live time to those levels | under 2 min, about 13 min, about 64 min | About 25 s per Battle | M2 | 115 Battles (level 6) after about 42 min, so about 22 s per Battle |
 | Huntsman runs dry | About 3 Battles | The Long Cut and Bleeder's Cut, 120 Oil spent against 90 gained | M3, M6 | M3: never under 10 Oil across 40 Seeds at level 7, 2/2/2. M6, with longer Battles: reaches 0 |

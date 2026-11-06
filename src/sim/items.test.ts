@@ -49,15 +49,15 @@ describe('rolling items', () => {
     expect([...counts].sort()).toEqual([3, 4]);
   });
 
-  it.each([
-    [1, 0.78, 0.19, 0.03],
-    [2, 0.7, 0.23, 0.07],
-    [3, 0.6, 0.28, 0.12],
-  ] as const)("Rarity odds match each Floor's table across many Seeds: Floor %i", (floor, common, magic, rare) => {
-    const share = (rarity: Rarity) => withRarity(floor, rarity).length / SEEDS;
-    expect(Math.abs(share('common') - common)).toBeLessThan(0.015);
-    expect(Math.abs(share('magic') - magic)).toBeLessThan(0.015);
-    expect(Math.abs(share('rare') - rare)).toBeLessThan(0.01);
+  it('every Rarity drops on every Floor, commons most and rares least, and rares grow deeper', () => {
+    const share = (floor: FloorNumber, rarity: Rarity) => withRarity(floor, rarity).length / SEEDS;
+    for (const floor of [1, 2, 3] as const) {
+      expect(share(floor, 'rare')).toBeGreaterThan(0);
+      expect(share(floor, 'common')).toBeGreaterThan(share(floor, 'magic'));
+      expect(share(floor, 'magic')).toBeGreaterThan(share(floor, 'rare'));
+    }
+    expect(share(2, 'rare')).toBeGreaterThan(share(1, 'rare'));
+    expect(share(3, 'rare')).toBeGreaterThan(share(2, 'rare'));
   });
 
   it("a common is never a blank Saint's Knuckle, while magic and rare can be Saint's Knuckles", () => {

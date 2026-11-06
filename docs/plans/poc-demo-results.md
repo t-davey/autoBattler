@@ -13,7 +13,7 @@ The balance tables and rehearsal record for [Milestone 6](poc-demo/m6-tuning-and
 | First Guardian attempt, median | 13–20 min | 18.3 min | 19.3 min |
 | New Party Wipes in first 5 minutes | Under 5% | 0% | 1% |
 | At least one rare by 60 minutes | At least 80% | 86.5% | 90.5% |
-| Guardian Wipes mainly poison | At least 90% | 100% of 3,031 | 100% of 2,982 |
+| Guardian Wipes mainly poison, counting a Seed's shared first hour once per player | At least 90% | 100% of 3,031 | 100% of 2,982 |
 | Untended: Guardian killed within 2 hours | At most 10% | 0% | 0% |
 | Answer: Guardian killed within 2 hours | At least 80% | 85% | 87.5% |
 | Answer: median first kill | 60–120 min | 74 min | 72 min |
@@ -23,7 +23,7 @@ The first Guardian attempt sits near the top of its range. The holdout's 19.3 mi
 
 ## What changed
 
-Numbers only, with no rule changes, plus one display fix: the Battle panel rounds max health, which Floor scale could show as 206.99999999999997. The plan's tuning order held: Poison and scale fixed the Wipes on the way down, enemy health set the pacing, and Guardian health set the kill rate. Rarity came last, to clear the rare target with margin.
+Numbers only, with no rule changes, plus one display fix: the Battle panel rounds max health, which Floor scale could show as 206.99999999999997. This departed from the plan's tuning order, which puts Guardian health first. Pacing was furthest off, so Poison and Floor scale came first to stop the Wipes on the way down, then each enemy's health and power, which the order doesn't name, then Guardian health. Rarity came last, as planned, to clear the rare target with margin.
 
 | Number | Was | Now |
 |---|---|---|
@@ -51,24 +51,27 @@ Each row plays the same first hour, then acts at minute 60. Seeds 1-200.
 | Points only | 4% | 119 min | 5.6 |
 | Gear only | 32% | 89 min | 5.2 |
 | **Answer: points and gear** | **85%** | **74 min** | **3.9** |
+| Points only, Huntsman 5/1/0 | 51% | 114 min | 5.5 |
+| Points only, every Hero 5/1/0 | 47% | 116 min | 5.6 |
 | Answer, Sin-Eater spends nothing | 93% | 74 min | 3.7 |
 | Answer, Huntsman spends nothing | 60% | 75 min | 4.4 |
 | Answer, Lamplighter spends nothing | 46% | 87 min | 5.0 |
 | Answer, Lamplighter 2/2/2 (Warm Hands) | 86% | 74 min | 3.9 |
 | Answer, Huntsman 5/1/0 (no Long Cut) | 100% | 70 min | 3.1 |
 
-Neither half is enough alone, so the check-in's decision is what beats the Wall. Holdout rows differ by at most 8 points.
+Poison gear and points together beat the Wall most reliably, and each alone falls well short on these builds. The reference build understates points, though: see finding 1. Answer equips only weapons of the same Reach, so no Hero loses a skill, which the plan's wording doesn't state. Holdout rows from the first table's players differ by at most 8 points.
 
 ## Findings for the human
 
-None trips a risk, and none is changed here, since each is a design question or a Watch list item.
+No target misses and no risk trips, and none of these is changed here, since each is a design question or a Watch list item. **Finding 1 bears directly on the demo's question.**
 
-1. **Bulwark points don't help overall.** A Sin-Eater who spends nothing does better than the reference build, 93% against 85%. Against the Warden alone, its builds run from 66% to 86% and Shared Burden is what helps, so the likely cost is Bar the Way spending turns. The [Watch list](poc-demo-m2-review.md#watch-list) calls this a design question for S3.
-2. **The Long Cut lowers the kill rate.** Skipping it raises the Answer from 85% to 100%. The likely reason, not measured: it fires as soon as a target is Bleeding, so it ends a nearly full Bleed, along with Open Veins' bonus, and spends Oil and a turn doing so.
-3. **Warm Hands has no measurable effect on the Wall**, as G27 asked: 86% with it, 85% without, and the same Wipes. That compares the 2 points at minute 60 only.
-4. **The Warden is a sharp cliff.** At level 7, the reference Party in a Waxed Shroud each wins 0% at 8% poison resistance, 12% at 12%, and 86% at 14%. This is likely why one rare can feel decisive, and also why a small number change can move a kill rate a lot.
-5. **The Huntsman now runs dry.** Battles are longer, and Oil reached 0 at level 7 on 2/2/2, where the M2 review measured never under 10. A dry Hero uses the basic attack, which is no loss given finding 2.
-6. **The Live Log rounds small Poison ticks.** A 0.5 stack reads "sickens for 1" while health falls by 0.5. The rule is right and the line overstates it, which is a UI change for its own PR.
+1. **Routine play also beats the Wall.** `npm run balance -- drops`, which spends points as they come in step order and equips plain upgrades with no eye on poison, relights the Lamp on 200 of 200 Seeds, median 58 minutes. A one-time spend at minute 60 on 5/1/0 builds kills in about half of Seeds with no gear at all. So the Wall rewards a player who keeps tending, whichever choices they make, and the 81.5-point gap in the targets measures not gearing up against gearing up, for a player who does nothing for an hour. Whether that's a real decision is the S4 question. Raising Guardian health would make it harder, at the cost of the Answer's target.
+2. **Bulwark points don't help overall.** A Sin-Eater who spends nothing does better than the reference build, 93% against 85%. Against the Warden alone, its builds run from 66% to 86% and Shared Burden is what helps, so the likely cost is the actions Bar the Way uses. The [Watch list](poc-demo-m2-review.md#watch-list) calls this a design question for S3.
+3. **The Long Cut lowers the kill rate.** Skipping it raises the Answer from 85% to 100%. The likely reason, not measured: it fires as soon as a target is Bleeding, so it ends a nearly full Bleed, along with Open Veins' bonus, and spends Oil and an action doing so.
+4. **Warm Hands shows no effect on the Wall**, as G27 asked: 86% at 2/2/2, 85% at 4/0/2, with the same Wipes. This is a weak test: the 2 builds also differ in Mend and Lantern Ward ranks, which could offset it, and it only spends at minute 60.
+5. **The Warden is a sharp cliff.** At level 7, the reference Party in a Waxed Shroud each wins 0% at 8% poison resistance, 12% at 12%, and 86% at 14%. This is likely why one rare can feel decisive, and also why a small number change can move a kill rate a lot.
+6. **The Huntsman now runs dry.** Battles are longer, and Oil reached 0 at level 7 on 2/2/2, where the M2 review measured never under 10. A dry Hero uses the basic attack, which is no loss given finding 3.
+7. **The Live Log rounds small Poison ticks.** A 0.5 stack reads "sickens for 1" while health falls by 0.5. The rule is right and the line overstates it, which is a UI change for its own PR.
 
 ## Risks re-measured
 
@@ -82,7 +85,7 @@ None trips a risk, and none is changed here, since each is a design question or 
 
 The Lamplighter's soft pass from M2 hardens at the real Wall into one answer: 4/0/2 is its only viable build there, either skill first. It still passes on the stand-ins.
 
-**R3: passes.** 37.8 items an hour, 3.25 of them rare; 24.8 decision drops an hour; 2.3% dominated pairs; 57.2% of rares with Sallow.
+**R3: passes.** 37.8 items an hour, 3.25 of them rare; 24.8 decision drops an hour; 2.3% dominated pairs; 57.2% of rares with Sallow. Lamp relit in 200 of 200 Seeds, median 58 minutes: see finding 1.
 
 **R1 and the save: pass.** `npm run bench:catchup` runs 12 hours in 97 ms, within 76-119 ms, with a 51 KB save and 465 items, close to M5's numbers. The browser and Stash rows weren't re-measured, since nothing here adds to their cost.
 
@@ -94,6 +97,8 @@ The Lamplighter's soft pass from M2 hardens at the real Wall into one answer: 4/
 - **Doing nothing:** no kill in the next hour. Spending points alone on any of 3 builds: no kill in the next hour either.
 - **Points and that one rare:** a kill in 13-27 minutes of Party time, on any of 3 builds and whichever Hero wears it.
 
+The search mode tests the reference build, on one wearer. The other builds and wearers came from a one-off check that isn't kept in the repo: reference, 5/1/0 for every Hero, and a third mixed set.
+
 ## Rehearsal
 
 `npm run dev` from "Start over", with `DEMO_SEED` 8, in the built-in browser with no console errors. Agent-run, and not the human's verdict.
@@ -104,7 +109,7 @@ The Lamplighter's soft pass from M2 hardens at the real Wall into one answer: 4/
 | 2. Skip time, read the Wipe | PASS. "2 Wipes at the Mouldering Warden, mostly poison damage", 1 at the Mire Bloat, and a fallback | 1 hour | Under 2 s |
 | 3. Equip the rare, spend points | PASS. The shroud on the Lamplighter shows 24%, and 15 points go on the reference build | None | Under 1 min |
 | 4. Skip, see the Guardian fall | PASS. "Guardian kills: 3", after 2 more Wipes | 1 hour | Under 2 s |
-| 5. Lamp relights, rare drops | PASS. "The Lamp is relit", with 5 rares listed | Same hour | Same |
+| 5. Lamp relights, rare drops | PASS. "The Lamp is relit", with 5 rares listed. The report doesn't mark which is the guaranteed one, whose rule has its own test | Same hour | Same |
 | 6. Close, reopen, read the report | PASS. Left the page for 63 s, past G19's 60 s. "Away 1 minute", with the spent points and gear kept | 1 minute | 1 minute |
 
 The first 5 steps ran twice, with the same reports both times. Step 4 skipped time rather than watching, as the plan allows. Step 6 left the page for another one on the same origin, so the rehearsal didn't test closing an Electron window, or an absence of hours.

@@ -92,7 +92,7 @@ function buildsFor(heroId) {
 }
 
 const server = await createServer({ configFile: false, server: { middlewareMode: true }, appType: 'custom' });
-const { advance, applyAction, beginCatchUp, continueCatchUp, createGame, deserializeGame, partyUnitSpecs, serializeGame, simulateBattle, SLOTS: SLOT_NAMES, TICK_MS, viewGame, viewStash } = await server.ssrLoadModule('/src/sim/index.ts');
+const { advance, applyAction, beginCatchUp, continueCatchUp, createGame, deserializeGame, partyUnitSpecs, serializeGame, simulateBattle, SLOTS, TICK_MS, viewGame, viewStash } = await server.ssrLoadModule('/src/sim/index.ts');
 
 const referenceRanks = Object.fromEntries(
   Object.entries(REFERENCE_RANKS).map(([heroId, allocation]) => [heroId, ranksFrom(CLASSES[heroId].skills, allocation)]),
@@ -335,12 +335,18 @@ function measureDrops() {
 }
 
 const GUARDIAN_NAME = 'The Mouldering Warden';
-const TICKS_PER_MINUTE = 600;
+const TICKS_PER_MINUTE = 60_000 / TICK_MS;
 const WALL_MINUTES = 120;
 const ACT_AT_MINUTE = 60;
 const EARLY_WIPE_MINUTES = 5;
 /** Weakest first, so the Hero Poison kills soonest gets first pick of the Stash. */
 const ANSWER_HERO_ORDER = ['lamplighter', 'huntsman', 'sin-eater'];
+
+/** Same Reach only, so no skill is lost. */
+const canWear = (hero, item) => {
+  const worn = hero.equipment[item.slot];
+  return item.levelRequirement <= hero.level && (worn === null || item.reach === worn.reach);
+};
 
 /** Reaches the build in step order, then adds spare points one at a time across the Branch. */
 function spendOnBuild(game, heroId, allocation) {
@@ -359,13 +365,13 @@ function spendReferencePoints(game, builds = REFERENCE_RANKS) {
   for (const heroId of Object.keys(CLASSES)) if (builds[heroId]) spendOnBuild(game, heroId, builds[heroId]);
 }
 
-/** For each Hero and Slot, the Stash's highest poison resistance above what's worn. Same Reach only, so no skill is lost. */
+/** For each Hero and Slot, the Stash's highest poison resistance above what's worn. */
 function equipPoisonAnswer(game) {
   for (const heroId of ANSWER_HERO_ORDER) {
-    for (const slot of SLOT_NAMES) {
+    for (const slot of SLOTS) {
       const hero = viewGame(game).heroes.find(({ id }) => id === heroId);
       const worn = hero.equipment[slot];
-      const wearable = viewStash(game).filter((item) => item.slot === slot && item.levelRequirement <= hero.level && (worn === null || item.reach === worn.reach));
+      const wearable = viewStash(game).filter((item) => item.slot === slot && canWear(hero, item));
       const best = wearable.reduce((top, item) => (top === null || item.stats.poisonResistance > top.stats.poisonResistance ? item : top), null);
       if (best && best.stats.poisonResistance > (worn?.stats.poisonResistance ?? 0)) {
         applyAction(game, { type: 'equipItem', heroId, itemId: best.id });
@@ -389,7 +395,6 @@ const newLedger = () => ({
   wipesByFloor: {},
   guardianWipes: 0,
   guardianPoisonWipes: 0,
-  draws: 0,
   level: 0,
 });
 
@@ -425,9 +430,6 @@ function recordEvent(ledger, tick, event) {
         if ((ledger.damage.poison ?? 0) > (ledger.damage.physical ?? 0)) ledger.guardianPoisonWipes++;
       }
       return;
-    case 'draw':
-      ledger.draws++;
-      return;
     case 'guardianFell':
       ledger.kills++;
       ledger.firstKill ??= tick;
@@ -462,6 +464,9 @@ const WALL_PLAYERS = {
 /** The Answer with one thing changed, for the M2 review's Watch list and G27's Warm Hands comparison. */
 const WALL_VARIANTS = {
   'Gear only': equipPoisonAnswer,
+  // A build that skips The Long Cut, with no gear, to test whether points alone can beat the Wall.
+  'Points only, every Hero 5/1/0': (game) => spendReferencePoints(game, { 'sin-eater': [5, 1, 0], huntsman: [5, 1, 0], lamplighter: [5, 1, 0] }),
+  'Points only, Huntsman 5/1/0': (game) => spendReferencePoints(game, { ...REFERENCE_RANKS, huntsman: [5, 1, 0] }),
   'Answer, Sin-Eater spends nothing': answerWith({ 'sin-eater': null }),
   'Answer, Huntsman spends nothing': answerWith({ huntsman: null }),
   'Answer, Lamplighter spends nothing': answerWith({ lamplighter: null }),
@@ -471,9 +476,9 @@ const WALL_VARIANTS = {
 
 const medianOf = (values) => [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)] ?? null;
 const sum = (values) => values.reduce((total, value) => total + value, 0);
-const minutes = (ticks) => ticks / TICKS_PER_MINUTE;
+const ticksToMinutes = (ticks) => ticks / TICKS_PER_MINUTE;
 const killShare = (ledgers) => (ledgers.filter(({ firstKill }) => firstKill !== null).length / ledgers.length) * 100;
-const medianKill = (ledgers) => medianOf(ledgers.flatMap(({ firstKill }) => (firstKill === null ? [] : [minutes(firstKill)])));
+const medianKill = (ledgers) => medianOf(ledgers.flatMap(({ firstKill }) => (firstKill === null ? [] : [ticksToMinutes(firstKill)])));
 
 /** Plays each Seed to the hour once, then forks that same hour into every player. */
 function runWall(players, firstSeed) {
@@ -495,7 +500,7 @@ function runWall(players, firstSeed) {
   return results;
 }
 
-const shown = (value, unit = '') => (value === null ? 'none' : `${value.toFixed(1)}${unit}`);
+const formatted = (value, unit = '') => (value === null ? 'none' : `${value.toFixed(1)}${unit}`);
 const within = (value, low, high) => value !== null && value >= low && value <= high;
 
 function printPlayers(results) {
@@ -514,11 +519,11 @@ function measureWall(firstSeed) {
   const results = runWall({ ...WALL_PLAYERS, ...WALL_VARIANTS }, firstSeed);
   const { Untended: untended, 'Points only': pointsOnly, Answer: answer } = results;
 
-  const battleSeconds = medianOf(untended.flatMap(({ battleTicks }) => battleTicks)) / 10;
-  const floorMinutes = minutes(medianOf(untended.flatMap(({ floorTicks }) => floorTicks)));
-  const attempts = untended.flatMap(({ firstAttempt }) => (firstAttempt === null ? [] : [minutes(firstAttempt)]));
+  const battleSeconds = (medianOf(untended.flatMap(({ battleTicks }) => battleTicks)) * TICK_MS) / 1000;
+  const floorMinutes = ticksToMinutes(medianOf(untended.flatMap(({ floorTicks }) => floorTicks)));
+  const attempts = untended.flatMap(({ firstAttempt }) => (firstAttempt === null ? [] : [ticksToMinutes(firstAttempt)]));
   const earlyWipes = (untended.filter(({ earlyWipes: count }) => count > 0).length / SEEDS) * 100;
-  const rares = (untended.filter(({ firstRare }) => firstRare !== null && minutes(firstRare) <= ACT_AT_MINUTE).length / SEEDS) * 100;
+  const rares = (untended.filter(({ firstRare }) => firstRare !== null && ticksToMinutes(firstRare) <= ACT_AT_MINUTE).length / SEEDS) * 100;
   const scripted = [untended, pointsOnly, answer].flat();
   const guardianWipes = sum(scripted.map(({ guardianWipes: count }) => count));
   const poisonWipes = guardianWipes === 0 ? 0 : (sum(scripted.map(({ guardianPoisonWipes }) => guardianPoisonWipes)) / guardianWipes) * 100;
@@ -526,16 +531,16 @@ function measureWall(firstSeed) {
   const gap = answerKills - killShare(pointsOnly);
 
   const targets = [
-    ['Median Battle length, Floors 1-3', '20-30 s', shown(battleSeconds, ' s'), within(battleSeconds, 20, 30)],
-    ['Median Floor length', '4-6 min', shown(floorMinutes, ' min'), within(floorMinutes, 4, 6)],
-    ['First Guardian attempt, median', '13-20 min', `${shown(medianOf(attempts), ' min')}, reached in ${attempts.length} of ${SEEDS} Seeds`, within(medianOf(attempts), 13, 20)],
-    ['New Party Wipes in first 5 minutes', 'under 5%', shown(earlyWipes, '%'), earlyWipes < 5],
-    ['At least one rare by 60 minutes', 'at least 80%', shown(rares, '%'), rares >= 80],
-    ['Guardian Wipes mainly poison', 'at least 90%', `${shown(poisonWipes, '%')} of ${guardianWipes}`, poisonWipes >= 90],
-    ['Untended: Guardian killed in 2 hours', 'at most 10%', shown(killShare(untended), '%'), killShare(untended) <= 10],
-    ['Answer: Guardian killed in 2 hours', 'at least 80%', shown(answerKills, '%'), answerKills >= 80],
-    ['Answer: median first kill', '60-120 min', shown(medianKill(answer), ' min'), within(medianKill(answer), 60, 120)],
-    ['Points only: kill rate below Answer', 'at least 20 points', `${shown(killShare(pointsOnly), '%')}, ${shown(gap)} points below`, gap >= 20],
+    ['Median Battle length, Floors 1-3', '20-30 s', formatted(battleSeconds, ' s'), within(battleSeconds, 20, 30)],
+    ['Median Floor length', '4-6 min', formatted(floorMinutes, ' min'), within(floorMinutes, 4, 6)],
+    ['First Guardian attempt, median', '13-20 min', `${formatted(medianOf(attempts), ' min')}, reached in ${attempts.length} of ${SEEDS} Seeds`, within(medianOf(attempts), 13, 20)],
+    ['New Party Wipes in first 5 minutes', 'under 5%', formatted(earlyWipes, '%'), earlyWipes < 5],
+    ['At least one rare by 60 minutes', 'at least 80%', formatted(rares, '%'), rares >= 80],
+    ['Guardian Wipes mainly poison', 'at least 90%', `${formatted(poisonWipes, '%')} of ${guardianWipes}`, poisonWipes >= 90],
+    ['Untended: Guardian killed in 2 hours', 'at most 10%', formatted(killShare(untended), '%'), killShare(untended) <= 10],
+    ['Answer: Guardian killed in 2 hours', 'at least 80%', formatted(answerKills, '%'), answerKills >= 80],
+    ['Answer: median first kill', '60-120 min', formatted(medianKill(answer), ' min'), within(medianKill(answer), 60, 120)],
+    ['Points only: kill rate below Answer', 'at least 20 points', `${formatted(killShare(pointsOnly), '%')}, ${formatted(gap)} points below`, gap >= 20],
   ];
 
   console.log(`Wall: ${WALL_MINUTES} minutes of Party time over ${SEEDS} Seeds from ${firstSeed}, acting at minute ${ACT_AT_MINUTE}.`);
@@ -580,8 +585,7 @@ function usableSallowRare(game) {
   for (const item of rares) {
     for (const heroId of ANSWER_HERO_ORDER) {
       const hero = heroes.find(({ id }) => id === heroId);
-      const worn = hero.equipment[item.slot];
-      if (item.levelRequirement <= hero.level && (worn === null || item.reach === worn.reach)) return { item, heroId };
+      if (canWear(hero, item)) return { item, heroId };
     }
   }
   return null;
@@ -592,7 +596,7 @@ function minutesToKill(game) {
   let found = null;
   for (let tick = 0; tick < 60 * TICKS_PER_MINUTE && found === null; tick++) {
     advance(game, TICK_MS, (event) => {
-      if (event.type === 'guardianFell') found ??= minutes(tick);
+      if (event.type === 'guardianFell') found ??= ticksToMinutes(tick);
     });
   }
   return found;
@@ -621,7 +625,7 @@ function tryDemoSeed(seed) {
     if (kill === null) return null;
     kills.push(kill);
   }
-  return { seed, wipes, rareName, slowest: Math.max(...kills), kills };
+  return { seed, wipes, rareName, kills };
 }
 
 /** Lowest Seed first among those that hold however long the rehearser watches. */

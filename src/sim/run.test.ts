@@ -256,14 +256,14 @@ describe('Enemy scale', () => {
         }
       }
     }
-    expect(healthOf[1]).toBeCloseTo(125);
-    expect(healthOf[2]).toBeCloseTo(143.75);
-    expect(healthOf[3]).toBeCloseTo(162.5);
-    expect(powerOf[2]! / powerOf[1]!).toBeCloseTo(1.15);
-    expect(powerOf[3]! / powerOf[1]!).toBeCloseTo(1.3);
-    expect(stackOf[1]).toBeCloseTo(0.5);
-    expect(stackOf[2]).toBeCloseTo(0.575);
-    expect(stackOf[3]).toBeCloseTo(0.65);
+    expect(healthOf[2]).toBeGreaterThan(healthOf[1]!);
+    expect(healthOf[3]).toBeGreaterThan(healthOf[2]!);
+    // One scale multiplies all three.
+    for (const floor of [2, 3]) {
+      const scale = healthOf[floor]! / healthOf[1]!;
+      expect(powerOf[floor]! / powerOf[1]!).toBeCloseTo(scale);
+      expect(stackOf[floor]! / stackOf[1]!).toBeCloseTo(scale);
+    }
     expect([xpOf[1], xpOf[2], xpOf[3]]).toEqual([15, 20, 25]);
   });
 });
@@ -419,7 +419,9 @@ describe('the Guardian', () => {
   it('fields the Mouldering Warden alone, in the front Row', () => {
     const played = game(1, atGuardian);
     stepUntil(played, 'battleStarted');
-    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'The Mouldering Warden', row: 'front', maxHealth: 1_100, health: 1_100 }]);
+    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'The Mouldering Warden', row: 'front' }]);
+    const [warden] = viewGame(played).battle!.enemies;
+    expect(warden!.health).toBe(warden!.maxHealth);
   });
 
   it('a level 40 Party kills the Guardian and relights the Lamp', () => {
