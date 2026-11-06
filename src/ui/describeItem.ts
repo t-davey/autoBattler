@@ -3,7 +3,7 @@ import { seconds } from './describeHero';
 
 export const SLOT_TEXT: Readonly<Record<Slot, string>> = { weapon: 'Weapon', body: 'Body', trinket: 'Trinket' };
 
-/** Words for what a stat does, as a Stash filter or an item row names it. */
+/** Words for what a stat does, as a Stash filter or a stat change names it. */
 export const STAT_TEXT: Readonly<Record<ItemStat, string>> = {
   power: 'power',
   maxHealth: 'max health',
@@ -34,12 +34,6 @@ export const changedStats = (item: ItemView, heroes: readonly HeroView[]): reado
 export function formatChange(stat: ItemStat, change: number): string {
   if (change === 0) return '0';
   return `${change > 0 ? '+' : ''}${change}${PERCENT_STATS.has(stat) ? '%' : ''}`;
-}
-
-/** An item's fixed facts: its Slot, its Reach if it is a weapon, and its level requirement. */
-export function itemFacts(item: ItemView): string {
-  const slot = item.reach ? `${SLOT_TEXT[item.slot]} (${item.reach})` : SLOT_TEXT[item.slot];
-  return `${slot} · Level ${item.levelRequirement}`;
 }
 
 /** A Hero's stat sheet on one line. */

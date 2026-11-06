@@ -166,6 +166,14 @@ _Avoid_: Level, stage
 One space on a Floor, holding a Battle, chest, trap, or shrine.
 _Avoid_: Encounter, tile
 
+**Way in**:
+The side of a Room the Party entered by, shown in the Battle scene as a door or stairs.
+_Avoid_: Entrance, spawn point
+
+**Way out**:
+The side of a Room the Party leaves by, always lit so the scene shows where it is heading.
+_Avoid_: Exit, goal
+
 **Wall**:
 A Guardian that stops a Party until it grows stronger.
 _Avoid_: Gate, blocker
@@ -243,6 +251,18 @@ _Avoid_: Church, cult
 **Synod**:
 The Penitents' Order's governing body, which knows the Rendering.
 _Avoid_: Council
+
+**Spigot burner**:
+A small flame fed from a pipe on a Room's wall. It gives light but doesn't hold back the Dark, as a Lamp does.
+_Avoid_: Sconce, Lamp, torch
+
+**Tallow candle**:
+A candle left in a burial niche in the Undercroft.
+_Avoid_: Votive
+
+**Foxfire**:
+The cold glow of fungal growth in the Undercroft.
+_Avoid_: Glowshroom
 
 **Town Council**:
 The body that sends Parties out to relight Lamps.

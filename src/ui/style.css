@@ -8,6 +8,8 @@
   --blood: #8e2a2a;
   --ember: #c58a3a;
   --magic: #7f9fc9;
+  --ui-scale: 1;
+  --header-height: calc(40px * var(--ui-scale));
   font-family: Georgia, 'Times New Roman', serif;
   color: var(--ink);
   background: var(--soot);
@@ -28,7 +30,7 @@ body {
   height: 100vh;
   max-width: 90rem;
   margin: 0 auto;
-  padding: 1rem;
+  padding: calc(var(--header-height) + 1rem) 1rem 1rem;
   gap: 1rem;
 }
 
@@ -83,54 +85,27 @@ ul {
   gap: 1rem;
 }
 
-.dashboard-main > .battle-panel {
-  flex: 1 1 28rem;
-  min-width: 0;
-}
-
-.battle-panel {
-  min-height: 15rem;
-}
-
-.floor-map {
-  flex: 0 0 auto;
-}
-
-.room-grid {
-  display: grid;
-  width: 18rem;
-  height: 14rem;
-  gap: 2px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
+/* Wide enough for the scene at 2x, counting the panel's padding and border. */
 .room {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
   border: 1px solid var(--iron);
   background: var(--soot);
 }
 
 .room-ahead {
-  color: var(--ink-faint);
+  color: var(--ink);
 }
 
 .room-cleared {
-  color: var(--iron);
+  color: var(--ink-faint);
 }
 
 .room-current {
   color: var(--soot);
   background: var(--ember);
   border-color: var(--ember);
-}
-
-.party-status {
-  margin-top: 0.75rem;
 }
 
 .town-menu {
@@ -154,55 +129,10 @@ ul {
   color: var(--ember);
 }
 
-.battlefield {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1rem;
-}
-
-.row-units {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.unit {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0.5rem;
-  background: var(--soot);
-  border: 1px solid var(--iron);
-}
-
-.unit-fallen {
-  opacity: 0.45;
-}
-
-.unit-fallen .unit-name {
-  text-decoration: line-through;
-}
-
-.health-bar {
-  height: 0.5rem;
-  background: var(--iron);
-}
-
 .health-fill {
   height: 100%;
   background: var(--blood);
   transition: width 100ms linear;
-}
-
-.unit-health {
-  font-size: 0.8rem;
-  color: var(--ink-faint);
-}
-
-.travelling {
-  margin: 0;
-  font-style: italic;
-  color: var(--ink-faint);
 }
 
 .live-log {
@@ -220,27 +150,25 @@ ul {
   line-height: 1.5;
 }
 
-.oil-bar {
-  height: 0.25rem;
-  background: var(--iron);
-}
-
 .oil-fill {
   height: 100%;
   background: var(--ember);
   transition: width 100ms linear;
 }
 
-.unit-effects {
-  font-size: 0.75rem;
-  color: var(--ember);
-}
-
 .app-header {
+  position: fixed;
+  z-index: 3;
+  top: 0;
+  right: 0;
+  left: 0;
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   gap: 1rem;
+  height: 40px;
+  padding: 0 1rem;
+  background: var(--soot);
+  zoom: var(--ui-scale);
 }
 
 .tabs {
@@ -391,12 +319,6 @@ button:disabled {
   }
 }
 
-@media (max-width: 40rem) {
-  .battlefield {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 .rarity-common {
   color: var(--ink);
   font-weight: normal;
@@ -410,82 +332,11 @@ button:disabled {
   color: var(--ember);
 }
 
-.stash {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  gap: 1rem;
-}
-
-.stash-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  min-height: 0;
-}
-
-.stash-controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  font-size: 0.85rem;
-}
-
-.stash-controls label {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  color: var(--ink-faint);
-}
-
 select {
   font: inherit;
   color: var(--ink);
   background: var(--soot);
   border: 1px solid var(--iron);
-}
-
-.stash-items {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.equipped-slot p {
-  margin: 0;
-  font-size: 0.9rem;
-}
-
-.equipped-heroes {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.equipped-slots {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.equipped-slot {
-  padding: 0.25rem 0;
-}
-
-.equipped-name {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.5rem;
 }
 
 .planning-gear {
@@ -502,13 +353,6 @@ select {
   color: var(--blood);
 }
 
-@media (max-width: 48rem) {
-  .stash {
-    grid-template-columns: minmax(0, 1fr);
-    overflow-y: auto;
-  }
-}
-
 .dev-tools {
   display: flex;
   gap: 0.5rem;
@@ -516,6 +360,8 @@ select {
 }
 
 .save-banner {
+  position: relative;
+  z-index: 2;
   margin: 0;
   padding: 0.5rem 1rem;
   border: 1px solid var(--blood);
@@ -615,49 +461,15 @@ select {
   overflow-y: auto;
 }
 
-.check-in-stash {
-  display: grid;
-  grid-template-columns: 22rem minmax(0, 1fr);
-  flex: 1;
-  min-height: 0;
-  gap: 1rem;
+.compare-stats {
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
 }
 
-.stash-item {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  gap: 0.15rem;
-  padding: 0.4rem 0.5rem;
-  color: var(--ink);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  background: var(--soot);
-  border: 1px solid transparent;
-}
-
-.stash-item[aria-pressed='true'] {
-  border-color: var(--ember);
-}
-
-.item-compare table {
-  width: 100%;
-  margin-top: 0.5rem;
-  border-collapse: collapse;
-}
-
-.item-compare th,
-.item-compare td {
-  padding: 0.35rem 0.5rem;
-  font-weight: normal;
-  text-align: left;
-  vertical-align: top;
-  border-bottom: 1px solid var(--iron);
-}
-
-.item-compare thead th {
-  color: var(--ember);
+.stash-row-warning {
+  flex: 1 1 100%;
+  margin: 0;
+  padding-left: calc(16px + 0.4rem);
 }
 
 .stat-gain {
@@ -680,4 +492,396 @@ select {
 /* Only groups what catch-up makes inert, so the page keeps its layout. */
 .app-body {
   display: contents;
+}
+
+/* The Battle scene fills the window under the header, with the rest of the screen laid over its corners. */
+.battle-screen {
+  position: fixed;
+  inset: var(--header-height) 0 0;
+  overflow: hidden;
+  background: #050508;
+}
+
+.battle-scene {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.battle-scene canvas {
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* Sized for the base window, then zoomed with the scene so its layout holds on any screen. */
+.battle-overlay {
+  position: absolute;
+  inset: 0;
+  text-shadow: 0 1px 2px #000, 0 0 4px #000;
+  pointer-events: none;
+  zoom: var(--ui-scale);
+}
+
+.floor-map {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+}
+
+.floor-map h2 {
+  margin-bottom: 0.25rem;
+  font-size: 1.2rem;
+}
+
+.room-grid {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pack-status,
+.travelling {
+  position: absolute;
+  top: 0.3rem;
+  left: 50%;
+  width: 28rem;
+  margin: 0;
+  font-size: 0.95rem;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.travelling {
+  font-style: italic;
+  color: var(--ink-faint);
+}
+
+.party-status {
+  position: absolute;
+  bottom: 0.75rem;
+  left: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 21rem;
+  font-size: 1rem;
+}
+
+.unit-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.unit-health {
+  color: var(--ink-faint);
+}
+
+.unit-fallen {
+  opacity: 0.45;
+}
+
+.unit-fallen .unit-name {
+  text-decoration: line-through;
+}
+
+.unit-effects {
+  font-size: 0.875rem;
+  color: var(--ember);
+}
+
+.health-bar {
+  height: 0.5rem;
+  background: rgb(0 0 0 / 70%);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 12%);
+}
+
+.oil-bar {
+  height: 0.25rem;
+  margin-top: 2px;
+  background: rgb(0 0 0 / 70%);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 12%);
+}
+
+.live-log-bare {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  width: 26rem;
+  height: 12.5rem;
+  text-align: right;
+  mask-image: linear-gradient(to bottom, transparent, #000 2.5rem);
+  pointer-events: auto;
+}
+
+.live-log-bare .log-lines {
+  font-size: 0.975rem;
+  line-height: 1.35;
+}
+
+/* The Stash fills the window under the header, and grows with it like the Battle screen. */
+.stash-screen {
+  position: fixed;
+  inset: var(--header-height) 0 0;
+  background: var(--soot);
+}
+
+.stash-scaled {
+  position: absolute;
+  inset: 0;
+  padding: 0.5rem 0.75rem 0.75rem;
+  zoom: var(--ui-scale);
+}
+
+.party-stash {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  height: 100%;
+  min-height: 0;
+  font-size: 0.9rem;
+}
+
+.party-stash p {
+  margin: 0;
+}
+
+.party-stash ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slot-icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.slot-icon-common {
+  fill: var(--ink-faint);
+}
+
+.slot-icon-magic {
+  fill: var(--magic);
+}
+
+.slot-icon-rare {
+  fill: var(--ember);
+}
+
+.slot-icon-empty {
+  fill: var(--iron);
+}
+
+.party-gear {
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.hero-gear {
+  padding: 0.4rem 0.5rem;
+  background: var(--ash);
+  border: 1px solid var(--iron);
+}
+
+.hero-gear-active {
+  border-color: var(--ember);
+}
+
+.hero-gear h3 {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.hero-gear .hint {
+  font-size: 0.72rem;
+}
+
+.hero-slot {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.hero-slot-pick {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  height: 1.7rem;
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.hero-slot-pick span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hero-slot-pick[aria-pressed='true'] {
+  border-color: var(--ember);
+  box-shadow: inset 2px 0 0 var(--ember);
+}
+
+.hero-slot-unequip {
+  flex: none;
+  width: 1.7rem;
+  padding: 0;
+  color: var(--ink-faint);
+}
+
+.stash-lower {
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 0.6rem;
+  min-height: 0;
+}
+
+.stash-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.stash-list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+  margin-bottom: 0.3rem;
+}
+
+.stash-list-head h2 {
+  margin: 0;
+}
+
+.stash-list-head .hint {
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+.stash-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  margin-left: auto;
+  font-size: 0.78rem;
+}
+
+.stash-controls button[aria-pressed='true'] {
+  color: var(--ember);
+  border-color: var(--ember);
+}
+
+.stash-empty {
+  padding: 0.5rem 0;
+}
+
+.stash-rows {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  border-top: 1px solid var(--iron);
+}
+
+.stash-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-right: 0.5rem;
+  border-bottom: 1px solid var(--ash);
+}
+
+.stash-row:hover {
+  background: var(--ash);
+}
+
+.stash-row-selected {
+  background: var(--ash);
+  box-shadow: inset 2px 0 0 var(--ember);
+}
+
+.stash-row-pick {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.1rem 0.4rem;
+  min-width: 0;
+  padding: 0.3rem 0.5rem;
+  text-align: left;
+  background: none;
+  border: 0;
+}
+
+.stash-row-pick .stat-changes {
+  flex: 1 1 100%;
+  padding-left: calc(16px + 0.4rem);
+}
+
+.stash-new {
+  font-size: 0.72rem;
+  color: var(--ember);
+}
+
+.stat-changes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.6rem;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.needs-level {
+  flex: none;
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+.party-compare {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0.5rem 0.6rem;
+  background: var(--ash);
+  border: 1px solid var(--iron);
+}
+
+.party-compare h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.party-compare > .hint {
+  margin-bottom: 0.4rem;
+  font-size: 0.78rem;
+}
+
+.compare-hero {
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--iron);
+}
+
+.compare-hero > .hint {
+  font-size: 0.75rem;
+}
+
+.compare-hero-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.compare-hero-active .compare-hero-name {
+  color: var(--ember);
 }

@@ -88,6 +88,14 @@ The Party gathers information along the way through Fragments. [CONTEXT.md](../.
 
 The spigots are the physical detail that carries this. They read as plumbing on a first visit and as a supply line once the player knows.
 
+## Light in the Undercroft
+
+**Provisional.** Only Lamps hold back the Dark. These give light and nothing more, and a Room shows a random mix of them.
+
+- **Spigot burners:** flames fed from the pipes behind the spigots, meant for the workers who keep the dead. Some have guttered out. They read as plumbing, then as a supply line.
+- **Tallow candles:** left in the burial niches. They read as offerings, then as a hint of what is being burned.
+- **Foxfire:** the cold glow of the fungal growth, in contrast with the warm Oil.
+
 ## Rules as story
 
 Each rule keeps working as designed. These are its in-world reasons.

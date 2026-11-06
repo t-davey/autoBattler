@@ -1,7 +1,7 @@
 import { maxHealthOf, type BattleState, type Reach, type Row, type TeamId } from './battle';
 import type { Slot } from './content/items';
 import { GRID_HEIGHT, GRID_WIDTH, type FloorNumber, type RoomKind } from './floors';
-import { xpToNextLevel } from './content/party';
+import { CLASSES, xpToNextLevel } from './content/party';
 import { MAX_SKILL_RANK, rankValue, SKILL_IDS, SKILLS, type HeroId, type SkillId, type SkillKind, type SkillReach } from './content/skills';
 import { heroesOf, stateOf, type Game } from './game';
 import { heroReach, heroStats, unspentPoints, type HeroState, type HeroStats } from './heroes';
@@ -13,6 +13,7 @@ export interface UnitView {
   readonly id: string;
   readonly name: string;
   readonly row: Row;
+  readonly reach: Reach;
   readonly health: number;
   readonly maxHealth: number;
   readonly oil: number;
@@ -59,6 +60,9 @@ export interface SkillView {
 export interface HeroView {
   readonly id: HeroId;
   readonly name: string;
+  /** Where the Hero stands when a Battle starts. */
+  readonly row: Row;
+  readonly reach: Reach;
   readonly level: number;
   readonly xp: number;
   readonly xpToNext: number;
@@ -116,6 +120,7 @@ function viewTeam(battle: BattleState, team: TeamId): readonly UnitView[] {
       id: unit.spec.id,
       name: unit.spec.name,
       row: unit.row,
+      reach: unit.spec.reach,
       health: unit.health,
       maxHealth: maxHealthOf(unit),
       oil: unit.oil,
@@ -169,6 +174,8 @@ function viewHero(hero: HeroState): HeroView {
   return {
     id: hero.id,
     name: hero.name,
+    row: CLASSES[hero.id].row,
+    reach: heroReach(hero),
     level: hero.level,
     xp: hero.xp,
     xpToNext: xpToNextLevel(hero.level),

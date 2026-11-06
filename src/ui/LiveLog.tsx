@@ -3,7 +3,8 @@ import type { LogLine } from './store';
 
 const NEAR_BOTTOM_PX = 24;
 
-export function LiveLog({ lines }: { lines: readonly LogLine[] }) {
+/** `bare` drops the panel, for lying directly over the Battle scene. */
+export function LiveLog({ lines, bare = false }: { lines: readonly LogLine[]; bare?: boolean }) {
   const listRef = useRef<HTMLUListElement>(null);
   const followingRef = useRef(true);
 
@@ -20,8 +21,8 @@ export function LiveLog({ lines }: { lines: readonly LogLine[] }) {
   };
 
   return (
-    <section className="panel live-log" aria-label="Live Log">
-      <h2>Live Log</h2>
+    <section className={bare ? 'live-log live-log-bare' : 'panel live-log'} aria-label="Live Log">
+      {!bare && <h2>Live Log</h2>}
       <ul ref={listRef} className="log-lines" onScroll={onScroll}>
         {lines.map((line) => (
           <li key={line.id} className={line.rarity ? `rarity-${line.rarity}` : undefined}>{line.text}</li>

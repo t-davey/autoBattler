@@ -18,6 +18,17 @@ const failing = (message: string): SaveStore => ({
 });
 
 describe('loadSave', () => {
+  it('restores which items count as new, and a save without that still loads', () => {
+    const { store } = memorySaves();
+    const game = createGame({ seed: 1 });
+    writeSave(store, game, 1, 42);
+    expect(loadSave(store).saved?.seenItemId).toBe(42);
+    writeSave(store, game, 1);
+    const saved = loadSave(store).saved;
+    expect(saved).not.toBeNull();
+    expect(saved?.seenItemId).toBeUndefined();
+  });
+
   it('finds nothing in empty storage, and says nothing about it', () => {
     expect(loadSave(memorySaves().store)).toEqual({ saved: null, notice: null });
   });

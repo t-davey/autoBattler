@@ -3,27 +3,44 @@ import type { GameView, RoomKind, RoomView } from '../sim';
 const ROOM_GLYPHS: Readonly<Record<RoomKind, string>> = { battle: '⚔', chest: '▣', stairs: '▼', guardian: '☠' };
 const ROOM_NAMES: Readonly<Record<RoomKind, string>> = { battle: 'Battle', chest: 'Chest', stairs: 'Stairs', guardian: 'Guardian' };
 
-function RoomCell({ room, order }: { room: RoomView; order: number }) {
+function RoomCell({ room, order, column, row }: { room: RoomView; order: number; column: number; row: number }) {
   const party = room.state === 'current';
   const label = `Room ${order}: ${ROOM_NAMES[room.kind]}, ${room.state}${party ? ', the Party is here' : ''}`;
   return (
-    <li className={`room room-${room.state}`} style={{ gridColumn: room.x + 1, gridRow: room.y + 1 }} aria-label={label} title={label}>
+    <li className={`room room-${room.state}`} style={{ gridColumn: column, gridRow: row }} aria-label={label} title={label}>
       {party ? '✦' : ROOM_GLYPHS[room.kind]}
     </li>
   );
 }
 
-/** The DOM tile map. ADR 0003 keeps it behind this one component. */
+/** Keeps the map's far corner above the top of the Room's wall, whose slope is 1 down for 2 across.
+ *  In base-window pixels, for a map under its heading in the top-left corner. */
+const WALL_CLEARANCE_PX = 302;
+const MAX_TILE_STEP_PX = 54;
+const TILE_GAP_PX = 2;
+
+/** The DOM tile map. ADR 0003 keeps it behind this one component.
+ *  It crops to the Rooms in use, and its tiles fill the corner up to a cap. */
 export function FloorMap({ view }: { view: GameView }) {
   const { map, floor } = view;
   if (!map) return null;
-  const style = { gridTemplateColumns: `repeat(${map.width}, 1fr)`, gridTemplateRows: `repeat(${map.height}, 1fr)` };
+  const left = Math.min(...map.rooms.map((room) => room.x));
+  const top = Math.min(...map.rooms.map((room) => room.y));
+  const columns = Math.max(...map.rooms.map((room) => room.x)) - left + 1;
+  const rows = Math.max(...map.rooms.map((room) => room.y)) - top + 1;
+  const tile = Math.floor(Math.min(WALL_CLEARANCE_PX / (rows + columns / 2), MAX_TILE_STEP_PX)) - TILE_GAP_PX;
+  const style = {
+    gap: TILE_GAP_PX,
+    fontSize: tile * 0.55,
+    gridTemplateColumns: `repeat(${columns}, ${tile}px)`,
+    gridTemplateRows: `repeat(${rows}, ${tile}px)`,
+  };
   return (
-    <section className="panel floor-map" aria-label="Floor map">
+    <section className="floor-map" aria-label="Floor map">
       <h2>Floor {floor}</h2>
       <ol className="room-grid" style={style}>
         {map.rooms.map((room, index) => (
-          <RoomCell key={`${room.x},${room.y}`} room={room} order={index + 1} />
+          <RoomCell key={`${room.x},${room.y}`} room={room} order={index + 1} column={room.x - left + 1} row={room.y - top + 1} />
         ))}
       </ol>
     </section>

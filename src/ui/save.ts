@@ -14,6 +14,8 @@ export interface LoadedSave {
   readonly game: Game;
   /** The time the state was last advanced to, not the time of writing, so writes can't lose or double-count time. */
   readonly savedAt: number;
+  /** Items after this one count as new in the Stash. Older saves have none. */
+  readonly seenItemId?: number;
 }
 
 export interface LoadResult {
@@ -35,10 +37,10 @@ function parseEnvelope(text: string): LoadedSave | null {
     return null;
   }
   if (typeof parsed !== 'object' || parsed === null) return null;
-  const { savedAt, game } = parsed as Record<string, unknown>;
+  const { savedAt, game, seenItemId } = parsed as Record<string, unknown>;
   if (typeof savedAt !== 'number' || !Number.isFinite(savedAt) || typeof game !== 'string') return null;
   const restored = deserializeGame(game);
-  return restored && { game: restored, savedAt };
+  return restored && { game: restored, savedAt, ...(typeof seenItemId === 'number' && Number.isFinite(seenItemId) ? { seenItemId } : {}) };
 }
 
 /** Reads the save. An unreadable or old one moves to BAD_SAVE_KEY. */
@@ -66,8 +68,8 @@ export function loadSave(store: SaveStore): LoadResult {
   return { saved: null, notice: BAD_SAVE_NOTICE };
 }
 
-export function writeSave(store: SaveStore, game: Game, savedAt: number): void {
-  store.write(SAVE_KEY, JSON.stringify({ savedAt, game: serializeGame(game) }));
+export function writeSave(store: SaveStore, game: Game, savedAt: number, seenItemId?: number): void {
+  store.write(SAVE_KEY, JSON.stringify({ savedAt, seenItemId, game: serializeGame(game) }));
 }
 
 export const clearSave = (store: SaveStore): void => store.remove(SAVE_KEY);

@@ -167,15 +167,22 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 
 ## Presentation
 
-- UI-first: panels, text, icons, and a simple tile map, with room for pixel art later. [ADR 0003](adr/0003-react-panels-dom-map.md) records the rendering stack.
+- UI-first: panels, text, icons, and a simple tile map, plus an animated Battle scene as the main element of the Dashboard during a Run. [ADR 0003](adr/0003-react-panels-dom-map.md) and [ADR 0004](adr/0004-battle-scene-canvas.md) record the rendering stack.
+- **Battle scene:** low-resolution pixel art at 320 × 170, showing an isometric Room with the Party and Pack in their Rows. Sprites are generated from simple shapes in code for now, and hand-drawn art can replace them later. Its animation is presentation only, and catch-up jumps to the current state. [The Battle scene guide](battle-scene.md) covers how it works.
+- **Light:** every Room's shadows are lifted enough to read, and a Unit is never drawn darker than a set minimum. Each Room then rolls a random mix of Spigot burners, Tallow candles, and Foxfire, with at least 4 of a lone source or 2 of each in a mix. The look stays the same for that Room. A Hero's lantern dims as their Oil falls, which changes only the picture.
+- **Ways through:** a Room shows its way in and way out, on the edges that match the Floor map. A way out is always flame-lit, and stairs lead onto a Floor and out of its Stairs Room.
 - A dashboard while the Party runs, tabs for planning, and a [check-in](#check-ins) built around the Away Report.
 - The Live Log shows the latest 1,000 lines of live play, and those lines are gone when the game closes.
 - Catch-up produces an Away Report rather than log lines. Saves keep the last 10 Away Reports.
-- The Stash can be sorted and filtered.
+- **Stash:** it starts from the Party. Picking a Hero's Slot lists the Stash's items for that Slot with their stat changes for that Hero, and the picked item's changes for the whole Party sit beside the list. Empty Slots show changes without gain colours, since everything is a gain there.
+- Identical items list as one with a count, even when their level requirements differ, and equipping takes the lowest. The Stash can be sorted and filtered.
+- Items found since the Party was last sent back from a check-in are marked new.
+- A check-in uses the same Stash, opening filtered to its Finding's stat or rarity, on a Slot with a match.
 - Grim gothic tone, for now.
 - Audio starts silent, with a few key effects such as a rare drop added later.
 - "autoBattler" is the working title.
 - The window is usually large, with a minimum of 1280x720, so panels can sit side by side.
+- **During a Run,** the Battle scene fills the window under the header. The Floor map, Pack bar, Party status, and Live Log lie over its corners without panels, and grow with it so the layout holds on any screen. The top-right corner is kept for the Belt, Run calls, and rules. Town keeps its own menu.
 
 ### Check-ins
 
@@ -218,5 +225,4 @@ A smaller build comes before the first playable, to test one thing: is it satisf
 
 ## Open questions
 
-- **Map animation:** how much animation the map needs. This is the main trigger for moving the map from the DOM to Canvas or PixiJS.
-- **Pixel-art scale on fractional displays:** whether to snap to whole device pixels or accept slight unevenness.
+None right now.
