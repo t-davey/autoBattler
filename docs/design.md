@@ -195,6 +195,12 @@ Deeper skills need 3 points spent in that Branch per step rather than 5, so a He
 
 Each Class also gets one Class-specific unique that visibly changes a skill, so 4 in total. The skills are drafted in [First playable skills](first-playable-skills.md) for the human to review, and numbers get tuned through play.
 
+## Proof-of-concept demo
+
+A smaller build comes before the first playable, to test one thing: is it satisfying to come back to loot, make a build decision, and see that decision beat a Wall? It has a preset Party of Sin-Eater, Huntsman, and Lamplighter, one Branch each, and Floors 1–3 of Act 1 ending in one Guardian and one Lamp.
+
+[The demo plan](plans/poc-demo.md) holds its scope, its rules, and its milestones. Where it differs from this document, it applies to the demo only.
+
 ## Open questions
 
 - **Map animation:** how much animation the map needs. This is the main trigger for moving the map from the DOM to Canvas or PixiJS.
