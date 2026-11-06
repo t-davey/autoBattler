@@ -19,11 +19,11 @@ What is true in the world. Status labels are defined in [the lore guide](README.
 
 ## The reveal
 
-**Canon.** It lands at the end of Act 3 in the first Difficulty Tier, through a ledger item, so that the replay carries new meaning.
+**Canon.** It lands at the end of Act 3 in the first Difficulty Tier, through a ledger Item, so that the replay carries new meaning.
 
 ## The Acts
 
-**Canon**, beyond what the core truth states. Each Act's place is in [World](../design.md#world).
+**Canon**, beyond what the core truth states. Each Act's place is in [World](../design.md#world), where the names stay provisional.
 
 | Act | Its part in the Rendering |
 |---|---|
@@ -33,7 +33,7 @@ What is true in the world. Status labels are defined in [the lore guide](README.
 
 ## The Mouldering Warden
 
-**Provisional.** The first Guardian pleads with the Party. It reads as a monster's threat on the first visit, and as a plea once the player knows the truth. Like every Guardian, it is an Entity who put its Lamp out on purpose, and it asks the Party to leave that Lamp dark so the dead can rest. The line is in [the Act 1 Fragments](act-1-fragments.md).
+**Provisional.** The first Guardian pleads with the Party. It reads as a monster's threat on the first visit, and as a plea once the player knows the truth. It asks the Party to leave its Lamp dark so the dead can rest. The line is in [the Act 1 Fragments](act-1-fragments.md).
 
 ## Rules as story
 
@@ -50,7 +50,7 @@ Each rule keeps working as designed. These are its in-world reasons.
 
 ## Open questions
 
-- **The ledger:** an Item is gear a Hero can equip, so how does the ledger that carries the reveal fit? Plan this with the real UI, when that gets built.
+- **The ledger:** an Item is gear a Hero can equip, so how does a ledger fit? Plan this with the real UI, when that gets built.
 - **Who knows:** does Town know where its Oil comes from? Does anyone still run the Rendering, and if so, who fills the Heroes' lanterns?
 - **The Classes:** what are the Lamplighters and Sin-Eaters in this history? Each sounds like it could be an office of the trade.
 - **The Court:** who rules it, and what do they want from a Party that keeps relighting Lamps?

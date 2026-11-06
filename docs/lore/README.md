@@ -34,7 +34,7 @@ Facts in the bible and lines in the fragments files carry one of these:
 3. **Keep the bible short.** It records decisions, and the prose lives in the fragments files.
 4. **Budget words by channel.** See below.
 5. **Write Act 1 fully, then test it.** Friends' reactions over a few days of real Check-ins shape Acts 2 and 3. Hold off on detailed writing for later Acts until then.
-6. **Consider a turn at later Difficulty Tiers.** The reset into the second could change what the replay means. [The reveal](bible.md#the-reveal) lands before that reset, so the replay carries it.
+6. **Let the reveal change the replay.** [The reveal](bible.md#the-reveal) lands before the reset into the second Difficulty Tier, so the replay means something new.
 
 The demo doesn't wait on any of this. Its chest lines are provisional ([G33](../plans/poc-demo/gaps.md)) and can use Fragments once they are ready, and anything more, such as a Guardian's line, is a demo scope change for the human to confirm.
 
@@ -57,6 +57,7 @@ The demo doesn't wait on any of this. Its chest lines are provisional ([G33](../
 |---|---|---|
 | Act introductions | 3, a few sentences each | Set the place and the question |
 | Guardian lines | The Mouldering Warden's 1 line | The first Wall's story beat |
+| The reveal | 1 ledger Item | Says outright what Oil is |
 | Item descriptions | One line, uniques first | Optional deeper lore |
 | Away Report and Room lines | A small pool per Act | Atmosphere and hints that repay attention |
 
