@@ -1,4 +1,4 @@
-/** Flavour for the Live Log. Provisional, from docs/lore/act-1-fragments.md. */
+/** Flavour for the Live Log. Provisional, from docs/lore/act-2-fragments.md. */
 export const CHEST_LINES: readonly string[] = [
   'Tallow on the hinges. Someone kept this chest opening easily.',
   'Inside the lid, a tally of names, each struck through.',

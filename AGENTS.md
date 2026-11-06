@@ -16,7 +16,7 @@ Read [CONTEXT.md](CONTEXT.md) before naming a game concept in code, docs, or con
 
 ## Game design
 
-The human owns game design. Read [docs/design.md](docs/design.md) before changing game rules or content, and confirm anything it marks open or leaves unsaid with the human before building it. [The demo plan](docs/plans/poc-demo.md) sets what gets built next. The current art, enemies, and numbers are starting values, not settled design. Read [docs/lore/README.md](docs/lore/README.md) before writing story text.
+The human owns game design. Read [docs/design.md](docs/design.md) before changing game rules or content, and confirm anything it marks open or leaves unsaid with the human before building it. [The first playable](docs/design.md#first-playable) sets what gets built next. The current art, enemies, and numbers are starting values, not settled design. Read [docs/lore/README.md](docs/lore/README.md) before writing story text.
 
 ## Done
 
