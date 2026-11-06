@@ -16,7 +16,7 @@ export function TownMenu({ view, dispatch }: { view: GameView; dispatch: Store['
       <p className={lampLit ? 'lamp lamp-lit' : 'lamp'}>{lampLit ? 'The Lamp is lit.' : 'The Lamp is dark.'}</p>
       <p>
         {fallenBack
-          ? 'Fallen back: Runs turn back before the Guardian until a Hero levels up or a skill point is spent.'
+          ? 'Fallen back: Runs turn back before the Guardian until a Hero levels up, a skill point is spent, or an item is equipped.'
           : `Setbacks towards falling back: ${setbacksTowardsFallback} of ${setbacksToFallBack}.`}
       </p>
     </section>

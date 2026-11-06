@@ -7,6 +7,7 @@
   --iron: #3a343c;
   --blood: #8e2a2a;
   --ember: #c58a3a;
+  --magic: #7f9fc9;
   font-family: Georgia, 'Times New Roman', serif;
   color: var(--ink);
   background: var(--soot);
@@ -393,5 +394,132 @@ button:disabled {
 @media (max-width: 40rem) {
   .battlefield {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.rarity-common {
+  color: var(--ink);
+  font-weight: normal;
+}
+
+.rarity-magic {
+  color: var(--magic);
+}
+
+.rarity-rare {
+  color: var(--ember);
+}
+
+.stash {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 1rem;
+}
+
+.stash-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+}
+
+.stash-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.85rem;
+}
+
+.stash-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--ink-faint);
+}
+
+select {
+  font: inherit;
+  color: var(--ink);
+  background: var(--soot);
+  border: 1px solid var(--iron);
+}
+
+.stash-items {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stash-item {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--iron);
+}
+
+.stash-item p,
+.equipped-slot p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.equip-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.equip-buttons .hint {
+  margin: 0;
+}
+
+.equipped-heroes {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.equipped-slots {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.equipped-slot {
+  padding: 0.25rem 0;
+}
+
+.equipped-name {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.planning-gear {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.planning-gear .hint {
+  margin: 0;
+}
+
+.skill-blocked {
+  color: var(--blood);
+}
+
+@media (max-width: 48rem) {
+  .stash {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-y: auto;
   }
 }

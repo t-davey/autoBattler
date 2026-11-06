@@ -9,8 +9,8 @@ The demo tests one thing: is it satisfying to come back to loot, make a build de
 | M1: Live Battle on screen | Merged in [PR #12](https://github.com/t-davey/autoBattler/pull/12) |
 | M2: Heroes and skills | Merged in [PR #14](https://github.com/t-davey/autoBattler/pull/14) |
 | M3: Floors and the Wall | Merged in [PR #16](https://github.com/t-davey/autoBattler/pull/16) |
-| M4: Loot and gear | Next: [m4-loot-and-gear.md](poc-demo/m4-loot-and-gear.md) |
-| M5: Catch-up and Away Report | [m5-catch-up-and-away-report.md](poc-demo/m5-catch-up-and-away-report.md) |
+| M4: Loot and gear | Merged in [PR #17](https://github.com/t-davey/autoBattler/pull/17) |
+| M5: Catch-up and Away Report | Next: [m5-catch-up-and-away-report.md](poc-demo/m5-catch-up-and-away-report.md) |
 | M6: Tuning and demo run | [m6-tuning-and-demo-run.md](poc-demo/m6-tuning-and-demo-run.md) |
 
 ## How to use this plan

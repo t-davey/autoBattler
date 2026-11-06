@@ -19,7 +19,7 @@ What merged milestones left for later ones to know. The code holds their rules a
 ## Milestone 3 ([PR #16](https://github.com/t-davey/autoBattler/pull/16))
 
 - **Setbacks:** `battleEnded` still says how a Battle went, then a `wipe` or `draw` event follows with `floor` and `enemyName`. Count Setbacks from those two events alone, so none counts twice. M5's Setback kind comes from the event's type, and `fellBack` sets the Away Report's fall-back note.
-- **Actions can report:** `applyAction` takes an optional sink, because spending a point can end a fallback. The store adds those lines to the Live Log. M4's `equipItem` calls `endFallback` the same way (G22).
+- **Actions can report:** `applyAction` takes an optional sink, because spending a point can end a fallback. The store adds those lines to the Live Log.
 - **`scenario`:** adds `startAt` and `lampLit`, as planned, and two more for tests that tuning mustn't break: `setbacks` (3 starts fallen back) and `battleTicks` (draws Battles early).
 - **Where events fire:** `floorEntered` comes on reaching a Floor's first Room, and so reaches a sink on a new game. Each Room's `roomEntered` comes first, then the Battle or chest. `levelUp` comes before the Room's recovery, so recovery uses the new max health.
 - **Timed actions:** the Warden fights by `UnitSpec.actions`. Its `power`, `actionInterval`, and `damageType` go unused.
@@ -39,3 +39,26 @@ What merged milestones left for later ones to know. The code holds their rules a
 | Guardian kill, 6-point reference builds | Level 7 with gear | Level 8: never. Level 10: every time, with no Hero falling |
 
 The hand estimates assumed nobody Wipes on the way down. Three Setbacks on Floor 3 can trigger a fallback before the Party has met the Guardian, and it wins only at a sharp level cliff. Check both against the demo script in M6.
+
+## Milestone 4 ([PR #17](https://github.com/t-davey/autoBattler/pull/17))
+
+- **Item ids:** `ItemId` is a number that counts up from `nextItemId`, so a higher id is a newer item. Starter gear takes the first ids.
+- **Item views:** `itemFound` carries an `ItemView`, ready for M5's `AwayReport.loot`. `itemFound` follows the Room's `chestOpened` or `battleEnded`, or a Guardian kill's `guardianFell`, and its `lampRelit` on the first kill.
+- **`scenario`:** adds `equipped`, as planned, and `stash` for tests. `rollItem(seed, floor)` rolls one item alone, without a Game. Scenario tests assert against extremes, such as level 1 or level 40, so that tuning doesn't break them.
+- **First kill:** the guaranteed rare hangs on `wall.lampLit`, so a `lampLit` scenario gets ordinary drops.
+- **Saves:** `SAVE_VERSION` stayed at 1, since nothing writes saves until M5.
+- **Stash filter:** G39 filters by stat, and `ItemView.affixes` now serves only `balance -- drops` and M5.
+- **Stash speed:** the list has no `content-visibility` yet. M5's 12-hour Stash measures it.
+
+**R3, measured with `npm run balance -- drops` on 2026-11-06, for M6 to re-measure.** It passes, spending points and equipping plain upgrades.
+
+| Measure | Plan's estimate or trigger | Measured |
+|---|---|---|
+| Items per hour | About 32 | 38.4 |
+| Rares per hour | About 1.8 | 2.71 |
+| Decision drops per hour | Under 2 trips | 26.0 |
+| Dominated same-Slot rare pairs | Over 40% trips | 2.4% |
+| Rares with Sallow | Outside 30–80% trips | 57.6% |
+| Lamp relit, 2 hours of Party time | First Wall in 1–2 hours | 200 of 200 Seeds, median 68 minutes |
+
+Drops run ahead of the plan's hand estimates, and the median Lamp falls inside the 1–2 hour target with gear in play. The reasons aren't measured yet: check both in M6.

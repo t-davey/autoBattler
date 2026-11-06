@@ -77,6 +77,22 @@ describe('store', () => {
     expect(store.getSnapshot().log.map((line) => line.text)).toEqual([describeEvent({ type: 'retryingGuardian' })]);
   });
 
+  it('publishes a new Stash only when the Stash changes', () => {
+    const store = createStore(createGame({ seed: 9, scenario: { heroLevel: 40 } }));
+    const empty = store.getSnapshot().stash;
+    store.advance(1_000);
+    expect(store.getSnapshot().stash).toBe(empty);
+
+    while (store.getSnapshot().stash.length === 0) store.advance(1_000);
+    const line = store.getSnapshot().log.findLast((candidate) => candidate.rarity !== null);
+    const [found] = store.getSnapshot().stash;
+    expect(line?.rarity).toBe(found?.rarity);
+    expect(line?.text).toContain(found?.name);
+
+    expect(store.dispatch({ type: 'equipItem', heroId: 'huntsman', itemId: found!.id })).toEqual({ ok: true });
+    expect(store.getSnapshot().stash.some((item) => item.id === found!.id)).toBe(false);
+  });
+
   it('dispatch returns a refusal and publishes nothing', () => {
     const store = createStore(createGame({ seed: 1 }));
     const before = store.getSnapshot();

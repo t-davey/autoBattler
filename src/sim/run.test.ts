@@ -74,7 +74,8 @@ describe('Rooms', () => {
       stepTicks(played, 199, seen);
       expect(seen).toEqual([]);
       stepTicks(played, 1, seen);
-      expect(seen.map((event) => event.type)).toEqual(['chestOpened']);
+      expect(seen[0]?.type).toBe('chestOpened');
+      expect(seen.slice(1).every((event) => event.type === 'itemFound')).toBe(true);
       expect(seen[0]).toMatchObject({ line: expect.stringMatching(/\w/) });
       expect(viewGame(played).phase).toBe('travelling');
       return;

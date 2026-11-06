@@ -24,7 +24,7 @@ export function LiveLog({ lines }: { lines: readonly LogLine[] }) {
       <h2>Live Log</h2>
       <ul ref={listRef} className="log-lines" onScroll={onScroll}>
         {lines.map((line) => (
-          <li key={line.id}>{line.text}</li>
+          <li key={line.id} className={line.rarity ? `rarity-${line.rarity}` : undefined}>{line.text}</li>
         ))}
       </ul>
     </section>

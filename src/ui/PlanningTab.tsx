@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import type { ActionResult, HeroView, PlayerAction, SkillId } from '../sim';
-import { lockText, REFUSAL_TEXT, seconds, skillFacts, skillValues } from './describeHero';
-
-type Dispatch = (action: PlayerAction) => ActionResult;
+import { SLOTS, type HeroView, type SkillId } from '../sim';
+import { lockText, REFUSAL_TEXT, skillFacts, skillValues } from './describeHero';
+import { SLOT_TEXT, statSheet } from './describeItem';
+import type { Dispatch } from './store';
 
 function NameEditor({ hero, dispatch, onRefused }: { hero: HeroView; dispatch: Dispatch; onRefused: (text: string) => void }) {
   const [draft, setDraft] = useState(hero.name);
@@ -52,7 +52,6 @@ function SkillOrder({ hero, dispatch, nameOf }: { hero: HeroView; dispatch: Disp
 function HeroCard({ hero, dispatch }: { hero: HeroView; dispatch: Dispatch }) {
   const [refusal, setRefusal] = useState('');
   const nameOf = (id: SkillId) => hero.skills.find((skill) => skill.id === id)?.name ?? id;
-  const { maxHealth, power, armour, actionInterval, critChance } = hero.stats;
 
   return (
     <section className="panel hero-card" aria-label={hero.name}>
@@ -61,9 +60,17 @@ function HeroCard({ hero, dispatch }: { hero: HeroView; dispatch: Dispatch }) {
       <p className="hero-level">
         Level {hero.level} · {hero.xp} / {hero.xpToNext} XP · Oil {Math.floor(hero.oil)} / {hero.stats.maxOil}
       </p>
-      <p className="hint">
-        Health {maxHealth} · Power {power} · Armour {armour} · Acts every {seconds(actionInterval)} · Crit {critChance}%
-      </p>
+      <p className="hint">{statSheet(hero.stats)}</p>
+      <ul className="planning-gear" aria-label={`${hero.name}'s gear`}>
+        {SLOTS.map((slot) => {
+          const item = hero.equipment[slot];
+          return (
+            <li key={slot} className="hint">
+              {SLOT_TEXT[slot]}: {item ? <span className={`rarity-${item.rarity}`}>{item.name}</span> : 'empty'}
+            </li>
+          );
+        })}
+      </ul>
 
       <h3>{hero.skills[0]?.branch}: {hero.unspentPoints} unspent</h3>
       <ul className="skills">
@@ -89,6 +96,7 @@ function HeroCard({ hero, dispatch }: { hero: HeroView; dispatch: Dispatch }) {
                 <p key={line} className="hint">{line}</p>
               ))}
               {locked && <p className="hint">{locked}</p>}
+              {skill.blockedByWeapon && <p className="hint skill-blocked">Needs a melee weapon: unavailable while holding a ranged one.</p>}
             </li>
           );
         })}
