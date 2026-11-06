@@ -146,6 +146,16 @@ _Avoid_: Mode, strategy
 A harder replay of the game's content with better loot.
 _Avoid_: Difficulty level, new game plus
 
+### Story
+
+**The Rendering**:
+The hidden truth at the heart of the story: Oil is rendered from the dead.
+_Avoid_: The twist, the secret
+
+**Fragment**:
+A short piece of story text that the player meets in play, such as an item description or an Away Report line.
+_Avoid_: Lore entry, codex entry
+
 ### Loot and economy
 
 **Affix**:
