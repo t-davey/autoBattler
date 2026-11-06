@@ -28,6 +28,19 @@ const STEPS = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const;
 export const FLOOR_SCALE: Readonly<Record<FloorNumber, number>> = { 1: 1, 2: 1.15, 3: 1.3 };
 export const BATTLE_XP: Readonly<Record<FloorNumber, number>> = { 1: 15, 2: 20, 3: 25 };
 
+/** XP falloff: full XP up to Floor level + this many levels, then less for each level past it. */
+const XP_GRACE_LEVELS = 1;
+const XP_LOST_PER_LEVEL = 0.25;
+const MIN_XP_SHARE = 0.1;
+
+const floorLevel = (floor: FloorNumber): number => floor + 3;
+
+/** The share of a Floor's XP that a Hero of this level earns. */
+export function xpShare(heroLevel: number, floor: FloorNumber): number {
+  const levelsPast = Math.max(0, heroLevel - floorLevel(floor) - XP_GRACE_LEVELS);
+  return Math.max(MIN_XP_SHARE, 1 - levelsPast * XP_LOST_PER_LEVEL);
+}
+
 export const isFloorNumber = (value: unknown): value is FloorNumber => value === 1 || value === 2 || value === 3;
 
 const cellKey = (x: number, y: number): number => y * GRID_WIDTH + x;

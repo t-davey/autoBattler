@@ -25,7 +25,7 @@ Each is its own PR and leaves the demo runnable.
 | 1 | Make the Wall a module | Merged in [PR #33](https://github.com/t-davey/autoBattler/pull/33) |
 | 2 | Balance players who check in on a schedule: `npm run balance -- checkins`, with [its baseline](poc-demo-results.md#check-in-baseline) | Added with this plan |
 | 3 | Test speed | Not started |
-| 4 | XP falloff, as [option B](#xp-falloff-options) | Not started |
+| 4 | XP falloff, as [option B](#xp-falloff-options) | Built, with [its measurement](poc-demo-results.md#with-xp-falloff) |
 | 5 | Floors 4–6, the second Guardian and Lamp, and falling back between Lamps | Not started; needs the Guardian sheet |
 | 6 | Tune both Walls to the new target, then search for a new demo Seed | Not started |
 | 7 | Change the weak skills found in [the results](poc-demo-results.md#findings-for-the-human), if the human chooses to | Not started; [still open](#still-open) |
@@ -47,7 +47,7 @@ The rest is proposed, for the human to change:
 
 ## XP falloff options
 
-**The human picked option B on 2026-11-06.** These are starting values to tune. Falloff needs Floor levels, which the demo lacks, so all of these suppose **Floor level = Floor number + 3**: Floors 1–3 are levels 4–6, and Floors 4–6 would be levels 7–9. The tests also assumed a kill's Guardian XP falls off like its Floor's Battle XP. "−25% a level" takes 25 points off 100% for each level past the grace, so B reaches its 10% minimum at 4 levels past it. Option C halves instead. The XP falloff PR re-measures B on 200 Seeds with a mode in the repo.
+**The human picked option B on 2026-11-06.** These are starting values to tune. Falloff needs Floor levels, which the demo lacks, so all of these suppose **Floor level = Floor number + 3**: Floors 1–3 are levels 4–6, and Floors 4–6 would be levels 7–9. The tests also assumed a kill's Guardian XP falls off like its Floor's Battle XP. "−25% a level" takes 25 points off 100% for each level past the grace, so B reaches its 10% minimum at 4 levels past it. Option C halves instead. [The results](poc-demo-results.md#with-xp-falloff) re-measure B on 200 Seeds with a mode in the repo: its kills came sooner than this table's.
 
 Measured on 2026-11-06 with a throwaway script that isn't in the repo: 30 Seeds, 24 hours, first Wall only, and a player who spends points in step order and equips plain upgrades every 8 hours.
 
@@ -108,7 +108,7 @@ The human decides these. Each suggestion is only a starting point.
 
 ## Targets to replace
 
-[The M6 targets](poc-demo-results.md#targets) measure a player who acts once at minute 60. These replace the ones that assume that. `npm run balance -- checkins` measures the first two, whose 10% and 80% carry over from the M6 targets and are the human's to change. `npm run balance -- wall` keeps its old targets until XP falloff breaks them, and that PR retires them.
+[The M6 targets](poc-demo-results.md#targets) measure a player who acts once at minute 60. These replace the ones that assume that. `npm run balance -- checkins` measures the first two, whose 10% and 80% carry over from the M6 targets and are the human's to change. `npm run balance -- wall` keeps its old targets, since XP falloff broke none of them. They retire when step 6 retunes the Wall.
 
 - **Untended:** at most 10% of Seeds beat a Wall within a full 12-hour absence.
 - **A player with the answer, at the 8-hour gap:** at least 80% of Seeds make the first kill after the 2nd or 3rd check-in.
