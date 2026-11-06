@@ -4,15 +4,16 @@ Number tuning always comes first. A fallback that changes rules, scope, or desig
 
 ## R1: 12 hours of catch-up blocks the UI
 
-| When | Measurement | Threshold that triggers action |
+**Measured in M5**, re-measured in M6. [as-built.md](as-built.md#milestone-5-pr-18) holds the results.
+
+| Where | Measurement | Threshold that triggers action |
 |---|---|---|
-| M1 | `npm run bench:catchup`: 432,000 Ticks of continuous Battles under Node, median of 3 runs (the bare tracer was 67–81 ms) | Over 500 ms: remove per-Tick allocation before starting M2 |
-| M3 | The same, through full Runs (measured at M3: 92 ms median, within 57–124 ms) | Over 2 s: profile and fix before starting M4 |
-| M5 | In a browser, with `PerformanceObserver` on `longtask`, from a 12-hour save | Total over 10 s, or any task over 100 ms: take the fallback |
+| Node | `npm run bench:catchup`: 432,000 Ticks through full Runs, median of 3 | Over 2 s: profile and fix |
+| Browser | `PerformanceObserver` on `longtask`, from a 12-hour save | Total over 10 s, or any task over 100 ms: take the fallback |
 
 **Fallback:** move catch-up to a Web Worker. The sim has no DOM, so the Worker runs `deserializeGame`, `beginCatchUp`, and `continueCatchUp`, and posts back the state and the Away Report. It costs one new file and a Vite worker import. Never approximate 12 hours with a summary formula, since [ADR 0001](../../adr/0001-deterministic-sim-core.md) requires that catch-up run the same rules.
 
-**Equivalence tests:** `advance runs the same Ticks however elapsed time is sliced` (M1) and `catch-up and live play reach identical state for the same Seed and elapsed time` (M5). A failure in either stops the milestone, whichever fallback is in use.
+**Equivalence tests:** `advance runs the same Ticks however elapsed time is sliced` and `catch-up and live play reach identical state for the same Seed and elapsed time`. A failure in either stops the milestone, whichever fallback is in use.
 
 ## R2: 9 skills leave no real build decision
 
@@ -52,6 +53,6 @@ Only 5 of the 9 skills are active, and the Sin-Eater has just 1, so skill order 
 
 | Risk | Milestone that measures it | Threshold | Fallback |
 |---|---|---|---|
-| Uncapped Stash bloats saves, since Salvage and a cap are cut | M5: `serializeGame` length and time after 12 hours | Over 1 MB or 20 ms | Save only on `visibilitychange`, `pagehide`, and every 60 s |
-| Long Stash list lags | M5: Stash tab holding a 12-hour Stash, about 400 items | A sort or filter over 100 ms | `content-visibility: auto` on rows, as [the research note](../../research/rendering-technology.md) suggests |
+| Uncapped Stash bloats saves, since Salvage and a cap are cut | M5, then M6: `serializeGame` length and time after 12 hours | Over 1 MB or 20 ms | Save only on `visibilitychange`, `pagehide`, and every 60 s |
+| Long Stash list lags | M5, then M6: Stash tab holding a 12-hour Stash, about 400 items | A sort or filter over 100 ms | `content-visibility: auto` on rows, as [the research note](../../research/rendering-technology.md) suggests |
 | The demo Seed stops working as rules change | M6 | Rehearsal fails | Re-run the Seed search |

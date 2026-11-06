@@ -15,7 +15,7 @@ The numbers and links behind the sim's interface. [`src/sim/index.ts`](../../../
 | Battle draw (G8) | 120 | 1,200 |
 | Catch-up cap | 43,200 | 432,000 |
 
-100 ms keeps Room timing inside the design's 25–35 seconds, turns seconds into Ticks by multiplying by 10, and gives speed about 3% resolution. **Measured** on the human's machine on 2026-11-05: the tracer `simulateBattle` ran 432,000 Ticks with 7 Units and 100,800 Battle Log entries in 67–81 ms under Node. That is a floor, since it has none of the real rules. [R1](risks.md#r1-12-hours-of-catch-up-blocks-the-ui) tracks the real cost.
+100 ms keeps Room timing inside the design's 25–35 seconds, turns seconds into Ticks by multiplying by 10, and gives speed about 3% resolution. [R1](risks.md#r1-12-hours-of-catch-up-blocks-the-ui) tracks the cost.
 
 ## The Game
 
