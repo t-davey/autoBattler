@@ -1,4 +1,4 @@
-// Headless balance measurements. `builds` measures risk R2 in docs/plans/poc-demo.md, and exits
+// Headless balance measurements. `builds` measures risk R2 in docs/plans/poc-demo/risks.md, and exits
 // non-zero if a trigger trips.
 import { createServer } from 'vite';
 

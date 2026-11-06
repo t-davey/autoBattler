@@ -38,7 +38,7 @@ Issues live in GitHub Issues, used through the `gh` CLI. See [docs/agents/issue-
 
 ### Triage labels
 
-The five triage roles use their default label names. See [docs/agents/triage-labels.md](docs/agents/triage-labels.md).
+The five triage roles use their default label names.
 
 ### Domain docs
 
