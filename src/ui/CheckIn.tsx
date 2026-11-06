@@ -8,7 +8,7 @@ import { PlanningTab } from './PlanningTab';
 import { emptyStashQuery, type StashQuery } from './stashQuery';
 import type { Dispatch } from './store';
 
-const ICONS: Readonly<Record<FindingKind, IconName>> = { setbacks: 'skull', loot: 'chest', points: 'flame' };
+const FINDING_ICONS: Readonly<Record<FindingKind, IconName>> = { setbacks: 'skull', loot: 'chest', points: 'flame' };
 
 function FindingFix({ finding, report, stash, seenItemId, view, dispatch }: { finding: Finding; report: AwayReport; stash: readonly ItemView[]; seenItemId: number; view: GameView; dispatch: Dispatch }) {
   if (finding.kind === 'points') return <div className="check-in-scroll"><PlanningTab heroes={view.heroes} dispatch={dispatch} /></div>;
@@ -42,7 +42,7 @@ export function CheckIn({ report, view, stash, seenItemId, dispatch, onSendBack 
           {findings.map((finding) => (
             <li key={finding.kind}>
               <button type="button" className="finding" aria-pressed={finding.kind === openKind} onClick={() => setOpenKind(finding.kind)}>
-                <PixelIcon name={ICONS[finding.kind]} className="finding-icon" />
+                <PixelIcon name={FINDING_ICONS[finding.kind]} className="finding-icon" />
                 <span>
                   <strong>{finding.title}</strong>
                   {finding.details.map((line) => (

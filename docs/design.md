@@ -198,23 +198,23 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 
 ### Palette
 
-Starting values, in [the stylesheet](../src/ui/style.css). Every colour names something the Party could touch, and metal and blood match the Battle scene's art.
+Starting values, in [the stylesheet](../src/ui/style.css), which also holds each colour's lighter and darker shades. Colours are named for the world's materials, and Dark, iron, brass, and Blood match the Battle scene's art.
 
 | Colour | Hex | Used for |
 |---|---|---|
-| Dark |  | The scene's backdrop and overlays |
-| Soot |  | The page, and recesses |
-| Char |  | Plates |
-| Vellum |  | The Away Report's ledger page |
-| Iron |  | Edges, and anything structural |
-| Brass | , bright  | Headings, corner brackets, Guardian Rooms |
-| Flame |  | Only what is lit, selected, new, or rare |
-| Oil | , bright  | The Oil gauge and Catch-up |
-| Tallow | , dim  | Text |
-| Blood |  | Health bars |
-| Rust |  | Refusals and stat losses |
-| Verdigris |  | Stat gains, drawn from the scene's mould glow |
-| Rime |  | Magic items |
+| Dark | `#050508` | The scene's backdrop and overlays |
+| Soot | `#100d0c` | The page, and recesses |
+| Char | `#1b1613` | Plates |
+| Vellum | `#211a13` | The Away Report's ledger page |
+| Iron | `#4c4e54` | Edges, and anything structural |
+| Brass | `#b08a3e`, bright `#d6b460` | Headings, skill names, corner brackets, Guardian Rooms |
+| Flame | `#f4b24a` | Only what is lit, selected, new, or rare |
+| Oil | `#b46f1d`, bright `#e39a36` | The Oil gauge and Catch-up |
+| Tallow | `#e0d3b2`, dim `#a89a80` | Text |
+| Blood | `#b03e32` | Health bars and the ledger's margin |
+| Rust | `#e58a6c` | Refusals, warnings, and stat losses |
+| Verdigris | `#7cc4ab` | Stat gains, drawn from Foxfire's glow |
+| Rime | `#8fb7d9` | Magic items |
 
 Panels are iron-bound plates with brass corners, and the Away Report reads as a ledger page. That look is styling only, and [the ledger Fragment's form](lore/bible.md#open-questions) stays open. Headings use Pirata One and text uses EB Garamond, both bundled so the game looks the same offline.
 
