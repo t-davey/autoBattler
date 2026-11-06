@@ -11,7 +11,7 @@ The demo tests one thing: is it satisfying to come back to loot, make a build de
 | M3: Floors and the Wall | Merged in [PR #16](https://github.com/t-davey/autoBattler/pull/16) |
 | M4: Loot and gear | Merged in [PR #17](https://github.com/t-davey/autoBattler/pull/17) |
 | M5: Catch-up and Away Report | Merged in [PR #18](https://github.com/t-davey/autoBattler/pull/18) |
-| M6: Tuning and demo run | Merged in PR_LINK, with [results](poc-demo-results.md) |
+| M6: Tuning and demo run | Merged in [PR #20](https://github.com/t-davey/autoBattler/pull/20), with [results](poc-demo-results.md) |
 
 ## How to use this plan
 

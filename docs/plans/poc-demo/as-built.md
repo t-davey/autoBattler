@@ -55,7 +55,7 @@ What merged milestones left for later ones to know. The code holds their rules a
 
 The Stash is the closest to its limit, in a dev build. It has no `content-visibility`, which is the fallback if the Stash outgrows this.
 
-## Milestone 6 (PR_LINK)
+## Milestone 6 ([PR #20](https://github.com/t-davey/autoBattler/pull/20))
 
 - **Numbers:** [the results](../poc-demo-results.md) hold the tuned values, every target, and the findings a later Wall should weigh.
 - **Tests:** tests no longer pin tuned enemy, Guardian, or Rarity numbers, so tuning shouldn't break them.
