@@ -194,6 +194,14 @@ _Avoid_: Session, visit
 The summary of what a Party did while the player was away, with the game closed or its window covered or minimized.
 _Avoid_: Offline report, summary screen
 
+**Finding**:
+One entry in an Away Report that the player can act on, such as a Setback, the loot found, or unspent skill points.
+_Avoid_: Alert, task
+
+**Run call**:
+An order the player gives a Party during a Run, such as returning to Town.
+_Avoid_: Command, intervention
+
 **Lamp**:
 A point in an Act that a Party relights by beating its Guardian, and where it can resume after returning to Town.
 _Avoid_: Checkpoint, waypoint, save point

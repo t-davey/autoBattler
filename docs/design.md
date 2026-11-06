@@ -166,13 +166,28 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 ## Presentation
 
 - UI-first: panels, text, icons, and a simple tile map, with room for pixel art later. [ADR 0003](adr/0003-react-panels-dom-map.md) records the rendering stack.
-- A dashboard while the Party runs, tabs for planning, and an Away Report.
+- A live view while the Party runs, and a [check-in](#check-ins) built around the Away Report.
 - The Live Log shows the latest 1,000 lines of live play, and those lines are gone when the game closes.
 - Catch-up produces an Away Report rather than log lines. Saves keep the last 10 Away Reports.
 - The Stash can be sorted and filtered.
 - Grim gothic tone, for now.
 - Audio starts silent, with a few key effects such as a rare drop added later.
 - "autoBattler" is the working title.
+- The window is at least 1280x720, so panels can sit side by side.
+
+### Check-ins
+
+- A check-in opens on the Away Report, a short list of Findings. Each one opens its fix beside the list, so the report stays in view while the player acts.
+- The Party pauses during a check-in, until the player sends it back.
+- A Finding has a fixed icon by kind and no tick, because a change can't be known to work until the Party tries it. Its text states facts that update as the player acts, such as each Hero's poison resistance, and never judges whether a change was enough.
+- A Finding about Setbacks can open the Stash filtered to the stat that answers them.
+- Comparing an item shows its stat changes for each Hero, and never calls it better.
+
+### Live view
+
+- The player tends the Party through the Belt and Run calls, such as returning to Town or skipping side rooms.
+- Each Belt item and Run call sits beside the rule that does its job while the player is away.
+- Rules are simple presets. They move to their own page if they grow too numerous.
 
 ## Release
 
@@ -205,3 +220,4 @@ A smaller build comes before the first playable, to test one thing: is it satisf
 
 - **Map animation:** how much animation the map needs. This is the main trigger for moving the map from the DOM to Canvas or PixiJS.
 - **Pixel-art scale on fractional displays:** whether to snap to whole device pixels or accept slight unevenness.
+- **A check-in left open:** whether the Party loses that time, or the time counts towards Catch-up when it's sent back.
