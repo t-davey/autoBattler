@@ -1,14 +1,15 @@
 import type { GameView, RoomKind, RoomView } from '../sim';
+import { PixelIcon, type IconName } from './PixelIcon';
 
-const ROOM_GLYPHS: Readonly<Record<RoomKind, string>> = { battle: '⚔', chest: '▣', stairs: '▼', guardian: '☠' };
+const ROOM_ICONS: Readonly<Record<RoomKind, IconName>> = { battle: 'battle', chest: 'chest', stairs: 'stairs', guardian: 'cog' };
 const ROOM_NAMES: Readonly<Record<RoomKind, string>> = { battle: 'Battle', chest: 'Chest', stairs: 'Stairs', guardian: 'Guardian' };
 
 function RoomCell({ room, order, column, row }: { room: RoomView; order: number; column: number; row: number }) {
   const party = room.state === 'current';
   const label = `Room ${order}: ${ROOM_NAMES[room.kind]}, ${room.state}${party ? ', the Party is here' : ''}`;
   return (
-    <li className={`room room-${room.state}`} style={{ gridColumn: column, gridRow: row }} aria-label={label} title={label}>
-      {party ? '✦' : ROOM_GLYPHS[room.kind]}
+    <li className={`room room-${room.state} room-${room.kind}`} style={{ gridColumn: column, gridRow: row }} aria-label={label} title={label}>
+      <PixelIcon name={party ? 'lantern' : ROOM_ICONS[room.kind]} />
     </li>
   );
 }
@@ -31,7 +32,8 @@ export function FloorMap({ view }: { view: GameView }) {
   const tile = Math.floor(Math.min(WALL_CLEARANCE_PX / (rows + columns / 2), MAX_TILE_STEP_PX)) - TILE_GAP_PX;
   const style = {
     gap: TILE_GAP_PX,
-    fontSize: tile * 0.55,
+    // A whole multiple of the icons' 8 pixels, so they stay crisp.
+    fontSize: Math.max(8, Math.floor((tile * 0.6) / 8) * 8),
     gridTemplateColumns: `repeat(${columns}, ${tile}px)`,
     gridTemplateRows: `repeat(${rows}, ${tile}px)`,
   };

@@ -7,6 +7,10 @@ import { startDriver } from './driver';
 import { localStorageSave } from './localStorageSave';
 import { loadSave } from './save';
 import { createStore } from './store';
+import '@fontsource/pirata-one/400.css';
+import '@fontsource/eb-garamond/400.css';
+import '@fontsource/eb-garamond/400-italic.css';
+import '@fontsource/eb-garamond/700.css';
 import './style.css';
 
 const root = document.querySelector<HTMLElement>('#app');

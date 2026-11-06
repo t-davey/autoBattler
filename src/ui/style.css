@@ -1,27 +1,79 @@
+/* The palette, named for the world's materials. Dark, iron, brass, and blood match the scene's art. docs/design.md#palette says what each is for. */
 :root {
   color-scheme: dark;
-  --ink: #d9d2c0;
-  --ink-faint: #8d8574;
-  --soot: #121014;
-  --ash: #1d1a20;
-  --iron: #3a343c;
-  --blood: #8e2a2a;
-  --ember: #c58a3a;
-  --magic: #7f9fc9;
+
+  /* Ground: the Dark, and what it leaves on everything. */
+  --dark: #050508;
+  --soot: #100d0c;
+  --char: #1b1613;
+  --char-raised: #2a221c;
+  --vellum: #211a13;
+
+  /* Metal: cold iron holds things up, and brass marks what was built on purpose. */
+  --iron: #4c4e54;
+  --iron-bright: #6e7076;
+  --brass-deep: #60461e;
+  --brass: #b08a3e;
+  --brass-bright: #d6b460;
+
+  /* Light: only what is lit, selected, new, or rare gets flame. */
+  --flame: #f4b24a;
+  --flame-core: #ffe2a0;
+  --flame-glow: color-mix(in srgb, var(--flame) 35%, transparent);
+
+  /* Oil: thicker and darker than the flame it feeds. */
+  --oil-deep: #6a3d10;
+  --oil: #b46f1d;
+  --oil-bright: #e39a36;
+  --oil-bands: linear-gradient(var(--oil-bright) 35%, var(--oil) 35% 70%, var(--oil-deep) 70%);
+
+  /* Text: tallow on soot. */
+  --tallow: #e0d3b2;
+  --tallow-dim: #a89a80;
+
+  /* Signs of wear. */
+  --blood-deep: #6e1f1a;
+  --blood: #b03e32;
+  --blood-bright: #d9604c;
+  --rust: #e58a6c;
+  --verdigris: #7cc4ab;
+  --rime: #8fb7d9;
+
+  --display: 'Pirata One', Georgia, serif;
   --ui-scale: 1;
   --header-height: calc(40px * var(--ui-scale));
-  font-family: Georgia, 'Times New Roman', serif;
-  color: var(--ink);
+  font-family: 'EB Garamond', Georgia, 'Times New Roman', serif;
+  /* Garamond runs small, and the stats need numerals that read at a glance. */
+  font-size-adjust: ex-height 0.46;
+  font-variant-numeric: lining-nums;
+  color: var(--tallow);
   background: var(--soot);
+  scrollbar-color: var(--iron) transparent;
+  scrollbar-width: thin;
 }
 
 * {
   box-sizing: border-box;
 }
 
+/* Lamplight from above, falling off into soot. */
 body {
   margin: 0;
-  background: var(--soot);
+  background: radial-gradient(ellipse 90% 60% at 50% -10%, color-mix(in srgb, var(--flame) 8%, transparent), transparent 70%) fixed, var(--soot);
+}
+
+.pixel-icon {
+  display: inline-block;
+  flex: none;
+  width: 1em;
+  height: 1em;
+  fill: currentcolor;
+  vertical-align: -0.1em;
+}
+
+:focus-visible {
+  outline: 1px solid var(--flame);
+  outline-offset: 1px;
 }
 
 #app {
@@ -42,21 +94,32 @@ h3 {
   letter-spacing: 0.04em;
 }
 
+h1,
+h2,
+.lit-button,
+.catch-up p {
+  font-family: var(--display);
+  font-size-adjust: none;
+}
+
+h1,
+h2 {
+  color: var(--brass-bright);
+}
+
 h1 {
-  font-size: 1.4rem;
-  color: var(--ember);
+  font-size: 1.7rem;
 }
 
 h2 {
-  font-size: 1rem;
+  font-size: 1.35rem;
   margin-bottom: 0.75rem;
-  color: var(--ember);
 }
 
 h3 {
   font-size: 0.8rem;
   margin-bottom: 0.5rem;
-  color: var(--ink-faint);
+  color: var(--tallow-dim);
 }
 
 ul {
@@ -73,10 +136,19 @@ ul {
   gap: 1rem;
 }
 
+/* An iron-bound plate. The frame paints wider than the 1px border, so it takes no layout. */
+.panel,
+.hero-gear,
+.party-compare,
+.check-in-report {
+  background: linear-gradient(var(--char-raised), var(--char) 3rem);
+  border: 1px solid var(--iron);
+  border-image: url('./art/plate.svg') 12 / 12px stretch;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 50%);
+}
+
 .panel {
   padding: 1rem;
-  background: var(--ash);
-  border: 1px solid var(--iron);
 }
 
 .dashboard-main {
@@ -91,21 +163,28 @@ ul {
   align-items: center;
   justify-content: center;
   border: 1px solid var(--iron);
-  background: var(--soot);
+  background: linear-gradient(var(--char-raised), var(--soot));
 }
 
 .room-ahead {
-  color: var(--ink);
+  color: var(--tallow);
+}
+
+.room-guardian.room-ahead {
+  color: var(--brass-bright);
+  border-color: var(--brass);
 }
 
 .room-cleared {
-  color: var(--ink-faint);
+  color: var(--iron-bright);
+  background: color-mix(in srgb, var(--dark) 80%, transparent);
 }
 
 .room-current {
   color: var(--soot);
-  background: var(--ember);
-  border-color: var(--ember);
+  background: radial-gradient(circle, var(--flame-core), var(--flame) 70%);
+  border-color: var(--flame-core);
+  box-shadow: 0 0 12px var(--flame-glow);
 }
 
 .town-menu {
@@ -122,16 +201,38 @@ ul {
 }
 
 .lamp {
-  color: var(--ink-faint);
+  color: var(--tallow-dim);
 }
 
 .lamp-lit {
-  color: var(--ember);
+  color: var(--flame);
+  text-shadow: 0 0 8px var(--flame-glow);
 }
 
+.lamp-lit .pixel-icon,
+.flicker {
+  color: var(--flame);
+  animation: flicker 2.6s steps(6) infinite;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 4px var(--flame)); }
+  35% { opacity: 0.82; filter: drop-shadow(0 0 2px var(--flame)); }
+  60% { opacity: 1; filter: drop-shadow(0 0 6px var(--flame)); }
+  80% { opacity: 0.9; filter: drop-shadow(0 0 3px var(--flame)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lamp-lit .pixel-icon,
+  .flicker {
+    animation: none;
+  }
+}
+
+/* Bars are banded like the scene's shading rather than smoothly lit. */
 .health-fill {
   height: 100%;
-  background: var(--blood);
+  background: linear-gradient(var(--blood-bright) 25%, var(--blood) 25% 70%, var(--blood-deep) 70%);
   transition: width 100ms linear;
 }
 
@@ -152,7 +253,7 @@ ul {
 
 .oil-fill {
   height: 100%;
-  background: var(--ember);
+  background: var(--oil-bands);
   transition: width 100ms linear;
 }
 
@@ -167,7 +268,9 @@ ul {
   gap: 1rem;
   height: 40px;
   padding: 0 1rem;
-  background: var(--soot);
+  background: linear-gradient(var(--char-raised), var(--soot));
+  border-bottom: 1px solid var(--brass-deep);
+  box-shadow: 0 1px 0 #000, 0 3px 8px rgb(0 0 0 / 60%);
   zoom: var(--ui-scale);
 }
 
@@ -179,29 +282,59 @@ ul {
 button,
 input {
   font: inherit;
-  color: var(--ink);
+  color: var(--tallow);
   background: var(--soot);
   border: 1px solid var(--iron);
+}
+
+input {
+  box-shadow: inset 0 1px 3px #000;
 }
 
 button {
   padding: 0.15rem 0.6rem;
   cursor: pointer;
+  background: linear-gradient(var(--char-raised), var(--soot));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--brass-bright) 15%, transparent), 0 1px 0 #000;
 }
 
 button:hover:not(:disabled) {
-  border-color: var(--ember);
+  color: var(--brass-bright);
+  border-color: var(--brass);
+}
+
+button:active:not(:disabled) {
+  background: var(--soot);
+  box-shadow: inset 0 1px 3px #000;
+}
+
+/* A lit wick: what sends the Party back out. */
+.lit-button,
+.lit-button:hover:not(:disabled),
+.lit-button:active:not(:disabled) {
+  padding: 0.5rem 1.2rem;
+  color: var(--soot);
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  background: linear-gradient(var(--flame-core), var(--flame) 40%, var(--oil-bright));
+  border: 1px solid var(--flame-core);
+  box-shadow: 0 0 14px var(--flame-glow), 0 1px 0 #000;
+}
+
+.lit-button:hover:not(:disabled) {
+  box-shadow: 0 0 22px var(--flame), 0 1px 0 #000;
 }
 
 button:disabled {
-  color: var(--ink-faint);
+  color: var(--tallow-dim);
   cursor: default;
   opacity: 0.5;
 }
 
 .tab[aria-selected='true'] {
-  color: var(--ember);
-  border-color: var(--ember);
+  color: var(--flame);
+  background: radial-gradient(ellipse 80% 90% at 50% 100%, var(--flame-glow), transparent), var(--soot);
+  border-color: var(--brass);
 }
 
 .planning {
@@ -243,18 +376,18 @@ button:disabled {
 }
 
 .hero-level {
-  color: var(--ember);
+  color: var(--brass-bright);
 }
 
 .hint {
   margin: 0 0 0.5rem;
   font-size: 0.8rem;
-  color: var(--ink-faint);
+  color: var(--tallow-dim);
 }
 
 .refusal {
   font-size: 0.8rem;
-  color: var(--blood);
+  color: var(--rust);
 }
 
 .skills {
@@ -287,7 +420,7 @@ button:disabled {
 .skill-head strong {
   flex: 1;
   font-weight: normal;
-  color: var(--ember);
+  color: var(--brass-bright);
 }
 
 .skill-order {
@@ -320,21 +453,22 @@ button:disabled {
 }
 
 .rarity-common {
-  color: var(--ink);
+  color: var(--tallow);
   font-weight: normal;
 }
 
 .rarity-magic {
-  color: var(--magic);
+  color: var(--rime);
 }
 
 .rarity-rare {
-  color: var(--ember);
+  color: var(--flame);
+  text-shadow: 0 0 6px var(--flame-glow);
 }
 
 select {
   font: inherit;
-  color: var(--ink);
+  color: var(--tallow);
   background: var(--soot);
   border: 1px solid var(--iron);
 }
@@ -350,7 +484,7 @@ select {
 }
 
 .skill-blocked {
-  color: var(--blood);
+  color: var(--rust);
 }
 
 .dev-tools {
@@ -364,8 +498,8 @@ select {
   z-index: 2;
   margin: 0;
   padding: 0.5rem 1rem;
-  border: 1px solid var(--blood);
-  background: var(--ash);
+  border: 1px solid var(--rust);
+  background: var(--char);
 }
 
 .catch-up {
@@ -377,15 +511,29 @@ select {
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  background: rgb(18 16 20 / 85%);
+  background: color-mix(in srgb, var(--dark) 88%, transparent);
 }
 
 .catch-up p {
   margin: 0;
+  font-size: 1.4rem;
+  color: var(--brass-bright);
 }
 
 .catch-up progress {
   width: min(24rem, 80vw);
+  height: 0.75rem;
+  appearance: none;
+  background: #000;
+  border: 1px solid var(--brass-deep);
+}
+
+.catch-up progress::-webkit-progress-bar {
+  background: #000;
+}
+
+.catch-up progress::-webkit-progress-value {
+  background: var(--oil-bands);
 }
 
 .check-in {
@@ -396,12 +544,21 @@ select {
   gap: 1rem;
 }
 
+/* The Away Report reads as a page of a ledger: ruled lines, and a red margin that entries' icons sit in. */
 .check-in-report {
+  --ledger-margin: 2.4rem;
+  --ledger-gutter: 0.6rem;
   display: flex;
   flex-direction: column;
   min-height: 0;
   gap: 0.5rem;
+  padding: 1rem 1rem 1rem calc(var(--ledger-margin) + var(--ledger-gutter));
   overflow-y: auto;
+  background:
+    linear-gradient(90deg, transparent var(--ledger-margin), color-mix(in srgb, var(--blood) 55%, transparent) var(--ledger-margin) calc(var(--ledger-margin) + 1px), transparent calc(var(--ledger-margin) + 1px)) local,
+    repeating-linear-gradient(transparent 0 1.6rem, color-mix(in srgb, var(--tallow) 6%, transparent) 1.6rem calc(1.6rem + 1px)) local,
+    var(--vellum);
+  box-shadow: inset 0 0 40px rgb(0 0 0 / 55%), 0 2px 6px rgb(0 0 0 / 50%);
 }
 
 .check-in-report p {
@@ -415,24 +572,40 @@ select {
 }
 
 .finding {
-  display: flex;
+  position: relative;
+  display: block;
   width: 100%;
-  gap: 0.6rem;
-  padding: 0.7rem;
-  color: var(--ink);
+  padding: 0.5rem 0.6rem;
+  color: var(--tallow);
   font: inherit;
   text-align: left;
   cursor: pointer;
-  background: var(--ash);
-  border: 1px solid var(--iron);
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom-color: var(--iron);
+  box-shadow: none;
 }
 
-.finding[aria-pressed='true'] {
-  border-color: var(--ember);
+.finding:hover:not(:disabled) {
+  color: var(--tallow);
+  background: color-mix(in srgb, var(--flame) 5%, transparent);
+  border-color: transparent transparent var(--brass);
 }
 
+.finding[aria-pressed='true'],
+.finding[aria-pressed='true']:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--flame) 9%, transparent);
+  border-color: var(--brass);
+}
+
+/* Sits in the ledger's margin. */
 .finding-icon {
-  color: var(--ember);
+  position: absolute;
+  top: 0.55rem;
+  left: calc(0.5rem - var(--ledger-gutter) - var(--ledger-margin));
+  width: 16px;
+  height: 16px;
+  color: var(--brass-bright);
 }
 
 .finding-detail {
@@ -442,12 +615,6 @@ select {
 
 .send-back {
   margin-top: auto;
-  padding: 0.55rem 1.1rem;
-  color: var(--soot);
-  font-weight: bold;
-  cursor: pointer;
-  background: var(--ember);
-  border: 1px solid var(--ember);
 }
 
 .check-in-fix {
@@ -473,11 +640,11 @@ select {
 }
 
 .stat-gain {
-  color: #7fbf7f;
+  color: var(--verdigris);
 }
 
 .stat-loss {
-  color: #d97a6c;
+  color: var(--rust);
 }
 
 .visually-hidden {
@@ -499,7 +666,7 @@ select {
   position: fixed;
   inset: var(--header-height) 0 0;
   overflow: hidden;
-  background: #050508;
+  background: var(--dark);
 }
 
 .battle-scene {
@@ -532,7 +699,7 @@ select {
 
 .floor-map h2 {
   margin-bottom: 0.25rem;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
 }
 
 .room-grid {
@@ -556,7 +723,7 @@ select {
 
 .travelling {
   font-style: italic;
-  color: var(--ink-faint);
+  color: var(--tallow-dim);
 }
 
 .party-status {
@@ -577,7 +744,7 @@ select {
 }
 
 .unit-health {
-  color: var(--ink-faint);
+  color: var(--tallow-dim);
 }
 
 .unit-fallen {
@@ -590,20 +757,22 @@ select {
 
 .unit-effects {
   font-size: 0.875rem;
-  color: var(--ember);
+  color: var(--brass-bright);
 }
 
+/* Glass in an iron case. */
 .health-bar {
   height: 0.5rem;
-  background: rgb(0 0 0 / 70%);
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 12%);
+  background: rgb(0 0 0 / 80%);
+  box-shadow: 0 0 0 1px var(--iron);
 }
 
+/* The lantern's gauge, cased in brass. */
 .oil-bar {
-  height: 0.25rem;
-  margin-top: 2px;
-  background: rgb(0 0 0 / 70%);
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 12%);
+  height: 0.3rem;
+  margin-top: 3px;
+  background: rgb(0 0 0 / 80%);
+  box-shadow: 0 0 0 1px var(--brass-deep);
 }
 
 .live-log-bare {
@@ -626,7 +795,6 @@ select {
 .stash-screen {
   position: fixed;
   inset: var(--header-height) 0 0;
-  background: var(--soot);
 }
 
 .stash-scaled {
@@ -662,15 +830,15 @@ select {
 }
 
 .slot-icon-common {
-  fill: var(--ink-faint);
+  fill: var(--tallow-dim);
 }
 
 .slot-icon-magic {
-  fill: var(--magic);
+  fill: var(--rime);
 }
 
 .slot-icon-rare {
-  fill: var(--ember);
+  fill: var(--flame);
 }
 
 .slot-icon-empty {
@@ -686,18 +854,16 @@ select {
 
 .hero-gear {
   padding: 0.4rem 0.5rem;
-  background: var(--ash);
-  border: 1px solid var(--iron);
 }
 
 .hero-gear-active {
-  border-color: var(--ember);
+  box-shadow: 0 0 0 1px var(--brass), 0 0 14px var(--flame-glow);
 }
 
 .hero-gear h3 {
   margin: 0;
   font-size: 0.9rem;
-  color: var(--ink);
+  color: var(--tallow);
 }
 
 .hero-gear .hint {
@@ -721,6 +887,10 @@ select {
   text-align: left;
 }
 
+.hero-slot-pick .hint {
+  margin: 0;
+}
+
 .hero-slot-pick span {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -728,15 +898,15 @@ select {
 }
 
 .hero-slot-pick[aria-pressed='true'] {
-  border-color: var(--ember);
-  box-shadow: inset 2px 0 0 var(--ember);
+  border-color: var(--brass);
+  box-shadow: inset 2px 0 0 var(--flame);
 }
 
 .hero-slot-unequip {
   flex: none;
   width: 1.7rem;
   padding: 0;
-  color: var(--ink-faint);
+  color: var(--tallow-dim);
 }
 
 .stash-lower {
@@ -779,8 +949,8 @@ select {
 }
 
 .stash-controls button[aria-pressed='true'] {
-  color: var(--ember);
-  border-color: var(--ember);
+  color: var(--flame);
+  border-color: var(--brass);
 }
 
 .stash-empty {
@@ -799,16 +969,21 @@ select {
   align-items: center;
   gap: 0.5rem;
   padding-right: 0.5rem;
-  border-bottom: 1px solid var(--ash);
+  border-bottom: 1px solid var(--char);
 }
 
 .stash-row:hover {
-  background: var(--ash);
+  background: var(--char);
 }
 
 .stash-row-selected {
-  background: var(--ash);
-  box-shadow: inset 2px 0 0 var(--ember);
+  background: var(--char);
+  box-shadow: inset 2px 0 0 var(--flame);
+}
+
+.stash-row-pick,
+.stash-row-pick:active:not(:disabled) {
+  box-shadow: none;
 }
 
 .stash-row-pick {
@@ -831,7 +1006,7 @@ select {
 
 .stash-new {
   font-size: 0.72rem;
-  color: var(--ember);
+  color: var(--flame);
 }
 
 .stat-changes {
@@ -852,8 +1027,6 @@ select {
   min-height: 0;
   overflow-y: auto;
   padding: 0.5rem 0.6rem;
-  background: var(--ash);
-  border: 1px solid var(--iron);
 }
 
 .party-compare h3 {
@@ -883,5 +1056,5 @@ select {
 }
 
 .compare-hero-active .compare-hero-name {
-  color: var(--ember);
+  color: var(--flame);
 }

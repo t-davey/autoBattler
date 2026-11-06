@@ -3,6 +3,7 @@ import { BattleScreen } from './BattleScreen';
 import { CheckIn } from './CheckIn';
 import { DevTools } from './DevTools';
 import { LiveLog } from './LiveLog';
+import { PixelIcon } from './PixelIcon';
 import { PlanningTab } from './PlanningTab';
 import { StashTab } from './StashTab';
 import type { Store } from './store';
@@ -67,7 +68,7 @@ export function App({ store }: { store: Store }) {
       </div>
       {catchUpProgress !== null && (
         <div className="catch-up" role="status">
-          <p>Catching up...</p>
+          <p><PixelIcon name="lantern" className="flicker" /> Catching up...</p>
           <progress aria-label="Catch-up progress" value={catchUpProgress} />
         </div>
       )}

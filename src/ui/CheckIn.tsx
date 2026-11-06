@@ -3,11 +3,12 @@ import type { AwayReport, GameView, ItemView } from '../sim';
 import { describeAbsence } from './describeAwayReport';
 import { describeFindings, type Finding, type FindingKind } from './describeFindings';
 import { PartyStash } from './PartyStash';
+import { PixelIcon, type IconName } from './PixelIcon';
 import { PlanningTab } from './PlanningTab';
 import { emptyStashQuery, type StashQuery } from './stashQuery';
 import type { Dispatch } from './store';
 
-const ICONS: Readonly<Record<FindingKind, string>> = { setbacks: '☠', loot: '▣', points: '✦' };
+const FINDING_ICONS: Readonly<Record<FindingKind, IconName>> = { setbacks: 'skull', loot: 'chest', points: 'flame' };
 
 function FindingFix({ finding, report, stash, seenItemId, view, dispatch }: { finding: Finding; report: AwayReport; stash: readonly ItemView[]; seenItemId: number; view: GameView; dispatch: Dispatch }) {
   if (finding.kind === 'points') return <div className="check-in-scroll"><PlanningTab heroes={view.heroes} dispatch={dispatch} /></div>;
@@ -41,7 +42,7 @@ export function CheckIn({ report, view, stash, seenItemId, dispatch, onSendBack 
           {findings.map((finding) => (
             <li key={finding.kind}>
               <button type="button" className="finding" aria-pressed={finding.kind === openKind} onClick={() => setOpenKind(finding.kind)}>
-                <span className="finding-icon" aria-hidden="true">{ICONS[finding.kind]}</span>
+                <PixelIcon name={FINDING_ICONS[finding.kind]} className="finding-icon" />
                 <span>
                   <strong>{finding.title}</strong>
                   {finding.details.map((line) => (
@@ -54,8 +55,8 @@ export function CheckIn({ report, view, stash, seenItemId, dispatch, onSendBack 
         </ul>
         {report.setbacks.length === 0 && <p>No Setbacks.</p>}
         {report.guardianKills > 0 && <p>Guardian kills: {report.guardianKills}.</p>}
-        {report.lampRelit && <p className="lamp-lit">The Lamp is relit.</p>}
-        <button type="button" className="send-back" onClick={onSendBack}>Send the Party back</button>
+        {report.lampRelit && <p className="lamp lamp-lit"><PixelIcon name="lantern" /> The Lamp is relit.</p>}
+        <button type="button" className="lit-button send-back" onClick={onSendBack}>Send the Party back</button>
       </section>
       <section className="panel check-in-fix" aria-label="Fix">
         {open ? (
