@@ -26,7 +26,7 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  max-width: 72rem;
+  max-width: 90rem;
   margin: 0 auto;
   padding: 1rem;
   gap: 1rem;
@@ -447,6 +447,9 @@ select {
 }
 
 .stash-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
@@ -455,27 +458,9 @@ select {
   list-style: none;
 }
 
-.stash-item {
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--iron);
-}
-
-.stash-item p,
 .equipped-slot p {
   margin: 0;
   font-size: 0.9rem;
-}
-
-.equip-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.25rem;
-  margin-top: 0.25rem;
-}
-
-.equip-buttons .hint {
-  margin: 0;
 }
 
 .equipped-heroes {
@@ -557,31 +542,139 @@ select {
   width: min(24rem, 80vw);
 }
 
-.away-report {
-  flex: 0 1 auto;
-  max-height: 45vh;
+.check-in {
+  display: grid;
+  grid-template-columns: 24rem minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+  gap: 1rem;
+}
+
+.check-in-report {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: 0.5rem;
   overflow-y: auto;
+}
+
+.check-in-report p {
+  margin: 0;
+}
+
+.findings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.finding {
+  display: flex;
+  width: 100%;
+  gap: 0.6rem;
+  padding: 0.7rem;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: var(--ash);
+  border: 1px solid var(--iron);
+}
+
+.finding[aria-pressed='true'] {
   border-color: var(--ember);
 }
 
-.away-report p {
-  margin: 0 0 0.5rem;
+.finding-icon {
+  color: var(--ember);
 }
 
-.away-report li {
-  margin-bottom: 0.15rem;
+.finding-detail {
+  display: block;
+  margin-top: 0.2rem;
 }
 
-.away-report-head {
+.send-back {
+  margin-top: auto;
+  padding: 0.55rem 1.1rem;
+  color: var(--soot);
+  font-weight: bold;
+  cursor: pointer;
+  background: var(--ember);
+  border: 1px solid var(--ember);
+}
+
+.check-in-fix {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  flex-direction: column;
+  min-height: 0;
 }
 
-.away-report-links {
+.check-in-scroll {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.check-in-stash {
+  display: grid;
+  grid-template-columns: 22rem minmax(0, 1fr);
+  flex: 1;
+  min-height: 0;
+  gap: 1rem;
+}
+
+.stash-item {
   display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
+  flex-direction: column;
+  width: 100%;
+  gap: 0.15rem;
+  padding: 0.4rem 0.5rem;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: var(--soot);
+  border: 1px solid transparent;
+}
+
+.stash-item[aria-pressed='true'] {
+  border-color: var(--ember);
+}
+
+.item-compare table {
+  width: 100%;
+  margin-top: 0.5rem;
+  border-collapse: collapse;
+}
+
+.item-compare th,
+.item-compare td {
+  padding: 0.35rem 0.5rem;
+  font-weight: normal;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--iron);
+}
+
+.item-compare thead th {
+  color: var(--ember);
+}
+
+.stat-gain {
+  color: #7fbf7f;
+}
+
+.stat-loss {
+  color: #d97a6c;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 /* Only groups what catch-up makes inert, so the page keeps its layout. */

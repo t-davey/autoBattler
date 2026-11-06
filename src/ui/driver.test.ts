@@ -34,7 +34,7 @@ describe('driver', () => {
   it('a gap of 60 seconds or more runs catch-up', () => {
     const { store } = start(clock - 60_000);
     expect(store.isCatchingUp()).toBe(true);
-    vi.advanceTimersByTime(0);
+    vi.advanceTimersByTime(1);
     expect(store.isCatchingUp()).toBe(false);
     const { awayReport, view, log } = store.getSnapshot();
     expect(awayReport?.elapsedMs).toBe(60_000);
@@ -85,13 +85,95 @@ describe('driver', () => {
     expect(store.getSnapshot().awayReport?.elapsedMs).toBe(120_100);
   });
 
-  it('time passing during catch-up plays on after it', () => {
+  it('time passing during catch-up counts once the Party is sent back', () => {
     const { store } = start(clock - 60_000);
     clock += 5_000;
     vi.advanceTimersByTime(0);
     expect(store.isCatchingUp()).toBe(false);
-    vi.advanceTimersByTime(100);
+    store.sendPartyBack();
+    vi.advanceTimersByTime(0);
     expect(store.getSnapshot().view.tick).toBe(650);
+  });
+
+  describe('a check-in', () => {
+    const inCheckIn = () => {
+      const started = start(clock - 60_000);
+      vi.advanceTimersByTime(0);
+      expect(started.store.inCheckIn()).toBe(true);
+      return started;
+    };
+
+    it('pauses the Party', () => {
+      const { store } = inCheckIn();
+      play(30_000);
+      expect(store.getSnapshot().view.tick).toBe(600);
+    });
+
+    it('saves the time it paused at, so closing the game keeps that time', () => {
+      const pausedAt = clock;
+      const { driver, saves } = inCheckIn();
+      play(30_000);
+      driver.save();
+      expect(saves.envelope().savedAt).toBe(pausedAt);
+    });
+
+    it('counts its time once the Party is sent back, without opening another', () => {
+      const { store } = inCheckIn();
+      play(120_000);
+      store.sendPartyBack();
+      expect(store.isCatchingUp()).toBe(true);
+      vi.advanceTimersByTime(0);
+
+      const { view, awayReport, log } = store.getSnapshot();
+      expect(view.tick).toBe(600 + 1_200);
+      expect(awayReport).toBeNull();
+      expect(store.inCheckIn()).toBe(false);
+      expect(log.at(-1)?.text).toBe('2 minutes passed during the check-in.');
+    });
+
+    it('plays live again after its time has run', () => {
+      const { store } = inCheckIn();
+      play(1_000);
+      store.sendPartyBack();
+      vi.advanceTimersByTime(0);
+      const { tick } = store.getSnapshot().view;
+      play(1_000);
+      expect(store.getSnapshot().view.tick).toBe(tick + 10);
+    });
+
+    it('adds its results to the next Away Report', () => {
+      const { store } = inCheckIn();
+      play(120_000);
+      store.sendPartyBack();
+      vi.advanceTimersByTime(0);
+
+      store.catchUp(60_000);
+      vi.advanceTimersByTime(0);
+      expect(store.getSnapshot().awayReport?.elapsedMs).toBe(120_000 + 60_000);
+    });
+
+    it('leaves a later absence to open its own report, however soon the window hides', () => {
+      const { store } = inCheckIn();
+      play(1_000);
+      store.sendPartyBack();
+      vi.advanceTimersByTime(0);
+
+      hidden = true;
+      play(120_000);
+      hidden = false;
+      play(100);
+      vi.advanceTimersByTime(1);
+      expect(store.inCheckIn()).toBe(true);
+    });
+
+    it('adds no Live Log line for a pause under a second', () => {
+      const { store } = inCheckIn();
+      const lines = store.getSnapshot().log.length;
+      clock += 500;
+      store.sendPartyBack();
+      vi.advanceTimersByTime(0);
+      expect(store.getSnapshot().log).toHaveLength(lines);
+    });
   });
 
   it('saves every 30 seconds', () => {

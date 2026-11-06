@@ -10,6 +10,8 @@ export interface StashQuery {
   readonly stat: ItemStat | 'all';
 }
 
+export const emptyStashQuery: StashQuery = { sort: 'newest', slot: 'all', rarity: 'all', stat: 'all' };
+
 const RARITY_RANK: Readonly<Record<Rarity, number>> = { rare: 0, magic: 1, common: 2 };
 
 const newestFirst = (a: ItemView, b: ItemView): number => b.id - a.id;

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { AwayReport, AwaySetback } from '../sim';
-import { describeAbsence, describeDuration, describeSetbacks, mergeAwayReports } from './describeAwayReport';
+import { describeAbsence, describeDuration, groupSetbacks, mergeAwayReports } from './describeAwayReport';
+
+const describeSetbacks = (setbacks: readonly AwaySetback[]): readonly string[] => groupSetbacks(setbacks).map((group) => group.text);
 
 const setback = (changes: Partial<AwaySetback> = {}): AwaySetback => ({
   kind: 'wipe',

@@ -37,5 +37,5 @@ export type { FloorNumber, RoomKind } from './floors';
 export type { ActionRefusal, ActionResult, Game, GameSetup, PlayerAction } from './game';
 export type { HeroStats } from './heroes';
 export type { BattleOutcome, EventSink, GameEvent, Phase, StartAt, TownReason } from './run';
-export { viewGame, viewStash } from './view';
+export { itemBlocksLearnedSkill, viewGame, viewStash } from './view';
 export type { BattleView, FloorMapView, GameView, HeroView, RoomView, SkillValueView, SkillView, UnitView, WallView } from './view';

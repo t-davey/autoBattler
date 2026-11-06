@@ -16,6 +16,15 @@ describe('store', () => {
     expect(store.getSnapshot().log.map((line) => line.text)).toEqual(events.slice(-1_000).map(describeEvent));
   });
 
+  it('sending the Party back from Town sends it out', () => {
+    const store = createStore(createGame({ seed: 1 }));
+    for (let i = 0; i < 100_000 && store.getSnapshot().view.phase !== 'town'; i++) store.advance(100);
+    expect(store.getSnapshot().view.phase).toBe('town');
+
+    store.sendPartyBack();
+    expect(store.getSnapshot().view.phase).not.toBe('town');
+  });
+
   it('gives Live Log lines ids that never repeat', () => {
     const store = createStore(createGame({ seed: 2 }));
     const seen = new Set<number>();
@@ -186,7 +195,7 @@ describe('store', () => {
       vi.advanceTimersByTime(1);
       expect(store.getSnapshot().awayReport?.elapsedMs).toBe(HOUR_MS + 60_000);
 
-      store.dismissAwayReport();
+      store.sendPartyBack();
       store.catchUp(60_000);
       vi.advanceTimersByTime(1);
       expect(store.getSnapshot().awayReport?.elapsedMs).toBe(60_000);
@@ -199,7 +208,7 @@ describe('store', () => {
       store.advance(10_000);
       expect(store.getSnapshot().awayReport).not.toBeNull();
 
-      store.dismissAwayReport();
+      store.sendPartyBack();
       expect(store.getSnapshot().awayReport).toBeNull();
     });
 

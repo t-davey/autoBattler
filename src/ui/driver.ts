@@ -21,13 +21,14 @@ export interface Driver {
 
 /** Owns the clock, so rendering never sets game speed.
  *  Nothing steps while hidden, because throttled timers are too uneven to trust. The whole
- *  gap applies when the window returns, since the last-advanced time doesn't move until then. */
+ *  gap applies when the window returns, since the last-advanced time doesn't move until then.
+ *  A check-in pauses the same way, and its time runs through catch-up when the Party is sent back. */
 export function startDriver({ now, isHidden, store, advancedTo }: DriverOptions): Driver {
   let last = advancedTo;
 
   const stepOrCatchUp = (): void => {
     // Time passing during catch-up stays in the gap, for the first pass after it.
-    if (isHidden() || store.isCatchingUp()) return;
+    if (isHidden() || store.isCatchingUp() || store.inCheckIn()) return;
     const current = now();
     const gap = current - last;
     last = current;
@@ -35,8 +36,16 @@ export function startDriver({ now, isHidden, store, advancedTo }: DriverOptions)
     else store.advance(gap);
   };
 
+  const runPausedTime = (): void => {
+    const current = now();
+    const gap = current - last;
+    last = current;
+    if (gap > 0) store.catchUpPausedTime(gap);
+  };
+
   const save = (): void => store.save(last);
   const stopSettled = store.onSettled(save);
+  const stopSentBack = store.onSentBack(runPausedTime);
   const stepper = setInterval(stepOrCatchUp, TICK_MS);
   const saver = setInterval(save, SAVE_INTERVAL_MS);
   // A return from absence shows its progress straight away.
@@ -47,6 +56,7 @@ export function startDriver({ now, isHidden, store, advancedTo }: DriverOptions)
       clearInterval(stepper);
       clearInterval(saver);
       stopSettled();
+      stopSentBack();
     },
     save,
   };

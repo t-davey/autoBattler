@@ -171,7 +171,7 @@ A Guardian that stops a Party until it grows stronger.
 _Avoid_: Gate, blocker
 
 **Catch-up**:
-Running a player's absence through the same rules as live play, up to 12 hours, and reporting it as an Away Report.
+Running a player's absence, or the time a check-in paused, through the same rules as live play, up to 12 hours, and reporting it in an Away Report.
 _Avoid_: Offline progress, fast-forward
 
 **Party time**:
@@ -191,8 +191,16 @@ A player's return to the game to read the Away Report and act on it.
 _Avoid_: Session, visit
 
 **Away Report**:
-The summary of what a Party did while the player was away, with the game closed or its window covered or minimized.
+The summary of what a Party did while the player was away, with the game closed or its window covered or minimized, along with any time a check-in paused.
 _Avoid_: Offline report, summary screen
+
+**Finding**:
+One entry in an Away Report that gives the player something to act on, such as Setbacks, the loot found, or unspent skill points.
+_Avoid_: Alert, task
+
+**Run call**:
+An order the player gives a Party during a Run, such as returning to Town.
+_Avoid_: Command, intervention
 
 **Lamp**:
 A point in an Act that a Party relights by beating its Guardian, and where it can resume after returning to Town.
