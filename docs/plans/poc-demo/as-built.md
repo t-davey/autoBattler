@@ -60,7 +60,7 @@ The hand estimates assumed nobody Wipes on the way down. Three Setbacks on Floor
 
 Drops run ahead of the plan's hand estimates, and the median Lamp falls inside the 1–2 hour target with gear in play. The reasons aren't measured yet: check both in M6.
 
-## Milestone 5 ([issue #9](https://github.com/t-davey/autoBattler/issues/9))
+## Milestone 5 ([PR #18](https://github.com/t-davey/autoBattler/pull/18))
 
 - **Stepping:** `bankElapsed` and `stepTick` in `game.ts` are the only way the Game moves. `advance` and catch-up differ only in how they slice time and where events go.
 - **Who holds what:** `driver.ts` holds the time the state was last advanced to, which is a save's `savedAt`. `store.ts` holds the Game, runs catch-up's chunks, and refuses actions during it with `catchingUp`. A full-window overlay stops the player reaching them.
