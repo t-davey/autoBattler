@@ -19,7 +19,7 @@ One complete clash between two Teams, ending in a win for one Team or a draw.
 _Avoid_: Match, fight, combat
 
 **Tick**:
-The smallest step of Battle time, in which each living Unit gets one chance to act.
+The smallest step of game time, 100 ms; within a Battle, each living Unit gets one chance to act in it.
 _Avoid_: Turn, frame, round
 
 **Seed**:
@@ -34,8 +34,16 @@ _Avoid_: History, replay, event stream
 The death of every Hero in a Party.
 _Avoid_: Party death, game over
 
+**Pack**:
+The group of enemies a Party meets in a Battle, drawn from one Family.
+_Avoid_: Group, wave, mob
+
+**Family**:
+A set of related enemies that fill front and back-Row roles together.
+_Avoid_: Faction, type
+
 **Elite**:
-A stronger enemy in a pack with random modifiers and better loot.
+A stronger enemy in a Pack with random modifiers and better loot.
 _Avoid_: Champion, miniboss
 
 ### Party
@@ -63,6 +71,26 @@ _Avoid_: Mana, energy
 **Row**:
 The front or back line a Unit stands in during a Battle.
 _Avoid_: Rank, line, position
+
+**Damage type**:
+The kind of harm a hit deals: physical, fire, cold, poison, or holy.
+_Avoid_: Element
+
+**Resistance**:
+A percentage that reduces damage of one Damage type, capped at 75%.
+_Avoid_: Defence, ward
+
+**Armour**:
+A stat that reduces physical damage, on top of physical Resistance.
+_Avoid_: Defence, protection
+
+**Reach**:
+Whether a Unit is melee, limited to the enemy front Row, or ranged, not limited by Row.
+_Avoid_: Range
+
+**Targeting**:
+Which Row a Unit picks from among those its Reach allows: the front Row while it lives, or either.
+_Avoid_: Aggro, priority
 
 **Live Log**:
 The dashboard's rolling record of live play, combining Battle Logs with lines from other Rooms.

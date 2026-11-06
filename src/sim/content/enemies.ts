@@ -1,0 +1,35 @@
+import type { Row, UnitSpec } from '../battle';
+import { nextInt, type Rng } from '../rng';
+
+type EnemyTemplate = Omit<UnitSpec, 'id' | 'row' | 'critChance'>;
+
+const melee = { reach: 'melee', targeting: 'frontFirst' } as const;
+const ranged = { reach: 'ranged', targeting: 'frontFirst' } as const;
+
+const SODDEN_THRALL: EnemyTemplate = { name: 'Sodden Thrall', ...melee, health: 90, power: 3, actionInterval: 30, damageType: 'physical', armour: 5, resistances: {} };
+const TALLOW_WIGHT: EnemyTemplate = { name: 'Tallow Wight', ...melee, health: 130, power: 4, actionInterval: 35, damageType: 'physical', armour: 15, resistances: { physical: 10 } };
+const BONE_CHANTER: EnemyTemplate = { name: 'Bone Chanter', ...ranged, targeting: 'any', health: 60, power: 3, actionInterval: 30, damageType: 'physical', armour: 0, resistances: {} };
+const MIRE_BLOAT: EnemyTemplate = { name: 'Mire Bloat', ...melee, health: 100, power: 2, actionInterval: 30, damageType: 'poison', armour: 5, resistances: { physical: 20 } };
+const SPORELING: EnemyTemplate = { name: 'Sporeling', ...ranged, health: 55, power: 2, actionInterval: 30, damageType: 'poison', armour: 0, resistances: { physical: 20 } };
+
+interface Family {
+  readonly front: readonly EnemyTemplate[];
+  readonly back: readonly EnemyTemplate[];
+}
+
+const FAMILIES: readonly Family[] = [
+  { front: [SODDEN_THRALL, TALLOW_WIGHT], back: [BONE_CHANTER] }, // the restless dead
+  { front: [MIRE_BLOAT], back: [SPORELING] }, // fungal growth
+];
+
+/** A Pack of 1–2 front and 1–2 back enemies, drawn from one Family. */
+export function rollPack(rng: Rng): UnitSpec[] {
+  const family = FAMILIES[nextInt(rng, FAMILIES.length)]!;
+  const roll = (row: Row): UnitSpec[] =>
+    Array.from({ length: 1 + nextInt(rng, 2) }, (_, index) => {
+      const templates = family[row];
+      const template = templates[nextInt(rng, templates.length)]!;
+      return { ...template, id: `enemy-${row}-${index}`, row, critChance: 0 };
+    });
+  return [...roll('front'), ...roll('back')];
+}

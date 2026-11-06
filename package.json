@@ -13,6 +13,7 @@
     "build": "vite build && tsc -p tsconfig.electron.json",
     "start:electron": "npm run build && electron .",
     "smoke:electron": "npm run build && electron scripts/smoke-electron.mjs",
+    "bench:catchup": "node scripts/bench-catchup.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.sim.json --noEmit && tsc -p tsconfig.ui.json --noEmit && tsc -p tsconfig.test.json --noEmit && tsc -p tsconfig.electron.json --noEmit",
@@ -20,9 +21,16 @@
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "6.2.1",
     "electron": "^45.2.2",
     "typescript": "^7.0.2",
     "vite": "^8.3.5",
     "vitest": "^5.1.0"
+  },
+  "dependencies": {
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   }
 }
