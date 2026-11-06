@@ -205,9 +205,9 @@ describe('carrying over', () => {
 
   describe('XP falloff', () => {
     /** The whole XP one Hero holds after winning one Battle, from a level's start. */
-    function xpFromWin(heroLevel: number, room: 'guardian' | 'battle' = 'battle', floor: 1 | 3 = 1): number {
+    function xpFromWin(heroLevel: number, startAt: Scenario['startAt'] = { floor: 1, room: 0 }): number {
       for (let seed = 1; seed < 500; seed++) {
-        const played = game(seed, { heroLevel, startAt: room === 'guardian' ? atGuardian.startAt : { floor, room: 0 } });
+        const played = game(seed, { heroLevel, startAt });
         const entered = stepUntil(played, (event) => event.type === 'battleStarted' || event.type === 'chestOpened');
         if (entered.type !== 'battleStarted') continue;
         const saved = JSON.parse(serializeGame(played)) as { game: { battle: { units: { team: string; health: number; ticksToAction: number }[] } } };
@@ -232,15 +232,14 @@ describe('carrying over', () => {
     });
 
     it('a deeper Floor keeps its full XP for longer', () => {
-      expect(xpFromWin(7, 'battle', 3)).toBe(25);
-      expect(xpFromWin(8, 'battle', 3)).toBe(18);
+      expect(xpFromWin(7, { floor: 3, room: 0 })).toBe(25);
+      expect(xpFromWin(8, { floor: 3, room: 0 })).toBe(18);
     });
 
     it("a Guardian's XP falls off like its Floor's", () => {
-      expect(xpFromWin(7, 'guardian')).toBe(100);
-      expect(xpFromWin(8, 'guardian')).toBe(75);
+      expect(xpFromWin(7, atGuardian.startAt)).toBe(100);
+      expect(xpFromWin(8, atGuardian.startAt)).toBe(75);
     });
-
   });
 
   it('a level-up raises max health but heals nothing', () => {
@@ -268,7 +267,7 @@ describe('carrying over', () => {
 
 describe('Enemy scale', () => {
   const firstBattleAt = (floor: 1 | 2 | 3, seed: number) => {
-    const played = game(seed, { heroLevel: 40, startAt: { floor, room: 0 } });
+    const played = game(seed, { heroLevel: 1, startAt: { floor, room: 0 } });
     stepUntil(played, 'battleStarted');
     return played;
   };
@@ -304,8 +303,7 @@ describe('Enemy scale', () => {
       expect(powerOf[floor]! / powerOf[1]!).toBeCloseTo(scale);
       expect(stackOf[floor]! / stackOf[1]!).toBeCloseTo(scale);
     }
-    // XP falloff's 10% of 15, 20, and 25, rounded down in the view.
-    expect([xpOf[1], xpOf[2], xpOf[3]]).toEqual([1, 2, 2]);
+    expect([xpOf[1], xpOf[2], xpOf[3]]).toEqual([15, 20, 25]);
   });
 });
 

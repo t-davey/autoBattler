@@ -33,7 +33,7 @@ const XP_GRACE_LEVELS = 1;
 const XP_LOST_PER_LEVEL = 0.25;
 const MIN_XP_SHARE = 0.1;
 
-export const floorLevel = (floor: FloorNumber): number => floor + 3;
+const floorLevel = (floor: FloorNumber): number => floor + 3;
 
 /** The share of a Floor's XP that a Hero of this level earns. */
 export function xpShare(heroLevel: number, floor: FloorNumber): number {
