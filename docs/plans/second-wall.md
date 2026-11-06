@@ -2,7 +2,7 @@
 
 The [proof-of-concept demo](poc-demo.md) answered its question with yes, but it holds about an hour of game: [after the first Wall falls, nothing threatens the Party again](poc-demo-results.md#after-the-verdict-12-hours-of-play). This slice tests the next question: **does the loop still hold when a player meets a second Wall, needing a different answer, over several days of real check-ins?**
 
-**Status: decided, not built.** The human made the decisions below on 2026-11-06. Only the Wall module and the check-in measurement are done. Some questions stay [open](#still-open), including parts of falling back. Where this plan differs from [the demo plan](poc-demo.md), this plan applies.
+**Status: decided, not built.** The human made the decisions below on 2026-11-06. Only the Wall module and the check-in measurement are done. Some questions stay [open](#still-open), including parts of falling back. Where this plan differs from [the demo plan](poc-demo.md), this plan applies. [The two-phase Wall](two-phase-wall.md) comes next, and sets how the first Wall meets these targets.
 
 ## Decisions
 

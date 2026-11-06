@@ -43,6 +43,13 @@ export interface UnitAction {
   readonly poisonStack?: number;
 }
 
+/** A later stage of a Unit's Battle. Its actions replace the Unit's, on fresh clocks. */
+export interface UnitPhase {
+  /** Entered once health is at or below this share of max health. */
+  readonly atHealthShare: number;
+  readonly actions: readonly UnitAction[];
+}
+
 export interface UnitSpec {
   readonly id: string;
   readonly name: string;
@@ -72,6 +79,8 @@ export interface UnitSpec {
   readonly poisonOnHit?: number;
   /** When set, the Unit uses these instead of power, actionInterval, and damageType. */
   readonly actions?: readonly UnitAction[];
+  /** Needs actions. */
+  readonly secondPhase?: UnitPhase;
 }
 
 export interface BattleSetup {
@@ -143,6 +152,7 @@ export type BattleEvent =
       readonly targetName: string;
       readonly amount: number;
     }
+  | { readonly type: 'phaseChanged'; readonly tick: number; readonly unitId: string; readonly unitName: string }
   | { readonly type: 'death'; readonly tick: number; readonly unitId: string; readonly unitName: string };
 
 export interface BattleResult {
@@ -178,6 +188,8 @@ interface UnitState {
   ticksToAction: number;
   /** Ticks until each of spec.actions is next used. Empty for a Unit without actions. */
   ticksToEachAction: number[];
+  /** Set once the Unit enters spec.secondPhase. */
+  inSecondPhase?: boolean;
   oil: number;
   /** The Tick each used skill is ready again. */
   skillReadyAt: Partial<Record<SkillId, number>>;
@@ -546,6 +558,18 @@ function useAction(battle: BattleState, unit: UnitState, action: UnitAction, eve
   }
 }
 
+const actionsOf = (unit: UnitState): readonly UnitAction[] | undefined =>
+  unit.inSecondPhase ? unit.spec.secondPhase?.actions : unit.spec.actions;
+
+function enterDuePhase(battle: BattleState, unit: UnitState, events: BattleEvent[]): boolean {
+  const phase = unit.spec.secondPhase;
+  if (!phase || unit.inSecondPhase || unit.health > maxHealthOf(unit) * phase.atHealthShare) return false;
+  unit.inSecondPhase = true;
+  unit.ticksToEachAction = phase.actions.map((action) => action.interval);
+  events.push({ type: 'phaseChanged', tick: battle.tick, unitId: unit.spec.id, unitName: unit.spec.name });
+  return true;
+}
+
 function runDueActions(battle: BattleState, unit: UnitState, actions: readonly UnitAction[], events: BattleEvent[]): void {
   actions.forEach((action, index) => {
     if (!isAlive(unit) || unit.ticksToEachAction[index]! > 0) return;
@@ -555,8 +579,9 @@ function runDueActions(battle: BattleState, unit: UnitState, actions: readonly U
 }
 
 function act(battle: BattleState, unit: UnitState, events: BattleEvent[]): void {
-  if (unit.spec.actions) {
-    runDueActions(battle, unit, unit.spec.actions, events);
+  const actions = actionsOf(unit);
+  if (actions) {
+    runDueActions(battle, unit, actions, events);
     return;
   }
   unit.ticksToAction = unit.spec.actionInterval;
@@ -588,6 +613,7 @@ export function stepBattle(battle: BattleState): readonly BattleEvent[] {
   const acting: UnitState[] = [];
   for (const unit of battle.units) {
     if (!isAlive(unit)) continue;
+    if (enterDuePhase(battle, unit, events)) continue;
     if (unit.spec.actions) {
       let due = false;
       for (let i = 0; i < unit.ticksToEachAction.length; i++) {
