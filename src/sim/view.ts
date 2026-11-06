@@ -7,8 +7,8 @@ import { heroesOf, stateOf, type Game } from './game';
 import { heroReach, heroStats, unspentPoints, type HeroState, type HeroStats } from './heroes';
 import { viewItem, type ItemView } from './items';
 import { ENEMY_TEAM, PARTY_TEAM, type Phase, type RunState } from './run';
-import { SETBACKS_TO_FALL_BACK } from './wall';
 import { pointsToOpen, spendRefusal, spentPoints, type SpendRefusal } from './skills';
+import { SETBACKS_TO_FALL_BACK } from './wall';
 
 export interface UnitView {
   readonly id: string;

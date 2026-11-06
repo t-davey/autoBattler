@@ -49,7 +49,7 @@ export function recordSetback(wall: WallState, sink: WallSink): void {
 
 /**
  * The Party grew stronger, by a level-up, a skill point, or equipping an item. Ends a fallback, if there is one,
- * giving 3 fresh attempts at the Guardian. Other changes, such as unequipping, aren't growth.
+ * giving fresh attempts at the Guardian. Other changes, such as unequipping, aren't growth.
  */
 export function recordGrowth(wall: WallState, sink: WallSink): void {
   if (!wall.fallenBack) return;
