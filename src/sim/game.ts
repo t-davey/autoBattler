@@ -6,8 +6,9 @@ import { isFloorNumber, ROOM_KINDS } from './floors';
 import { clampToMaximums, createParty, heroUnitSpec, unspentPoints, type HeroState } from './heroes';
 import { slotOf, starterItem, type ItemId, type ItemSpec, type ItemState } from './items';
 import { createRng, type Rng } from './rng';
-import { createRun, endFallback, sendParty, SETBACKS_TO_FALL_BACK, stepRun, type EventSink, type RunState, type RunWorld, type StartAt, type WallState } from './run';
+import { createRun, sendParty, stepRun, type EventSink, type RunState, type RunWorld, type StartAt } from './run';
 import { isLegalOrder, spendRefusal, type SkillRanks, type SpendRefusal } from './skills';
+import { createWall, isWallState, recordGrowth } from './wall';
 
 export const TICK_MS = 100;
 /** The longest absence that counts: 12 hours. */
@@ -70,9 +71,7 @@ export function createGame(setup: GameSetup): Game {
   }));
   const stashed = (stash ?? []).map(withId);
   const rng = createRng(setup.seed);
-  const counted = Math.min(setbacks ?? 0, SETBACKS_TO_FALL_BACK);
-  const wall: WallState = { lampLit: lampLit ?? false, setbacks: counted, fallenBack: counted >= SETBACKS_TO_FALL_BACK };
-  return gameOf({ rng, tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), wall, battleTicks: battleTicks ?? null, heroes, stash: stashed, nextItemId, stashRevision: 0 });
+  return gameOf({ rng, tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), wall: createWall({ lampLit, setbacks }), battleTicks: battleTicks ?? null, heroes, stash: stashed, nextItemId, stashRevision: 0 });
 }
 
 export const heroesOf = (game: Game): readonly HeroState[] => stateOf(game).heroes;
@@ -108,7 +107,7 @@ export function applyAction(game: Game, action: PlayerAction, sink: EventSink = 
       const rank = hero.ranks[skillId] ?? 0;
       hero.ranks[skillId] = rank + 1;
       if (rank === 0 && SKILLS[skillId].kind === 'active') hero.order.push(skillId);
-      endFallback(state.wall, sink);
+      recordGrowth(state.wall, sink);
       return ACCEPTED;
     }
     case 'setSkillOrder':
@@ -131,7 +130,7 @@ export function applyAction(game: Game, action: PlayerAction, sink: EventSink = 
       hero.equipped[slot] = item;
       state.stashRevision++;
       clampToMaximums(hero);
-      endFallback(state.wall, sink);
+      recordGrowth(state.wall, sink);
       return ACCEPTED;
     }
     case 'unequipItem': {
@@ -318,15 +317,6 @@ function isRunState(value: unknown): value is RunState {
   if (!isFloorNumber(floor) || !isRecord(layout) || !Array.isArray(layout['rooms']) || !layout['rooms'].every(isRoom)) return false;
   return Number.isInteger(room) && (room as number) >= 0 && (room as number) < layout['rooms'].length;
 }
-
-const isWallState = (value: unknown): boolean =>
-  isRecord(value) &&
-  typeof value['lampLit'] === 'boolean' &&
-  isNumber(value['setbacks']) &&
-  Number.isInteger(value['setbacks']) &&
-  value['setbacks'] >= 0 &&
-  value['setbacks'] <= SETBACKS_TO_FALL_BACK &&
-  value['fallenBack'] === (value['setbacks'] === SETBACKS_TO_FALL_BACK);
 
 /** Every item in the Game, or null if any is malformed. */
 function allItems(game: Record<string, unknown>): readonly ItemState[] | null {

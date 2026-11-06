@@ -10,6 +10,7 @@ import { BATTLE_XP, FLOOR_SCALE, generateFloor, type FloorLayout, type FloorNumb
 import { clampToMaximums, gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
 import { rollItemSpec, viewItem, type ItemState, type ItemView } from './items';
 import { nextFloat, nextInt, type Rng } from './rng';
+import { recordGrowth, recordGuardianKill, recordSetback, turnsBackBeforeGuardian, type WallEvent, type WallState } from './wall';
 
 /** The Team the Party fights on. */
 export const PARTY_TEAM = 'a' satisfies TeamId;
@@ -22,7 +23,6 @@ const TOWN_TICKS = 100;
 const GUARDIAN_XP = 100;
 const RECOVERY_SHARE = 0.15;
 const RISE_SHARE = 0.2;
-export const SETBACKS_TO_FALL_BACK = 3;
 
 export type BattleOutcome = 'won' | 'lost' | 'draw';
 export type TownReason = 'setback' | 'turnedBack' | 'lampRelit' | 'guardianFell';
@@ -40,10 +40,7 @@ export type RunEvent =
   | { readonly type: 'wipe' | 'draw'; readonly floor: FloorNumber; readonly enemyName: string }
   | { readonly type: 'returnedToTown'; readonly reason: TownReason }
   | { readonly type: 'partySent' }
-  | { readonly type: 'fellBack' }
-  | { readonly type: 'retryingGuardian' }
-  | { readonly type: 'guardianFell' }
-  | { readonly type: 'lampRelit' };
+  | WallEvent;
 
 export type GameEvent = BattleEvent | RunEvent;
 export type EventSink = (event: GameEvent) => void;
@@ -59,13 +56,6 @@ export interface RunState {
   layout: FloorLayout | null;
   /** The Room the Party is in, or travelling to. */
   room: number;
-}
-
-export interface WallState {
-  lampLit: boolean;
-  /** Setbacks since the count last cleared. Stops at SETBACKS_TO_FALL_BACK. */
-  setbacks: number;
-  fallenBack: boolean;
 }
 
 /** The part of the Game that Runs read and change. */
@@ -135,14 +125,6 @@ export function sendParty(world: RunWorld, sink: EventSink): void {
   enterFloor(world, 1);
 }
 
-/** Ends a fallback, if there is one, giving 3 fresh attempts at the Guardian. */
-export function endFallback(wall: WallState, sink: EventSink): void {
-  if (!wall.fallenBack) return;
-  wall.fallenBack = false;
-  wall.setbacks = 0;
-  sink({ type: 'retryingGuardian' });
-}
-
 function recoveryShare(heroes: readonly HeroState[]): number {
   const rank = heroes.find((hero) => hero.id === 'lamplighter')?.ranks['warm-hands'] ?? 0;
   return RECOVERY_SHARE * (rank > 0 ? 1 + rankValue('warm-hands', rank) / 100 : 1);
@@ -158,7 +140,7 @@ function leaveRoom(world: RunWorld, sink: EventSink): void {
   }
 
   const next = run.layout!.rooms[run.room + 1];
-  if (next?.kind === 'guardian' && wall.fallenBack) returnToTown(world, 'turnedBack', sink);
+  if (next?.kind === 'guardian' && turnsBackBeforeGuardian(wall)) returnToTown(world, 'turnedBack', sink);
   else if (next) travelTo(run, run.room + 1);
   else enterFloor(world, (run.floor! + 1) as FloorNumber);
 }
@@ -208,16 +190,9 @@ function outcomeOf(battle: BattleState): BattleOutcome {
 }
 
 function setback(world: RunWorld, type: 'wipe' | 'draw', battle: BattleState, sink: EventSink): void {
-  const { wall } = world;
   const firstEnemy = battle.units.find((unit) => unit.team === ENEMY_TEAM);
   sink({ type, floor: world.run.floor!, enemyName: firstEnemy?.spec.name ?? '' });
-  if (!wall.fallenBack) {
-    wall.setbacks++;
-    if (wall.setbacks >= SETBACKS_TO_FALL_BACK) {
-      wall.fallenBack = true;
-      sink({ type: 'fellBack' });
-    }
-  }
+  recordSetback(world.wall, sink);
   returnToTown(world, 'setback', sink);
 }
 
@@ -225,18 +200,12 @@ function reward(world: RunWorld, xp: number, sink: EventSink): void {
   for (const hero of world.heroes) {
     const levels = gainXp(hero, xp);
     for (const level of levels) sink({ type: 'levelUp', heroId: hero.id, heroName: hero.name, level });
-    if (levels.length > 0) endFallback(world.wall, sink);
+    if (levels.length > 0) recordGrowth(world.wall, sink);
   }
 }
 
 function guardianFell(world: RunWorld, sink: EventSink): void {
-  const { wall } = world;
-  sink({ type: 'guardianFell' });
-  wall.setbacks = 0;
-  wall.fallenBack = false;
-  const relit = !wall.lampLit;
-  wall.lampLit = true;
-  if (relit) sink({ type: 'lampRelit' });
+  const relit = recordGuardianKill(world.wall, sink);
   // The Lamp is lit from the first kill on, so the guaranteed rare comes once.
   dropItem(world, sink, relit ? 'rare' : undefined);
   returnToTown(world, relit ? 'lampRelit' : 'guardianFell', sink);

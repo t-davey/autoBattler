@@ -6,7 +6,8 @@ import { MAX_SKILL_RANK, rankValue, SKILL_IDS, SKILLS, type HeroId, type SkillId
 import { heroesOf, stateOf, type Game } from './game';
 import { heroReach, heroStats, unspentPoints, type HeroState, type HeroStats } from './heroes';
 import { viewItem, type ItemView } from './items';
-import { ENEMY_TEAM, PARTY_TEAM, SETBACKS_TO_FALL_BACK, type Phase, type RunState } from './run';
+import { ENEMY_TEAM, PARTY_TEAM, type Phase, type RunState } from './run';
+import { SETBACKS_TO_FALL_BACK } from './wall';
 import { pointsToOpen, spendRefusal, spentPoints, type SpendRefusal } from './skills';
 
 export interface UnitView {
