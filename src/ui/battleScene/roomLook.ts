@@ -82,8 +82,8 @@ function waysOf(map: FloorMapView, index: number): Way[] {
   const edgeIn = before ? edgeTowards(room, before) : null;
   const edgeOut = after ? edgeTowards(room, after) : null;
   const ways: Way[] = [];
-  // A Floor's first Room is reached by stairs, set opposite the way on.
-  if (edgeIn) ways.push({ edge: edgeIn, role: 'in', kind: 'door' });
+  // A Floor's first Room is reached by stairs, set opposite the way out.
+  if (edgeIn) ways.push({ edge: edgeIn, role: 'in', kind: before?.kind === 'stairs' ? 'stairs' : 'door' });
   else if (edgeOut) ways.push({ edge: OPPOSITE[edgeOut], role: 'in', kind: 'stairs' });
   if (edgeOut) ways.push({ edge: edgeOut, role: 'out', kind: room.kind === 'stairs' ? 'stairs' : 'door' });
   else if (room.kind === 'stairs' && edgeIn) ways.push({ edge: OPPOSITE[edgeIn], role: 'out', kind: 'stairs' });

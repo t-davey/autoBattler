@@ -16,7 +16,7 @@ const DISSOLVE_SECONDS = 0.55;
 const BORN_SECONDS = 0.4;
 const FLASH_SECONDS = 0.09;
 const KICK_SECONDS = 0.25;
-const NUMBER_SECONDS = 0.9;
+export const NUMBER_SECONDS = 0.9;
 const WARD_COLOUR: Rgb = [255, 206, 110];
 const HEAL_COLOUR: Rgb = [244, 206, 120];
 const BLEED_COLOUR: Rgb = [244, 110, 96];
@@ -48,7 +48,7 @@ interface Move {
   readonly unitId: string;
   readonly duration: number;
   readonly triggerAt: number;
-  readonly onTrigger: () => void;
+  onTrigger: () => void;
   readonly pose: (t: number) => Pose;
   readonly tick: number | null;
   t: number;
@@ -56,7 +56,7 @@ interface Move {
   freezeUntil: number;
 }
 
-interface StageUnit {
+interface SceneUnit {
   readonly id: string;
   readonly figure: Figure;
   readonly team: 'party' | 'enemy';
@@ -65,8 +65,9 @@ interface StageUnit {
   reach: Reach;
   health: number;
   maxHealth: number;
-  /** Health the scene hasn't shown as lost yet, because the blow is still on its way. */
+  /** Health the scene hasn't shown as lost yet, because these blows are still on their way. */
   pendingDamage: number;
+  pendingBlows: number;
   oil: number;
   maxOil: number;
   bleeding: boolean;
@@ -83,7 +84,6 @@ interface StageUnit {
   kickedAt: number;
   deathPending: boolean;
   diedAt: number | null;
-  lastDrip: number;
 }
 
 export interface Particle {
@@ -177,7 +177,7 @@ export interface SceneFrame {
   readonly fade: number;
 }
 
-export interface Stage {
+export interface Scene {
   /** Takes what the Game just did, and animates it unless it covers too much time. */
   play(batch: PlayedBatch, view: GameView): void;
   /** Follows the Game's current state. Safe to call every frame. */
@@ -186,7 +186,7 @@ export interface Stage {
   frame(): SceneFrame;
 }
 
-export interface StageOptions {
+export interface SceneOptions {
   readonly random?: () => number;
   /** Set false when the player prefers reduced motion. */
   readonly shakes?: boolean;
@@ -198,14 +198,11 @@ const easeOut = (k: number): number => 1 - (1 - k) * (1 - k);
 
 const SPREADS: Readonly<Record<number, readonly number[]>> = { 1: [0], 2: [-0.85, 0.85], 3: [-1.4, 0, 1.4] };
 
-function slot(team: 'party' | 'enemy', row: Row, index: number, count: number): Point {
+function standingPoint(team: 'party' | 'enemy', row: Row, index: number, count: number): Point {
   const across = row === 'front' ? 1.2 : 2.4;
   const spread = SPREADS[count]?.[index] ?? (index - (count - 1) / 2) * 0.9;
   return formationPoint(team === 'party' ? -across : across, spread);
 }
-
-/** A Hero's Row before their first Battle in this scene. */
-const DEFAULT_ROWS: Readonly<Record<string, Row>> = { 'sin-eater': 'front', huntsman: 'front', lamplighter: 'back' };
 
 interface Swing {
   readonly windup: number;
@@ -226,14 +223,14 @@ const CLAW: Swing = { windup: 0.3, dash: 0.13, hold: 0.07, recover: 0.34, raised
 const SLAM: Swing = { windup: 0.4, dash: 0.1, hold: 0.14, recover: 0.36, raised: -2.4, struck: 1.2, lean: 14, gap: 44, stop: 0.09, shake: 2 };
 const CUTTING_SKILLS: ReadonlySet<SkillId> = new Set<SkillId>(['bleeders-cut', 'the-long-cut']);
 
-export function createStage({ random = Math.random, shakes = true }: StageOptions = {}): Stage {
+export function createScene({ random = Math.random, shakes = true }: SceneOptions = {}): Scene {
   let now = 0;
   let look: RoomLook | null = null;
   let lampLit = false;
   let chestOpen = false;
   let shake = 0;
   let transition: { readonly to: RoomLook; readonly startedAt: number; readonly leaves: boolean; swapped: boolean } | null = null;
-  const units = new Map<string, StageUnit>();
+  const units = new Map<string, SceneUnit>();
   let moves: Move[] = [];
   let bullets: Bullet[] = [];
   let particles: Particle[] = [];
@@ -249,16 +246,16 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
     }
   };
 
-  const floatNumber = (unit: StageUnit, text: string, colour: Rgb): void => {
+  const floatNumber = (unit: SceneUnit, text: string, colour: Rgb): void => {
     numbers.push({ x: unit.x + (random() * 16 - 8), y: unit.y - 60, text, colour, bornAt: now });
   };
 
-  const flash = (unit: StageUnit, colour: Rgb = HIT_FLASH, seconds = FLASH_SECONDS): void => {
+  const flash = (unit: SceneUnit, colour: Rgb = HIT_FLASH, seconds = FLASH_SECONDS): void => {
     unit.flashUntil = now + seconds;
     unit.flashColour = colour;
   };
 
-  const crumble = (unit: StageUnit): void => {
+  const crumble = (unit: SceneUnit): void => {
     unit.deathPending = false;
     unit.diedAt = now;
     if (unit.team === 'enemy') {
@@ -267,8 +264,9 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
     }
   };
 
-  const shownHit = (target: StageUnit, attacker: StageUnit, damage: number, absorbed: number, crit: boolean, type: DamageType, style: Swing | null): void => {
-    target.pendingDamage = Math.max(0, target.pendingDamage - damage);
+  const shownHit = (target: SceneUnit, attacker: SceneUnit, damage: number, absorbed: number, crit: boolean, type: DamageType, style: Swing | null): void => {
+    target.pendingBlows = Math.max(0, target.pendingBlows - 1);
+    target.pendingDamage = target.pendingBlows === 0 ? 0 : Math.max(0, target.pendingDamage - damage);
     const direction = attacker.team === 'party' ? 1 : -1;
     target.kick = direction * (crit ? 9 : 6);
     target.kickedAt = now;
@@ -285,10 +283,10 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
       flashes.push({ x: target.x, y: target.y - 26, bornAt: now, duration: 0.12, radius: 60, strength: 0.8 });
     }
     if (shakes && style) shake = Math.max(shake, style.shake + (crit ? 1 : 0));
-    if (target.deathPending && target.pendingDamage === 0) crumble(target);
+    if (target.deathPending && target.pendingBlows === 0) crumble(target);
   };
 
-  const swingMove = (attacker: StageUnit, target: StageUnit, swing: Swing, tick: number, land: () => void): Move => {
+  const swingMove = (attacker: SceneUnit, target: SceneUnit, swing: Swing, tick: number, land: () => void): Move => {
     const towards = attacker.team === 'party' ? 1 : -1;
     const landedAt = swing.windup + swing.dash;
     const total = landedAt + swing.hold + swing.recover;
@@ -318,7 +316,7 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
     return move;
   };
 
-  const shotMove = (attacker: StageUnit, target: StageUnit, tick: number, colour: Rgb, land: () => void): Move => {
+  const shotMove = (attacker: SceneUnit, target: SceneUnit, tick: number, colour: Rgb, arc: number, land: () => void): Move => {
     const away = attacker.team === 'party' ? -1 : 1;
     return {
       unitId: attacker.id,
@@ -330,7 +328,7 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
       freezeUntil: 0,
       onTrigger: () => {
         const from = { x: attacker.x - away * 18, y: attacker.y - 46 };
-        bullets.push({ from, to: { x: target.x, y: target.y - 28 }, bornAt: now, duration: 0.3, arc: colour === SPORES[2] ? 44 : 10, colour, onLand: land });
+        bullets.push({ from, to: { x: target.x, y: target.y - 28 }, bornAt: now, duration: 0.3, arc, colour, onLand: land });
       },
       pose: (t) => {
         if (t < 0.22) {
@@ -346,7 +344,7 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
     };
   };
 
-  const castMove = (unit: StageUnit, duration: number, triggerAt: number, flare: number, onTrigger: () => void): Move => ({
+  const castMove = (unit: SceneUnit, duration: number, triggerAt: number, flare: number, onTrigger: () => void): Move => ({
     unitId: unit.id,
     duration,
     triggerAt,
@@ -361,7 +359,7 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
     },
   });
 
-  const braceMove = (unit: StageUnit): Move => ({
+  const braceMove = (unit: SceneUnit): Move => ({
     unitId: unit.id,
     duration: 0.7,
     triggerAt: 0.27,
@@ -390,6 +388,13 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
   });
 
   const startMove = (move: Move): void => {
+    // A move cut off still lands, so its target's bar and death aren't left waiting.
+    for (const other of moves) {
+      if (other.unitId === move.unitId && !other.fired) {
+        other.fired = true;
+        other.onTrigger();
+      }
+    }
     moves = moves.filter((other) => other.unitId !== move.unitId);
     moves.push(move);
   };
@@ -399,38 +404,39 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
     const target = units.get(event.targetId);
     if (!attacker || !target) return;
     target.pendingDamage += event.damage;
+    target.pendingBlows += 1;
     const land = (hitStyle: Swing | null): void => shownHit(target, attacker, event.damage, event.absorbed, event.crit, event.damageType, hitStyle);
     // A hit split by Shared Burden comes from the blow already under way.
-    const under = moves.find((move) => move.unitId === attacker.id && move.tick === event.tick && !move.fired);
-    if (under) {
-      const landFirst = under.onTrigger;
-      startMove({ ...under, onTrigger: () => {
+    const blowUnderWay = moves.find((move) => move.unitId === attacker.id && move.tick === event.tick && !move.fired);
+    if (blowUnderWay) {
+      const landFirst = blowUnderWay.onTrigger;
+      blowUnderWay.onTrigger = () => {
         landFirst();
         land(null);
-      } });
+      };
       return;
     }
     if (attacker.reach === 'ranged') {
-      const colour: Rgb = event.damageType === 'poison' ? SPORES[2]! : [214, 206, 176];
-      startMove(shotMove(attacker, target, event.tick, colour, () => land(null)));
+      const lobbed = event.damageType === 'poison';
+      startMove(shotMove(attacker, target, event.tick, lobbed ? SPORES[2]! : [214, 206, 176], lobbed ? 44 : 10, () => land(null)));
       return;
     }
     const swing = style ?? (attacker.team === 'party' ? STRIKE : CLAW);
     startMove(swingMove(attacker, target, swing, event.tick, () => land(swing)));
   };
 
-  const ward = (unit: StageUnit): void => {
+  const ward = (unit: SceneUnit): void => {
     flash(unit, [255, 226, 160], 0.08);
   };
 
-  const castWard = (caster: StageUnit): void => {
+  const castWard = (caster: SceneUnit): void => {
     startMove(castMove(caster, 0.95, 0.25, 1.2, () => {
       rings.push({ x: caster.x, y: caster.y, bornAt: now, duration: 0.55, radius: 190, colour: [255, 200, 110] });
       flashes.push({ x: caster.x, y: caster.y - 40, bornAt: now, duration: 0.5, radius: 150, strength: 0.6 });
     }));
   };
 
-  const heal = (target: StageUnit, amount: number): void => {
+  const heal = (target: SceneUnit, amount: number): void => {
     floatNumber(target, `+${Math.ceil(amount)}`, HEAL_COLOUR);
     flash(target, [255, 226, 160], 0.14);
     flashes.push({ x: target.x, y: target.y - 26, bornAt: now, duration: 0.7, radius: 90, strength: 0.7 });
@@ -485,7 +491,7 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
         case 'death': {
           const unit = units.get(event.unitId);
           if (!unit || unit.diedAt !== null) break;
-          if (unit.pendingDamage > 0) unit.deathPending = true;
+          if (unit.pendingBlows > 0) unit.deathPending = true;
           else crumble(unit);
           break;
         }
@@ -508,7 +514,7 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
     return roomLookOf(map, floor, index);
   };
 
-  const fanOf = (unit: StageUnit): number => (unit.id === 'sin-eater' ? -14 : unit.id === 'lamplighter' ? 14 : 0);
+  const fanOf = (unit: SceneUnit): number => (unit.id === 'sin-eater' ? -14 : unit.id === 'lamplighter' ? 14 : 0);
 
   const enterRoom = (next: RoomLook): void => {
     look = next;
@@ -522,7 +528,7 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
     }
   };
 
-  const unitFromView = (view: UnitView, team: 'party' | 'enemy'): StageUnit => ({
+  const unitFromView = (view: UnitView, team: 'party' | 'enemy'): SceneUnit => ({
     id: view.id,
     figure: figureOf(view),
     team,
@@ -532,6 +538,7 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
     health: view.health,
     maxHealth: view.maxHealth,
     pendingDamage: 0,
+    pendingBlows: 0,
     oil: view.oil,
     maxOil: view.maxOil,
     bleeding: view.bleeding,
@@ -548,7 +555,6 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
     kickedAt: -9,
     deathPending: false,
     diedAt: null,
-    lastDrip: 0,
   });
 
   /** A batch's blows land later, so while reading one, its deaths wait for its events. */
@@ -558,8 +564,8 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
       : view.heroes.map((hero) => ({
           id: hero.id,
           name: hero.name,
-          row: units.get(hero.id)?.row ?? DEFAULT_ROWS[hero.id] ?? 'front',
-          reach: units.get(hero.id)?.reach ?? 'melee',
+          row: hero.row,
+          reach: hero.reach,
           health: hero.health,
           maxHealth: hero.stats.maxHealth,
           oil: hero.oil,
@@ -574,9 +580,14 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
       for (const row of ['front', 'back'] as const) {
         const standing = list.filter((unit) => unit.row === row && unit.health > 0);
         standing.forEach((unit, index) => {
-          const stage = units.get(unit.id);
-          const home = slot(team, row, index, standing.length);
-          if (stage) stage.home = home;
+          let known = units.get(unit.id);
+          // Enemy ids repeat between Packs, so a fallen or different Unit under this id is a new one.
+          if (known && team === 'enemy' && (known.diedAt !== null || known.deathPending || known.figure !== figureOf(unit))) {
+            units.delete(unit.id);
+            known = undefined;
+          }
+          const home = standingPoint(team, row, index, standing.length);
+          if (known) known.home = home;
           else {
             const fresh = unitFromView(unit, team);
             fresh.home = home;
@@ -588,32 +599,32 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
       }
       for (const unit of list) {
         seen.add(unit.id);
-        let stage = units.get(unit.id);
-        if (!stage) {
+        let shown = units.get(unit.id);
+        if (!shown) {
           // Already down when this scene first saw it.
-          stage = unitFromView(unit, team);
-          stage.home = slot(team, unit.row, 0, 1);
-          stage.x = stage.home.x;
-          stage.y = stage.home.y;
-          stage.diedAt = now - DISSOLVE_SECONDS;
-          units.set(unit.id, stage);
+          shown = unitFromView(unit, team);
+          shown.home = standingPoint(team, unit.row, 0, 1);
+          shown.x = shown.home.x;
+          shown.y = shown.home.y;
+          shown.diedAt = now - DISSOLVE_SECONDS;
+          units.set(unit.id, shown);
         }
-        stage.row = unit.row;
-        stage.reach = unit.reach;
-        stage.health = unit.health;
-        stage.maxHealth = unit.maxHealth;
-        stage.oil = unit.oil;
-        stage.maxOil = unit.maxOil;
-        stage.bleeding = unit.bleeding;
-        stage.poisoned = unit.poisonStacks > 0;
-        stage.warded = unit.wardAmount > 0;
-        if (unit.health > 0 && team === 'party') stage.diedAt = null;
-        if (settleDeaths && unit.health <= 0 && stage.diedAt === null && !stage.deathPending && stage.pendingDamage === 0) crumble(stage);
+        shown.row = unit.row;
+        shown.reach = unit.reach;
+        shown.health = unit.health;
+        shown.maxHealth = unit.maxHealth;
+        shown.oil = unit.oil;
+        shown.maxOil = unit.maxOil;
+        shown.bleeding = unit.bleeding;
+        shown.poisoned = unit.poisonStacks > 0;
+        shown.warded = unit.wardAmount > 0;
+        if (unit.health > 0 && team === 'party') shown.diedAt = null;
+        if (settleDeaths && unit.health <= 0 && shown.diedAt === null && !shown.deathPending && shown.pendingBlows === 0) crumble(shown);
       }
     }
     if (!settleDeaths) return;
     for (const unit of units.values()) {
-      if (!seen.has(unit.id) && unit.diedAt === null && !unit.deathPending && unit.pendingDamage === 0) crumble(unit);
+      if (!seen.has(unit.id) && unit.diedAt === null && !unit.deathPending && unit.pendingBlows === 0) crumble(unit);
     }
   };
 
@@ -645,6 +656,7 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
     transition = null;
     for (const unit of units.values()) {
       unit.pendingDamage = 0;
+      unit.pendingBlows = 0;
       unit.deathPending = false;
     }
     syncView(view);
@@ -677,7 +689,7 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
     if (age >= leaveFor + FADE_SECONDS) transition = null;
   };
 
-  const walkTargetOf = (unit: StageUnit): Point => {
+  const walkTargetOf = (unit: SceneUnit): Point => {
     if (transition && !transition.swapped && transition.leaves && unit.team === 'party') {
       const out = look?.ways.find((way) => way.role === 'out');
       if (out) return wayPoint(out.edge);
@@ -685,7 +697,7 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
     return unit.home;
   };
 
-  const walk = (unit: StageUnit, seconds: number): void => {
+  const walk = (unit: SceneUnit, seconds: number): void => {
     if (unit.diedAt !== null) return;
     const target = walkTargetOf(unit);
     const dx = target.x - unit.x;
@@ -703,7 +715,7 @@ export function createStage({ random = Math.random, shakes = true }: StageOption
     }
   };
 
-  const drip = (unit: StageUnit, seconds: number): void => {
+  const drip = (unit: SceneUnit, seconds: number): void => {
     if (unit.diedAt !== null) return;
     if (unit.bleeding && random() < seconds * 7) {
       particles.push({ x: unit.x + (random() * 16 - 8), y: unit.y - 26, vx: 0, vy: 24, gravity: 180, bornAt: now, life: 0.35, colour: [176, 32, 36] });

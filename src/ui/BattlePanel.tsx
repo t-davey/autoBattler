@@ -68,8 +68,8 @@ function PartyStatus({ heroes }: { heroes: readonly HeroView[] }) {
   const asUnit = (hero: HeroView): UnitView => ({
     id: hero.id,
     name: hero.name,
-    row: 'front',
-    reach: 'melee',
+    row: hero.row,
+    reach: hero.reach,
     health: hero.health,
     maxHealth: hero.stats.maxHealth,
     oil: hero.oil,

@@ -3,7 +3,7 @@ import type { Store } from '../store';
 import { drawScene, snappedDisplayWidth } from './draw';
 import { ART_HEIGHT, ART_WIDTH } from './iso';
 import { bakeRoom, type BakedRoom } from './roomBake';
-import { createStage } from './stage';
+import { createScene } from './scene';
 
 const MAX_FRAME_SECONDS = 0.1;
 
@@ -19,9 +19,9 @@ export const BattleScene = memo(function BattleScene({ store }: { store: Store }
     if (!element || !context || !holder) return;
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const stage = createStage({ shakes: !reducedMotion });
-    stage.sync(store.getSnapshot().view);
-    const stopPlayed = store.onPlayed((batch) => stage.play(batch, store.getSnapshot().view));
+    const scene = createScene({ shakes: !reducedMotion });
+    scene.sync(store.getSnapshot().view);
+    const stopPlayed = store.onPlayed((batch) => scene.play(batch, store.getSnapshot().view));
 
     const fit = (): void => {
       const width = snappedDisplayWidth(holder.clientWidth, window.devicePixelRatio);
@@ -30,6 +30,8 @@ export const BattleScene = memo(function BattleScene({ store }: { store: Store }
     };
     const resizes = new ResizeObserver(fit);
     resizes.observe(holder);
+    // Moving to a display with another scale changes the ratio without resizing the holder.
+    window.addEventListener('resize', fit);
     fit();
 
     const image = context.createImageData(ART_WIDTH, ART_HEIGHT);
@@ -40,10 +42,10 @@ export const BattleScene = memo(function BattleScene({ store }: { store: Store }
     const draw = (time: number): void => {
       frameRequest = requestAnimationFrame(draw);
       // The first frame's timestamp can be earlier than the clock read before it.
-      stage.advance(Math.max(0, Math.min(MAX_FRAME_SECONDS, (time - last) / 1000)));
+      scene.advance(Math.max(0, Math.min(MAX_FRAME_SECONDS, (time - last) / 1000)));
       last = time;
-      stage.sync(store.getSnapshot().view);
-      const frame = stage.frame();
+      scene.sync(store.getSnapshot().view);
+      const frame = scene.frame();
       if (!frame.look) return;
       const wanted = `${frame.look.key}:${frame.lampLit}`;
       if (!room || wanted !== bakedFor) {
@@ -62,6 +64,7 @@ export const BattleScene = memo(function BattleScene({ store }: { store: Store }
     return () => {
       cancelAnimationFrame(frameRequest);
       resizes.disconnect();
+      window.removeEventListener('resize', fit);
       stopPlayed();
     };
   }, [store]);

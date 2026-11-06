@@ -53,7 +53,7 @@ const LAMP_TOP = ORIGIN_Y - 48;
 const LAMP_GLASS_TOP = ORIGIN_Y - 44;
 const LAMP_GLASS_BOTTOM = ORIGIN_Y - 30;
 
-const noise = (a: number, b: number): number => {
+export const noise = (a: number, b: number): number => {
   const value = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
   return value - Math.floor(value);
 };
@@ -212,7 +212,7 @@ export function bakeRoom(look: RoomLook, lampLit: boolean): BakedRoom {
     if (way.edge === 'backLeft' || way.edge === 'backRight') cutWallWay(way, way.edge, albedo, material);
     else cutFrontWay(way, albedo, material);
     if (way.role !== 'out') continue;
-    // The way on is always lit, so the Room always shows where the Party is heading.
+    // The way out is always lit, so the Room always shows where the Party is heading.
     if (way.edge === 'backLeft' || way.edge === 'backRight') {
       for (const offset of [-0.72, 0.72]) addFlame(wallPoint(way.edge, WALL_WAY_AT + offset, 34), true);
       warm.push({ ...wallPoint(way.edge, WALL_WAY_AT, 24), radius: 100, strength: 0.6 });

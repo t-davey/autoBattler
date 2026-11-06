@@ -173,11 +173,19 @@ describe('saves', () => {
     expect(deserializeGame(JSON.stringify({ ...good, version: SAVE_VERSION + 1 }))).toBeNull();
     expect(deserializeGame(JSON.stringify(good))).not.toBeNull();
   });
+});
 
+describe('the view of a Battle', () => {
   it('reports the Reach of each Unit in a Battle', () => {
     const battle = viewGame(started(1)).battle!;
     expect(battle.party.find((unit) => unit.id === 'sin-eater')?.reach).toBe('melee');
     expect(battle.party.find((unit) => unit.id === 'lamplighter')?.reach).toBe('ranged');
     expect(battle.enemies.every((unit) => unit.reach === 'melee' || unit.reach === 'ranged')).toBe(true);
+  });
+
+  it('reports where each Hero stands and how they reach', () => {
+    const heroes = viewGame(createGame({ seed: 1 })).heroes;
+    const lamplighter = heroes.find((hero) => hero.id === 'lamplighter')!;
+    expect(lamplighter).toMatchObject({ row: 'back', reach: 'ranged' });
   });
 });

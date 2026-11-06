@@ -1,7 +1,7 @@
 import { LANTERNS, RAMPS, SPRITES, WEAPONS, type Rgb } from './art';
 import { ART_HEIGHT, ART_WIDTH, ORIGIN_Y, UNITS_PER_PIXEL, formationPoint } from './iso';
-import { MATERIAL_FOXFIRE, MATERIAL_LAMP, MATERIAL_VOID, MATERIAL_WATER, type BakedRoom } from './roomBake';
-import type { SceneFrame, UnitFrame } from './stage';
+import { MATERIAL_FOXFIRE, MATERIAL_LAMP, MATERIAL_VOID, MATERIAL_WATER, noise, type BakedRoom } from './roomBake';
+import { NUMBER_SECONDS, type SceneFrame, type UnitFrame } from './scene';
 
 const STONE: readonly Rgb[] = [[14, 15, 24], [25, 26, 38], [38, 37, 50], [54, 48, 58], [74, 60, 60], [98, 76, 64], [128, 96, 72], [160, 122, 86], [194, 154, 106]];
 const WATER: readonly Rgb[] = [[10, 18, 28], [14, 28, 40], [20, 40, 50], [28, 54, 60], [44, 70, 68], [76, 88, 72], [128, 110, 76], [204, 158, 92], [250, 210, 130]];
@@ -33,7 +33,6 @@ const DIGITS: Readonly<Record<string, string>> = {
   '9': '111101111001111',
   '+': '000010111010000',
 };
-const NUMBER_SECONDS = 0.9;
 
 interface SceneLight {
   readonly x: number;
@@ -44,10 +43,6 @@ interface SceneLight {
 
 const flipOf = (unit: UnitFrame): number => (unit.team === 'party' ? 1 : -1);
 const clamp = (value: number, low: number, high: number): number => Math.max(low, Math.min(high, value));
-const noise = (a: number, b: number): number => {
-  const value = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
-  return value - Math.floor(value);
-};
 const mixRgb = (a: Rgb, b: Rgb, k: number): Rgb => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
 
 function lanternLights(frame: SceneFrame): SceneLight[] {
@@ -177,7 +172,7 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
 
   if (frame.look?.kind === 'chest') drawChest(put, frame.chestOpen);
 
-  const litLevel = (x: number, y: number): { step: number; cold: number } => {
+  const litShade = (x: number, y: number): { step: number; cold: number } => {
     const px = clamp(Math.floor(x / UNITS_PER_PIXEL), 0, ART_WIDTH - 1);
     const py = clamp(Math.floor((y - 26) / UNITS_PER_PIXEL), 0, ART_HEIGHT - 1);
     const i = py * ART_WIDTH + px;
@@ -209,7 +204,7 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
         buffer[o + 2] = buffer[o + 2]! * 0.42;
       }
     }
-    const { step, cold } = litLevel(unit.x, unit.y);
+    const { step, cold } = litShade(unit.x, unit.y);
     const flip = flipOf(unit);
     const hop = unit.hop ? -1 : 0;
     const lean = unit.lean / UNITS_PER_PIXEL;
@@ -218,24 +213,24 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
     let top = 0;
     for (const pixel of SPRITES[unit.figure]) {
       if (unit.dissolve > 0 && noise(pixel.x + unit.x, pixel.y) < unit.dissolve) continue;
-      const row = Math.round(pixel.y * unit.squash);
+      const spriteY = Math.round(pixel.y * unit.squash);
       const x = cx + flip * pixel.x + Math.round((lean * -pixel.y) / 30);
-      const y = cy + row + hop;
-      if (row < top) top = row;
+      const y = cy + spriteY + hop;
+      if (spriteY < top) top = spriteY;
       if (pixel.material === null) {
         if (unit.warded && (x + y + wardFrame) % 4 < 2) put(x, y, WARD_EDGE);
         else if (unit.braced && (x + y + braceFrame) % 6 < 1) put(x, y, BRACE_EDGE);
         else put(x, y, OUTLINE);
       } else if (pixel.material === 'glow') {
         const full = unit.lantern ?? 1;
-        const bright: Rgb = unit.lanternFlare > 0.3 ? [255, 250, 210] : pixel.level > 1 ? [255, 232, 160] : [255, 186, 90];
+        const bright: Rgb = unit.lanternFlare > 0.3 ? [255, 250, 210] : pixel.shade > 1 ? [255, 232, 160] : [255, 186, 90];
         put(x, y, mixRgb(LANTERN_DARK, bright, 0.35 + 0.65 * full));
       } else if (pixel.material === 'eye') {
         put(x, y, unit.team === 'enemy' ? [255, 96, 64] : [255, 190, 90]);
       } else if (unit.flash) {
         put(x, y, unit.flash);
       } else {
-        const colour = RAMPS[pixel.material][clamp(pixel.level + step, 0, 5)]!;
+        const colour = RAMPS[pixel.material][clamp(pixel.shade + step, 0, 5)]!;
         put(x, y, [colour[0] + cold * 10, colour[1] + cold * 36, colour[2] + cold * 40]);
       }
     }

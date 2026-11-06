@@ -65,6 +65,20 @@ describe('the ways through a Room', () => {
     expect(roomLookOf(map, floor, 0).ways[0]).toMatchObject({ role: 'in', kind: 'stairs' });
   });
 
+  it('take stairs from a Stairs Room down to the Guardian, who has no way out', () => {
+    const map: FloorMapView = {
+      width: 9,
+      height: 7,
+      rooms: [
+        { x: 0, y: 0, kind: 'battle', state: 'cleared' },
+        { x: 1, y: 0, kind: 'stairs', state: 'cleared' },
+        { x: 1, y: 1, kind: 'guardian', state: 'current' },
+      ],
+    };
+    expect(roomLookOf(map, 3, 1).ways.at(-1)).toMatchObject({ role: 'out', kind: 'stairs' });
+    expect(roomLookOf(map, 3, 2).ways).toEqual([expect.objectContaining({ role: 'in', kind: 'stairs' })]);
+  });
+
   it('end a Floor with stairs out', () => {
     const { map, floor } = mapOf(1);
     const last = roomLookOf(map, floor, map.rooms.length - 1);

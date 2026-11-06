@@ -157,7 +157,7 @@ export interface SpritePixel {
   readonly y: number;
   /** null is the outline. */
   readonly material: Material | null;
-  readonly level: number;
+  readonly shade: number;
 }
 
 const FIGURE_SCALE = 1.15;
@@ -167,7 +167,7 @@ const BOX_WIDTH = 60;
 const BOX_HEIGHT = 63;
 
 function bake(parts: readonly Part[]): readonly SpritePixel[] {
-  const cells = new Array<{ material: Material; level: number } | null>(BOX_WIDTH * BOX_HEIGHT).fill(null);
+  const cells = new Array<{ material: Material; shade: number } | null>(BOX_WIDTH * BOX_HEIGHT).fill(null);
   for (let py = 0; py < BOX_HEIGHT; py++) {
     for (let px = 0; px < BOX_WIDTH; px++) {
       const x = (BOX_LEFT + (px + 0.5) * UNITS_PER_PIXEL) / FIGURE_SCALE;
@@ -175,8 +175,8 @@ function bake(parts: readonly Part[]): readonly SpritePixel[] {
       for (const part of parts) {
         if (!part.contains(x, y)) continue;
         const facing = -((x - part.x) / part.rx) * 0.45 - ((y - part.y) / part.ry) * 0.75;
-        const level = Math.max(0, Math.min(2, Math.round(1 + facing * 1.3))) + part.brightness;
-        cells[py * BOX_WIDTH + px] = { material: part.material, level };
+        const shade = Math.max(0, Math.min(2, Math.round(1 + facing * 1.3))) + part.brightness;
+        cells[py * BOX_WIDTH + px] = { material: part.material, shade };
       }
     }
   }
@@ -186,8 +186,8 @@ function bake(parts: readonly Part[]): readonly SpritePixel[] {
     for (let px = 0; px < BOX_WIDTH; px++) {
       const cell = cells[py * BOX_WIDTH + px];
       const position = { x: px + BOX_LEFT / UNITS_PER_PIXEL, y: py + BOX_TOP / UNITS_PER_PIXEL };
-      if (cell) pixels.push({ ...position, material: cell.material, level: cell.level });
-      else if (filled(px - 1, py) || filled(px + 1, py) || filled(px, py - 1) || filled(px, py + 1)) pixels.push({ ...position, material: null, level: 0 });
+      if (cell) pixels.push({ ...position, material: cell.material, shade: cell.shade });
+      else if (filled(px - 1, py) || filled(px + 1, py) || filled(px, py - 1) || filled(px, py + 1)) pixels.push({ ...position, material: null, shade: 0 });
     }
   }
   return pixels;
