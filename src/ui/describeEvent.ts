@@ -85,7 +85,7 @@ export function describeEvent(event: GameEvent): string {
     case 'partySent':
       return 'The Party goes down again.';
     case 'fellBack':
-      return 'Three Setbacks. The Party will turn back before the Guardian until it grows stronger.';
+      return 'One Setback too many. The Party will turn back before the Guardian until it grows stronger.';
     case 'retryingGuardian':
       return 'Stronger now. The Party will try the Guardian again.';
     case 'guardianFell':

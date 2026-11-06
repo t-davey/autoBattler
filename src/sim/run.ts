@@ -4,7 +4,7 @@ import { rollPack } from './content/enemies';
 import { MOULDERING_WARDEN } from './content/guardian';
 import { OIL_BETWEEN_ROOMS } from './content/party';
 import { rankValue, type HeroId } from './content/skills';
-import { BATTLE_XP, FLOOR_SCALE, generateFloor, type FloorLayout, type FloorNumber, type RoomKind } from './floors';
+import { BATTLE_XP, FLOOR_SCALE, generateFloor, type FloorLayout, type FloorNumber, type RoomKind, type RoomLayout } from './floors';
 import { gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
 import { nextInt, type Rng } from './rng';
 
@@ -38,7 +38,7 @@ export type RunEvent =
   | { readonly type: 'partySent' }
   | { readonly type: 'fellBack' }
   | { readonly type: 'retryingGuardian' }
-  | { readonly type: 'guardianFell'; readonly enemyName: string }
+  | { readonly type: 'guardianFell' }
   | { readonly type: 'lampRelit' };
 
 export type GameEvent = BattleEvent | RunEvent;
@@ -79,6 +79,8 @@ export interface StartAt {
   readonly floor: FloorNumber;
   readonly room: number | 'guardian';
 }
+
+const currentRoom = (run: RunState): RoomLayout => run.layout!.rooms[run.room]!;
 
 function travelTo(run: RunState, room: number): void {
   run.phase = 'travelling';
@@ -154,7 +156,7 @@ function leaveRoom(world: RunWorld, sink: EventSink): void {
 function enterRoom(world: RunWorld, sink: EventSink): void {
   const { run } = world;
   const floor = run.floor!;
-  const { kind } = run.layout!.rooms[run.room]!;
+  const { kind } = currentRoom(run);
   if (run.room === 0) sink({ type: 'floorEntered', floor });
   sink({ type: 'roomEntered', floor, room: run.room, kind });
   if (kind === 'chest') {
@@ -184,8 +186,8 @@ function outcomeOf(battle: BattleState): BattleOutcome {
 
 function setback(world: RunWorld, type: 'wipe' | 'draw', battle: BattleState, sink: EventSink): void {
   const { wall } = world;
-  const leader = battle.units.find((unit) => unit.team === ENEMY_TEAM);
-  sink({ type, floor: world.run.floor!, enemyName: leader?.spec.name ?? '' });
+  const firstEnemy = battle.units.find((unit) => unit.team === ENEMY_TEAM);
+  sink({ type, floor: world.run.floor!, enemyName: firstEnemy?.spec.name ?? '' });
   if (!wall.fallenBack) {
     wall.setbacks++;
     if (wall.setbacks >= SETBACKS_TO_FALL_BACK) {
@@ -206,7 +208,7 @@ function reward(world: RunWorld, xp: number, sink: EventSink): void {
 
 function guardianFell(world: RunWorld, sink: EventSink): void {
   const { wall } = world;
-  sink({ type: 'guardianFell', enemyName: MOULDERING_WARDEN.name });
+  sink({ type: 'guardianFell' });
   wall.setbacks = 0;
   wall.fallenBack = false;
   const relit = !wall.lampLit;
@@ -239,7 +241,7 @@ function finishBattle(world: RunWorld, battle: BattleState, sink: EventSink): vo
     return;
   }
   const { run } = world;
-  const isGuardian = run.layout!.rooms[run.room]!.kind === 'guardian';
+  const isGuardian = currentRoom(run).kind === 'guardian';
   reward(world, isGuardian ? GUARDIAN_XP : BATTLE_XP[run.floor!], sink);
   if (isGuardian) guardianFell(world, sink);
   else leaveRoom(world, sink);

@@ -132,84 +132,74 @@ describe('carrying over', () => {
     expect(sawLowOil).toBe(true);
   });
 
-  /** The share of max health a hurt Hero gets back on leaving a chest, or null if no Hero was hurt. */
-  function recoveredShare(seed: number, scenario: Scenario): number | null {
-    const played = game(seed, scenario);
-    for (let i = 0; i < 10_000; i++) {
-      const before = viewGame(played);
-      let left = false;
-      let wiped = false;
-      advance(played, TICK_MS, (event) => {
-        if (event.type === 'chestOpened') left = true;
-        if (event.type === 'returnedToTown') wiped = true;
-      });
-      if (wiped) return null;
-      if (!left) continue;
-      for (const candidate of before.heroes) {
-        const after = hero(viewGame(played), candidate.id);
-        if (after.health < after.stats.maxHealth) return (after.health - candidate.health) / after.stats.maxHealth;
-      }
+  /** A Game with the Party searching a chest, each Hero at the health and Oil given. */
+  function atChest(scenario: Scenario, health: number, oil: number): Game {
+    for (let seed = 1; seed < 200; seed++) {
+      const played = game(seed, { heroLevel: 40, ...scenario });
+      const entered = stepUntil(played, 'roomEntered');
+      if (entered.type !== 'roomEntered' || entered.kind !== 'chest') continue;
+      const saved = JSON.parse(serializeGame(played)) as { game: { heroes: { health: number; oil: number }[] } };
+      for (const candidate of saved.game.heroes) Object.assign(candidate, { health, oil });
+      return deserializeGame(JSON.stringify(saved))!;
     }
-    return null;
+    throw new Error('no first-Room chest');
   }
 
-  const shareAcrossSeeds = (scenario: Scenario): number => {
-    for (let seed = 1; seed < 200; seed++) {
-      const share = recoveredShare(seed, scenario);
-      if (share !== null) return share;
-    }
-    throw new Error('no hurt Hero left a chest');
+  const recoveredShare = (scenario: Scenario): number => {
+    const played = atChest(scenario, 10, 100);
+    stepUntil(played, 'chestOpened');
+    const { health, stats } = hero(viewGame(played), 'sin-eater');
+    return (health - 10) / stats.maxHealth;
   };
 
   it('leaving a Room recovers 15% of max health', () => {
-    expect(shareAcrossSeeds({ startAt: { floor: 3, room: 0 } })).toBeCloseTo(0.15);
+    expect(recoveredShare({})).toBeCloseTo(0.15);
   });
 
   it('Warm Hands raises recovery between Rooms', () => {
-    const withRank = (rank: number): Scenario => ({
-      startAt: { floor: 3, room: 0 },
-      skillRanks: { lamplighter: { 'warm-hands': rank } },
-    });
-    expect(shareAcrossSeeds(withRank(1))).toBeCloseTo(0.18);
-    expect(shareAcrossSeeds(withRank(5))).toBeCloseTo(0.24);
+    const withRank = (rank: number): Scenario => ({ skillRanks: { lamplighter: { 'warm-hands': rank } } });
+    expect(recoveredShare(withRank(1))).toBeCloseTo(0.18);
+    expect(recoveredShare(withRank(5))).toBeCloseTo(0.24);
   });
 
-  it('leaving a chest adds 30 Oil', () => {
-    for (let seed = 1; seed < 400; seed++) {
-      const played = game(seed, { heroLevel: 5, startAt: { floor: 2, room: 0 }, skillRanks: { huntsman: { 'bleeders-cut': 3, 'the-long-cut': 3 } } });
-      for (let i = 0; i < 10_000; i++) {
-        const before = hero(viewGame(played), 'huntsman').oil;
-        let left = false;
-        advance(played, TICK_MS, (event) => {
-          if (event.type === 'chestOpened') left = true;
-        });
-        if (left && before < 100) {
-          expect(hero(viewGame(played), 'huntsman').oil).toBe(Math.min(100, before + 30));
-          return;
-        }
-        if (left) break;
-      }
-    }
-    throw new Error('no Hero low on Oil left a chest');
+  it('leaving a chest adds 30 Oil, up to the maximum', () => {
+    const low = atChest({}, 10, 40);
+    stepUntil(low, 'chestOpened');
+    expect(hero(viewGame(low), 'huntsman').oil).toBe(70);
+
+    const high = atChest({}, 10, 90);
+    stepUntil(high, 'chestOpened');
+    expect(hero(viewGame(high), 'huntsman').oil).toBe(100);
   });
 
   it('a Hero who falls in a won Battle rises at 20% health', () => {
-    for (let seed = 1; seed < 500; seed++) {
-      const played = game(seed, { heroLevel: 2, startAt: { floor: 3, room: 0 } });
-      const seen: GameEvent[] = [];
-      const ended = stepUntil(played, 'battleEnded', seen);
-      const rose = seen.find((event) => event.type === 'heroRose');
-      if (ended.type !== 'battleEnded' || ended.outcome !== 'won' || rose?.type !== 'heroRose') continue;
-
-      const risen = hero(viewGame(played), rose.heroId);
-      expect(rose.health).toBeCloseTo(risen.stats.maxHealth * 0.2);
-      // And the normal recovery for leaving the Room on top.
-      expect(risen.health).toBeCloseTo(risen.stats.maxHealth * 0.35);
-      // Same XP as a Hero who stood.
-      expect(new Set(viewGame(played).heroes.map((candidate) => candidate.xp)).size).toBe(1);
-      return;
+    const played = game(1, { heroLevel: 40 });
+    stepUntil(played, 'battleStarted');
+    // The Huntsman dies to Poison next Tick, and the enemies never act and die to one blow.
+    const saved = JSON.parse(serializeGame(played)) as {
+      game: { battle: { tick: number; units: { team: string; spec: { id: string }; health: number; poison: object[]; ticksToAction: number }[] } };
+    };
+    const { battle } = saved.game;
+    for (const unit of battle.units) {
+      if (unit.team === 'b') Object.assign(unit, { health: 0.01, ticksToAction: 100_000 });
+      if (unit.spec.id === 'huntsman') Object.assign(unit, { health: 1, poison: [{ damage: 50, nextTickAt: battle.tick + 1, expiresAt: battle.tick + 100 }] });
     }
-    throw new Error('no Hero fell in a won Battle');
+    const fallen = deserializeGame(JSON.stringify(saved))!;
+    const xpBefore = hero(viewGame(fallen), 'sin-eater').xp;
+    const seen: GameEvent[] = [];
+    const ended = stepUntil(fallen, 'battleEnded', seen);
+    expect(ended).toMatchObject({ outcome: 'won' });
+
+    const risen = hero(viewGame(fallen), 'huntsman');
+    expect(seen.find((event) => event.type === 'heroRose')).toMatchObject({ heroId: 'huntsman' });
+    const rose = seen.find((event) => event.type === 'heroRose');
+    if (rose?.type !== 'heroRose') throw new Error('no heroRose');
+    expect(rose.health).toBeCloseTo(risen.stats.maxHealth * 0.2);
+    // And the normal recovery for leaving the Room on top.
+    expect(risen.health).toBeCloseTo(risen.stats.maxHealth * 0.35);
+    // Same XP as a Hero who stood.
+    expect(risen.xp - xpBefore).toBe(hero(viewGame(fallen), 'sin-eater').xp - xpBefore);
+    expect(risen.xp - xpBefore).toBe(15);
   });
 
   it('a level-up raises max health but heals nothing', () => {
@@ -521,9 +511,22 @@ describe('saves', () => {
       withGame({ run: { ...run, phase: 'battle' } }),
       withGame({ wall: null }),
       withGame({ wall: { lampLit: 'yes', setbacks: 0, fallenBack: false } }),
+      withGame({ wall: { lampLit: false, setbacks: 9, fallenBack: false } }),
+      withGame({ wall: { lampLit: false, setbacks: 0, fallenBack: true } }),
+      withGame({ wall: { lampLit: false, setbacks: 3, fallenBack: false } }),
       withGame({ battleTicks: 'soon' }),
     ];
     for (const text of bad) expect(deserializeGame(text)).toBeNull();
     expect(deserializeGame(JSON.stringify(good))).not.toBeNull();
+
+    const heroes = good.game['heroes'] as object[];
+    const withFirstHero = (changes: object) => withGame({ heroes: [{ ...heroes[0], ...changes }, ...heroes.slice(1)] });
+    expect(deserializeGame(withFirstHero({ health: 0 }))).toBeNull();
+
+    const fighting = game(1, atGuardian);
+    stepUntil(fighting, 'battleStarted');
+    const inBattle = JSON.parse(serializeGame(fighting)) as { game: { battle: { units: { spec: { id: string }; ticksToEachAction: number[] }[] } } };
+    inBattle.game.battle.units.find((unit) => unit.spec.id === 'guardian')!.ticksToEachAction = [1];
+    expect(deserializeGame(JSON.stringify(inBattle))).toBeNull();
   });
 });

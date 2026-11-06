@@ -4,7 +4,7 @@ import type { Store } from './store';
 /** Shown while the Party is in Town: a button, a countdown, and how the Wall stands. */
 export function TownMenu({ view, dispatch }: { view: GameView; dispatch: Store['dispatch'] }) {
   const seconds = Math.ceil(((view.townTicksLeft ?? 0) * TICK_MS) / 1_000);
-  const { lampLit, setbacksTowardsFallback, fallenBack } = view.wall;
+  const { lampLit, setbacksTowardsFallback, setbacksToFallBack, fallenBack } = view.wall;
   return (
     <section className="panel town-menu" aria-label="Town">
       <h2>Town</h2>
@@ -17,7 +17,7 @@ export function TownMenu({ view, dispatch }: { view: GameView; dispatch: Store['
       <p>
         {fallenBack
           ? 'Fallen back: Runs turn back before the Guardian until a Hero levels up or a skill point is spent.'
-          : `Setbacks towards falling back: ${setbacksTowardsFallback} of 3.`}
+          : `Setbacks towards falling back: ${setbacksTowardsFallback} of ${setbacksToFallBack}.`}
       </p>
     </section>
   );

@@ -1,10 +1,10 @@
-import type { BattleState, Row, TeamId } from './battle';
+import { maxHealthOf, type BattleState, type Row, type TeamId } from './battle';
 import { GRID_HEIGHT, GRID_WIDTH, type FloorNumber, type RoomKind } from './floors';
 import { xpToNextLevel } from './content/party';
 import { MAX_SKILL_RANK, rankValue, SKILL_IDS, SKILLS, type HeroId, type SkillId, type SkillKind, type SkillReach } from './content/skills';
 import { heroesOf, stateOf, type Game } from './game';
 import { heroStats, unspentPoints, type HeroState, type HeroStats } from './heroes';
-import { ENEMY_TEAM, PARTY_TEAM, type Phase, type RunState } from './run';
+import { ENEMY_TEAM, PARTY_TEAM, SETBACKS_TO_FALL_BACK, type Phase, type RunState } from './run';
 import { pointsToOpen, spendRefusal, spentPoints, type SpendRefusal } from './skills';
 
 export interface UnitView {
@@ -85,6 +85,8 @@ export interface FloorMapView {
 export interface WallView {
   readonly lampLit: boolean;
   readonly setbacksTowardsFallback: number;
+  /** The count at which the Party falls back. */
+  readonly setbacksToFallBack: number;
   readonly fallenBack: boolean;
 }
 
@@ -108,7 +110,7 @@ function viewTeam(battle: BattleState, team: TeamId): readonly UnitView[] {
       name: unit.spec.name,
       row: unit.row,
       health: unit.health,
-      maxHealth: unit.spec.maxHealth ?? unit.spec.health,
+      maxHealth: maxHealthOf(unit),
       oil: unit.oil,
       maxOil: unit.spec.maxOil ?? 0,
       bleeding: unit.bleed !== null,
@@ -182,7 +184,7 @@ export function viewGame(game: Game): GameView {
     map: viewMap(run),
     floor: run.floor,
     townTicksLeft: run.phase === 'town' ? run.ticksLeft : null,
-    wall: { lampLit: wall.lampLit, setbacksTowardsFallback: wall.setbacks, fallenBack: wall.fallenBack },
+    wall: { lampLit: wall.lampLit, setbacksTowardsFallback: wall.setbacks, setbacksToFallBack: SETBACKS_TO_FALL_BACK, fallenBack: wall.fallenBack },
     battle: battle && { party: viewTeam(battle, PARTY_TEAM), enemies: viewTeam(battle, ENEMY_TEAM) },
     heroes: heroesOf(game).map(viewHero),
   };

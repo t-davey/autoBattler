@@ -1,6 +1,6 @@
 import type { UnitSpec } from '../battle';
 
-/** Fights only by its actions, so power, actionInterval, and damageType go unused. */
+/** Acts only through its actions, so power, actionInterval, and damageType go unused. */
 export const MOULDERING_WARDEN: UnitSpec = {
   id: 'guardian',
   name: 'The Mouldering Warden',

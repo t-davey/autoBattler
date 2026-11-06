@@ -3,7 +3,7 @@ import type { GameView, RoomKind, RoomView } from '../sim';
 const ROOM_GLYPHS: Readonly<Record<RoomKind, string>> = { battle: '⚔', chest: '▣', stairs: '▼', guardian: '☠' };
 const ROOM_NAMES: Readonly<Record<RoomKind, string>> = { battle: 'Battle', chest: 'Chest', stairs: 'Stairs', guardian: 'Guardian' };
 
-function Tile({ room, order }: { room: RoomView; order: number }) {
+function RoomCell({ room, order }: { room: RoomView; order: number }) {
   const party = room.state === 'current';
   const label = `Room ${order}: ${ROOM_NAMES[room.kind]}, ${room.state}${party ? ', the Party is here' : ''}`;
   return (
@@ -23,7 +23,7 @@ export function FloorMap({ view }: { view: GameView }) {
       <h2>Floor {floor}</h2>
       <ol className="room-grid" style={style}>
         {map.rooms.map((room, index) => (
-          <Tile key={`${room.x},${room.y}`} room={room} order={index + 1} />
+          <RoomCell key={`${room.x},${room.y}`} room={room} order={index + 1} />
         ))}
       </ol>
     </section>

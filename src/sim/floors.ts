@@ -1,7 +1,8 @@
 import { createRng, nextInt, shuffled, type Rng } from './rng';
 
 export type FloorNumber = 1 | 2 | 3;
-export type RoomKind = 'battle' | 'chest' | 'stairs' | 'guardian';
+export const ROOM_KINDS = ['battle', 'chest', 'stairs', 'guardian'] as const;
+export type RoomKind = (typeof ROOM_KINDS)[number];
 
 export interface RoomLayout {
   readonly x: number;

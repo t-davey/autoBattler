@@ -29,7 +29,7 @@ export interface LearnedSkill {
   readonly rank: number;
 }
 
-/** A timed move with its own clock and damage, for Units that fight by more than one. */
+/** A timed move with its own clock and damage, for a Unit with more than one way to act. */
 export interface UnitAction {
   readonly name: string;
   /** Ticks between uses. */
@@ -177,7 +177,7 @@ interface UnitState {
   /** Ticks until this Unit next acts. */
   ticksToAction: number;
   /** Ticks until each of spec.actions is next used. Empty for a Unit without actions. */
-  actionTicks: number[];
+  ticksToEachAction: number[];
   oil: number;
   /** The Tick each used skill is ready again. */
   skillReadyAt: Partial<Record<SkillId, number>>;
@@ -210,7 +210,7 @@ const isAlive = (unit: UnitState): boolean => unit.health > 0;
 const otherTeam = (team: TeamId): TeamId => (team === 'a' ? 'b' : 'a');
 const livingOn = (battle: BattleState, team: TeamId): UnitState[] =>
   battle.units.filter((unit) => unit.team === team && isAlive(unit));
-const maxHealthOf = (unit: UnitState): number => unit.spec.maxHealth ?? unit.spec.health;
+export const maxHealthOf = (unit: UnitState): number => unit.spec.maxHealth ?? unit.spec.health;
 const healthShare = (unit: UnitState): number => unit.health / maxHealthOf(unit);
 
 function stepForwardIfFrontEmpty(battle: BattleState, team: TeamId): void {
@@ -235,7 +235,7 @@ export function createBattle(setup: BattleSetup): BattleState {
       row: spec.row,
       health: spec.health,
       ticksToAction: spec.actionInterval,
-      actionTicks: spec.actions?.map((action) => action.interval) ?? [],
+      ticksToEachAction: spec.actions?.map((action) => action.interval) ?? [],
       oil: spec.oil ?? spec.maxOil ?? 0,
       skillReadyAt: {},
       bleed: null,
@@ -548,8 +548,8 @@ function useAction(battle: BattleState, unit: UnitState, action: UnitAction, eve
 
 function runDueActions(battle: BattleState, unit: UnitState, actions: readonly UnitAction[], events: BattleEvent[]): void {
   actions.forEach((action, index) => {
-    if (!isAlive(unit) || unit.actionTicks[index]! > 0) return;
-    unit.actionTicks[index] = action.interval;
+    if (!isAlive(unit) || unit.ticksToEachAction[index]! > 0) return;
+    unit.ticksToEachAction[index] = action.interval;
     useAction(battle, unit, action, events);
   });
 }
@@ -590,8 +590,8 @@ export function stepBattle(battle: BattleState): readonly BattleEvent[] {
     if (!isAlive(unit)) continue;
     if (unit.spec.actions) {
       let due = false;
-      for (let i = 0; i < unit.actionTicks.length; i++) {
-        if (--unit.actionTicks[i]! <= 0) due = true;
+      for (let i = 0; i < unit.ticksToEachAction.length; i++) {
+        if (--unit.ticksToEachAction[i]! <= 0) due = true;
       }
       if (due) acting.push(unit);
       continue;

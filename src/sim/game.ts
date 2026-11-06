@@ -1,7 +1,7 @@
 import type { UnitSpec } from './battle';
 import { HERO_IDS, MAX_NAME_LENGTH } from './content/party';
 import { isSkillId, MAX_SKILL_RANK, SKILLS, type HeroId, type SkillId } from './content/skills';
-import { isFloorNumber } from './floors';
+import { isFloorNumber, ROOM_KINDS } from './floors';
 import { createParty, heroUnitSpec, unspentPoints, type HeroState } from './heroes';
 import { createRng, type Rng } from './rng';
 import { createRun, endFallback, sendParty, SETBACKS_TO_FALL_BACK, stepRun, type EventSink, type RunState, type RunWorld, type StartAt, type WallState } from './run';
@@ -181,6 +181,12 @@ const isWard = (value: unknown): boolean =>
 const isSkillTicks = (value: unknown): boolean =>
   isRecord(value) && Object.entries(value).every(([id, tick]) => isSkillId(id) && isNumber(tick));
 
+/** A clock for each of the Unit's actions, or an action would silently never come. */
+const hasActionClocks = (spec: Record<string, unknown>, clocks: unknown): boolean =>
+  Array.isArray(clocks) &&
+  clocks.every(isNumber) &&
+  clocks.length === (Array.isArray(spec['actions']) ? spec['actions'].length : 0);
+
 const isUnitState = (value: unknown): boolean =>
   isRecord(value) &&
   isUnitSpec(value['spec']) &&
@@ -188,8 +194,7 @@ const isUnitState = (value: unknown): boolean =>
   isRow(value['row']) &&
   isNumber(value['health']) &&
   isNumber(value['ticksToAction']) &&
-  Array.isArray(value['actionTicks']) &&
-  value['actionTicks'].every(isNumber) &&
+  hasActionClocks(value['spec'] as Record<string, unknown>, value['ticksToEachAction']) &&
   isNumber(value['oil']) &&
   isSkillTicks(value['skillReadyAt']) &&
   (value['bleed'] === null || isBleed(value['bleed'])) &&
@@ -222,6 +227,7 @@ function isHeroState(value: unknown): boolean {
     level >= 1 &&
     isNumber(value['xp']) &&
     isNumber(value['health']) &&
+    value['health'] > 0 &&
     isNumber(value['oil']) &&
     isRanks(ranks) &&
     Array.isArray(order) &&
@@ -230,9 +236,9 @@ function isHeroState(value: unknown): boolean {
   );
 }
 
-const ROOM_KINDS: readonly unknown[] = ['battle', 'chest', 'stairs', 'guardian'];
+const isRoomKind = (value: unknown): boolean => (ROOM_KINDS as readonly unknown[]).includes(value);
 const isRoom = (value: unknown): boolean =>
-  isRecord(value) && isNumber(value['x']) && isNumber(value['y']) && ROOM_KINDS.includes(value['kind']);
+  isRecord(value) && isNumber(value['x']) && isNumber(value['y']) && isRoomKind(value['kind']);
 
 function isRunState(value: unknown): value is RunState {
   if (!isRecord(value) || !isNumber(value['ticksLeft']) || !isNumber(value['room'])) return false;
@@ -247,7 +253,10 @@ const isWallState = (value: unknown): boolean =>
   isRecord(value) &&
   typeof value['lampLit'] === 'boolean' &&
   isNumber(value['setbacks']) &&
-  typeof value['fallenBack'] === 'boolean';
+  Number.isInteger(value['setbacks']) &&
+  value['setbacks'] >= 0 &&
+  value['setbacks'] <= SETBACKS_TO_FALL_BACK &&
+  value['fallenBack'] === (value['setbacks'] === SETBACKS_TO_FALL_BACK);
 
 const isGameState = (value: unknown): boolean =>
   isRecord(value) &&

@@ -52,6 +52,10 @@ _Avoid_: Champion, miniboss
 A player-owned Unit who levels up and equips gear.
 _Avoid_: Character, adventurer, member
 
+**Rise**:
+What a Hero who fell in a won Battle does when the Battle ends, returning at reduced health.
+_Avoid_: Revive, resurrect
+
 **Party**:
 The 3 Heroes the player sends down together.
 _Avoid_: Group, squad

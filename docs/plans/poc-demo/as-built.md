@@ -18,11 +18,12 @@ What merged milestones left for later ones to know. The code holds their rules a
 
 ## Milestone 3 (PR_LINK)
 
-- **Setbacks:** `battleEnded` still says how a Battle went, then a `wipe` or `draw` event follows with `floor` and `enemyName`. Count Setbacks from those two events alone, so none counts twice. M5's Setback kind comes from the event's type.
+- **Setbacks:** `battleEnded` still says how a Battle went, then a `wipe` or `draw` event follows with `floor` and `enemyName`. Count Setbacks from those two events alone, so none counts twice. M5's Setback kind comes from the event's type, and `fellBack` sets the Away Report's fall-back note.
 - **Actions can report:** `applyAction` takes an optional sink, because spending a point can end a fallback. The store adds those lines to the Live Log. M4's `equipItem` calls `endFallback` the same way (G22).
 - **`scenario`:** adds `startAt` and `lampLit`, as planned, and two more for tests that tuning mustn't break: `setbacks` (3 starts fallen back) and `battleTicks` (draws Battles early).
 - **Where events fire:** `floorEntered` comes on reaching a Floor's first Room, and so reaches a sink on a new game. Each Room's `roomEntered` comes first, then the Battle or chest. `levelUp` comes before the Room's recovery, so recovery uses the new max health.
 - **Timed actions:** the Warden fights by `UnitSpec.actions`. Its `power`, `actionInterval`, and `damageType` go unused.
+- **Between Battles:** the Battle panel shows the Party's carried health and Oil, so wear shows outside a Battle too. The Town menu also shows the Setback count from `GameView.wall`.
 - **Dev queries:** `src/ui/devSetup.ts` reads `?seed=`, `?start=guardian`, and `?level=`. `bench:catchup` now limits at M3's 2 s.
 
 **The Wall, measured over 2 hours of Party time on the human's machine, for M6 to tune.** None of it trips a risk, and all of it is before M4's gear.
