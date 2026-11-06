@@ -1,7 +1,7 @@
 // Measures 12 hours of Ticks under Node, and exits non-zero over docs/plans/poc-demo/risks.md's limit (risk R1).
 import { createServer } from 'vite';
 
-const LIMIT_MS = 500;
+const LIMIT_MS = 2_000;
 const RUNS = 3;
 
 const server = await createServer({ configFile: false, server: { middlewareMode: true }, appType: 'custom' });

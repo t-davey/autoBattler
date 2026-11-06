@@ -1,6 +1,6 @@
 # Sim interface
 
-The contract for what M3–M5 add. [`src/sim/index.ts`](../../../src/sim/index.ts) holds what M1 and M2 built.
+The contract for what M4 and M5 add. [`src/sim/index.ts`](../../../src/sim/index.ts) holds what M1–M3 built.
 
 ## Tick length: 100 ms
 
@@ -24,8 +24,6 @@ The contract for what M3–M5 add. [`src/sim/index.ts`](../../../src/sim/index.t
 ```ts
 // ---- GameSetup.scenario: starts part-way through, for tests and the balance script.
 // Assert against extremes, such as level 1 or level 40, so that tuning doesn't break tests. ----
-readonly startAt?: { readonly floor: 1 | 2 | 3; readonly room: number | 'guardian' }; // M3
-readonly lampLit?: boolean;    // M3
 readonly equipped?: Readonly<Record<HeroId, readonly ItemSpec[]>>; // M4
 
 // ---- Catch-up (M5) ----
@@ -36,7 +34,6 @@ export function beginCatchUp(game: Game, elapsedMs: number): CatchUp;
 export function continueCatchUp(game: Game, catchUp: CatchUp, maxTicks: number): AwayReport | null;
 
 // ---- PlayerAction ----
-  | { readonly type: 'sendParty' }                                                           // M3
   | { readonly type: 'equipItem'; readonly heroId: HeroId; readonly itemId: ItemId }         // M4
   | { readonly type: 'unequipItem'; readonly heroId: HeroId; readonly slot: Slot };          // M4
 
@@ -44,12 +41,7 @@ export function continueCatchUp(game: Game, catchUp: CatchUp, maxTicks: number):
 export function viewStash(game: Game): readonly ItemView[]; // M4
 
 // ---- GameView ----
-readonly phase: 'town' | 'travelling' | 'battle' | 'chest'; // M3 adds town and chest
 readonly heroes: readonly HeroView[];     // M4: equipped items
-readonly map: FloorMapView | null;        // M3: Rooms with x, y, kind, state; Party's Room
-readonly floor: 1 | 2 | 3 | null;         // M3
-readonly townTicksLeft: number | null;    // M3: countdown until the Party leaves Town
-readonly wall: { readonly lampLit: boolean; readonly setbacksTowardsFallback: number; readonly fallenBack: boolean }; // M3
 readonly stashRevision: number;           // M4: lets the store call viewStash only on change
 
 // ---- Away Report (M5) ----
@@ -75,13 +67,10 @@ export interface AwayReport {
 }
 
 // ---- GameEvent ----
-  | { readonly type: 'roomEntered' | 'floorEntered' | 'chestOpened' | 'wipe' | 'draw'
-      | 'returnedToTown' | 'partySent' | 'fellBack' | 'retryingGuardian'
-      | 'guardianFell' | 'lampRelit'; /* ... */ }     // M3
   | { readonly type: 'itemFound'; /* ItemView */ };   // M4
 ```
 
-The union's `/* ... */` fields are for the milestone to settle. Add types as they arrive: `Slot`, `ItemId`, `ItemSpec`, `ItemView`.
+Add types as they arrive: `Slot`, `ItemId`, `ItemSpec`, `ItemView`.
 
 ## How catch-up reuses live stepping
 

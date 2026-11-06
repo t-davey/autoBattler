@@ -28,9 +28,7 @@ export const CLASSES: Readonly<Record<HeroId, ClassStats>> = {
 };
 
 export const LEVEL_CAP = 60;
-/** Temporary until Floors set XP by Floor. */
-export const XP_PER_BATTLE = 15;
-export const OIL_BETWEEN_BATTLES = 30;
+export const OIL_BETWEEN_ROOMS = 30;
 export const MAX_NAME_LENGTH = 24;
 
 /** XP from a level to the next. */

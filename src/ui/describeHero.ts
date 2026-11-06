@@ -11,6 +11,7 @@ const ROW_TEXT = { front: 'Front Row', back: 'Back Row', either: 'Either Row' } 
 
 /** Words for an action the sim refused. */
 export const REFUSAL_TEXT: Readonly<Record<ActionRefusal, string>> = {
+  notInTown: 'The Party can only be sent from Town.',
   unknownHero: 'No such Hero.',
   unknownSkill: 'No such skill.',
   otherClass: 'Another Class holds this skill.',

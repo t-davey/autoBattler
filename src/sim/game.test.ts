@@ -22,22 +22,14 @@ const stepUntil = (game: Game, wanted: GameEvent['type']): void => {
   if (!found) throw new Error(`no ${wanted} event`);
 };
 
-/** A Game one Tick in, with its first Battle started. */
+/** A Game with its first Battle started. */
 const started = (seed: number): Game => {
   const game = createGame({ seed });
-  advance(game, TICK_MS);
+  stepUntil(game, 'battleStarted');
   return game;
 };
 
 describe('createGame', () => {
-  it('starts a Battle on the first Tick, and reports it', () => {
-    const game = createGame({ seed: 1 });
-    expect(viewGame(game)).toMatchObject({ tick: 0, phase: 'travelling', battle: null });
-    const events: GameEvent[] = [];
-    advance(game, TICK_MS, (event) => events.push(event));
-    expect(events.map((event) => event.type)).toEqual(['battleStarted']);
-  });
-
   it('puts the Party in its fixed Rows', () => {
     const { phase, battle } = viewGame(started(1));
     expect(phase).toBe('battle');
@@ -78,19 +70,6 @@ describe('createGame', () => {
 });
 
 describe('advance', () => {
-  it('a new Battle follows 50 Ticks after the last ends, with the Party restored', () => {
-    const game = createGame({ seed: 1 });
-    stepUntil(game, 'battleEnded');
-    const endedAt = viewGame(game).tick;
-    expect(viewGame(game)).toMatchObject({ phase: 'travelling', battle: null });
-
-    stepUntil(game, 'battleStarted');
-    const view = viewGame(game);
-    expect(view.tick).toBe(endedAt + 50);
-    expect(view.phase).toBe('battle');
-    for (const hero of view.battle!.party) expect(hero.health).toBe(hero.maxHealth);
-  });
-
   it('advance runs the same Ticks however elapsed time is sliced', () => {
     const elapsedMs = 600_000;
     const whole = createGame({ seed: 7 });

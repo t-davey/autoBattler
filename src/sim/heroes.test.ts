@@ -67,14 +67,9 @@ describe('levels', () => {
   it('a Hero gains a level and a skill point at the XP threshold', () => {
     const game = createGame({ seed: 1, scenario: STRONG });
     const before = heroIn(game, 'sin-eater');
-    const events: GameEvent[] = [];
-    advance(game, TICK_MS, (event) => events.push(event));
-    const needed = Math.ceil(before.xpToNext / 15);
-    let wins = 0;
-    while (wins < needed) {
+    while (heroIn(game, 'sin-eater').level === 40) {
       stepUntil(game, (event) => event.type === 'battleEnded' && event.outcome === 'won');
-      wins++;
-      if (wins < needed) expect(heroIn(game, 'sin-eater').level).toBe(40);
+      if (heroIn(game, 'sin-eater').level === 40) expect(heroIn(game, 'sin-eater').xp).toBeLessThan(before.xpToNext);
     }
     expect(heroIn(game, 'sin-eater')).toMatchObject({ level: 41, unspentPoints: before.unspentPoints + 1 });
   });
@@ -90,7 +85,7 @@ describe('levels', () => {
   it('only won Battles give XP', () => {
     // A new Party rarely loses, so a saved Game is edited to make it fall.
     const game = createGame({ seed: 1 });
-    advance(game, TICK_MS);
+    stepUntil(game, (event) => event.type === 'battleStarted');
     const saved = JSON.parse(serializeGame(game));
     for (const unit of saved.game.battle.units) if (unit.team === 'a') unit.health = 0.01;
     for (const unit of saved.game.battle.units) if (unit.team === 'b') unit.spec = { ...unit.spec, power: 500 };
@@ -102,7 +97,7 @@ describe('levels', () => {
 
   it('a drawn Battle gives no XP', () => {
     const game = createGame({ seed: 1 });
-    advance(game, TICK_MS);
+    stepUntil(game, (event) => event.type === 'battleStarted');
     const saved = JSON.parse(serializeGame(game));
     saved.game.battle.maxTicks = saved.game.battle.tick + 1;
     const drawing = deserializeGame(JSON.stringify(saved))!;
@@ -230,7 +225,7 @@ describe('between Battles', () => {
 
   it('a build change reaches the next Battle but not the current one', () => {
     const game = atLevel(7);
-    advance(game, TICK_MS);
+    stepUntil(game, (event) => event.type === 'battleStarted');
     spend(game, 'huntsman', 'bleeders-cut');
     let usedInCurrent = false;
     while (viewGame(game).phase === 'battle') {
@@ -256,14 +251,16 @@ describe('between Battles', () => {
     expect(skillsWith(['the-long-cut', 'bleeders-cut'])).not.toEqual(skillsWith(['bleeders-cut', 'the-long-cut']));
   });
 
-  it('Oil carries between Battles, with 30 more between them, up to the maximum', () => {
-    const saved = JSON.parse(serializeGame(createGame({ seed: 1 })));
-    saved.game.heroes[1].oil = 10;
+  it('Oil carries out of a Battle, with 30 more on leaving the Room, up to the maximum', () => {
+    const started = createGame({ seed: 1 });
+    stepUntil(started, (event) => event.type === 'battleStarted');
+    const saved = JSON.parse(serializeGame(started));
+    saved.game.battle.units[1].oil = 10;
     const game = deserializeGame(JSON.stringify(saved))!;
-    advance(game, TICK_MS);
+    const startedAt = viewGame(game).tick;
     while (viewGame(game).phase === 'battle') advance(game, TICK_MS);
-    // The Battle began on Tick 1, and a Hero with no skills spends nothing.
-    const battleTicks = viewGame(game).tick - 1;
+    // A Hero with no skills spends nothing.
+    const battleTicks = viewGame(game).tick - startedAt;
     const expected = 10 + Math.floor(battleTicks / 5) + 30;
     expect(expected).toBeLessThan(100);
     expect(heroIn(game, 'huntsman').oil).toBe(expected);

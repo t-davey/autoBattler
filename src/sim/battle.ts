@@ -29,10 +29,27 @@ export interface LearnedSkill {
   readonly rank: number;
 }
 
+/** A timed move with its own clock and damage, for a Unit with more than one way to act. */
+export interface UnitAction {
+  readonly name: string;
+  /** Ticks between uses. */
+  readonly interval: number;
+  /** One Unit in the enemy front Row, or every enemy. */
+  readonly target: 'oneFront' | 'every';
+  /** Direct damage. 0 lands no hit. */
+  readonly damage: number;
+  readonly damageType: DamageType;
+  /** The damage of a Poison stack added to each target. */
+  readonly poisonStack?: number;
+}
+
 export interface UnitSpec {
   readonly id: string;
   readonly name: string;
+  /** Health at the start of the Battle. */
   readonly health: number;
+  /** Defaults to health. */
+  readonly maxHealth?: number;
   readonly power: number;
   /** Ticks between this Unit's actions. */
   readonly actionInterval: number;
@@ -53,6 +70,8 @@ export interface UnitSpec {
   readonly skills?: readonly LearnedSkill[];
   /** The damage of a Poison stack added with each attack. */
   readonly poisonOnHit?: number;
+  /** When set, the Unit uses these instead of power, actionInterval, and damageType. */
+  readonly actions?: readonly UnitAction[];
 }
 
 export interface BattleSetup {
@@ -95,6 +114,13 @@ export type BattleEvent =
       readonly unitName: string;
       readonly skillId: SkillId;
       readonly skillName: string;
+    }
+  | {
+      readonly type: 'action';
+      readonly tick: number;
+      readonly unitId: string;
+      readonly unitName: string;
+      readonly actionName: string;
     }
   | {
       readonly type: 'heal';
@@ -150,6 +176,8 @@ interface UnitState {
   health: number;
   /** Ticks until this Unit next acts. */
   ticksToAction: number;
+  /** Ticks until each of spec.actions is next used. Empty for a Unit without actions. */
+  ticksToEachAction: number[];
   oil: number;
   /** The Tick each used skill is ready again. */
   skillReadyAt: Partial<Record<SkillId, number>>;
@@ -182,7 +210,8 @@ const isAlive = (unit: UnitState): boolean => unit.health > 0;
 const otherTeam = (team: TeamId): TeamId => (team === 'a' ? 'b' : 'a');
 const livingOn = (battle: BattleState, team: TeamId): UnitState[] =>
   battle.units.filter((unit) => unit.team === team && isAlive(unit));
-const healthShare = (unit: UnitState): number => unit.health / unit.spec.health;
+export const maxHealthOf = (unit: UnitState): number => unit.spec.maxHealth ?? unit.spec.health;
+const healthShare = (unit: UnitState): number => unit.health / maxHealthOf(unit);
 
 function stepForwardIfFrontEmpty(battle: BattleState, team: TeamId): void {
   const living = livingOn(battle, team);
@@ -206,6 +235,7 @@ export function createBattle(setup: BattleSetup): BattleState {
       row: spec.row,
       health: spec.health,
       ticksToAction: spec.actionInterval,
+      ticksToEachAction: spec.actions?.map((action) => action.interval) ?? [],
       oil: spec.oil ?? spec.maxOil ?? 0,
       skillReadyAt: {},
       bleed: null,
@@ -476,7 +506,7 @@ const ACTIVE_RULES: Readonly<Record<ActiveSkillId, ActiveRule>> = {
     use(battle, unit, rank, events) {
       const allies = livingOn(battle, unit.team);
       const target = allies.reduce((lowest, ally) => (healthShare(ally) < healthShare(lowest) ? ally : lowest));
-      const amount = Math.min(skillAmount(unit, 'mend-by-lamplight', rank), target.spec.health - target.health);
+      const amount = Math.min(skillAmount(unit, 'mend-by-lamplight', rank), maxHealthOf(target) - target.health);
       target.health += amount;
       events.push({ type: 'heal', tick: battle.tick, targetId: target.spec.id, targetName: target.spec.name, amount });
     },
@@ -504,7 +534,31 @@ function firstAvailableSkill(battle: BattleState, unit: UnitState): LearnedSkill
   });
 }
 
+function useAction(battle: BattleState, unit: UnitState, action: UnitAction, events: BattleEvent[]): void {
+  events.push({ type: 'action', tick: battle.tick, unitId: unit.spec.id, unitName: unit.spec.name, actionName: action.name });
+  const single = action.target === 'oneFront' ? chooseTarget(battle, unit) : undefined;
+  const targets = action.target === 'every' ? livingOn(battle, otherTeam(unit.team)) : single ? [single] : [];
+  for (const target of targets) {
+    if (action.damage > 0) {
+      landStrike(battle, { attacker: unit, target, raw: action.damage, damageType: action.damageType, crit: false, ignoresArmour: false, hasMinimum: true }, events);
+    }
+    if (action.poisonStack !== undefined && isAlive(target)) addPoisonStack(battle, target, action.poisonStack, events);
+  }
+}
+
+function runDueActions(battle: BattleState, unit: UnitState, actions: readonly UnitAction[], events: BattleEvent[]): void {
+  actions.forEach((action, index) => {
+    if (!isAlive(unit) || unit.ticksToEachAction[index]! > 0) return;
+    unit.ticksToEachAction[index] = action.interval;
+    useAction(battle, unit, action, events);
+  });
+}
+
 function act(battle: BattleState, unit: UnitState, events: BattleEvent[]): void {
+  if (unit.spec.actions) {
+    runDueActions(battle, unit, unit.spec.actions, events);
+    return;
+  }
   unit.ticksToAction = unit.spec.actionInterval;
   const learned = firstAvailableSkill(battle, unit);
   if (!learned) {
@@ -534,6 +588,14 @@ export function stepBattle(battle: BattleState): readonly BattleEvent[] {
   const acting: UnitState[] = [];
   for (const unit of battle.units) {
     if (!isAlive(unit)) continue;
+    if (unit.spec.actions) {
+      let due = false;
+      for (let i = 0; i < unit.ticksToEachAction.length; i++) {
+        if (--unit.ticksToEachAction[i]! <= 0) due = true;
+      }
+      if (due) acting.push(unit);
+      continue;
+    }
     unit.ticksToAction--;
     if (unit.ticksToAction <= 0) acting.push(unit);
   }

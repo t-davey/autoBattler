@@ -52,6 +52,10 @@ _Avoid_: Champion, miniboss
 A player-owned Unit who levels up and equips gear.
 _Avoid_: Character, adventurer, member
 
+**Rise**:
+What a Hero who fell in a won Battle does when the Battle ends, returning at reduced health.
+_Avoid_: Revive, resurrect
+
 **Party**:
 The 3 Heroes the player sends down together.
 _Avoid_: Group, squad
@@ -161,6 +165,18 @@ _Avoid_: Encounter, tile
 **Wall**:
 A Guardian or Boss that stops a Party until it grows stronger.
 _Avoid_: Gate, blocker
+
+**Party time**:
+The time a Party has spent playing, live or in catch-up, as opposed to time on the player's clock.
+_Avoid_: Game time, play time
+
+**Setback**:
+A Wipe or a draw that returns the Party to Town.
+_Avoid_: Defeat, loss, failure
+
+**Fall back**:
+To stop challenging a Wall after 3 Setbacks, and farm until the Party grows stronger or its build changes.
+_Avoid_: Retreat, regroup
 
 **Check-in**:
 A player's return to the game to read the Away Report and act on it.

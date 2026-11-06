@@ -10,6 +10,8 @@ export interface HeroState {
   level: number;
   /** XP towards the next level. */
   xp: number;
+  /** Carries between Rooms. */
+  health: number;
   oil: number;
   ranks: Partial<Record<SkillId, number>>; // Mutable, unlike SkillRanks.
   /** The learned active skills, first choice first. */
@@ -23,7 +25,9 @@ export interface HeroSetup {
 
 export function createHero(id: HeroId, setup: HeroSetup = {}): HeroState {
   const ranks = { ...setup.ranks };
-  return { id, name: CLASSES[id].className, level: setup.level ?? 1, xp: 0, oil: CLASSES[id].maxOil, ranks, order: learnedActives(ranks) };
+  const hero: HeroState = { id, name: CLASSES[id].className, level: setup.level ?? 1, xp: 0, health: 0, oil: CLASSES[id].maxOil, ranks, order: learnedActives(ranks) };
+  hero.health = heroStats(hero).maxHealth;
+  return hero;
 }
 
 export const createParty = (setupFor: (id: HeroId) => HeroSetup = () => ({})): HeroState[] =>
@@ -63,7 +67,8 @@ export function heroUnitSpec(hero: HeroState): UnitSpec {
   return {
     id: hero.id,
     name: hero.name,
-    health: maxHealth,
+    health: Math.min(hero.health, maxHealth),
+    maxHealth,
     power,
     actionInterval,
     row,

@@ -25,14 +25,22 @@ const FAMILIES: readonly Family[] = [
   { front: [MIRE_BLOAT], back: [SPORELING] }, // fungal growth
 ];
 
-/** A Pack of 1–2 front and 1–2 back enemies, drawn from one Family. */
-export function rollPack(rng: Rng): UnitSpec[] {
+/** A Pack of 1–2 front and 1–2 back enemies, drawn from one Family. Scale multiplies health, power, and Poison stacks. */
+export function rollPack(rng: Rng, scale: number): UnitSpec[] {
   const family = FAMILIES[nextInt(rng, FAMILIES.length)]!;
   const roll = (row: Row): UnitSpec[] =>
     Array.from({ length: 1 + nextInt(rng, 2) }, (_, index) => {
       const templates = family[row];
       const template = templates[nextInt(rng, templates.length)]!;
-      return { ...template, id: `enemy-${row}-${index}`, row, critChance: 0 };
+      return {
+        ...template,
+        id: `enemy-${row}-${index}`,
+        row,
+        critChance: 0,
+        health: template.health * scale,
+        power: template.power * scale,
+        ...(template.poisonOnHit === undefined ? {} : { poisonOnHit: template.poisonOnHit * scale }),
+      };
     });
   return [...roll('front'), ...roll('back')];
 }

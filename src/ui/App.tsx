@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { BattlePanel } from './BattlePanel';
+import { FloorMap } from './FloorMap';
 import { LiveLog } from './LiveLog';
 import { PlanningTab } from './PlanningTab';
 import type { Store } from './store';
+import { TownMenu } from './TownMenu';
 import { useGame } from './useGame';
 
 type Tab = 'dashboard' | 'planning';
@@ -29,7 +31,16 @@ export function App({ store }: { store: Store }) {
       </header>
       {tab === 'dashboard' ? (
         <main className="dashboard">
-          <BattlePanel battle={view.battle} />
+          <div className="dashboard-main">
+            {view.phase === 'town' ? (
+              <TownMenu view={view} dispatch={store.dispatch} />
+            ) : (
+              <>
+                <FloorMap view={view} />
+                <BattlePanel view={view} />
+              </>
+            )}
+          </div>
           <LiveLog lines={log} />
         </main>
       ) : (

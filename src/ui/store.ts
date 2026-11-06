@@ -36,6 +36,17 @@ export function createStore(game: Game): Store {
   let snapshot: Snapshot = { view: viewGame(game), log: [] };
   let nextLineId = 0;
 
+  /** Lines beyond the cap never reach the log, so their text isn't built. Ids still count them. */
+  const withLines = (log: readonly LogLine[], events: readonly GameEvent[]): readonly LogLine[] => {
+    if (events.length === 0) return log;
+    const firstId = nextLineId;
+    nextLineId += events.length;
+    const kept = events.slice(-LIVE_LOG_CAP);
+    const skipped = events.length - kept.length;
+    const lines = kept.map((event, index) => ({ id: firstId + skipped + index, text: describeEvent(event) }));
+    return [...log, ...lines].slice(-LIVE_LOG_CAP);
+  };
+
   return {
     subscribe(listener) {
       listeners.add(listener);
@@ -48,20 +59,14 @@ export function createStore(game: Game): Store {
       const view = viewGame(game);
       if (view.tick === snapshot.view.tick) return;
 
-      // Lines beyond the cap never reach the log, so their text isn't built. Ids still count them.
-      const firstId = nextLineId;
-      nextLineId += events.length;
-      const kept = events.slice(-LIVE_LOG_CAP);
-      const skipped = events.length - kept.length;
-      const lines = kept.map((event, index) => ({ id: firstId + skipped + index, text: describeEvent(event) }));
-
-      snapshot = { view, log: [...snapshot.log, ...lines].slice(-LIVE_LOG_CAP) };
+      snapshot = { view, log: withLines(snapshot.log, events) };
       for (const listener of listeners) listener();
     },
     dispatch(action) {
-      const result = applyAction(game, action);
+      const events: GameEvent[] = [];
+      const result = applyAction(game, action, (event) => events.push(event));
       if (!result.ok) return result;
-      snapshot = { ...snapshot, view: viewGame(game) };
+      snapshot = { view: viewGame(game), log: withLines(snapshot.log, events) };
       for (const listener of listeners) listener();
       return result;
     },
