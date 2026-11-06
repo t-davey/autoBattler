@@ -2,7 +2,7 @@ import type { GameEvent } from '../sim';
 
 const OUTCOME_LINES = {
   won: 'The Pack is broken. The Party stands.',
-  lost: 'The Party falls. The dark closes in.',
+  lost: 'A Wipe. The dark closes in.',
   draw: 'Neither side yields. The Battle gutters out.',
 } as const;
 

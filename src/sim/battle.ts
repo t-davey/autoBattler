@@ -52,7 +52,7 @@ export interface BattleResult {
   readonly log: readonly BattleEvent[];
 }
 
-export interface UnitState {
+interface UnitState {
   readonly spec: UnitSpec;
   readonly team: TeamId;
   row: Row;

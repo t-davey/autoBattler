@@ -1,4 +1,4 @@
-import { CATCH_UP_CAP_MS, TICK_MS } from '../sim';
+import { TICK_MS } from '../sim';
 
 export interface DriverOptions {
   readonly now: () => number;
@@ -14,7 +14,7 @@ export function startDriver({ now, isHidden, step }: DriverOptions): () => void 
   const timer = setInterval(() => {
     if (isHidden()) return;
     const current = now();
-    step(Math.min(current - last, CATCH_UP_CAP_MS));
+    step(current - last);
     last = current;
   }, TICK_MS);
   return () => clearInterval(timer);

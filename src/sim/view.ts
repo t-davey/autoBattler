@@ -1,5 +1,5 @@
 import type { BattleState, Row, TeamId } from './battle';
-import { stateOf, type Game } from './game';
+import { ENEMY_TEAM, PARTY_TEAM, stateOf, type Game } from './game';
 
 export interface UnitView {
   readonly id: string;
@@ -37,6 +37,6 @@ export function viewGame(game: Game): GameView {
   return {
     tick,
     phase: battle ? 'battle' : 'travelling',
-    battle: battle && { party: viewTeam(battle, 'a'), enemies: viewTeam(battle, 'b') },
+    battle: battle && { party: viewTeam(battle, PARTY_TEAM), enemies: viewTeam(battle, ENEMY_TEAM) },
   };
 }

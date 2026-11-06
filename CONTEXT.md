@@ -85,8 +85,12 @@ A stat that reduces physical damage, on top of physical Resistance.
 _Avoid_: Defence, protection
 
 **Reach**:
-Whether a Unit is melee, hitting only the enemy front Row, or ranged, able to hit either Row.
+Whether a Unit is melee, limited to the enemy front Row, or ranged, not limited by Row.
 _Avoid_: Range
+
+**Targeting**:
+Which Row a Unit picks from among those its Reach allows: the front Row while it lives, or either.
+_Avoid_: Aggro, priority
 
 **Live Log**:
 The dashboard's rolling record of live play, combining Battle Logs with lines from other Rooms.

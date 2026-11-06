@@ -22,9 +22,24 @@ const stepUntil = (game: Game, wanted: GameEvent['type']): void => {
   if (!found) throw new Error(`no ${wanted} event`);
 };
 
+/** A Game one Tick in, with its first Battle started. */
+const started = (seed: number): Game => {
+  const game = createGame({ seed });
+  advance(game, TICK_MS);
+  return game;
+};
+
 describe('createGame', () => {
-  it('starts in a Battle with the Party in its fixed Rows', () => {
-    const { phase, battle } = viewGame(createGame({ seed: 1 }));
+  it('starts a Battle on the first Tick, and reports it', () => {
+    const game = createGame({ seed: 1 });
+    expect(viewGame(game)).toMatchObject({ tick: 0, phase: 'travelling', battle: null });
+    const events: GameEvent[] = [];
+    advance(game, TICK_MS, (event) => events.push(event));
+    expect(events.map((event) => event.type)).toEqual(['battleStarted']);
+  });
+
+  it('puts the Party in its fixed Rows', () => {
+    const { phase, battle } = viewGame(started(1));
     expect(phase).toBe('battle');
     expect(battle?.party.map(({ name, row }) => [name, row])).toEqual([
       ['Sin-Eater', 'front'],
@@ -38,7 +53,7 @@ describe('createGame', () => {
     const fungalGrowth = ['Mire Bloat', 'Sporeling'];
     const families = new Set<string>();
     for (let seed = 0; seed < 100; seed++) {
-      const enemies = viewGame(createGame({ seed })).battle!.enemies;
+      const enemies = viewGame(started(seed)).battle!.enemies;
       const inRow = (row: string) => enemies.filter((enemy) => enemy.row === row).length;
       expect(inRow('front')).toBeGreaterThanOrEqual(1);
       expect(inRow('front')).toBeLessThanOrEqual(2);
@@ -55,7 +70,7 @@ describe('createGame', () => {
 
   it('gives every Unit in a Battle its own id', () => {
     for (let seed = 0; seed < 50; seed++) {
-      const { party, enemies } = viewGame(createGame({ seed })).battle!;
+      const { party, enemies } = viewGame(started(seed)).battle!;
       const ids = [...party, ...enemies].map((unit) => unit.id);
       expect(new Set(ids).size).toBe(ids.length);
     }
@@ -119,6 +134,10 @@ describe('advance', () => {
     expect(new Set(events.map((event) => event.type))).toEqual(
       new Set(['attack', 'death', 'battleEnded', 'battleStarted']),
     );
+    // Every Battle that ends was first reported as started.
+    expect(events.filter((event) => event.type === 'battleStarted').length).toBeGreaterThanOrEqual(
+      events.filter((event) => event.type === 'battleEnded').length,
+    );
     expect(events.find((event) => event.type === 'battleEnded')).toMatchObject({
       outcome: expect.stringMatching(/^(won|lost|draw)$/),
     });
@@ -151,7 +170,12 @@ describe('saves', () => {
   });
 
   it('deserializeGame returns null for bad data and another SAVE_VERSION', () => {
-    const good = JSON.parse(serializeGame(createGame({ seed: 1 }))) as { version: number; game: object };
+    const good = JSON.parse(serializeGame(started(1))) as {
+      version: number;
+      game: { battle: { units: { spec: object }[] } };
+    };
+    const withBattle = (battle: object) => ({ ...good, game: { ...good.game, battle: { ...good.game.battle, ...battle } } });
+    const [firstUnit, ...otherUnits] = good.game.battle.units;
     const badData = [
       '',
       '{',
@@ -162,7 +186,10 @@ describe('saves', () => {
       JSON.stringify({ version: SAVE_VERSION, game: {} }),
       JSON.stringify({ ...good, game: { ...good.game, tick: 'soon' } }),
       JSON.stringify({ ...good, game: { ...good.game, rng: null } }),
-      JSON.stringify({ ...good, game: { ...good.game, battle: { units: 'none' } } }),
+      JSON.stringify(withBattle({ units: 'none' })),
+      JSON.stringify(withBattle({ winner: 'c' })),
+      JSON.stringify(withBattle({ units: [{ ...firstUnit, spec: {} }, ...otherUnits] })),
+      JSON.stringify(withBattle({ units: [{ ...firstUnit, spec: { ...firstUnit!.spec, resistances: { poison: 'high' } } }, ...otherUnits] })),
     ];
     for (const text of badData) expect(deserializeGame(text)).toBeNull();
     expect(deserializeGame(JSON.stringify({ ...good, version: SAVE_VERSION + 1 }))).toBeNull();

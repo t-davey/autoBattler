@@ -21,6 +21,6 @@ await server.close();
 if (ticks !== CATCH_UP_CAP_MS / TICK_MS) throw new Error(`expected ${CATCH_UP_CAP_MS / TICK_MS} Ticks, ran ${ticks}`);
 
 const median = [...timings].sort((a, b) => a - b)[Math.floor(RUNS / 2)];
-const rounded = timings.map((ms) => ms.toFixed(0)).join(', ');
-console.log(`bench:catchup: ${ticks} Ticks, median ${median.toFixed(0)} ms (runs: ${rounded} ms; limit ${LIMIT_MS} ms)`);
+const runs = timings.map((ms) => ms.toFixed(0)).join(', ');
+console.log(`bench:catchup: ${ticks} Ticks, median ${median.toFixed(0)} ms (runs: ${runs} ms; limit ${LIMIT_MS} ms)`);
 if (median > LIMIT_MS) process.exitCode = 1;
