@@ -1,4 +1,4 @@
-// Measures 12 hours of Ticks under Node, and exits non-zero over the plan's limit (risk R1).
+// Measures 12 hours of Ticks under Node, and exits non-zero over docs/plans/poc-demo/risks.md's limit (risk R1).
 import { createServer } from 'vite';
 
 const LIMIT_MS = 500;

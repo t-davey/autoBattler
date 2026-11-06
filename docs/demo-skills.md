@@ -2,7 +2,7 @@
 
 **Status: approved by the human on 2026-11-05 (stop S2 in [the demo plan](plans/poc-demo.md#human-stops)).** These 9 skills apply to the proof-of-concept demo only, and every number is a starting value that Milestone 6 tunes.
 
-They come from [First playable skills](first-playable-skills.md). [Adaptations](#adaptations) lists every change. [The M2 review](plans/poc-demo-m2-review.md) records how this file was checked and what to compare it against during the build.
+This file is the demo's source of truth for its skills. [Adaptations](#adaptations) lists every change from [First playable skills](first-playable-skills.md), which is worth opening only to see the original of a skill. Open [the M2 review](plans/poc-demo-m2-review.md) when a measurement arrives or a settled answer comes up again.
 
 ## Reading the tables
 

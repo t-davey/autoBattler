@@ -17,8 +17,9 @@
     "balance": "node scripts/balance.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
+    "check:docs": "node scripts/check-doc-size.mjs",
     "typecheck": "tsc -p tsconfig.sim.json --noEmit && tsc -p tsconfig.ui.json --noEmit && tsc -p tsconfig.test.json --noEmit && tsc -p tsconfig.electron.json --noEmit",
-    "check": "npm run typecheck && npm run test && npm run build"
+    "check": "npm run check:docs && npm run typecheck && npm run test && npm run build"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
