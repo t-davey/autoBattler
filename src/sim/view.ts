@@ -1,9 +1,11 @@
 import { maxHealthOf, type BattleState, type Row, type TeamId } from './battle';
+import type { Slot } from './content/items';
 import { GRID_HEIGHT, GRID_WIDTH, type FloorNumber, type RoomKind } from './floors';
 import { xpToNextLevel } from './content/party';
 import { MAX_SKILL_RANK, rankValue, SKILL_IDS, SKILLS, type HeroId, type SkillId, type SkillKind, type SkillReach } from './content/skills';
 import { heroesOf, stateOf, type Game } from './game';
-import { heroStats, unspentPoints, type HeroState, type HeroStats } from './heroes';
+import { heroReach, heroStats, unspentPoints, type HeroState, type HeroStats } from './heroes';
+import { viewItem, type ItemView } from './items';
 import { ENEMY_TEAM, PARTY_TEAM, SETBACKS_TO_FALL_BACK, type Phase, type RunState } from './run';
 import { pointsToOpen, spendRefusal, spentPoints, type SpendRefusal } from './skills';
 
@@ -50,6 +52,8 @@ export interface SkillView {
   readonly values: readonly SkillValueView[];
   /** Why a point can't go here now, or null if it can. */
   readonly refusal: SpendRefusal | null;
+  /** A melee skill can't fire while the Hero holds a ranged weapon. */
+  readonly blockedByWeapon: boolean;
 }
 
 export interface HeroView {
@@ -65,6 +69,7 @@ export interface HeroView {
   readonly unspentPoints: number;
   readonly skills: readonly SkillView[];
   readonly order: readonly SkillId[];
+  readonly equipment: Readonly<Record<Slot, ItemView | null>>;
 }
 
 export interface RoomView {
@@ -100,6 +105,8 @@ export interface GameView {
   readonly townTicksLeft: number | null;
   readonly wall: WallView;
   readonly heroes: readonly HeroView[];
+  /** Changes whenever the Stash does, so a reader can call viewStash only then. */
+  readonly stashRevision: number;
 }
 
 function viewTeam(battle: BattleState, team: TeamId): readonly UnitView[] {
@@ -142,7 +149,13 @@ function viewSkill(hero: HeroState, id: SkillId): SkillView {
       next: rank < MAX_SKILL_RANK ? rankValue(id, rank + 1, index) : null,
     })),
     refusal: spendRefusal(hero.id, hero.ranks, unspentPoints(hero), id),
+    blockedByWeapon: skill.reach === 'melee' && heroReach(hero) !== 'melee',
   };
+}
+
+function viewEquipped(hero: HeroState, slot: Slot): ItemView | null {
+  const item = hero.equipped[slot];
+  return item ? viewItem(item) : null;
 }
 
 function viewHero(hero: HeroState): HeroView {
@@ -159,6 +172,11 @@ function viewHero(hero: HeroState): HeroView {
     unspentPoints: unspentPoints(hero),
     skills: SKILL_IDS.filter((id) => SKILLS[id].heroId === hero.id).map((id) => viewSkill(hero, id)),
     order: [...hero.order],
+    equipment: {
+      weapon: viewEquipped(hero, 'weapon'),
+      body: viewEquipped(hero, 'body'),
+      trinket: viewEquipped(hero, 'trinket'),
+    },
   };
 }
 
@@ -177,7 +195,7 @@ function viewMap({ layout, room }: RunState): FloorMapView | null {
 }
 
 export function viewGame(game: Game): GameView {
-  const { tick, battle, run, wall } = stateOf(game);
+  const { tick, battle, run, wall, stashRevision } = stateOf(game);
   return {
     tick,
     phase: run.phase,
@@ -187,5 +205,9 @@ export function viewGame(game: Game): GameView {
     wall: { lampLit: wall.lampLit, setbacksTowardsFallback: wall.setbacks, setbacksToFallBack: SETBACKS_TO_FALL_BACK, fallenBack: wall.fallenBack },
     battle: battle && { party: viewTeam(battle, PARTY_TEAM), enemies: viewTeam(battle, ENEMY_TEAM) },
     heroes: heroesOf(game).map(viewHero),
+    stashRevision,
   };
 }
+
+/** The Stash, in the order items arrived in it. */
+export const viewStash = (game: Game): readonly ItemView[] => stateOf(game).stash.map(viewItem);

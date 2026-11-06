@@ -1,5 +1,5 @@
-// Headless balance measurements. `builds` measures risk R2 in docs/plans/poc-demo/risks.md, and exits
-// non-zero if a trigger trips.
+// Headless balance measurements. `builds` measures risk R2 and `drops` measures risk R3, both in
+// docs/plans/poc-demo/risks.md. Each exits non-zero if a trigger trips.
 import { createServer } from 'vite';
 
 const SEEDS = 200;
@@ -91,7 +91,7 @@ function buildsFor(heroId) {
 }
 
 const server = await createServer({ configFile: false, server: { middlewareMode: true }, appType: 'custom' });
-const { applyAction, createGame, partyUnitSpecs, simulateBattle } = await server.ssrLoadModule('/src/sim/index.ts');
+const { advance, applyAction, createGame, partyUnitSpecs, simulateBattle, viewGame } = await server.ssrLoadModule('/src/sim/index.ts');
 
 const referenceRanks = Object.fromEntries(
   Object.entries(REFERENCE_RANKS).map(([heroId, allocation]) => [heroId, ranksFrom(CLASSES[heroId].skills, allocation)]),
@@ -198,11 +198,121 @@ function measureBuilds() {
   }
 }
 
+const DROP_HOURS = 2;
+const DROP_STEP_MS = 1_000;
+const MIN_DECISION_DROPS_PER_HOUR = 2;
+const MAX_DOMINATED_SHARE = 40;
+const POISON_SHARE_RANGE = [30, 80];
+const EMPTY_SLOT_STATS = { power: 0, maxHealth: 0, armour: 0, poisonResistance: 0, critChance: 0, speed: 0 };
+
+const statsOf = (stats) => Object.keys(EMPTY_SLOT_STATS).map((stat) => stats[stat]);
+const atLeastAsGood = (a, b) => statsOf(a).every((value, index) => value >= statsOf(b)[index]);
+const isTradeOff = (a, b) => !atLeastAsGood(a, b) && !atLeastAsGood(b, a);
+
+/** Spends each point as it comes, on the first skill that takes it. */
+function spendPoints(game) {
+  for (const hero of viewGame(game).heroes) {
+    let left = hero.unspentPoints;
+    for (const skillId of CLASSES[hero.id].skills) {
+      while (left > 0 && applyAction(game, { type: 'spendSkillPoint', heroId: hero.id, skillId }).ok) left--;
+    }
+  }
+}
+
+/** Plays like a player who equips plain upgrades and leaves trade-offs in the Stash. Same Reach only, so no skill is lost. */
+function equipUpgrade(game, item) {
+  for (const hero of viewGame(game).heroes) {
+    const current = hero.equipment[item.slot];
+    const held = current?.stats ?? EMPTY_SLOT_STATS;
+    const upgrade = atLeastAsGood(item.stats, held) && !atLeastAsGood(held, item.stats);
+    const sameReach = item.reach === null || current === null || item.reach === current.reach;
+    if (hero.level >= item.levelRequirement && upgrade && sameReach) {
+      applyAction(game, { type: 'equipItem', heroId: hero.id, itemId: item.id });
+      return;
+    }
+  }
+}
+
+/** Better than a Hero's current item on one stat and worse on another. */
+const isDecision = (game, item) =>
+  viewGame(game).heroes.some((hero) => {
+    const current = hero.equipment[item.slot];
+    return hero.level >= item.levelRequirement && current !== null && isTradeOff(item.stats, current.stats);
+  });
+
+function measureDrops() {
+  const counts = { common: 0, magic: 0, rare: 0 };
+  const raresBySlot = { weapon: [], body: [], trinket: [] };
+  let decisions = 0;
+  let sallowRares = 0;
+  const relitAt = [];
+
+  for (let seed = 1; seed <= SEEDS; seed++) {
+    const game = createGame({ seed });
+    for (let elapsed = 0; elapsed < DROP_HOURS * 3_600_000; elapsed += DROP_STEP_MS) {
+      const found = [];
+      advance(game, DROP_STEP_MS, (event) => {
+        if (event.type === 'itemFound') found.push(event.item);
+        if (event.type === 'lampRelit') relitAt.push(elapsed / 60_000);
+      });
+      spendPoints(game);
+      for (const item of found) {
+        counts[item.rarity]++;
+        if (isDecision(game, item)) decisions++;
+        if (item.rarity === 'rare') {
+          raresBySlot[item.slot].push(item.stats);
+          if (item.affixes.includes('sallow')) sallowRares++;
+        }
+        equipUpgrade(game, item);
+      }
+    }
+  }
+
+  let pairs = 0;
+  let dominated = 0;
+  for (const rares of Object.values(raresBySlot)) {
+    for (let i = 0; i < rares.length; i++) {
+      for (let j = i + 1; j < rares.length; j++) {
+        pairs++;
+        if (!isTradeOff(rares[i], rares[j])) dominated++;
+      }
+    }
+  }
+
+  const hours = SEEDS * DROP_HOURS;
+  const total = counts.common + counts.magic + counts.rare;
+  const decisionsPerHour = decisions / hours;
+  const dominatedShare = pairs === 0 ? 0 : (dominated / pairs) * 100;
+  const poisonShare = counts.rare === 0 ? 0 : (sallowRares / counts.rare) * 100;
+
+  console.log(`R3 drops: ${DROP_HOURS} hours of Party time over ${SEEDS} Seeds, spending points and equipping plain upgrades`);
+  console.log(`  Items per hour: ${(total / hours).toFixed(1)} (common ${(counts.common / hours).toFixed(1)}, magic ${(counts.magic / hours).toFixed(1)}, rare ${(counts.rare / hours).toFixed(2)})`);
+  console.log(`  Decision drops per hour: ${decisionsPerHour.toFixed(1)} (trigger below ${MIN_DECISION_DROPS_PER_HOUR})`);
+  console.log(`  Dominated pairs: ${dominatedShare.toFixed(1)}% of ${pairs} same-Slot rare pairs (trigger above ${MAX_DOMINATED_SHARE}%)`);
+  console.log(`  Poison share: ${poisonShare.toFixed(1)}% of rares have Sallow (trigger outside ${POISON_SHARE_RANGE.join('-')}%)`);
+  const medianRelit = [...relitAt].sort((a, b) => a - b)[Math.floor(relitAt.length / 2)] ?? 0;
+  console.log(`  Lamp relit within ${DROP_HOURS} hours: ${relitAt.length} of ${SEEDS} Seeds, median ${medianRelit.toFixed(0)} minutes`);
+
+  const failures = [];
+  if (decisionsPerHour < MIN_DECISION_DROPS_PER_HOUR) failures.push('fewer than 2 decision drops per hour');
+  if (dominatedShare > MAX_DOMINATED_SHARE) failures.push('more than 40% dominated pairs');
+  if (poisonShare < POISON_SHARE_RANGE[0] || poisonShare > POISON_SHARE_RANGE[1]) failures.push('poison share outside 30-80%');
+
+  console.log('');
+  if (failures.length === 0) {
+    console.log('R3: PASS. No trigger tripped.');
+  } else {
+    for (const failure of failures) console.log(`R3: TRIPPED. ${failure}.`);
+    process.exitCode = 1;
+  }
+}
+
 const mode = process.argv[2];
 try {
   if (mode === 'builds') measureBuilds();
+  else if (mode === 'drops') measureDrops();
   else {
-    console.error('Usage: npm run balance -- builds');
+    console.error('Usage: npm run balance -- builds | drops');
     process.exitCode = 2;
   }
 } finally {

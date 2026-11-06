@@ -1,16 +1,16 @@
-import type { Reach, Row } from '../battle';
+import type { Row } from '../battle';
+import type { BaseId } from './items';
 import type { HeroId } from './skills';
 
 export interface ClassStats {
   readonly className: string;
   readonly row: Row;
-  readonly reach: Reach;
   readonly health: number;
   readonly healthPerLevel: number;
   readonly power: number;
   readonly powerPerLevel: number;
-  /** Until items arrive, the starter weapon is a constant on the Hero. */
-  readonly starterWeaponPower: number;
+  /** A common of this base, equipped when the Hero is created. */
+  readonly starterWeapon: BaseId;
   readonly armour: number;
   readonly armourPerLevel: number;
   readonly speed: number;
@@ -22,9 +22,9 @@ export interface ClassStats {
 export const HERO_IDS: readonly HeroId[] = ['sin-eater', 'huntsman', 'lamplighter'];
 
 export const CLASSES: Readonly<Record<HeroId, ClassStats>> = {
-  'sin-eater': { className: 'Sin-Eater', row: 'front', reach: 'melee', health: 160, healthPerLevel: 16, power: 10, powerPerLevel: 1, starterWeaponPower: 4, armour: 20, armourPerLevel: 3, speed: 95, critChance: 3, maxOil: 100 },
-  huntsman: { className: 'Huntsman', row: 'front', reach: 'melee', health: 110, healthPerLevel: 10, power: 14, powerPerLevel: 2, starterWeaponPower: 3, armour: 8, armourPerLevel: 1, speed: 110, critChance: 8, maxOil: 100 },
-  lamplighter: { className: 'Lamplighter', row: 'back', reach: 'ranged', health: 95, healthPerLevel: 9, power: 11, powerPerLevel: 1, starterWeaponPower: 3, armour: 5, armourPerLevel: 1, speed: 100, critChance: 5, maxOil: 100 },
+  'sin-eater': { className: 'Sin-Eater', row: 'front', health: 160, healthPerLevel: 16, power: 10, powerPerLevel: 1, starterWeapon: 'iron-cudgel', armour: 20, armourPerLevel: 3, speed: 95, critChance: 3, maxOil: 100 },
+  huntsman: { className: 'Huntsman', row: 'front', health: 110, healthPerLevel: 10, power: 14, powerPerLevel: 2, starterWeapon: 'flensing-knife', armour: 8, armourPerLevel: 1, speed: 110, critChance: 8, maxOil: 100 },
+  lamplighter: { className: 'Lamplighter', row: 'back', health: 95, healthPerLevel: 9, power: 11, powerPerLevel: 1, starterWeapon: 'bone-sling', armour: 5, armourPerLevel: 1, speed: 100, critChance: 5, maxOil: 100 },
 };
 
 export const LEVEL_CAP = 60;

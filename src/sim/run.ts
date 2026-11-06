@@ -3,10 +3,13 @@ import { CHEST_LINES } from './content/chests';
 import { rollPack } from './content/enemies';
 import { MOULDERING_WARDEN } from './content/guardian';
 import { OIL_BETWEEN_ROOMS } from './content/party';
+import type { Rarity } from './content/items';
+import { BATTLE_DROP_CHANCE, CHEST_DROP_CHANCE } from './content/items';
 import { rankValue, type HeroId } from './content/skills';
 import { BATTLE_XP, FLOOR_SCALE, generateFloor, type FloorLayout, type FloorNumber, type RoomKind, type RoomLayout } from './floors';
-import { gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
-import { nextInt, type Rng } from './rng';
+import { clampToMaximums, gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
+import { rollItemSpec, viewItem, type ItemState, type ItemView } from './items';
+import { nextFloat, nextInt, type Rng } from './rng';
 
 /** The Team the Party fights on. */
 export const PARTY_TEAM = 'a' satisfies TeamId;
@@ -32,6 +35,7 @@ export type RunEvent =
   | { readonly type: 'floorEntered'; readonly floor: FloorNumber }
   | { readonly type: 'roomEntered'; readonly floor: FloorNumber; readonly room: number; readonly kind: RoomKind }
   | { readonly type: 'chestOpened'; readonly line: string }
+  | { readonly type: 'itemFound'; readonly item: ItemView }
   // A Setback. battleEnded comes first and says how the Battle went; only these two count towards falling back.
   | { readonly type: 'wipe' | 'draw'; readonly floor: FloorNumber; readonly enemyName: string }
   | { readonly type: 'returnedToTown'; readonly reason: TownReason }
@@ -71,6 +75,12 @@ export interface RunWorld {
   battle: BattleState | null;
   readonly run: RunState;
   readonly wall: WallState;
+  /** Unequipped items, in no set order. */
+  readonly stash: ItemState[];
+  /** The id the next item takes. */
+  nextItemId: number;
+  /** Counts changes to the Stash. */
+  stashRevision: number;
   /** Set by tests to draw Battles early. Null uses the usual limit. */
   readonly battleTicks: number | null;
 }
@@ -173,8 +183,21 @@ function enterRoom(world: RunWorld, sink: EventSink): void {
   sink({ type: 'battleStarted', enemyNames: enemies.map((enemy) => enemy.name) });
 }
 
+/** Rolls an item for the Party's Floor, straight into the Stash. */
+function dropItem(world: RunWorld, sink: EventSink, rarity?: Rarity): void {
+  const item: ItemState = { ...rollItemSpec(world.rng, world.run.floor!, rarity), id: world.nextItemId++ };
+  world.stash.push(item);
+  world.stashRevision++;
+  sink({ type: 'itemFound', item: viewItem(item) });
+}
+
+const maybeDropItem = (world: RunWorld, chance: number, sink: EventSink): void => {
+  if (nextFloat(world.rng) < chance) dropItem(world, sink);
+};
+
 function finishChest(world: RunWorld, sink: EventSink): void {
   sink({ type: 'chestOpened', line: CHEST_LINES[nextInt(world.rng, CHEST_LINES.length)]! });
+  maybeDropItem(world, CHEST_DROP_CHANCE, sink);
   leaveRoom(world, sink);
 }
 
@@ -214,6 +237,8 @@ function guardianFell(world: RunWorld, sink: EventSink): void {
   const relit = !wall.lampLit;
   wall.lampLit = true;
   if (relit) sink({ type: 'lampRelit' });
+  // The Lamp is lit from the first kill on, so the guaranteed rare comes once.
+  dropItem(world, sink, relit ? 'rare' : undefined);
   returnToTown(world, relit ? 'lampRelit' : 'guardianFell', sink);
 }
 
@@ -224,6 +249,8 @@ function carryOut(world: RunWorld, battle: BattleState, won: boolean, sink: Even
     if (!unit) continue;
     hero.oil = unit.oil;
     hero.health = unit.health;
+    // Gear changed mid-Battle reaches the next one, but its new maximums apply now.
+    clampToMaximums(hero);
     if (won && unit.health <= 0) {
       hero.health = heroStats(hero).maxHealth * RISE_SHARE;
       sink({ type: 'heroRose', heroId: hero.id, heroName: hero.name, health: hero.health });
@@ -243,8 +270,12 @@ function finishBattle(world: RunWorld, battle: BattleState, sink: EventSink): vo
   const { run } = world;
   const isGuardian = currentRoom(run).kind === 'guardian';
   reward(world, isGuardian ? GUARDIAN_XP : BATTLE_XP[run.floor!], sink);
-  if (isGuardian) guardianFell(world, sink);
-  else leaveRoom(world, sink);
+  if (isGuardian) {
+    guardianFell(world, sink);
+    return;
+  }
+  maybeDropItem(world, BATTLE_DROP_CHANCE, sink);
+  leaveRoom(world, sink);
 }
 
 /** One Tick of the Party's Run. */

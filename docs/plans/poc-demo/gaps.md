@@ -2,7 +2,7 @@
 
 Rulings the [design](../../design.md) leaves unsaid. Each row is one line, so a milestone's **Needs** can be fetched alone: `rg "^\| G(2|7|8) " docs/plans/poc-demo/gaps.md`.
 
-The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 extends the approved scope, by the human's choice. G23–G28 came from [Milestone 2's review](../poc-demo-m2-review.md). G29–G34 came from Milestone 3's stop S1.
+The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 extends the approved scope, by the human's choice. G23–G28 came from [Milestone 2's review](../poc-demo-m2-review.md). G29–G34 came from Milestone 3's stop S1. G35–G38 came from Milestone 4's, on 2026-11-06.
 
 | # | Gap | Confirmed answer | Needed by |
 |---|---|---|---|
@@ -40,3 +40,7 @@ The human accepted every answer below on 2026-11-05. G3 and G4 are done. G22 ext
 | G32 | **Poison stacks by Floor.** Enemy scale names health and power only. | A stack's damage scales with power: 1, 1.4, and 1.9, unrounded. The Guardian's doesn't, since Floor scale doesn't apply to it. | M3 |
 | G33 | **Chest lines.** The plan names no text. | A random one of 5 provisional lines from [the Act 1 Fragments](../../lore/act-1-fragments.md). | M3 |
 | G34 | **Rules M3 leaves unsaid.** | A Hero who fell in a won Battle rises at 20%, then gets the usual recovery for leaving the Room, so 35%. A level-up raises max health but heals nothing. Spending a point before the 3rd Setback doesn't clear the count. A Setback during a fallback keeps it on, with the count at 3. Every Hero falling is a Wipe, even if every enemy falls on the same Tick. A new game goes straight to Floor 1. `lampRelit` fires on the first kill only, and every kill returns the Party to Town. | M3 |
+| G35 | **Blank trinkets.** A common Saint's Knuckle has no built-in stat and no Affixes, so it would do nothing. | Rarity rolls first, and a common picks only from the other 5 bases. Rarity odds stay as tabled. | M4 |
+| G36 | **No weapon.** `unequipItem` can empty the weapon Slot, and G14 defines only melee and ranged weapons. | The Hero fights in melee with no weapon power, so melee skills still work. | M4 |
+| G37 | **Item names.** The plan names no format. | Affix names in table order, then the base, such as "Keen Sallow Rust Mail". | M4 |
+| G38 | **Rules M4 leaves unsaid.** | Roll Rarity, then a base evenly. Any Affix can land on any Slot. Roll a whole number, scale by Floor, then round. Stairs Battles use the Battle chance, only won Battles drop, and the Guardian uses Floor 3's table. The Flensing Knife's +2% crit raises the Huntsman's crit from M2's value. | M4 |

@@ -1,6 +1,8 @@
-import type { UnitSpec } from './battle';
+import type { Reach, UnitSpec } from './battle';
+import { ITEM_BASES, type Slot } from './content/items';
 import { actionIntervalFor, CLASSES, HERO_IDS, LEVEL_CAP, xpToNextLevel } from './content/party';
 import { SKILLS, type HeroId, type SkillId } from './content/skills';
+import { gearStats, slotOf, type ItemState } from './items';
 import { learnedActives, spentPoints, type SkillRanks } from './skills';
 
 /** A Hero between Battles, as plain JSON-safe data. */
@@ -16,16 +18,20 @@ export interface HeroState {
   ranks: Partial<Record<SkillId, number>>; // Mutable, unlike SkillRanks.
   /** The learned active skills, first choice first. */
   order: SkillId[];
+  equipped: Partial<Record<Slot, ItemState>>;
 }
 
 export interface HeroSetup {
   readonly level?: number | undefined;
   readonly ranks?: SkillRanks | undefined;
+  /** In order: a later item takes the Slot of an earlier one. */
+  readonly gear?: readonly ItemState[] | undefined;
 }
 
 export function createHero(id: HeroId, setup: HeroSetup = {}): HeroState {
   const ranks = { ...setup.ranks };
-  const hero: HeroState = { id, name: CLASSES[id].className, level: setup.level ?? 1, xp: 0, health: 0, oil: CLASSES[id].maxOil, ranks, order: learnedActives(ranks) };
+  const hero: HeroState = { id, name: CLASSES[id].className, level: setup.level ?? 1, xp: 0, health: 0, oil: CLASSES[id].maxOil, ranks, order: learnedActives(ranks), equipped: {} };
+  for (const item of setup.gear ?? []) hero.equipped[slotOf(item)] = item;
   hero.health = heroStats(hero).maxHealth;
   return hero;
 }
@@ -44,25 +50,42 @@ export interface HeroStats {
   readonly actionInterval: number;
   readonly critChance: number;
   readonly maxOil: number;
+  /** A percentage. */
+  readonly poisonResistance: number;
 }
 
 export function heroStats(hero: HeroState): HeroStats {
   const stats = CLASSES[hero.id];
+  const gear = gearStats(Object.values(hero.equipped));
   const levels = hero.level - 1;
   return {
-    maxHealth: stats.health + stats.healthPerLevel * levels,
-    power: stats.power + stats.powerPerLevel * levels + stats.starterWeaponPower,
-    armour: stats.armour + stats.armourPerLevel * levels,
-    actionInterval: actionIntervalFor(stats.speed),
-    critChance: stats.critChance,
+    maxHealth: stats.health + stats.healthPerLevel * levels + gear.maxHealth,
+    power: stats.power + stats.powerPerLevel * levels + gear.power,
+    armour: stats.armour + stats.armourPerLevel * levels + gear.armour,
+    actionInterval: actionIntervalFor(stats.speed + gear.speed),
+    critChance: stats.critChance + gear.critChance,
     maxOil: stats.maxOil,
+    poisonResistance: gear.poisonResistance,
   };
+}
+
+/** Set by the weapon. A Hero with none fights in melee. */
+export function heroReach(hero: HeroState): Reach {
+  const weapon = hero.equipped.weapon;
+  return (weapon && ITEM_BASES[weapon.baseId].reach) ?? 'melee';
+}
+
+/** Applies a new maximum to what the Hero carries. */
+export function clampToMaximums(hero: HeroState): void {
+  const { maxHealth, maxOil } = heroStats(hero);
+  hero.health = Math.min(hero.health, maxHealth);
+  hero.oil = Math.min(hero.oil, maxOil);
 }
 
 /** The Hero as a Unit, as the next Battle would field them. Actives come first, in order. */
 export function heroUnitSpec(hero: HeroState): UnitSpec {
-  const { row, reach } = CLASSES[hero.id];
-  const { maxHealth, power, armour, actionInterval, critChance, maxOil } = heroStats(hero);
+  const { row } = CLASSES[hero.id];
+  const { maxHealth, power, armour, actionInterval, critChance, maxOil, poisonResistance } = heroStats(hero);
   const passives = (Object.keys(hero.ranks) as SkillId[]).filter((id) => SKILLS[id].kind === 'passive');
   return {
     id: hero.id,
@@ -72,11 +95,11 @@ export function heroUnitSpec(hero: HeroState): UnitSpec {
     power,
     actionInterval,
     row,
-    reach,
+    reach: heroReach(hero),
     targeting: 'any',
     damageType: 'physical',
     armour,
-    resistances: {},
+    resistances: { poison: poisonResistance },
     critChance,
     oil: Math.min(hero.oil, maxOil),
     maxOil,

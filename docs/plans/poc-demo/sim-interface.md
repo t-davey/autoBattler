@@ -1,6 +1,6 @@
 # Sim interface
 
-The contract for what M4 and M5 add. [`src/sim/index.ts`](../../../src/sim/index.ts) holds what M1–M3 built.
+The contract for what M5 adds. [`src/sim/index.ts`](../../../src/sim/index.ts) holds what M1–M4 built.
 
 ## Tick length: 100 ms
 
@@ -22,27 +22,12 @@ The contract for what M4 and M5 add. [`src/sim/index.ts`](../../../src/sim/index
 `Game` is plain JSON-safe data that the sim mutates in place, because copying it every Tick would make 432,000 Ticks too slow. The UI never reads inside it: the type is branded, and all reads go through view functions, which return fresh immutable objects.
 
 ```ts
-// ---- GameSetup.scenario: starts part-way through, for tests and the balance script.
-// Assert against extremes, such as level 1 or level 40, so that tuning doesn't break tests. ----
-readonly equipped?: Readonly<Record<HeroId, readonly ItemSpec[]>>; // M4
-
 // ---- Catch-up (M5) ----
 export interface CatchUp { ticksLeft: number; readonly ticksTotal: number; /* plain-data tally; continueCatchUp mutates it */ }
 /** Caps elapsedMs at CATCH_UP_CAP_MS and banks it. Runs nothing yet. */
 export function beginCatchUp(game: Game, elapsedMs: number): CatchUp;
 /** Runs up to maxTicks. Returns the Away Report once ticksLeft reaches 0, else null. */
 export function continueCatchUp(game: Game, catchUp: CatchUp, maxTicks: number): AwayReport | null;
-
-// ---- PlayerAction ----
-  | { readonly type: 'equipItem'; readonly heroId: HeroId; readonly itemId: ItemId }         // M4
-  | { readonly type: 'unequipItem'; readonly heroId: HeroId; readonly slot: Slot };          // M4
-
-// ---- Reads ----
-export function viewStash(game: Game): readonly ItemView[]; // M4
-
-// ---- GameView ----
-readonly heroes: readonly HeroView[];     // M4: equipped items
-readonly stashRevision: number;           // M4: lets the store call viewStash only on change
 
 // ---- Away Report (M5) ----
 export interface AwayReport {
@@ -65,12 +50,7 @@ export interface AwayReport {
   readonly loot: { readonly common: number; readonly magic: number; readonly rare: number; readonly notable: readonly ItemView[] };
   readonly unspentSkillPoints: number;
 }
-
-// ---- GameEvent ----
-  | { readonly type: 'itemFound'; /* ItemView */ };   // M4
 ```
-
-Add types as they arrive: `Slot`, `ItemId`, `ItemSpec`, `ItemView`.
 
 ## How catch-up reuses live stepping
 

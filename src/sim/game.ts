@@ -1,8 +1,10 @@
 import type { UnitSpec } from './battle';
-import { HERO_IDS, MAX_NAME_LENGTH } from './content/party';
+import { AFFIXES, ITEM_BASES, SLOTS, type Slot } from './content/items';
+import { CLASSES, HERO_IDS, MAX_NAME_LENGTH } from './content/party';
 import { isSkillId, MAX_SKILL_RANK, SKILLS, type HeroId, type SkillId } from './content/skills';
 import { isFloorNumber, ROOM_KINDS } from './floors';
-import { createParty, heroUnitSpec, unspentPoints, type HeroState } from './heroes';
+import { clampToMaximums, createParty, heroUnitSpec, unspentPoints, type HeroState } from './heroes';
+import { slotOf, starterItem, type ItemId, type ItemSpec, type ItemState } from './items';
 import { createRng, type Rng } from './rng';
 import { createRun, endFallback, sendParty, SETBACKS_TO_FALL_BACK, stepRun, type EventSink, type RunState, type RunWorld, type StartAt, type WallState } from './run';
 import { isLegalOrder, spendRefusal, type SkillRanks, type SpendRefusal } from './skills';
@@ -24,6 +26,10 @@ export interface GameSetup {
     readonly setbacks?: number;
     /** Battles draw after this many Ticks, instead of the usual limit. */
     readonly battleTicks?: number;
+    /** Gear each Hero starts with, on top of the starter weapon. An item takes the Slot it names. */
+    readonly equipped?: Readonly<Partial<Record<HeroId, readonly ItemSpec[]>>>;
+    /** Items already in the Stash. */
+    readonly stash?: readonly ItemSpec[];
   };
 }
 
@@ -32,9 +38,11 @@ export type PlayerAction =
   | { readonly type: 'renameHero'; readonly heroId: HeroId; readonly name: string }
   | { readonly type: 'spendSkillPoint'; readonly heroId: HeroId; readonly skillId: SkillId }
   | { readonly type: 'setSkillOrder'; readonly heroId: HeroId; readonly order: readonly SkillId[] }
-  | { readonly type: 'respec'; readonly heroId: HeroId };
+  | { readonly type: 'respec'; readonly heroId: HeroId }
+  | { readonly type: 'equipItem'; readonly heroId: HeroId; readonly itemId: ItemId }
+  | { readonly type: 'unequipItem'; readonly heroId: HeroId; readonly slot: Slot };
 
-export type ActionRefusal = 'notInTown' | 'unknownHero' | 'emptyName' | 'nameTooLong' | 'badOrder' | SpendRefusal;
+export type ActionRefusal = 'notInTown' | 'unknownHero' | 'emptyName' | 'nameTooLong' | 'badOrder' | 'unknownItem' | 'belowLevelRequirement' | 'emptySlot' | SpendRefusal;
 export type ActionResult = { readonly ok: true } | { readonly ok: false; readonly reason: ActionRefusal };
 
 /** A running game. The UI never reads inside it: reads go through the view functions. */
@@ -52,12 +60,19 @@ const gameOf = (state: GameState): Game => state as unknown as Game;
 const ignore: EventSink = () => {};
 
 export function createGame(setup: GameSetup): Game {
-  const { heroLevel, skillRanks, startAt, lampLit, setbacks, battleTicks } = setup.scenario ?? {};
-  const heroes = createParty((id) => ({ level: heroLevel, ranks: skillRanks?.[id] }));
+  const { heroLevel, skillRanks, startAt, lampLit, setbacks, battleTicks, equipped, stash } = setup.scenario ?? {};
+  let nextItemId = 1;
+  const withId = (spec: ItemSpec): ItemState => ({ ...spec, id: nextItemId++ });
+  const heroes = createParty((id) => ({
+    level: heroLevel,
+    ranks: skillRanks?.[id],
+    gear: [starterItem(CLASSES[id].starterWeapon), ...(equipped?.[id] ?? [])].map(withId),
+  }));
+  const stashed = (stash ?? []).map(withId);
   const rng = createRng(setup.seed);
   const counted = Math.min(setbacks ?? 0, SETBACKS_TO_FALL_BACK);
   const wall: WallState = { lampLit: lampLit ?? false, setbacks: counted, fallenBack: counted >= SETBACKS_TO_FALL_BACK };
-  return gameOf({ rng, tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), wall, battleTicks: battleTicks ?? null, heroes });
+  return gameOf({ rng, tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), wall, battleTicks: battleTicks ?? null, heroes, stash: stashed, nextItemId, stashRevision: 0 });
 }
 
 export const heroesOf = (game: Game): readonly HeroState[] => stateOf(game).heroes;
@@ -104,6 +119,30 @@ export function applyAction(game: Game, action: PlayerAction, sink: EventSink = 
       hero.ranks = {};
       hero.order = [];
       return ACCEPTED;
+    case 'equipItem': {
+      const index = state.stash.findIndex((item) => item.id === action.itemId);
+      const item = state.stash[index];
+      if (!item) return refused('unknownItem');
+      if (hero.level < item.levelRequirement) return refused('belowLevelRequirement');
+      const slot = slotOf(item);
+      const old = hero.equipped[slot];
+      state.stash.splice(index, 1);
+      if (old) state.stash.push(old);
+      hero.equipped[slot] = item;
+      state.stashRevision++;
+      clampToMaximums(hero);
+      endFallback(state.wall, sink);
+      return ACCEPTED;
+    }
+    case 'unequipItem': {
+      const old = hero.equipped[action.slot];
+      if (!old) return refused('emptySlot');
+      delete hero.equipped[action.slot];
+      state.stash.push(old);
+      state.stashRevision++;
+      clampToMaximums(hero);
+      return ACCEPTED;
+    }
   }
 }
 
@@ -217,6 +256,26 @@ const isBattleState = (value: unknown): boolean =>
 const isRanks = (value: unknown): value is SkillRanks =>
   isRecord(value) && Object.entries(value).every(([id, rank]) => isSkillId(id) && isRank(rank));
 
+const isAffix = (value: unknown): boolean =>
+  isRecord(value) && AFFIXES.some((affix) => affix.id === value['id']) && isNumber(value['value']);
+
+function isItem(value: unknown): value is ItemState {
+  if (!isRecord(value) || !Object.hasOwn(ITEM_BASES, value['baseId'] as string)) return false;
+  const { id, rarity, affixes, levelRequirement } = value;
+  return (
+    isNumber(id) &&
+    Number.isInteger(id) &&
+    (rarity === 'common' || rarity === 'magic' || rarity === 'rare') &&
+    Array.isArray(affixes) &&
+    affixes.every(isAffix) &&
+    isNumber(levelRequirement)
+  );
+}
+
+const isEquipped = (value: unknown): boolean =>
+  isRecord(value) &&
+  Object.entries(value).every(([slot, item]) => (SLOTS as readonly string[]).includes(slot) && isItem(item) && slotOf(item) === slot);
+
 function isHeroState(value: unknown): boolean {
   if (!isRecord(value) || !HERO_IDS.includes(value['id'] as HeroId)) return false;
   const { ranks, order, level } = value;
@@ -232,7 +291,8 @@ function isHeroState(value: unknown): boolean {
     isRanks(ranks) &&
     Array.isArray(order) &&
     isLegalOrder(ranks, order) &&
-    new Set(order).size === order.length
+    new Set(order).size === order.length &&
+    isEquipped(value['equipped'])
   );
 }
 
@@ -258,6 +318,22 @@ const isWallState = (value: unknown): boolean =>
   value['setbacks'] <= SETBACKS_TO_FALL_BACK &&
   value['fallenBack'] === (value['setbacks'] === SETBACKS_TO_FALL_BACK);
 
+/** Every item in the Game, or null if any is malformed. */
+function allItems(game: Record<string, unknown>): readonly ItemState[] | null {
+  const { heroes, stash } = game;
+  if (!Array.isArray(stash) || !stash.every(isItem)) return null;
+  const worn = (heroes as HeroState[]).flatMap((hero) => Object.values(hero.equipped));
+  return [...stash, ...worn];
+}
+
+/** Ids tell items apart and date them, so each is unique and already handed out. */
+function hasSoundItems(game: Record<string, unknown>): boolean {
+  const items = allItems(game);
+  if (!items || !isNumber(game['nextItemId']) || !isNumber(game['stashRevision'])) return false;
+  const nextItemId = game['nextItemId'];
+  return new Set(items.map((item) => item.id)).size === items.length && items.every((item) => item.id < nextItemId);
+}
+
 const isGameState = (value: unknown): boolean =>
   isRecord(value) &&
   isRng(value['rng']) &&
@@ -270,6 +346,7 @@ const isGameState = (value: unknown): boolean =>
   Array.isArray(value['heroes']) &&
   value['heroes'].length === HERO_IDS.length &&
   value['heroes'].every(isHeroState) &&
+  hasSoundItems(value) &&
   (value['battle'] === null || isBattleState(value['battle']));
 
 /** Returns null for bad data or another SAVE_VERSION. */

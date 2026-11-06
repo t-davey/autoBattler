@@ -218,6 +218,22 @@ _Avoid_: Lore entry, codex entry
 
 ### Loot and economy
 
+**Item**:
+A piece of gear a Hero can equip, or that waits in the Stash.
+_Avoid_: Equipment piece, drop
+
+**Rarity**:
+How rare an Item is: common, magic, or rare. It sets how many Affixes the Item rolls.
+_Avoid_: Quality, grade
+
+**Slot**:
+The place on a Hero an Item goes: weapon, body, or trinket.
+_Avoid_: Equip location, gear position
+
+**Level requirement**:
+The Hero level an Item needs before it can be equipped.
+_Avoid_: Item level, minimum level
+
 **Affix**:
 A randomly rolled property on an item.
 _Avoid_: Enchantment

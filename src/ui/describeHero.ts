@@ -21,6 +21,9 @@ export const REFUSAL_TEXT: Readonly<Record<ActionRefusal, string>> = {
   badOrder: 'The order must list each learned active skill once.',
   emptyName: 'A Hero needs a name.',
   nameTooLong: 'Names can hold 24 characters at most.',
+  unknownItem: 'That item is not in the Stash.',
+  belowLevelRequirement: 'This Hero is below the level requirement.',
+  emptySlot: 'Nothing is equipped there.',
 };
 
 /** A number of Ticks in seconds, such as "2.7s". */

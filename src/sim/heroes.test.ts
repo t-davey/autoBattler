@@ -105,10 +105,10 @@ describe('levels', () => {
     expect(heroIn(drawing, 'huntsman').xp).toBe(0);
   });
 
-  it('stats rise by Class rates, and speed and crit stay fixed', () => {
+  it("stats rise by Class rates, and speed and crit stay fixed, with starter weapons in hand", () => {
     const game = atLevel(7);
     expect(specOf(game, 'sin-eater')).toMatchObject({ health: 256, power: 20, armour: 38, actionInterval: 32, critChance: 3, maxOil: 100 });
-    expect(specOf(game, 'huntsman')).toMatchObject({ health: 170, power: 29, armour: 14, actionInterval: 27, critChance: 8 });
+    expect(specOf(game, 'huntsman')).toMatchObject({ health: 170, power: 29, armour: 14, actionInterval: 27, critChance: 10 });
     expect(specOf(game, 'lamplighter')).toMatchObject({ health: 149, power: 20, armour: 11, actionInterval: 30, critChance: 5 });
   });
 

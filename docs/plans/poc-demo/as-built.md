@@ -39,3 +39,26 @@ What merged milestones left for later ones to know. The code holds their rules a
 | Guardian kill, 6-point reference builds | Level 7 with gear | Level 8: never. Level 10: every time, with no Hero falling |
 
 The hand estimates assumed nobody Wipes on the way down. Three Setbacks on Floor 3 can trigger a fallback before the Party has met the Guardian, and it wins only at a sharp level cliff. Check both against the demo script in M6.
+
+## Milestone 4 ([#8](https://github.com/t-davey/autoBattler/issues/8))
+
+- **Item ids:** `ItemId` is a number that counts up from `nextItemId`, so a higher id is a newer item. Starter gear takes the first ids.
+- **Item views:** `itemFound` carries an `ItemView`, ready for M5's `AwayReport.loot`. `itemFound` follows the Room's `chestOpened`, `battleEnded`, or `lampRelit`.
+- **`scenario`:** adds `equipped`, as planned, and `stash` for tests. `rollItem(seed, floor)` rolls one item alone, without a Game. Scenario tests assert against extremes, such as level 1 or level 40, so that tuning doesn't break them.
+- **First kill:** the guaranteed rare hangs on `wall.lampLit`, so a `lampLit` scenario gets ordinary drops.
+- **Saves:** `SAVE_VERSION` stayed at 1, since nothing writes saves until M5.
+- **Stash filter:** the Affix filter matches Affixes alone, so "Sallow: poison resistance" leaves out a plain Waxed Shroud.
+- **Stash speed:** the list has no `content-visibility` yet. M5's 12-hour Stash measures it.
+
+**R3, measured with `npm run balance -- drops` on 2026-11-06, for M6 to re-measure.** It passes, spending points and equipping plain upgrades.
+
+| Measure | Plan's estimate or trigger | Measured |
+|---|---|---|
+| Items per hour | About 32 | 38.4 |
+| Rares per hour | About 1.8 | 2.71 |
+| Decision drops per hour | Under 2 trips | 26.0 |
+| Dominated same-Slot rare pairs | Over 40% trips | 2.4% |
+| Rares with Sallow | Outside 30–80% trips | 57.6% |
+| Lamp relit, 2 hours of Party time | First Wall in 1–2 hours | 200 of 200 Seeds, median 68 minutes |
+
+Drops run ahead of the plan's hand estimates, and the median Lamp falls inside the 1–2 hour target with gear in play. The reasons aren't measured yet: check both in M6.

@@ -76,6 +76,8 @@ export function describeEvent(event: GameEvent): string {
       return ROOM_LINES[event.kind];
     case 'chestOpened':
       return event.line;
+    case 'itemFound':
+      return `Found a ${event.item.rarity}: ${event.item.name}.`;
     case 'wipe':
       return `A Wipe on Floor ${event.floor}, before ${event.enemyName}.`;
     case 'draw':
