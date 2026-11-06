@@ -2,7 +2,7 @@
 
 The demo tests one thing: is it satisfying to come back to loot, make a build decision, and see that decision beat a Wall? Each milestone is a tracer bullet: one PR that leaves the demo runnable end to end.
 
-**Status: gaps confirmed by the human on 2026-11-05.** S3 and S4 under [Human stops](#human-stops) still lie ahead, and G21 still needs each later milestone's tables confirmed as it starts.
+**Status: gaps confirmed by the human on 2026-11-05.** S4 under [Human stops](#human-stops) still lies ahead.
 
 | Milestone | State |
 |---|---|
@@ -11,7 +11,7 @@ The demo tests one thing: is it satisfying to come back to loot, make a build de
 | M3: Floors and the Wall | Merged in [PR #16](https://github.com/t-davey/autoBattler/pull/16) |
 | M4: Loot and gear | Merged in [PR #17](https://github.com/t-davey/autoBattler/pull/17) |
 | M5: Catch-up and Away Report | Merged in [PR #18](https://github.com/t-davey/autoBattler/pull/18) |
-| M6: Tuning and demo run | Next: [m6-tuning-and-demo-run.md](poc-demo/m6-tuning-and-demo-run.md) |
+| M6: Tuning and demo run | Tuned and rehearsed, waiting on S4: [m6-tuning-and-demo-run.md](poc-demo/m6-tuning-and-demo-run.md), [results](poc-demo-results.md) |
 
 ## How to use this plan
 

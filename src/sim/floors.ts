@@ -25,7 +25,7 @@ const BATTLE_SHARE = 2 / 3;
 const STEPS = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const;
 
 /** Enemy health, power, and Poison stack damage by Floor. */
-export const FLOOR_SCALE: Readonly<Record<FloorNumber, number>> = { 1: 1, 2: 1.4, 3: 1.9 };
+export const FLOOR_SCALE: Readonly<Record<FloorNumber, number>> = { 1: 1, 2: 1.15, 3: 1.3 };
 export const BATTLE_XP: Readonly<Record<FloorNumber, number>> = { 1: 15, 2: 20, 3: 25 };
 
 export const isFloorNumber = (value: unknown): value is FloorNumber => value === 1 || value === 2 || value === 3;

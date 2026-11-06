@@ -235,34 +235,35 @@ describe('Enemy scale', () => {
 
   it('deeper Floors scale enemy health, power, and XP', () => {
     const healthOf: Record<number, number> = {};
-    const hitOn: Record<number, number> = {};
+    const powerOf: Record<number, number> = {};
     const stackOf: Record<number, number> = {};
     const xpOf: Record<number, number> = {};
     for (const floor of [1, 2, 3] as const) {
-      for (let seed = 1; seed < 200 && (!healthOf[floor] || !hitOn[floor] || !stackOf[floor]); seed++) {
+      for (let seed = 1; seed < 200 && (!healthOf[floor] || !stackOf[floor]); seed++) {
         const played = firstBattleAt(floor, seed);
         const thrall = viewGame(played).battle!.enemies.find((enemy) => enemy.name === 'Sodden Thrall');
-        if (thrall) healthOf[floor] = thrall.maxHealth;
+        if (thrall) {
+          healthOf[floor] = thrall.maxHealth;
+          // Hits round, which hides a small power, so this reads it from the save.
+          powerOf[floor] = JSON.parse(serializeGame(played)).game.battle.units.find((unit: { spec: { name: string } }) => unit.spec.name === 'Sodden Thrall').spec.power;
+        }
         const seen: GameEvent[] = [];
         const xpBefore = hero(viewGame(played), 'huntsman').xp;
         stepUntil(played, 'battleEnded', seen);
         xpOf[floor] = hero(viewGame(played), 'huntsman').xp - xpBefore;
         for (const event of seen) {
-          if (event.type === 'attack' && event.attackerName === 'Sodden Thrall' && event.targetId === 'sin-eater' && !event.crit) {
-            hitOn[floor] = event.damage;
-          }
           if (event.type === 'effectDamage' && event.effect === 'poison') stackOf[floor] = event.damage;
         }
       }
     }
-    expect(healthOf[1]).toBeCloseTo(90);
-    expect(healthOf[2]).toBeCloseTo(126);
-    expect(healthOf[3]).toBeCloseTo(171);
-    expect(hitOn[2]! / hitOn[1]!).toBeCloseTo(1.4);
-    expect(hitOn[3]! / hitOn[1]!).toBeCloseTo(1.9);
-    expect(stackOf[1]).toBeCloseTo(1);
-    expect(stackOf[2]).toBeCloseTo(1.4);
-    expect(stackOf[3]).toBeCloseTo(1.9);
+    expect(healthOf[1]).toBeCloseTo(125);
+    expect(healthOf[2]).toBeCloseTo(143.75);
+    expect(healthOf[3]).toBeCloseTo(162.5);
+    expect(powerOf[2]! / powerOf[1]!).toBeCloseTo(1.15);
+    expect(powerOf[3]! / powerOf[1]!).toBeCloseTo(1.3);
+    expect(stackOf[1]).toBeCloseTo(0.5);
+    expect(stackOf[2]).toBeCloseTo(0.575);
+    expect(stackOf[3]).toBeCloseTo(0.65);
     expect([xpOf[1], xpOf[2], xpOf[3]]).toEqual([15, 20, 25]);
   });
 });
@@ -418,7 +419,7 @@ describe('the Guardian', () => {
   it('fields the Mouldering Warden alone, in the front Row', () => {
     const played = game(1, atGuardian);
     stepUntil(played, 'battleStarted');
-    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'The Mouldering Warden', row: 'front', maxHealth: 1_200, health: 1_200 }]);
+    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'The Mouldering Warden', row: 'front', maxHealth: 1_100, health: 1_100 }]);
   });
 
   it('a level 40 Party kills the Guardian and relights the Lamp', () => {

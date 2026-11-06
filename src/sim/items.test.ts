@@ -50,9 +50,9 @@ describe('rolling items', () => {
   });
 
   it.each([
-    [1, 0.8, 0.18, 0.02],
-    [2, 0.72, 0.23, 0.05],
-    [3, 0.62, 0.28, 0.1],
+    [1, 0.78, 0.19, 0.03],
+    [2, 0.7, 0.23, 0.07],
+    [3, 0.6, 0.28, 0.12],
   ] as const)("Rarity odds match each Floor's table across many Seeds: Floor %i", (floor, common, magic, rare) => {
     const share = (rarity: Rarity) => withRarity(floor, rarity).length / SEEDS;
     expect(Math.abs(share('common') - common)).toBeLessThan(0.015);
