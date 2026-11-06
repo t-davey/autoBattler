@@ -6,7 +6,9 @@
 
 **ADRs:** 0001 elapsed time as input, saves store current state; 0002 storage capability (see G20); 0003 no log flood from catch-up.
 
-**Needs:** [gaps](gaps.md) G19, G20.
+**Risks:** [R1](risks.md#r1-12-hours-of-catch-up-blocks-the-ui), and the save size and Stash list rows of [Other risks](risks.md#other-risks-found-in-research).
+
+**Needs:** [gaps](gaps.md) G8, G19, G20.
 
 **Create**
 

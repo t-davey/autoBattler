@@ -53,5 +53,5 @@ Only 5 of the 9 skills are active, and the Sin-Eater has just 1, so skill order 
 | Risk | Milestone that measures it | Threshold | Fallback |
 |---|---|---|---|
 | Uncapped Stash bloats saves, since Salvage and a cap are cut | M5: `serializeGame` length and time after 12 hours | Over 1 MB or 20 ms | Save only on `visibilitychange`, `pagehide`, and every 60 s |
-| Long Stash list lags | M5: Stash tab holding a 12-hour Stash, about 400 items | A sort or filter over 100 ms | `content-visibility: auto` on rows, as the research note suggests |
+| Long Stash list lags | M5: Stash tab holding a 12-hour Stash, about 400 items | A sort or filter over 100 ms | `content-visibility: auto` on rows, as [the research note](../../research/rendering-technology.md) suggests |
 | The demo Seed stops working as rules change | M6 | Rehearsal fails | Re-run the Seed search |

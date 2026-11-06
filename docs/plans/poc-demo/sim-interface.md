@@ -22,7 +22,8 @@ The contract for what M3–M5 add. [`src/sim/index.ts`](../../../src/sim/index.t
 `Game` is plain JSON-safe data that the sim mutates in place, because copying it every Tick would make 432,000 Ticks too slow. The UI never reads inside it: the type is branded, and all reads go through view functions, which return fresh immutable objects.
 
 ```ts
-// ---- GameSetup.scenario: starts part-way through, for tests and the balance script ----
+// ---- GameSetup.scenario: starts part-way through, for tests and the balance script.
+// Assert against extremes, such as level 1 or level 40, so that tuning doesn't break tests. ----
 readonly startAt?: { readonly floor: 1 | 2 | 3; readonly room: number | 'guardian' }; // M3
 readonly lampLit?: boolean;    // M3
 readonly equipped?: Readonly<Record<HeroId, readonly ItemSpec[]>>; // M4
@@ -127,5 +128,6 @@ Because the sub-Tick remainder lives in `game.bankMs`, any way of slicing the sa
 
 ## UI rules for later milestones
 
+- **Store snapshot:** M5 adds the current `AwayReport` and catch-up progress to what `src/ui/store.ts` publishes.
 - **Hidden windows:** the driver doesn't step while `document.hidden` is true, since throttled timers fire too rarely and unevenly to tell apart from a real absence. When the window returns, it applies the whole gap under G19.
 - **Readable by agents:** the map and panels carry text or `aria-label`s, so the accessibility tree can verify them.

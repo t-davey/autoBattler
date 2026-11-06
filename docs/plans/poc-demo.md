@@ -15,12 +15,12 @@ The demo tests one thing: is it satisfying to come back to loot, make a build de
 
 ## How to use this plan
 
-Build one milestone at a time, in order. Every number is a starting value for M6 to tune. Read this file, the next milestone's file, and [as-built.md](poc-demo/as-built.md), then reach further when one of these applies:
+Build one milestone at a time, in order. Every number is a starting value for M6 to tune. Read this file, the next milestone's file, [as-built.md](poc-demo/as-built.md), and the [ADRs](../adr/) its **ADRs** line names, then reach further when one of these applies:
 
 - **[gaps.md](poc-demo/gaps.md):** the rulings a milestone's **Needs** line names.
 - **[sim-interface.md](poc-demo/sim-interface.md):** adding to `src/sim/index.ts` or the catch-up path.
 - **[risks.md](poc-demo/risks.md):** a milestone names a risk, or a threshold trips.
-- **[The M2 review](poc-demo-m2-review.md):** a measurement arrives, so fill in its row under Estimates to compare and check the Watch list before tuning.
+- **[The M2 review](poc-demo-m2-review.md):** starting M3 or M6, whose work its Watch list names, or a measurement arrives, so fill in its row under Estimates to compare and check the Watch list before tuning.
 
 ## Approved scope
 
@@ -80,4 +80,4 @@ The human alone merges each PR.
 
 Follow [docs/pull-requests.md](../pull-requests.md) in full: branch from the latest `main`, reach Done, check scope, review with `mattpocock-skills:code-review`, and fill in the template, including its Saves, Gameplay, and Docs lines. No milestone before M5 has saves, so none needs `!`. Put "Closes" and the milestone's issue in the PR body. Ask before filing any new issue.
 
-In the same PR, retire the milestone: move what later milestones need to know into [as-built.md](poc-demo/as-built.md), delete its file, and mark it merged in the table above. Keep its gaps, since they record the human's rulings.
+In the same PR, retire the milestone: move what later milestones need to know into [as-built.md](poc-demo/as-built.md), delete notes there that it settles, delete its file and its lines in [sim-interface.md](poc-demo/sim-interface.md), and link this PR from the table above. Keep its gaps, since they record the human's rulings.

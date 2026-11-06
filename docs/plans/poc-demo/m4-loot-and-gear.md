@@ -6,6 +6,8 @@
 
 **ADRs:** 0001 seeded loot; 0003 list rendering.
 
+**Risks:** [R3](risks.md#r3-6-affixes-make-drops-feel-samey).
+
 **Needs:** [gaps](gaps.md) G14, G21, G22, plus S3 if R3 trips.
 
 **Create**
@@ -15,9 +17,9 @@
 
 **Change**
 
-- `src/sim/run.ts`, `src/sim/game.ts`, `src/sim/view.ts`, `src/sim/index.ts`
+- `src/sim/run.ts`, `src/sim/game.ts`, `src/sim/view.ts`, `src/sim/index.ts`, `src/sim/battle.ts` inputs
 - `src/sim/content/party.ts`: the starter weapons become items.
-- `src/ui/App.tsx`, `PlanningTab.tsx`, `describeEvent.ts`
+- `src/ui/App.tsx`, `store.ts`, `PlanningTab.tsx`, `describeEvent.ts`
 - `scripts/balance.mjs`: add a `drops` mode.
 
 **Sim rules**

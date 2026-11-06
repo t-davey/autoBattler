@@ -6,6 +6,8 @@
 
 **ADRs:** 0001 seeded Floors; 0003 DOM map behind one component.
 
+**Risks:** [R1](risks.md#r1-12-hours-of-catch-up-blocks-the-ui).
+
 **Needs:** [gaps](gaps.md) G2, G7, G8, G9, G10, G16, G18, G21, G22.
 
 **Create**
@@ -19,7 +21,7 @@
 - `src/sim/battle.ts`: separate `maxHealth` from `health`, so health can carry between Rooms, and let a Unit have several timed `actions`, each with its own interval and target (one front-Row Hero, or every Hero). A Unit with `actions` uses them instead of `power`, `actionInterval`, and `damageType`, and each action carries its own damage.
 - `src/sim/game.test.ts`: drop the temporary-loop test.
 - `src/sim/view.ts`, `src/sim/index.ts`
-- `src/ui/App.tsx`, `describeEvent.ts`, `style.css`
+- `src/ui/App.tsx`, `store.ts`, `describeEvent.ts`, `style.css`
 
 **Sim rules**
 

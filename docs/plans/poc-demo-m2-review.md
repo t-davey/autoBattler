@@ -1,6 +1,6 @@
 # Milestone 2 review: skills and content tables
 
-The record of stops S1 and S2 for [Milestone 2](https://github.com/t-davey/autoBattler/blob/1e595668bb8380e0d8f1f06b37c6d95e33fb3556/docs/plans/poc-demo.md#milestone-2-heroes-and-skills), settled by the human on 2026-11-05. [docs/demo-skills.md](../demo-skills.md) holds the rules themselves, and [the plan](poc-demo/gaps.md) holds the gaps (G23–G28). This file holds the reasoning, and the estimates to compare against real results.
+The record of stops S1 and S2 for [Milestone 2](https://github.com/t-davey/autoBattler/blob/1e595668bb8380e0d8f1f06b37c6d95e33fb3556/docs/plans/poc-demo.md#milestone-2-heroes-and-skills), settled by the human on 2026-11-05. Mentions of the plan's Milestone 2 section mean that linked text. [docs/demo-skills.md](../demo-skills.md) holds the rules themselves, and [the plan](poc-demo/gaps.md) holds the gaps (G23–G28). This file holds the reasoning, and the estimates to compare against real results.
 
 **How to use it:** when a measurement arrives, fill in its row under [Estimates to compare](#estimates-to-compare). When a result differs enough to matter, check [Watch list](#watch-list) before tuning. Nothing here overrides the rules files.
 
