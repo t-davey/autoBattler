@@ -1,6 +1,6 @@
 # First playable skills
 
-**Status: draft, with its [decisions](#decisions) confirmed.** Nothing here is built, and every number is a starting value to tune through play. [docs/design.md](design.md#first-playable) sets the scope: 4 Classes, each with 2 Branches of about 3 skills, 24 skills in total. This draft adds the 4 free Class skills a new Hero starts with. For the demo, [docs/demo-skills.md](demo-skills.md) overrides it.
+**Status: draft, with its [decisions](#decisions) confirmed.** Nothing here is built as written, since [the demo](demo-skills.md) adapts 9 of these skills, and every number is a starting value to tune through play. [docs/design.md](design.md#first-playable) sets the scope: 4 Classes, each with 2 Branches of about 3 skills, 24 skills in total. This draft adds the 4 free Class skills a new Hero starts with. For the demo, [docs/demo-skills.md](demo-skills.md) overrides it.
 
 ## Decisions
 

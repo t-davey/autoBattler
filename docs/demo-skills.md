@@ -2,7 +2,7 @@
 
 **Status: approved by the human on 2026-11-05 (stop S2 in [the demo plan](plans/poc-demo.md#human-stops)).** These 9 skills apply to the proof-of-concept demo only, and every number is a starting value that Milestone 6 tunes.
 
-This file is the demo's source of truth for its skills. [Adaptations](#adaptations) lists every change from [First playable skills](first-playable-skills.md), which is worth opening only to see the original of a skill. Open [the M2 review](plans/poc-demo-m2-review.md) when a measurement arrives or a settled answer comes up again.
+This file is the demo's source of truth for its skills. [Adaptations](#adaptations) lists every change from [First playable skills](first-playable-skills.md), which is worth opening only to see the original of a skill. Open [the M2 review](plans/poc-demo-m2-review.md) when a measurement arrives, and [the gaps](plans/poc-demo/gaps.md) when a settled answer comes up again.
 
 ## Reading the tables
 
@@ -80,7 +80,7 @@ Each change from [First playable skills](first-playable-skills.md), with its rea
 | **Durations in Ticks** | The Tick is now 100 ms: 6, 20, 15, 25, and 8 seconds become 60, 200, 150, 250, and 80 Ticks. |
 | **Shared Burden covers direct hits and Poison ticks**, the only damage Heroes take in the demo | The human's answer to [question 1](#the-humans-answers). The first-playable wording, "damage dealt", needs spelling out once damage over time exists. |
 | **Poison stacks are per Unit**, not per enemy | Enemies poison Heroes here, and no Hero poisons enemies (G15). |
-| **Hearth's reach is "Any Hero" or "Every Hero"**, not spell | No Hero skill in the demo casts a spell at an enemy, so the sim needs no spell reach. This also differs from the plan's table. |
+| **Hearth's reach is "Any Hero" or "Every Hero"**, not spell | No Hero skill in the demo casts a spell at an enemy, so the sim needs no spell reach. |
 | **No limit of 3 active skills** | Each Hero has at most 2, so the limit never binds. |
 | **A Huntsman with a ranged weapon can't use its melee skills** | From G14. The planning tab says so. |
 
@@ -90,7 +90,7 @@ The plan doesn't settle these, and the human accepted them on 2026-11-05.
 
 **Numbers**
 
-- **Bonus armour** adds up, then multiplies the Hero's armour, gear included once Milestone 4 adds it. Bar the Way and Iron Penance at full ranks give 190% of that armour, not 208%.
+- **Bonus armour** adds up, then multiplies the Hero's armour, gear included. Bar the Way and Iron Penance at full ranks give 190% of that armour, not 208%.
 - **Out-of-Row:** the 60% applies to amounts, not durations. A Ward from the wrong Row is weaker but lasts as long.
 - **Bleed** divides evenly across its 6 ticks, with the first 10 Ticks after it lands. Its total is set from power when applied.
 - **Poison:** each stack ticks on its own clock, with its first tick 20 Ticks after it lands. A refresh changes when stacks expire, not when they tick.
@@ -116,7 +116,7 @@ The plan doesn't settle these, and the human accepted them on 2026-11-05.
 
 **Builds:** each Hero has 11 legal 6-point builds at level 7, and all 9 skills are reachable. Those builds reach rank 2 at most in a step 3 skill.
 
-**Oil:** the first-playable draft estimates that a Huntsman using The Long Cut and Bleeder's Cut spends 120 Oil per Battle against 90 gained, running dry after about 3 Battles. The same build applies here. A Lamplighter using Lantern Ward and Mend by Lamplight spends less than that draft's Hearth build, which also included Votive Spark and ran dry after about 4–5 Battles. These are hand estimates, and nothing here has been measured.
+**Oil:** the first-playable draft estimates that a Huntsman using The Long Cut and Bleeder's Cut runs dry after about 3 Battles, but at level 7 on 2/2/2 it [never fell under 10 Oil](plans/poc-demo-m2-review.md#estimates-to-compare) across 40 Seeds. A Lamplighter using Lantern Ward and Mend by Lamplight spends less than that draft's Hearth build, which also included Votive Spark and ran dry after about 4–5 Battles. That is a hand estimate, not yet measured.
 
 **Lantern Ward:** its cooldown of 250 Ticks outlasts its 80-Tick Ward, so with one Lamplighter, "No Hero holds a Ward" never blocks it in the demo.
 
@@ -133,9 +133,9 @@ The human accepted these on 2026-11-05:
 
 ## The human's answers
 
-Settled on 2026-11-05. [The M2 review](plans/poc-demo-m2-review.md#questions-and-answers) keeps the reasoning.
+Settled on 2026-11-05. [The gaps](plans/poc-demo/gaps.md) keep the reasoning: G26, G27, G5, and G28, in this order.
 
 1. **Shared Burden and the Wall:** it also redirects Poison ticks on back-Row Heroes, so it does something against the Guardian.
-2. **Warm Hands in the build check:** R2's "a skill never appears" trigger leaves it out in Milestones 2 and 6. Milestone 6 judges it by comparing whole Runs with and without it. Until Milestone 3, the planning tab said it had no effect yet.
+2. **Warm Hands in the build check:** R2's "a skill never appears" trigger leaves it out in Milestones 2 and 6. Milestone 6 judges it by comparing whole Runs with and without it.
 3. **The Sin-Eater's skill order:** unchanged. It has 1 active skill and no order to set, as G5 accepted.
 4. **Reapplying Bleed:** Bleeder's Cut keeps its targeting, the rule stays for later Branches, and the test is dropped, since nothing in the demo can reapply a Bleed.
