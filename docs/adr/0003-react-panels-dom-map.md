@@ -11,4 +11,4 @@
 
 ## Consequences
 
-React isn't installed yet, and `src/ui` is still the placeholder. Sim events should reach components through a store that stays free of React, so changing framework later costs only the components. The render loop never sets game speed, because hidden windows stop drawing and throttle timers. The Live Log needs a row cap.
+Sim events reach components through a store that stays free of React, so changing framework later costs only the components. The render loop never sets game speed, because hidden windows stop drawing and throttle timers. The Live Log has a cap of 1,000 rows. The tile map arrives with Floors.

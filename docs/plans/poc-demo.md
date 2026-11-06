@@ -1,6 +1,6 @@
 # Proof-of-concept demo: implementation plan
 
-**Status: gaps confirmed by the human on 2026-11-05.** Nothing here is built. S2, S3, and S4 under [Human stops](#human-stops) still lie ahead, and G21 still needs each milestone's tables confirmed as it starts.
+**Status: gaps confirmed by the human on 2026-11-05.** Milestone 1 is in [PR #12](https://github.com/t-davey/autoBattler/pull/12), and its tables are confirmed. Milestones 2–6 aren't built. S2, S3, and S4 under [Human stops](#human-stops) still lie ahead, and G21 still needs each milestone's tables confirmed as it starts.
 
 The demo tests one thing: is it satisfying to come back to loot, make a build decision, and see that decision beat a Wall? Each milestone is a tracer bullet: one PR that leaves the demo runnable end to end.
 
@@ -133,7 +133,7 @@ export function createGame(setup: GameSetup): Game;
 // ---- Live stepping (M1) ----
 export type EventSink = (event: GameEvent) => void;
 /** Banks elapsedMs and runs each whole Tick, reporting events to the sink.
- *  NaN and negative values bank nothing. */
+ *  NaN, infinite, and negative values bank nothing. */
 export function advance(game: Game, elapsedMs: number, sink?: EventSink): void;
 
 // ---- Catch-up (M5) ----
@@ -167,8 +167,8 @@ export function deserializeGame(text: string): Game | null; // M1; null on bad d
 
 export interface GameView {
   readonly tick: number;
-  readonly phase: 'town' | 'travelling' | 'battle' | 'chest';
-  readonly battle: BattleView | null;       // Teams, Rows, health, Oil, effects
+  readonly phase: 'town' | 'travelling' | 'battle' | 'chest'; // M1 has only travelling and battle
+  readonly battle: BattleView | null;       // party and enemies: Rows, health; M2: Oil, effects
   readonly heroes: readonly HeroView[];     // M2: name, level, XP, stats, Oil, skills, order, unspent points; M4: equipped items
   readonly map: FloorMapView | null;        // M3: Rooms with x, y, kind, state; Party's Room
   readonly floor: 1 | 2 | 3 | null;         // M3
@@ -200,7 +200,8 @@ export interface AwayReport {
 
 export type GameEvent =
   | BattleEvent          // M1: attack, death; M2: skill, heal, effect, ward
-  | { readonly type: 'battleEnded'; /* ... */ }       // M1
+  | { readonly type: 'battleStarted'; readonly enemyNames: readonly string[] } // M1
+  | { readonly type: 'battleEnded'; readonly outcome: 'won' | 'lost' | 'draw' } // M1
   | { readonly type: 'levelUp'; /* ... */ }           // M2
   | { readonly type: 'roomEntered' | 'floorEntered' | 'chestOpened' | 'wipe' | 'draw'
       | 'returnedToTown' | 'partySent' | 'fellBack' | 'retryingGuardian'
@@ -369,6 +370,15 @@ Every enemy has 0% critical chance. A Pack is 1–2 front enemies and 1–2 back
 **`CONTEXT.md`:** sharpen **Tick** to "the smallest step of game time, 100 ms; within a Battle, each living Unit gets one chance to act in it". Add **Damage type**, **Resistance**, **Armour**, **Reach**, **Pack**, **Family**.
 
 **Acceptance:** `npm run check` and `npm run smoke:electron` pass. `npm run bench:catchup` reports 432,000 Ticks within the [R1](#r1-12-hours-of-catch-up-blocks-the-ui) limit. Over 10 minutes in the running app, no console errors appear and the Live Log holds no more than 1,000 rows.
+
+**As built, for later milestones:**
+
+- A new game has no Battle until its first Tick, so the first `battleStarted` reaches a sink. Tests that need a Battle advance one Tick first.
+- A Team with only a back Row moves forward when a Battle starts.
+- `BattleView` has `party` and `enemies`, and `PARTY_TEAM` in `game.ts` is the only link between them and Team ids.
+- M3 must decide how `battleEnded.outcome` relates to its `wipe` and `draw` events, so a Setback isn't counted twice.
+- `driver.ts` applies no cap, and a returning window runs its whole gap live. M5 moves long gaps to catch-up.
+- Save validation lives in `game.ts`, and each new saved field needs a check there.
 
 ## Milestone 2: Heroes and skills
 
