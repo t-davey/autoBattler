@@ -131,9 +131,8 @@ describe('advance', () => {
     const game = createGame({ seed: 3 });
     const events: GameEvent[] = [];
     advance(game, 600_000, (event) => events.push(event));
-    expect(new Set(events.map((event) => event.type))).toEqual(
-      new Set(['attack', 'death', 'battleEnded', 'battleStarted']),
-    );
+    const types = new Set(events.map((event) => event.type));
+    for (const type of ['attack', 'death', 'battleEnded', 'battleStarted'] as const) expect(types).toContain(type);
     // Every Battle that ends was first reported as started.
     expect(events.filter((event) => event.type === 'battleStarted').length).toBeGreaterThanOrEqual(
       events.filter((event) => event.type === 'battleEnded').length,

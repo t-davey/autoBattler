@@ -146,6 +146,177 @@ ul {
   line-height: 1.5;
 }
 
+.oil-bar {
+  height: 0.25rem;
+  background: var(--iron);
+}
+
+.oil-fill {
+  height: 100%;
+  background: var(--ember);
+  transition: width 100ms linear;
+}
+
+.unit-effects {
+  font-size: 0.75rem;
+  color: var(--ember);
+}
+
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+}
+
+button,
+input {
+  font: inherit;
+  color: var(--ink);
+  background: var(--soot);
+  border: 1px solid var(--iron);
+}
+
+button {
+  padding: 0.15rem 0.6rem;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--ember);
+}
+
+button:disabled {
+  color: var(--ink-faint);
+  cursor: default;
+  opacity: 0.5;
+}
+
+.tab[aria-selected='true'] {
+  color: var(--ember);
+  border-color: var(--ember);
+}
+
+.planning {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.hero-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.hero-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.hero-card p {
+  margin: 0;
+}
+
+.hero-card h3 {
+  margin: 0.5rem 0 0;
+}
+
+.name-editor {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.name-editor input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.15rem 0.4rem;
+}
+
+.hero-level {
+  color: var(--ember);
+}
+
+.hint {
+  margin: 0 0 0.5rem;
+  font-size: 0.8rem;
+  color: var(--ink-faint);
+}
+
+.refusal {
+  font-size: 0.8rem;
+  color: var(--blood);
+}
+
+.skills {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.skill {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.5rem;
+  font-size: 0.9rem;
+  background: var(--soot);
+  border: 1px solid var(--iron);
+}
+
+.skill-unlearned {
+  border-style: dashed;
+}
+
+.skill-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.skill-head strong {
+  flex: 1;
+  font-weight: normal;
+  color: var(--ember);
+}
+
+.skill-order {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.skill-order li {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.skill-order li > span {
+  flex: 1;
+}
+
+.respec {
+  align-self: flex-start;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 60rem) {
+  .hero-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (max-width: 40rem) {
   .battlefield {
     grid-template-columns: repeat(2, minmax(0, 1fr));

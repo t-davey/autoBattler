@@ -57,4 +57,28 @@ describe('store', () => {
     store.advance(60_000);
     expect(calls).toBe(1);
   });
+
+  it('dispatch publishes an accepted action and keeps the Live Log', () => {
+    const store = createStore(createGame({ seed: 1 }));
+    store.advance(60_000);
+    const { log } = store.getSnapshot();
+    let calls = 0;
+    store.subscribe(() => calls++);
+
+    expect(store.dispatch({ type: 'renameHero', heroId: 'huntsman', name: 'Old Marrow' })).toEqual({ ok: true });
+    expect(calls).toBe(1);
+    expect(store.getSnapshot().log).toBe(log);
+    expect(store.getSnapshot().view.heroes.find((hero) => hero.id === 'huntsman')?.name).toBe('Old Marrow');
+  });
+
+  it('dispatch returns a refusal and publishes nothing', () => {
+    const store = createStore(createGame({ seed: 1 }));
+    const before = store.getSnapshot();
+    let calls = 0;
+    store.subscribe(() => calls++);
+
+    expect(store.dispatch({ type: 'renameHero', heroId: 'huntsman', name: ' ' })).toEqual({ ok: false, reason: 'emptyName' });
+    expect(calls).toBe(0);
+    expect(store.getSnapshot()).toBe(before);
+  });
 });

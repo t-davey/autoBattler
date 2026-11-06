@@ -92,6 +92,50 @@ _Avoid_: Range
 Which Row a Unit picks from among those its Reach allows: the front Row while it lives, or either.
 _Avoid_: Aggro, priority
 
+**Skill point**:
+What a Hero earns each level and spends to raise a skill.
+_Avoid_: Talent point, ability point
+
+**Skill rank**:
+How far a skill has been raised, from 1 to 5.
+_Avoid_: Skill level, tier
+
+**Step**:
+A skill's depth in its Branch, opened by points spent in that Branch.
+_Avoid_: Tier, layer
+
+**Skill order**:
+The order a Hero tries its learned active skills in, set by the player.
+_Avoid_: Priority list, rotation
+
+**Usefulness condition**:
+The built-in test that keeps a skill from firing when it would do nothing.
+_Avoid_: Trigger, requirement
+
+**Cooldown**:
+The Ticks before a skill can be used again.
+_Avoid_: Recharge
+
+**Respec**:
+Refunding all of a Hero's skill points to spend them again.
+_Avoid_: Reset, rebuild
+
+**Effect**:
+A timed condition on a Unit: Bleed, Poison, or Ward.
+_Avoid_: Status, buff, debuff
+
+**Bleed**:
+Physical damage over time that ignores Armour.
+_Avoid_: Wound, dot
+
+**Poison**:
+Stacking poison damage over time, up to 5 stacks on a Unit.
+_Avoid_: Venom, dot
+
+**Ward**:
+A temporary layer that absorbs damage of any type before health.
+_Avoid_: Shield, barrier
+
 **Live Log**:
 The dashboard's rolling record of live play, combining Battle Logs with lines from other Rooms.
 _Avoid_: Activity feed, combat log
