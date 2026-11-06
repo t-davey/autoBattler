@@ -103,7 +103,7 @@ Each rule keeps working as designed. These are its in-world reasons.
 
 ## The Guardians
 
-**Canon.** Guardians are automata with a gothic, steampunk look, powered by Oil. They were built long ago by the ancestors of the [Penitents' Order](#the-penitents-order). Today they act as the overseers and security for the Ember Works, which is the refinery. Guardians are the Acts' bosses: all 12 walls are Guardians, and the last one in each Act ends it. Defeating a Guardian gives the Party loot but no Oil.
+**Canon.** Guardians are automata with a gothic, steampunk look, powered by Oil. They were built long ago by the ancestors of the [Penitents' Order](#the-penitents-order). Today they act as the overseers and security for the Ember Works, which is the refinery. All 12 walls are Guardians, and the last one in each Act ends it. Defeating a Guardian gives the Party loot but no Oil.
 
 **Canon.** The Dark interferes with the Guardians' programming and makes them erratic. The Town Council doesn't expect the automata to be hostile.
 

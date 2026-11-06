@@ -221,7 +221,7 @@ The hidden truth at the heart of the story: Oil is rendered from the dead.
 _Avoid_: The twist, the secret
 
 **Fragment**:
-A short piece of story text that the player meets in play, such as a ledger item, an item description, or an Away Report line.
+A short piece of story text that the player meets in play, such as a ledger, an item description, or an Away Report line.
 _Avoid_: Lore entry, codex entry
 
 **The Dark**:
