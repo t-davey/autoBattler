@@ -37,7 +37,7 @@ export interface Snapshot {
   readonly stash: readonly ItemView[];
   /** 0-1 while catch-up runs, else null. */
   readonly catchUpProgress: number | null;
-  /** Held in memory only. Set means a check-in is under way, until the player sends the Party back. A further absence adds to it. */
+  /** Held in memory only. Set means a check-in is under way, until the player sends the Party back. */
   readonly awayReport: AwayReport | null;
   /** Something the player should know about their save. */
   readonly saveNotice: string | null;
@@ -70,6 +70,8 @@ export interface Store {
   dismissSaveNotice(): void;
   /** Writes the state, as of the time it was last advanced to. Does nothing during catch-up, which has already banked its time. */
   save(savedAt: number): void;
+  /** Hears the end of a check-in, so the driver can run the time it paused. */
+  onSentBack(listener: () => void): () => void;
   /** Hears when state changed apart from the clock: an accepted action, or catch-up finishing. */
   onSettled(listener: () => void): () => void;
   /** Removes the save and writes no more, for a reload to start over. */
@@ -92,6 +94,7 @@ const writeFailure = (error: unknown): string =>
 export function createStore(game: Game, { saves, saveNotice = null, workClock = () => performance.now() }: StoreOptions = {}): Store {
   const listeners = new Set<() => void>();
   const settledListeners = new Set<() => void>();
+  const sentBackListeners = new Set<() => void>();
   let snapshot: Snapshot = { view: viewGame(game), log: [], stash: viewStash(game), catchUpProgress: null, awayReport: null, saveNotice, saveWarning: null };
   let nextLineId = 0;
   let savingStopped = false;
@@ -133,10 +136,11 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
     const view = viewGame(game);
     const passed = describeDuration(report.appliedMs);
     const line: LogLine = { id: nextLineId++, text: holdReport ? `${passed} passed during the check-in.` : `${passed} passed. See the Away Report.`, rarity: null };
-    const earlier = snapshot.awayReport ?? heldReport;
-    heldReport = holdReport ? merged(earlier, report) : null;
-    const awayReport = holdReport ? snapshot.awayReport : merged(earlier, report);
-    replace({ view, stash: stashFor(view), log: keepNewest([...snapshot.log, line]), catchUpProgress: null, awayReport });
+    // A pause under a second has nothing worth a line.
+    const log = holdReport && report.appliedMs < 1_000 ? snapshot.log : keepNewest([...snapshot.log, line]);
+    const awayReport = holdReport ? snapshot.awayReport : merged(snapshot.awayReport ?? heldReport, report);
+    heldReport = holdReport ? merged(heldReport, report) : null;
+    replace({ view, stash: stashFor(view), log, catchUpProgress: null, awayReport });
     settled();
   };
 
@@ -198,6 +202,11 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
       publish(viewGame(game), events);
       replace({ awayReport: null });
       settled();
+      for (const listener of sentBackListeners) listener();
+    },
+    onSentBack(listener) {
+      sentBackListeners.add(listener);
+      return () => sentBackListeners.delete(listener);
     },
     dismissSaveNotice() {
       replace({ saveNotice: null });

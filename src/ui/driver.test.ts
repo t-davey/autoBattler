@@ -91,8 +91,7 @@ describe('driver', () => {
     vi.advanceTimersByTime(0);
     expect(store.isCatchingUp()).toBe(false);
     store.sendPartyBack();
-    vi.advanceTimersByTime(100);
-    vi.advanceTimersByTime(1);
+    vi.advanceTimersByTime(0);
     expect(store.getSnapshot().view.tick).toBe(650);
   });
 
@@ -110,7 +109,7 @@ describe('driver', () => {
       expect(store.getSnapshot().view.tick).toBe(600);
     });
 
-    it('saves the time it paused at, so closing the game loses nothing', () => {
+    it('saves the time it paused at, so closing the game keeps that time', () => {
       const pausedAt = clock;
       const { driver, saves } = inCheckIn();
       play(30_000);
@@ -122,12 +121,11 @@ describe('driver', () => {
       const { store } = inCheckIn();
       play(120_000);
       store.sendPartyBack();
-      play(100);
       expect(store.isCatchingUp()).toBe(true);
-      vi.advanceTimersByTime(1);
+      vi.advanceTimersByTime(0);
 
       const { view, awayReport, log } = store.getSnapshot();
-      expect(view.tick).toBe(600 + 1_201);
+      expect(view.tick).toBe(600 + 1_200);
       expect(awayReport).toBeNull();
       expect(store.inCheckIn()).toBe(false);
       expect(log.at(-1)?.text).toBe('2 minutes passed during the check-in.');
@@ -137,8 +135,7 @@ describe('driver', () => {
       const { store } = inCheckIn();
       play(1_000);
       store.sendPartyBack();
-      play(100);
-      vi.advanceTimersByTime(1);
+      vi.advanceTimersByTime(0);
       const { tick } = store.getSnapshot().view;
       play(1_000);
       expect(store.getSnapshot().view.tick).toBe(tick + 10);
@@ -148,12 +145,34 @@ describe('driver', () => {
       const { store } = inCheckIn();
       play(120_000);
       store.sendPartyBack();
-      play(100);
-      vi.advanceTimersByTime(1);
+      vi.advanceTimersByTime(0);
 
       store.catchUp(60_000);
       vi.advanceTimersByTime(0);
-      expect(store.getSnapshot().awayReport?.elapsedMs).toBe(120_100 + 60_000);
+      expect(store.getSnapshot().awayReport?.elapsedMs).toBe(120_000 + 60_000);
+    });
+
+    it('leaves a later absence to open its own report, however soon the window hides', () => {
+      const { store } = inCheckIn();
+      play(1_000);
+      store.sendPartyBack();
+      vi.advanceTimersByTime(0);
+
+      hidden = true;
+      play(120_000);
+      hidden = false;
+      play(100);
+      vi.advanceTimersByTime(1);
+      expect(store.inCheckIn()).toBe(true);
+    });
+
+    it('adds no Live Log line for a pause under a second', () => {
+      const { store } = inCheckIn();
+      const lines = store.getSnapshot().log.length;
+      clock += 500;
+      store.sendPartyBack();
+      vi.advanceTimersByTime(0);
+      expect(store.getSnapshot().log).toHaveLength(lines);
     });
   });
 

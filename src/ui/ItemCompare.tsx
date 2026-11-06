@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
-import { AFFIXES, RARITIES, SLOTS, type HeroView, type ItemStat, type ItemView, type Rarity, type Slot } from '../sim';
+import { AFFIXES, itemBlocksLearnedSkill, RARITIES, SLOTS, type HeroView, type ItemStat, type ItemView, type Rarity, type Slot } from '../sim';
 import { REFUSAL_TEXT } from './describeHero';
-import { changedStats, formatChange, itemFacts, itemStatsText, losesMeleeSkills, SLOT_TEXT, STAT_TEXT, statChange } from './describeItem';
+import { changedStats, formatChange, itemFacts, itemStatsText, SLOT_TEXT, STAT_TEXT, statChange } from './describeItem';
 import { queryStash, type StashQuery, type StashSort } from './stashQuery';
 import type { Dispatch } from './store';
 
@@ -125,7 +125,7 @@ export function ItemCompare({ item, heroes, dispatch }: ItemCompareProps) {
                 ) : (
                   <button type="button" aria-label={`Equip ${item.name} on ${hero.name}`} onClick={() => equip(hero)}>Equip</button>
                 )}
-                {losesMeleeSkills(item, hero) && <p className="hint skill-blocked">Melee skills stop working</p>}
+                {itemBlocksLearnedSkill(item, hero) && <p className="hint skill-blocked">Melee skills stop working</p>}
               </td>
             ))}
           </tr>

@@ -1,4 +1,4 @@
-import { maxHealthOf, type BattleState, type Row, type TeamId } from './battle';
+import { maxHealthOf, type BattleState, type Reach, type Row, type TeamId } from './battle';
 import type { Slot } from './content/items';
 import { GRID_HEIGHT, GRID_WIDTH, type FloorNumber, type RoomKind } from './floors';
 import { xpToNextLevel } from './content/party';
@@ -126,6 +126,9 @@ function viewTeam(battle: BattleState, team: TeamId): readonly UnitView[] {
     }));
 }
 
+/** A melee skill can't fire without a melee weapon. */
+const weaponBlocksSkill = (weaponReach: Reach, skillReach: SkillReach | null): boolean => skillReach === 'melee' && weaponReach !== 'melee';
+
 function viewSkill(hero: HeroState, id: SkillId): SkillView {
   const skill = SKILLS[id];
   const rank = hero.ranks[id] ?? 0;
@@ -149,9 +152,13 @@ function viewSkill(hero: HeroState, id: SkillId): SkillView {
       next: rank < MAX_SKILL_RANK ? rankValue(id, rank + 1, index) : null,
     })),
     refusal: spendRefusal(hero.id, hero.ranks, unspentPoints(hero), id),
-    blockedByWeapon: skill.reach === 'melee' && heroReach(hero) !== 'melee',
+    blockedByWeapon: weaponBlocksSkill(heroReach(hero), skill.reach),
   };
 }
+
+/** Whether equipping this item would stop a skill the Hero has learned. */
+export const itemBlocksLearnedSkill = (item: ItemView, hero: HeroView): boolean =>
+  item.reach !== null && hero.skills.some((skill) => skill.rank > 0 && weaponBlocksSkill(item.reach!, skill.reach));
 
 function viewEquipped(hero: HeroState, slot: Slot): ItemView | null {
   const item = hero.equipped[slot];

@@ -52,7 +52,7 @@ export function StashTab({ stash, heroes, dispatch }: { stash: readonly ItemView
       </section>
       <div className="equipped-heroes">
         <section className="panel" aria-label="Compare">
-          <ItemCompare item={selected} heroes={heroes} dispatch={dispatch} />
+          <ItemCompare key={selected?.id ?? 'none'} item={selected} heroes={heroes} dispatch={dispatch} />
         </section>
         {heroes.map((hero) => (
           <section key={hero.id} className="panel equipped-hero" aria-label={`Gear of ${hero.name}`}>

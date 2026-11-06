@@ -13,13 +13,14 @@ export interface Finding {
   readonly stat: ItemStat | null;
 }
 
-type DefenceStat = 'armour' | 'poisonResistance';
+type AnsweringStat = 'armour' | 'poisonResistance';
 
-const DEFENCE: Partial<Record<string, DefenceStat>> = { physical: 'armour', poison: 'poisonResistance' };
+/** The Hero stat that answers each Damage type the game deals so far. */
+const ANSWERING_STAT: Partial<Record<string, AnsweringStat>> = { physical: 'armour', poison: 'poisonResistance' };
 
 const capitalized = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 
-function defenceLine(stat: DefenceStat, heroes: readonly HeroView[]): string {
+function answeringStatLine(stat: AnsweringStat, heroes: readonly HeroView[]): string {
   const unit = stat === 'poisonResistance' ? '%' : '';
   const values = heroes.map((hero) => `${hero.name} ${Math.round(hero.stats[stat])}${unit}`);
   return `${capitalized(STAT_TEXT[stat])}: ${values.join(', ')}`;
@@ -35,14 +36,14 @@ function setbackFinding(report: AwayReport, view: GameView): Finding | null {
   const [top, ...rest] = [...groupSetbacks(report.setbacks)].sort((a, b) => b.count - a.count);
   if (!top) return null;
   const main = mainDamageOf(top.setback);
-  const stat = main ? (DEFENCE[main] ?? null) : null;
+  const stat = main ? (ANSWERING_STAT[main] ?? null) : null;
   const fallback = fallbackLine(report, view);
   return {
     kind: 'setbacks',
     title: top.text,
     details: [
       ...(rest.length > 0 ? [rest.map((group) => group.text).join(' · ')] : []),
-      ...(stat ? [defenceLine(stat, view.heroes)] : []),
+      ...(stat ? [answeringStatLine(stat, view.heroes)] : []),
       ...(fallback ? [fallback] : []),
     ],
     stat,
@@ -61,10 +62,10 @@ function lootFinding({ loot }: AwayReport): Finding | null {
 }
 
 function pointsFinding(report: AwayReport, heroes: readonly HeroView[]): Finding | null {
-  if (report.unspentSkillPoints === 0) return null;
+  if (report.unspentSkillPoints === 0 && report.levels.length === 0) return null;
   const unspent = heroes.reduce((total, hero) => total + hero.unspentPoints, 0);
   const nameOf = (id: string): string => heroes.find((hero) => hero.id === id)?.name ?? id;
-  const title = unspent === 0 ? 'All skill points spent' : `${unspent} skill point${unspent === 1 ? '' : 's'} to spend`;
+  const title = unspent === 0 ? (report.unspentSkillPoints === 0 ? 'No skill points to spend' : 'All skill points spent') : `${unspent} skill point${unspent === 1 ? '' : 's'} to spend`;
   const levels = report.levels.map(({ heroId, from, to }) => `${nameOf(heroId)}: level ${from} to ${to}`);
   return { kind: 'points', title, details: levels.length > 0 ? [levels.join(' · ')] : [], stat: null };
 }

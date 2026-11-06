@@ -36,10 +36,6 @@ export function formatChange(stat: ItemStat, change: number): string {
   return `${change > 0 ? '+' : ''}${change}${PERCENT_STATS.has(stat) ? '%' : ''}`;
 }
 
-/** Whether a ranged weapon would stop a skill this Hero has learned. */
-export const losesMeleeSkills = (item: ItemView, hero: HeroView): boolean =>
-  item.reach === 'ranged' && hero.skills.some((skill) => skill.rank > 0 && skill.reach === 'melee');
-
 /** An item's fixed facts: its Slot, its Reach if it is a weapon, and its level requirement. */
 export function itemFacts(item: ItemView): string {
   const slot = item.reach ? `${SLOT_TEXT[item.slot]} (${item.reach})` : SLOT_TEXT[item.slot];

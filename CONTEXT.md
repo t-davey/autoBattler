@@ -191,7 +191,7 @@ A player's return to the game to read the Away Report and act on it.
 _Avoid_: Session, visit
 
 **Away Report**:
-The summary of what a Party did while the player was away, with the game closed or its window covered or minimized.
+The summary of what a Party did while the player was away, with the game closed or its window covered or minimized, along with any time a check-in paused.
 _Avoid_: Offline report, summary screen
 
 **Finding**:

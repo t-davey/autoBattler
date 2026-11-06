@@ -44,7 +44,6 @@ export function groupSetbacks(setbacks: readonly AwaySetback[]): readonly Setbac
   });
 }
 
-export const describeSetbacks = (setbacks: readonly AwaySetback[]): readonly string[] => groupSetbacks(setbacks).map((group) => group.text);
 
 /** One report for two absences in a row, so an unread one isn't lost. */
 export function mergeAwayReports(earlier: AwayReport, later: AwayReport): AwayReport {

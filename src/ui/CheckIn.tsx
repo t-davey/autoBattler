@@ -18,15 +18,16 @@ function StashFix({ stash, view, dispatch, initial }: { stash: readonly ItemView
         <StashPicker stash={stash} initial={initial} selectedId={selectedId} onSelect={setSelectedId} />
       </div>
       <div className="check-in-scroll">
-        <ItemCompare item={selected} heroes={view.heroes} dispatch={dispatch} />
+        <ItemCompare key={selected?.id ?? 'none'} item={selected} heroes={view.heroes} dispatch={dispatch} />
       </div>
     </div>
   );
 }
 
-function FindingFix({ finding, stash, view, dispatch }: { finding: Finding; stash: readonly ItemView[]; view: GameView; dispatch: Dispatch }) {
+function FindingFix({ finding, report, stash, view, dispatch }: { finding: Finding; report: AwayReport; stash: readonly ItemView[]; view: GameView; dispatch: Dispatch }) {
   if (finding.kind === 'points') return <div className="check-in-scroll"><PlanningTab heroes={view.heroes} dispatch={dispatch} /></div>;
-  const initial: StashQuery = finding.kind === 'loot' ? { ...emptyStashQuery, rarity: 'rare' } : { ...emptyStashQuery, stat: finding.stat ?? 'all' };
+  const rareFound = report.loot.rare > 0;
+  const initial: StashQuery = finding.kind === 'loot' ? { ...emptyStashQuery, rarity: rareFound ? 'rare' : 'all' } : { ...emptyStashQuery, stat: finding.stat ?? 'all' };
   return <StashFix stash={stash} view={view} dispatch={dispatch} initial={initial} />;
 }
 
@@ -50,9 +51,6 @@ export function CheckIn({ report, view, stash, dispatch, onSendBack }: CheckInPr
         <p className="hint">
           {describeAbsence(report)} Floors cleared: {report.floorsCleared}. Deepest Floor: {report.deepestFloor}.
         </p>
-        {report.setbacks.length === 0 && <p>No Setbacks.</p>}
-        {report.guardianKills > 0 && <p>Guardian kills: {report.guardianKills}.</p>}
-        {report.lampRelit && <p className="lamp-lit">The Lamp is relit.</p>}
         <ul className="findings">
           {findings.map((finding) => (
             <li key={finding.kind}>
@@ -68,13 +66,16 @@ export function CheckIn({ report, view, stash, dispatch, onSendBack }: CheckInPr
             </li>
           ))}
         </ul>
+        {report.setbacks.length === 0 && <p>No Setbacks.</p>}
+        {report.guardianKills > 0 && <p>Guardian kills: {report.guardianKills}.</p>}
+        {report.lampRelit && <p className="lamp-lit">The Lamp is relit.</p>}
         <button type="button" className="send-back" onClick={onSendBack}>Send the Party back</button>
       </section>
       <section className="panel check-in-fix" aria-label="Fix">
         {open ? (
-          <FindingFix key={open.kind} finding={open} stash={stash} view={view} dispatch={dispatch} />
+          <FindingFix key={open.kind} finding={open} report={report} stash={stash} view={view} dispatch={dispatch} />
         ) : (
-          <p className="hint">Pick a Finding to act on it, or send the Party back as it is.</p>
+          <p className="hint">{findings.length > 0 ? 'Pick a Finding to act on it, or send the Party back as it is.' : 'Nothing here to act on. Send the Party back.'}</p>
         )}
       </section>
     </main>

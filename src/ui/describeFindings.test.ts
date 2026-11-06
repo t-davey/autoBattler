@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, viewGame, type AwayReport, type AwaySetback, type GameView, type HeroView } from '../sim';
+import { createGame, itemBlocksLearnedSkill, viewGame, type AwayReport, type AwaySetback, type GameView, type HeroView } from '../sim';
 import { describeFindings } from './describeFindings';
-import { changedStats, formatChange, losesMeleeSkills, statChange } from './describeItem';
+import { changedStats, formatChange, statChange } from './describeItem';
 
 const setback = (changes: Partial<AwaySetback> = {}): AwaySetback => ({
   kind: 'wipe',
@@ -81,6 +81,15 @@ describe('describeFindings', () => {
     expect(describeFindings(reported, withPoints(0))[0]?.title).toBe('All skill points spent');
   });
 
+  it('keeps level gains on show when no skill points were left unspent', () => {
+    const view = newView();
+    const hero = view.heroes[0]!;
+    const levels = [{ heroId: hero.id, from: 1, to: 2 }];
+    const [finding] = describeFindings(report({ levels }), withHeroes(view, (each) => ({ ...each, unspentPoints: 0 })));
+    expect(finding?.title).toBe('No skill points to spend');
+    expect(finding?.details).toEqual([`${hero.name}: level 1 to 2`]);
+  });
+
   it('keeps the loot Finding the same whatever the player does', () => {
     const loot = { common: 2, magic: 1, rare: 0, notable: [] };
     const [finding] = describeFindings(report({ loot }), newView());
@@ -112,8 +121,8 @@ describe('item comparison', () => {
     const melee = hero.skills[0]!;
     const learned = { ...hero, skills: [{ ...melee, reach: 'melee', rank: 1 }] } as const;
     const unlearned = { ...hero, skills: [{ ...melee, reach: 'melee', rank: 0 }] } as const;
-    expect(losesMeleeSkills(bow, learned)).toBe(true);
-    expect(losesMeleeSkills(bow, unlearned)).toBe(false);
-    expect(losesMeleeSkills(shroud, learned)).toBe(false);
+    expect(itemBlocksLearnedSkill(bow, learned)).toBe(true);
+    expect(itemBlocksLearnedSkill(bow, unlearned)).toBe(false);
+    expect(itemBlocksLearnedSkill(shroud, learned)).toBe(false);
   });
 });
