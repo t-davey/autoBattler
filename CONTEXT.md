@@ -1,6 +1,6 @@
 # autoBattler
 
-An idle dungeon crawler: a Party descends on its own, fighting Battles and collecting loot, while the player plans builds between check-ins.
+An idle dungeon crawler: a Party ventures out on its own, fighting Battles and collecting loot, while the player plans builds between check-ins.
 
 ## Language
 
@@ -57,12 +57,16 @@ What a Hero who fell in a won Battle does when the Battle ends, returning at red
 _Avoid_: Revive, resurrect
 
 **Party**:
-The 3 Heroes the player sends down together.
+The 3 Heroes the player sends out together.
 _Avoid_: Group, squad
 
 **Class**:
 The kind of Hero that determines their skill tree and role.
 _Avoid_: Job, archetype
+
+**Warrener**:
+The Class that replaces the Huntsman. The code and other docs say Huntsman until it is renamed.
+_Avoid_: Huntsman, in new writing
 
 **Branch**:
 One of the 3 themed sections of a Class's skill tree.
@@ -147,11 +151,11 @@ _Avoid_: Activity feed, combat log
 ### Progress
 
 **Run**:
-A Party's stretch of descent between leaving Town and returning to it.
+A Party's stretch of play between leaving Town and returning to it.
 _Avoid_: Delve, expedition, dive
 
 **Act**:
-A themed stretch of the descent, ending in a Boss.
+A themed stretch of the game's world, ending in its last Guardian.
 _Avoid_: Chapter, zone, region
 
 **Floor**:
@@ -163,7 +167,7 @@ One space on a Floor, holding a Battle, chest, trap, or shrine.
 _Avoid_: Encounter, tile
 
 **Wall**:
-A Guardian or Boss that stops a Party until it grows stronger.
+A Guardian that stops a Party until it grows stronger.
 _Avoid_: Gate, blocker
 
 **Catch-up**:
@@ -191,16 +195,16 @@ The summary of what a Party did while the player was away, with the game closed 
 _Avoid_: Offline report, summary screen
 
 **Lamp**:
-A point in the descent that a Party relights by beating its Guardian, and where it can resume after returning to Town.
+A point in an Act that a Party relights by beating its Guardian, and where it can resume after returning to Town.
 _Avoid_: Checkpoint, waypoint, save point
 
-**Guardian**:
-The tough named enemy that guards a Lamp.
-_Avoid_: Miniboss, gatekeeper
+**Barrier Lamp**:
+A Lamp in the wilderness of Act 1, part of the ward that keeps the Dark from reaching Town.
+_Avoid_: Beacon
 
-**Boss**:
-The hand-designed enemy that ends an Act.
-_Avoid_: Act guardian, final enemy
+**Guardian**:
+A tough, named, hand-designed automaton: one guards each Lamp, and the last in an Act ends it, making 12 per Difficulty Tier.
+_Avoid_: Boss, miniboss, gatekeeper, final enemy
 
 **Stance**:
 The player's push or farm setting for how a Party moves between Lamps.
@@ -212,17 +216,29 @@ _Avoid_: Difficulty level, new game plus
 
 ### Story
 
-**Entity**:
-An old being who put the Lamps out on purpose. Every Guardian is one.
-_Avoid_: Keeper
-
 **The Rendering**:
 The hidden truth at the heart of the story: Oil is rendered from the dead.
 _Avoid_: The twist, the secret
 
 **Fragment**:
-A short piece of story text that the player meets in play, such as an item description or an Away Report line.
+A short piece of story text that the player meets in play, such as a ledger item, an item description, or an Away Report line.
 _Avoid_: Lore entry, codex entry
+
+**The Dark**:
+What envelops the world, held back only by Oil Lamps. It reanimates the dead and is never explained.
+_Avoid_: Darkness, the shadow
+
+**The Penitents' Order**:
+The lay order Sin-Eaters belong to, descended from the builders of the automata. Most members don't know the Rendering.
+_Avoid_: Church, cult
+
+**Synod**:
+The Penitents' Order's governing body, which knows the Rendering.
+_Avoid_: Council
+
+**Town Council**:
+The body that sends Parties out to relight Lamps.
+_Avoid_: Synod
 
 ### Loot and economy
 

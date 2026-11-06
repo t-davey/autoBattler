@@ -10,7 +10,7 @@ A passion project for the creator and close friends, all on Windows. Single-play
 
 ## Core loop
 
-The Party descends on its own while the player is away. The player returns to new loot, rethinks the build, and sends the Party back down.
+The Party ventures out on its own while the player is away. The player returns to new loot, rethinks the build, and sends the Party back out.
 
 - The player's skill is build planning. Light tending adds a small edge while watching.
 - Anything the player can do by hand can also run by rule, so survival never requires watching.
@@ -94,17 +94,17 @@ Each Class has 3 Branches. A starred Branch is that Class's survivability option
 
 ## World
 
-One town survives around the Last Lamp, which holds back a rising dark. Parties descend to relight old Lamps in the depths. The dark is flavour: it never advances on a timer, and light is not a resource to manage.
+One town survives in a world of Dark, held back only by Oil Lamps. In Act 1 the Town Council sends the Party to relight the Barrier Lamps in the wilderness around Town. Then the Dark is found inside the Undercroft (Act 2), and the Council sends the Party there to relight its Lamps. Beating its last Guardian reveals the way into the Ember Works (Act 3), where the Dark has already gone, so the Party follows to light more Lamps. The Dark is flavour: it never advances on a timer, and light is not a resource to manage.
 
-The story reaches the player through short act introductions, Guardian lines, item descriptions, and Away Report text. [docs/lore/](lore/README.md) holds it, spoilers included.
+The story reaches the player through short act introductions, item descriptions, and Away Report text. [docs/lore/](lore/README.md) holds it, spoilers included.
 
 There are 3 Acts of 10 floors each. Names are provisional.
 
 | Act | Place | Enemies | Damage leaning |
 |---|---|---|---|
-| 1. The Undercroft | Flooded crypts beneath Town | The restless dead, fungal growth | Physical, poison |
-| 2. The Ember Works | Abandoned foundries that once fed the Lamps | Burned workers, slag-creatures | Fire, physical |
-| 3. The Lightless Court | A frozen palace | Those who chose the dark | Cold, corrupted holy |
+| 1. The wilderness | The dark wilderness around Town, where the Barrier Lamps stand | Undecided | Undecided |
+| 2. The Undercroft | Flooded crypts beneath Town | The reanimated dead, fungal growth | Physical, poison |
+| 3. The Ember Works | Foundries that still refine the Lamps' Oil, overseen by automata | Burned workers, slag-creatures | Fire, physical |
 
 ### Floors
 
@@ -115,10 +115,10 @@ There are 3 Acts of 10 floors each. Names are provisional.
 
 ### Lamps and walls
 
-- A Lamp sits every 3 floors, guarded by a Guardian. A Boss ends each Act, making 12 walls per Difficulty Tier.
+- A Lamp sits every 3 floors, guarded by a Guardian. A last Guardian ends each Act, making 12 walls per Difficulty Tier.
 - Each Party relights Lamps for itself, and they go dark again at each new Difficulty Tier.
 - Each wall leans on a particular damage type or role, without requiring a specific Class.
-- Guardians and Bosses respawn on each visit. The first kill guarantees a rare item.
+- Guardians respawn on each visit. The first kill guarantees a rare item.
 
 ### Why 2 weeks
 
@@ -126,7 +126,7 @@ Offline progress means about 300 hours of Party time in the first Difficulty Tie
 
 ### Loot sources
 
-Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop better loot. Specific Guardians and Bosses favour specific uniques, and each enemy family leans towards certain item types, so older areas stay worth farming.
+Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop better loot. Specific Guardians favour specific uniques, and each enemy family leans towards certain item types, so older areas stay worth farming.
 
 ## Runs
 
@@ -139,7 +139,7 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 ## Battles
 
 - Damage types are physical, fire, cold, poison, and holy, with matching resistances.
-- Enemies come in families with front and back-row roles, plus Elite packs with random modifiers and better loot, plus hand-designed bosses (simple at first).
+- Enemies come in families with front and back-row roles, plus Elite packs with random modifiers and better loot, plus hand-designed Guardians (simple at first).
 
 ## Setbacks
 
@@ -152,7 +152,7 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 ## Long term
 
 - There are 3 Difficulty Tiers of about equal length, about 6 weeks in total for one Party. Each replays the content with better loot and a resistance penalty.
-- Beating the final Boss unlocks the next Difficulty Tier. A Party can return to earlier ones freely, with its Lamps still lit there.
+- Beating the final Guardian unlocks the next Difficulty Tier. A Party can return to earlier ones freely, with its Lamps still lit there.
 - After the final Difficulty Tier, the player starts fresh Parties that share the Stash. Stash items have level requirements, and each Party that finishes the game earns a small account-wide bonus.
 - Endless depth is a later expansion, as is a fourth Act.
 
@@ -182,7 +182,7 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 
 ## First playable
 
-The full loop, built thin, to test whether coming back to loot feels good: all of Act 1 with its 3 Guardians and Boss, rarity and Affix loot, auto-salvage, Town, and the Away Report. Judge it over a few real days of check-ins, since a single session can't show whether returning feels good.
+The full loop, built thin, to test whether coming back to loot feels good: all of the Undercroft (Act 2) with its 4 Guardians, rarity and Affix loot, auto-salvage, Town, and the Away Report. Judge it over a few real days of check-ins, since a single session can't show whether returning feels good.
 
 All 4 Classes are in, each trimmed to 2 Branches of about 3 skills, about 24 skills in total:
 
@@ -191,7 +191,7 @@ All 4 Classes are in, each trimmed to 2 Branches of about 3 skills, about 24 ski
 - **Hexer:** Rot and Malediction
 - **Lamplighter:** Flame and Hearth
 
-Deeper skills need 3 points spent in that Branch per step rather than 5, so a Hero can reach a Branch's third skill within Act 1.
+Deeper skills need 3 points spent in that Branch per step rather than 5, so a Hero can reach a Branch's third skill within the Undercroft.
 
 Each Class also gets one Class-specific unique that visibly changes a skill, so 4 in total. The skills are drafted in [First playable skills](first-playable-skills.md) for the human to review, and numbers get tuned through play.
 

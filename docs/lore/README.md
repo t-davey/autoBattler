@@ -9,7 +9,7 @@ The human owns the canon. Terms are defined in [CONTEXT.md](../../CONTEXT.md), a
 | File | Holds |
 |---|---|
 | [bible.md](bible.md) | What is true in the world, marked by status, plus the open questions |
-| [act-1-fragments.md](act-1-fragments.md) | Draft Fragments for the Undercroft |
+| [act-2-fragments.md](act-2-fragments.md) | Draft Fragments for Act 2, the Undercroft |
 
 Add a fragments file for an Act when its turn comes.
 
@@ -33,10 +33,10 @@ Facts in the bible and lines in the fragments files carry one of these:
 2. **Turn game rules into story hooks.** Give each odd rule an in-world reason, so the story and the systems argue the same thing. In progress: see [Rules as story](bible.md#rules-as-story).
 3. **Keep the bible short.** It records decisions, and the prose lives in the fragments files.
 4. **Budget words by channel.** See below.
-5. **Write Act 1 fully, then test it.** Friends' reactions over a few days of real Check-ins shape Acts 2 and 3. Hold off on detailed writing for later Acts until then.
+5. **Write the first Act fully, then test it.** Act 1 is still a placeholder, so the Undercroft (Act 2) is the first to write. Friends' reactions over a few days of real Check-ins shape the other Acts. Hold off on detailed writing for later Acts until then.
 6. **Let the reveal change the replay.** [The reveal](bible.md#the-reveal) lands before the reset into the second Difficulty Tier, so the replay means something new.
 
-The demo doesn't wait on any of this. Its chest lines are provisional ([G33](../plans/poc-demo/gaps.md)) and can use Fragments once they are ready, and anything more, such as a Guardian's line, is a demo scope change for the human to confirm.
+The demo doesn't wait on any of this. Its chest lines are provisional ([G33](../plans/poc-demo/gaps.md)) and can use Fragments once they are ready, and anything more is a demo scope change for the human to confirm.
 
 ## Writing rules
 
@@ -51,13 +51,12 @@ The demo doesn't wait on any of this. Its chest lines are provisional ([G33](../
 
 ## Channel budget
 
-**Provisional**, for the first Difficulty Tier. Enemy descriptions aren't a channel yet.
+**Provisional**, for the first Difficulty Tier. Guardians have no dialog for now, walls carry no story beat of their own, and enemy descriptions aren't a channel yet.
 
 | Channel | Amount | Job |
 |---|---|---|
 | Act introductions | 3, a few sentences each | Set the place and the question |
-| Guardian lines | The Mouldering Warden's 1 line | The first Wall's story beat |
-| The reveal | 1 ledger Item | Says outright what Oil is |
+| The reveal | 1 ledger Fragment | Says outright what Oil is |
 | Item descriptions | One line, uniques first | Optional deeper lore |
 | Away Report and Room lines | A small pool per Act | Atmosphere and hints that repay attention |
 

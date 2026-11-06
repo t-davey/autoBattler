@@ -6,7 +6,7 @@
 
 The human confirmed these, which extend the design:
 
-1. **Points per step:** 3 in the first playable. The full game's 5 per step would put step 3 at 10 points, and even levelling gives about 8 points (level 9) by the end of Act 1. At 3 per step, unlocking and learning a step 3 skill costs 7 of those 8 points, which still forces a commitment to one Branch.
+1. **Points per step:** 3 in the first playable. The full game's 5 per step would put step 3 at 10 points, and even levelling gives about 8 points (level 9) by the end of the Undercroft. At 3 per step, unlocking and learning a step 3 skill costs 7 of those 8 points, which still forces a commitment to one Branch.
 2. **Free Class skills:** the 4 under [Free Class skills](#free-class-skills), making 28 skills to build. Each one supplies the damage type its Class loses to the trimmed Branches.
 3. **Active and passive split:** each Class gets one Branch of 2 active and 1 passive, and one of 1 active and 2 passive. With the free Class skill, a Hero then has 4 active skills to choose from for 3 slots, which makes the choice real while keeping actives cheap to build.
 4. **Out-of-Row penalty:** a skill used from the wrong Row has 60% of its numeric effects. Cost and cooldown don't change.
@@ -135,13 +135,13 @@ Under the [reference values](#decisions), a Hero gets 90 Oil per Battle and the 
 | Lamplighter (Flame): Flare, Votive Spark | 120 | -30 | About 3 Battles |
 | Lamplighter (mixed): Lantern Ward, Flare, Mend by Lamplight | 160 | -70 | About 1–2 Battles |
 
-Real Battles use less, since Bleed, Curses, and heals are often not needed on every action. The mixed Lamplighter is the build to watch, since 8 points can buy it in Act 1. If Heroes spend too much of a Floor on the basic attack in play, regeneration is the first number to raise.
+Real Battles use less, since Bleed, Curses, and heals are often not needed on every action. The mixed Lamplighter is the build to watch, since 8 points can buy it in the Undercroft. If Heroes spend too much of a Floor on the basic attack in play, regeneration is the first number to raise.
 
 ### Survival without a Lamplighter
 
 The design says any trio can finish. Each Class has its own healing and survivability, so a Party with no Lamplighter still has an answer:
 
-- **Sin-Eater:** Consume Sin, Bulwark's armour, and Red Tithe against packs. Red Tithe needs 2 enemies, so it won't fire against a lone Guardian or Boss.
+- **Sin-Eater:** Consume Sin, Bulwark's armour, and Red Tithe against packs. Red Tithe needs 2 enemies, so it won't fire against a lone Guardian.
 - **Huntsman:** Fall Back, Light Step, and Bind the Wound.
 - **Hexer:** Wasting Curse and Leech Hex.
 

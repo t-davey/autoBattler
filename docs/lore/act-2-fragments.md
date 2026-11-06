@@ -1,10 +1,6 @@
-# Act 1 Fragments: The Undercroft
+# Act 2 Fragments: The Undercroft
 
-Draft story text for Act 1. Every line here is **provisional** until the human confirms it. Follow the [writing rules](README.md#writing-rules). **Spoilers throughout.**
-
-## Guardian lines
-
-- **The Mouldering Warden:** "Leave it dark. Let us sleep."
+Draft story text for Act 2, the Undercroft. Every line here is **provisional** until the human confirms it. Follow the [writing rules](README.md#writing-rules). **Spoilers throughout.**
 
 ## Away Report and Room lines
 
@@ -20,4 +16,4 @@ The demo's chests use these 5 lines, in `src/sim/content/chests.ts`.
 
 - The Act introduction
 - Item descriptions
-- More Away Report and Room lines
+- More Away Report and Room lines, including some that make use of the [Oil spigots](bible.md#oil-in-the-acts)
