@@ -161,7 +161,7 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 
 - Offline progress runs at the full rate, capped at 12 hours.
 - A covered or minimized window counts the same way: the game catches up from elapsed time when the window returns, under the same cap.
-- The Party pauses during a [check-in](#check-ins), until the player sends it back.
+- The Party pauses during a [check-in](#check-ins), and resumes where it paused when the player sends it back. That time still counts: it runs through Catch-up, under the same cap, so a check-in never costs the Party progress.
 - Play runs in real time, with an optional 2x once balance holds up.
 - The target is about 2 weeks to finish the first Difficulty Tier, with 2–3 short check-ins a day.
 
@@ -220,5 +220,4 @@ A smaller build comes before the first playable, to test one thing: is it satisf
 
 - **Map animation:** how much animation the map needs. This is the main trigger for moving the map from the DOM to Canvas or PixiJS.
 - **Pixel-art scale on fractional displays:** whether to snap to whole device pixels or accept slight unevenness.
-- **A check-in left open or closed:** whether the Party loses that time, or the time counts towards Catch-up when it's sent back or the game next opens.
-- **Sending the Party back:** whether it resumes where it paused, or a check-in during a Run ends that Run.
+- **Catch-up after a check-in:** whether the paused time's results open a new Away Report straight away, or add to the next one.
