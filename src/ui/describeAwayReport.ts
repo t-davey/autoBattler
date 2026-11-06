@@ -36,6 +36,35 @@ export function describeSetbacks(setbacks: readonly AwaySetback[]): readonly str
   });
 }
 
+/** One report for two absences in a row, so an unread one isn't lost. */
+export function mergeAwayReports(earlier: AwayReport, later: AwayReport): AwayReport {
+  const levels = [...earlier.levels];
+  for (const gain of later.levels) {
+    const index = levels.findIndex((entry) => entry.heroId === gain.heroId);
+    if (index === -1) levels.push(gain);
+    else levels[index] = { ...gain, from: levels[index]!.from };
+  }
+  return {
+    elapsedMs: earlier.elapsedMs + later.elapsedMs,
+    appliedMs: earlier.appliedMs + later.appliedMs,
+    capped: earlier.capped || later.capped,
+    floorsCleared: earlier.floorsCleared + later.floorsCleared,
+    deepestFloor: Math.max(earlier.deepestFloor, later.deepestFloor),
+    setbacks: [...earlier.setbacks, ...later.setbacks],
+    guardianKills: earlier.guardianKills + later.guardianKills,
+    lampRelit: earlier.lampRelit || later.lampRelit,
+    fellBack: earlier.fellBack || later.fellBack,
+    levels,
+    loot: {
+      common: earlier.loot.common + later.loot.common,
+      magic: earlier.loot.magic + later.loot.magic,
+      rare: earlier.loot.rare + later.loot.rare,
+      notable: [...earlier.loot.notable, ...later.loot.notable],
+    },
+    unspentSkillPoints: later.unspentSkillPoints,
+  };
+}
+
 /** How long the Party was left, and how much of it counted. */
 export function describeAbsence({ elapsedMs, appliedMs, capped }: AwayReport): string {
   return capped ? `Away ${describeDuration(elapsedMs)}. Only ${describeDuration(appliedMs)} of it counted.` : `Away ${describeDuration(elapsedMs)}.`;

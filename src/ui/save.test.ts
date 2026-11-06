@@ -1,18 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { advance, createGame, deserializeGame, SAVE_VERSION, serializeGame, viewGame } from '../sim';
 import { startDriver } from './driver';
+import { memorySaves } from './memorySaves';
 import { BAD_SAVE_KEY, loadSave, SAVE_KEY, writeSave, type SaveStore } from './save';
 import { createStore } from './store';
-
-const memoryStore = (entries: Record<string, string> = {}) => {
-  const values = new Map(Object.entries(entries));
-  const store: SaveStore = {
-    read: (key) => values.get(key) ?? null,
-    write: (key, value) => void values.set(key, value),
-    remove: (key) => void values.delete(key),
-  };
-  return { store, values };
-};
 
 const failing = (message: string): SaveStore => ({
   read() {
@@ -28,11 +19,11 @@ const failing = (message: string): SaveStore => ({
 
 describe('loadSave', () => {
   it('finds nothing in empty storage, and says nothing about it', () => {
-    expect(loadSave(memoryStore().store)).toEqual({ saved: null, notice: null });
+    expect(loadSave(memorySaves().store)).toEqual({ saved: null, notice: null });
   });
 
   it('restores what writeSave wrote', () => {
-    const { store } = memoryStore();
+    const { store } = memorySaves();
     const game = createGame({ seed: 3 });
     advance(game, 90_000);
     writeSave(store, game, 12_345);
@@ -46,7 +37,7 @@ describe('loadSave', () => {
   it('an old version moves aside and starts a new game', () => {
     const inner = JSON.parse(serializeGame(createGame({ seed: 1 }))) as Record<string, unknown>;
     const old = JSON.stringify({ savedAt: 5, game: JSON.stringify({ ...inner, version: SAVE_VERSION + 1 }) });
-    const { store, values } = memoryStore({ [SAVE_KEY]: old });
+    const { store, values } = memorySaves({ [SAVE_KEY]: old });
 
     const { saved, notice } = loadSave(store);
     expect(saved).toBeNull();
@@ -61,10 +52,24 @@ describe('loadSave', () => {
     ['no savedAt', JSON.stringify({ game: '{}' })],
     ['a bad Game', JSON.stringify({ savedAt: 5, game: '{}' })],
   ])('an unreadable save moves aside: %s', (_name, text) => {
-    const { store, values } = memoryStore({ [SAVE_KEY]: text });
+    const { store, values } = memorySaves({ [SAVE_KEY]: text });
     expect(loadSave(store).saved).toBeNull();
     expect(values.get(BAD_SAVE_KEY)).toBe(text);
     expect(values.has(SAVE_KEY)).toBe(false);
+  });
+
+  it('a save that cannot be set aside says so, and stays where it is', () => {
+    const { store, values } = memorySaves({ [SAVE_KEY]: 'not json' });
+    const { saved, notice } = loadSave({
+      ...store,
+      write() {
+        throw new Error('quota exceeded');
+      },
+    });
+    expect(saved).toBeNull();
+    expect(notice).toContain('could not be read or set aside');
+    expect(notice).toContain('quota exceeded');
+    expect(values.get(SAVE_KEY)).toBe('not json');
   });
 
   it('storage that throws still starts a new game, with a notice', () => {
@@ -86,8 +91,8 @@ describe('saving from the store', () => {
   it('savedAt is the time state was last advanced to', () => {
     let clock = 1_000_000;
     let hidden = false;
-    const { store: saves, values } = memoryStore();
-    const store = createStore(createGame({ seed: 1 }), { saves });
+    const memory = memorySaves();
+    const store = createStore(createGame({ seed: 1 }), { saves: memory.store });
     const driver = startDriver({ now: () => clock, isHidden: () => hidden, store, advancedTo: clock });
 
     clock += 5_000;
@@ -100,7 +105,7 @@ describe('saving from the store', () => {
     vi.advanceTimersByTime(100);
     driver.save();
 
-    const { savedAt, game } = JSON.parse(values.get(SAVE_KEY)!) as { savedAt: number; game: string };
+    const { savedAt, game } = memory.envelope();
     expect(savedAt).toBe(advancedTo);
     expect(viewGame(deserializeGame(game)!).tick).toBe(50);
     driver.stop();
@@ -108,14 +113,14 @@ describe('saving from the store', () => {
 
   it('a Skip leaves savedAt alone, since no real time passed', () => {
     const clock = 1_000_000;
-    const { store: saves, values } = memoryStore();
-    const store = createStore(createGame({ seed: 1 }), { saves });
+    const memory = memorySaves();
+    const store = createStore(createGame({ seed: 1 }), { saves: memory.store });
     const driver = startDriver({ now: () => clock, isHidden: () => false, store, advancedTo: clock });
 
     store.catchUp(3_600_000);
     vi.advanceTimersByTime(0);
 
-    const { savedAt, game } = JSON.parse(values.get(SAVE_KEY)!) as { savedAt: number; game: string };
+    const { savedAt, game } = memory.envelope();
     expect(savedAt).toBe(clock);
     expect(viewGame(deserializeGame(game)!).tick).toBe(36_000);
     driver.stop();
@@ -133,7 +138,7 @@ describe('saving from the store', () => {
 
   it('a later write that works clears the warning', () => {
     let full = true;
-    const { store: saves } = memoryStore();
+    const { store: saves } = memorySaves();
     const store = createStore(createGame({ seed: 1 }), {
       saves: {
         ...saves,
@@ -152,7 +157,7 @@ describe('saving from the store', () => {
   });
 
   it('starting over removes the save and writes no more', () => {
-    const { store: saves, values } = memoryStore();
+    const { store: saves, values } = memorySaves();
     const store = createStore(createGame({ seed: 1 }), { saves });
     store.save(1);
     expect(values.has(SAVE_KEY)).toBe(true);

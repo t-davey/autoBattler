@@ -1,7 +1,7 @@
 import type { DamageType } from './battle';
 import { HERO_IDS } from './content/party';
 import type { HeroId } from './content/skills';
-import { bankElapsed, CATCH_UP_CAP_MS, heroesOf, stateOf, stepTick, type Game } from './game';
+import { bankElapsed, CATCH_UP_CAP_MS, heroesOf, stateOf, stepTick, usableElapsed, type Game } from './game';
 import { unspentPoints } from './heroes';
 import type { ItemView } from './items';
 import type { EventSink, GameEvent } from './run';
@@ -16,7 +16,7 @@ export interface AwaySetback {
   readonly mainDamageShare: number;
 }
 
-export interface AwayLevels {
+export interface AwayLevelGain {
   readonly heroId: HeroId;
   readonly from: number;
   readonly to: number;
@@ -33,7 +33,7 @@ export interface AwayReport {
   readonly guardianKills: number;
   readonly lampRelit: boolean;
   readonly fellBack: boolean;
-  readonly levels: readonly AwayLevels[];
+  readonly levels: readonly AwayLevelGain[];
   readonly loot: {
     readonly common: number;
     readonly magic: number;
@@ -51,7 +51,7 @@ interface Tally {
   guardianKills: number;
   lampRelit: boolean;
   fellBack: boolean;
-  levels: AwayLevels[];
+  levels: AwayLevelGain[];
   loot: { common: number; magic: number; rare: number; notable: ItemView[] };
   /** Damage the Party has taken in the current Battle. */
   battleDamage: Partial<Record<DamageType, number>>;
@@ -70,14 +70,20 @@ const isHero = (id: string): boolean => (HERO_IDS as readonly string[]).includes
 
 /** A Battle already under way when catch-up began shows only the damage since then. */
 function mainDamage(battleDamage: Tally['battleDamage']): Pick<AwaySetback, 'mainDamageType' | 'mainDamageShare'> {
-  const physical = battleDamage.physical ?? 0;
-  const poison = battleDamage.poison ?? 0;
-  const total = physical + poison;
-  if (total === 0) return { mainDamageType: 'physical', mainDamageShare: 0 };
-  return poison > physical ? { mainDamageType: 'poison', mainDamageShare: poison / total } : { mainDamageType: 'physical', mainDamageShare: physical / total };
+  let mainDamageType: DamageType = 'physical';
+  let largest = 0;
+  let total = 0;
+  for (const [type, damage] of Object.entries(battleDamage) as [DamageType, number][]) {
+    total += damage;
+    if (damage > largest || (damage === largest && type === 'physical')) {
+      mainDamageType = type;
+      largest = damage;
+    }
+  }
+  return { mainDamageType, mainDamageShare: total === 0 ? 0 : largest / total };
 }
 
-function addLevel(levels: AwayLevels[], heroId: HeroId, level: number): void {
+function addLevel(levels: AwayLevelGain[], heroId: HeroId, level: number): void {
   const index = levels.findIndex((entry) => entry.heroId === heroId);
   const from = levels[index]?.from ?? level - 1;
   const entry = { heroId, from, to: level };
@@ -126,9 +132,9 @@ function fold(tally: Tally, event: GameEvent): void {
   }
 }
 
-/** Caps elapsedMs at CATCH_UP_CAP_MS and banks it. Runs nothing yet. Values that aren't finite and positive count as none. */
+/** Caps elapsedMs at CATCH_UP_CAP_MS and banks it. Runs nothing yet. */
 export function beginCatchUp(game: Game, elapsedMs: number): CatchUp {
-  const elapsed = Number.isFinite(elapsedMs) && elapsedMs > 0 ? elapsedMs : 0;
+  const elapsed = usableElapsed(elapsedMs);
   const appliedMs = Math.min(elapsed, CATCH_UP_CAP_MS);
   const state = stateOf(game);
   const ticks = bankElapsed(state, appliedMs);

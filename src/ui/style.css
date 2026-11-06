@@ -583,3 +583,8 @@ select {
   gap: 0.5rem;
   margin-top: 0.75rem;
 }
+
+/* Only groups what catch-up makes inert, so the page keeps its layout. */
+.app-body {
+  display: contents;
+}

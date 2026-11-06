@@ -254,18 +254,19 @@ describe('saves', () => {
   };
 
   it.each([
-    ['after a Wipe', (game: Game) => stepUntil(game, 'wipe')],
-    ['in Town', (game: Game) => {
+    ['after a Wipe', 'town', (game: Game) => stepUntil(game, 'wipe')],
+    ['in Town', 'town', (game: Game) => {
       stepUntil(game, 'wipe');
       advance(game, 3_000);
     }],
-    ['mid-Battle', (game: Game) => {
+    ['mid-Battle', 'battle', (game: Game) => {
       stepUntil(game, 'battleStarted');
       advance(game, 4_000);
     }],
-  ])('a Game restored from serializeGame plays on identically %s', (_name, reach) => {
+  ])('a Game restored from serializeGame plays on identically %s', (_name, phase, reach) => {
     const game = newGame(6, atGuardian);
     reach(game);
+    expect(viewGame(game).phase).toBe(phase);
     const copy = restored(game);
     advance(game, 1_800_000);
     catchUp(copy, 1_800_000);

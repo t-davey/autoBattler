@@ -66,7 +66,7 @@ Drops run ahead of the plan's hand estimates, and the median Lamp falls inside t
 - **Who holds what:** `driver.ts` holds the time the state was last advanced to, which is a save's `savedAt`. `store.ts` holds the Game, runs catch-up's chunks, and refuses actions during it with `catchingUp`. A full-window overlay stops the player reaching them.
 - **Saves:** `SAVE_VERSION` is still 1, and the first saves carry it. From here, a change that stops them loading needs `!` in the PR title.
 - **Dev queries:** a save wins over `?seed=`, `?start=`, and `?level=`, which take effect after "Start over". `DEMO_SEED` in `main.tsx` is 1 until M6 chooses it.
-- **Report limits:** a Battle under way when catch-up began shows only the damage since then. `floorsCleared` counts on reaching the next Floor, so a Floor left just before catch-up counts in the report. A second absence replaces an undismissed report.
+- **Report limits:** a Battle under way when catch-up began shows only the damage since then. `floorsCleared` counts on reaching the next Floor, so a Floor left just before catch-up counts in the report. A second absence adds to an undismissed report.
 
 **R1 and the save and Stash rows, measured on 2026-11-06 for M6 to re-measure.** All are under their limits, so no fallback is in.
 

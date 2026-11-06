@@ -1,22 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createGame } from '../sim';
 import { startDriver } from './driver';
-import { SAVE_KEY, type SaveStore } from './save';
+import { memorySaves } from './memorySaves';
 import { createStore } from './store';
-
-const memorySaves = () => {
-  const values = new Map<string, string>();
-  let writes = 0;
-  const store: SaveStore = {
-    read: (key) => values.get(key) ?? null,
-    write(key, value) {
-      writes++;
-      values.set(key, value);
-    },
-    remove: (key) => void values.delete(key),
-  };
-  return { store, values, writes: () => writes };
-};
 
 describe('driver', () => {
   let clock = 0;
@@ -143,8 +129,7 @@ describe('driver', () => {
     }
     expect(passes).toBeGreaterThan(1);
     expect(saves.writes()).toBe(1);
-    const { savedAt } = JSON.parse(saves.values.get(SAVE_KEY)!) as { savedAt: number };
-    expect(savedAt).toBe(clock);
+    expect(saves.envelope().savedAt).toBe(clock);
   });
 
   it('stop ends stepping and saving', () => {

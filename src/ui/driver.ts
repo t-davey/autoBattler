@@ -2,7 +2,7 @@ import { TICK_MS } from '../sim';
 import type { Store } from './store';
 
 /** A gap this long gets catch-up and an Away Report. A shorter one plays live (G19). */
-export const CATCH_UP_MIN_GAP_MS = 60_000;
+const CATCH_UP_MIN_GAP_MS = 60_000;
 const SAVE_INTERVAL_MS = 30_000;
 
 export interface DriverOptions {
@@ -25,7 +25,7 @@ export interface Driver {
 export function startDriver({ now, isHidden, store, advancedTo }: DriverOptions): Driver {
   let last = advancedTo;
 
-  const pass = (): void => {
+  const stepOrCatchUp = (): void => {
     // Time passing during catch-up stays in the gap, for the first pass after it.
     if (isHidden() || store.isCatchingUp()) return;
     const current = now();
@@ -37,10 +37,10 @@ export function startDriver({ now, isHidden, store, advancedTo }: DriverOptions)
 
   const save = (): void => store.save(last);
   const stopSettled = store.onSettled(save);
-  const stepper = setInterval(pass, TICK_MS);
+  const stepper = setInterval(stepOrCatchUp, TICK_MS);
   const saver = setInterval(save, SAVE_INTERVAL_MS);
   // A return from absence shows its progress straight away.
-  pass();
+  stepOrCatchUp();
 
   return {
     stop() {

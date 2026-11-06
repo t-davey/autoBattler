@@ -14,7 +14,7 @@ import {
   type PlayerAction,
   type Rarity,
 } from '../sim';
-import { describeDuration } from './describeAwayReport';
+import { describeDuration, mergeAwayReports } from './describeAwayReport';
 import { describeEvent } from './describeEvent';
 import { clearSave, writeSave, type SaveStore } from './save';
 
@@ -37,7 +37,7 @@ export interface Snapshot {
   readonly stash: readonly ItemView[];
   /** 0-1 while catch-up runs, else null. */
   readonly catchUpProgress: number | null;
-  /** Held in memory only, until the player dismisses it. */
+  /** Held in memory only, until the player dismisses it. A further absence adds to it. */
   readonly awayReport: AwayReport | null;
   /** Something the player should know about their save. */
   readonly saveNotice: string | null;
@@ -79,6 +79,8 @@ export interface StoreOptions {
   readonly workClock?: () => number;
 }
 
+const keepNewest = (lines: readonly LogLine[]): readonly LogLine[] => lines.slice(-LIVE_LOG_CAP);
+
 const writeFailure = (error: unknown): string =>
   `The game could not be saved, so progress since the last save will be lost on closing. ${error instanceof Error ? error.message : String(error)}`;
 
@@ -97,8 +99,10 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
     const kept = events.slice(-LIVE_LOG_CAP);
     const skipped = events.length - kept.length;
     const lines = kept.map((event, index) => ({ id: firstId + skipped + index, text: describeEvent(event), rarity: event.type === 'itemFound' ? event.item.rarity : null }));
-    return [...log, ...lines].slice(-LIVE_LOG_CAP);
+    return keepNewest([...log, ...lines]);
   };
+
+  const catchingUp = (): boolean => snapshot.catchUpProgress !== null;
 
   const replace = (changes: Partial<Snapshot>): void => {
     snapshot = { ...snapshot, ...changes };
@@ -119,7 +123,7 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
   const finishCatchUp = (awayReport: AwayReport): void => {
     const view = viewGame(game);
     const line: LogLine = { id: nextLineId++, text: `${describeDuration(awayReport.appliedMs)} passed. See the Away Report.`, rarity: null };
-    replace({ view, stash: stashFor(view), log: [...snapshot.log, line].slice(-LIVE_LOG_CAP), catchUpProgress: null, awayReport });
+    replace({ view, stash: stashFor(view), log: keepNewest([...snapshot.log, line]), catchUpProgress: null, awayReport: snapshot.awayReport ? mergeAwayReports(snapshot.awayReport, awayReport) : awayReport });
     settled();
   };
 
@@ -130,7 +134,7 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
     },
     getSnapshot: () => snapshot,
     advance(elapsedMs) {
-      if (snapshot.catchUpProgress !== null) return;
+      if (catchingUp()) return;
       const events: GameEvent[] = [];
       advance(game, elapsedMs, (event) => events.push(event));
       const view = viewGame(game);
@@ -139,7 +143,7 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
       publish(view, events);
     },
     dispatch(action) {
-      if (snapshot.catchUpProgress !== null) return { ok: false, reason: 'catchingUp' };
+      if (catchingUp()) return { ok: false, reason: 'catchingUp' };
       const events: GameEvent[] = [];
       const result = applyAction(game, action, (event) => events.push(event));
       if (!result.ok) return result;
@@ -148,7 +152,7 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
       return result;
     },
     catchUp(elapsedMs) {
-      if (snapshot.catchUpProgress !== null) return;
+      if (catchingUp()) return;
       const running = beginCatchUp(game, elapsedMs);
       const work = (): void => {
         const started = workClock();
@@ -165,7 +169,7 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
       replace({ catchUpProgress: 0 });
       setTimeout(work, 0);
     },
-    isCatchingUp: () => snapshot.catchUpProgress !== null,
+    isCatchingUp: catchingUp,
     dismissAwayReport() {
       replace({ awayReport: null });
     },
@@ -173,7 +177,7 @@ export function createStore(game: Game, { saves, saveNotice = null, workClock = 
       replace({ saveNotice: null });
     },
     save(savedAt) {
-      if (!saves || savingStopped || snapshot.catchUpProgress !== null) return;
+      if (!saves || savingStopped || catchingUp()) return;
       try {
         writeSave(saves, game, savedAt);
         if (snapshot.saveWarning !== null) replace({ saveWarning: null });

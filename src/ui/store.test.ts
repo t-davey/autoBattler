@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { advance, createGame, type GameEvent } from '../sim';
+import { advance, createGame, serializeGame, type GameEvent } from '../sim';
 import { describeEvent } from './describeEvent';
 import { createStore } from './store';
 
@@ -131,14 +131,17 @@ describe('store', () => {
     });
 
     it('catch-up reaches the same state as stepping, and publishes it', () => {
-      const store = createStore(createGame({ seed: 2 }));
-      const live = createStore(createGame({ seed: 2 }));
+      const caughtUp = createGame({ seed: 2 });
+      const liveGame = createGame({ seed: 2 });
+      const store = createStore(caughtUp);
+      const live = createStore(liveGame);
       store.catchUp(HOUR_MS);
       vi.advanceTimersByTime(0);
       live.advance(HOUR_MS);
 
-      expect(store.getSnapshot().view).toEqual(live.getSnapshot().view);
-      expect(store.getSnapshot().stash).toEqual(live.getSnapshot().stash);
+      expect(serializeGame(caughtUp)).toBe(serializeGame(liveGame));
+      expect(store.getSnapshot().view.tick).toBe(live.getSnapshot().view.tick);
+      expect(store.getSnapshot().stash.length).toBe(live.getSnapshot().stash.length);
       expect(store.getSnapshot().stash.length).toBeGreaterThan(0);
     });
 
@@ -173,6 +176,20 @@ describe('store', () => {
       vi.advanceTimersByTime(0);
       expect(store.getSnapshot().view.tick).toBe(600);
       expect(store.dispatch({ type: 'renameHero', heroId: 'huntsman', name: 'Old Marrow' })).toEqual({ ok: true });
+    });
+
+    it('a second absence adds to an undismissed Away Report', () => {
+      const store = createStore(createGame({ seed: 2 }));
+      store.catchUp(HOUR_MS);
+      vi.advanceTimersByTime(0);
+      store.catchUp(60_000);
+      vi.advanceTimersByTime(1);
+      expect(store.getSnapshot().awayReport?.elapsedMs).toBe(HOUR_MS + 60_000);
+
+      store.dismissAwayReport();
+      store.catchUp(60_000);
+      vi.advanceTimersByTime(1);
+      expect(store.getSnapshot().awayReport?.elapsedMs).toBe(60_000);
     });
 
     it('the Away Report stays until the player dismisses it', () => {

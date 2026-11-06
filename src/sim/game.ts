@@ -146,10 +146,12 @@ export function applyAction(game: Game, action: PlayerAction, sink: EventSink = 
   }
 }
 
-/** Adds elapsedMs to the bank and removes the whole Ticks it now holds. Values that aren't finite and positive bank nothing. */
+/** Values that aren't finite and positive count as no time at all. */
+export const usableElapsed = (elapsedMs: number): number => (Number.isFinite(elapsedMs) && elapsedMs > 0 ? elapsedMs : 0);
+
+/** Adds elapsedMs to the bank and removes the whole Ticks it now holds. */
 export function bankElapsed(state: GameState, elapsedMs: number): number {
-  if (!Number.isFinite(elapsedMs) || elapsedMs <= 0) return 0;
-  state.bankMs += elapsedMs;
+  state.bankMs += usableElapsed(elapsedMs);
   const ticks = Math.floor(state.bankMs / TICK_MS);
   state.bankMs -= ticks * TICK_MS;
   return ticks;

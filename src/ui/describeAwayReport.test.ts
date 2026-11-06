@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AwayReport, AwaySetback } from '../sim';
-import { describeAbsence, describeDuration, describeSetbacks } from './describeAwayReport';
+import { describeAbsence, describeDuration, describeSetbacks, mergeAwayReports } from './describeAwayReport';
 
 const setback = (changes: Partial<AwaySetback> = {}): AwaySetback => ({
   kind: 'wipe',
@@ -31,6 +31,42 @@ describe('describeSetbacks', () => {
       '1 Wipe at the Sodden Thrall, mostly physical damage',
       '1 draw at the Mouldering Warden',
     ]);
+  });
+});
+
+describe('mergeAwayReports', () => {
+  const report = (changes: Partial<AwayReport>): AwayReport => ({
+    elapsedMs: 60_000,
+    appliedMs: 60_000,
+    capped: false,
+    floorsCleared: 1,
+    deepestFloor: 1,
+    setbacks: [],
+    guardianKills: 0,
+    lampRelit: false,
+    fellBack: false,
+    levels: [],
+    loot: { common: 1, magic: 1, rare: 0, notable: [] },
+    unspentSkillPoints: 1,
+    ...changes,
+  });
+
+  it('adds counts and times, keeps the deepest Floor, and takes the latest skill points', () => {
+    const merged = mergeAwayReports(
+      report({ deepestFloor: 3, setbacks: [setback()], lampRelit: true, unspentSkillPoints: 2 }),
+      report({ deepestFloor: 2, setbacks: [setback({ kind: 'draw' })], fellBack: true, guardianKills: 1, unspentSkillPoints: 5 }),
+    );
+    expect(merged).toMatchObject({ elapsedMs: 120_000, appliedMs: 120_000, floorsCleared: 2, deepestFloor: 3, guardianKills: 1, lampRelit: true, fellBack: true, unspentSkillPoints: 5 });
+    expect(merged.setbacks.map((entry) => entry.kind)).toEqual(['wipe', 'draw']);
+    expect(merged.loot).toMatchObject({ common: 2, magic: 2, rare: 0 });
+  });
+
+  it('runs a Hero\'s levels from the first report to the last', () => {
+    const merged = mergeAwayReports(
+      report({ levels: [{ heroId: 'huntsman', from: 1, to: 3 }] }),
+      report({ levels: [{ heroId: 'huntsman', from: 3, to: 4 }, { heroId: 'lamplighter', from: 2, to: 3 }] }),
+    );
+    expect(merged.levels).toEqual([{ heroId: 'huntsman', from: 1, to: 4 }, { heroId: 'lamplighter', from: 2, to: 3 }]);
   });
 });
 

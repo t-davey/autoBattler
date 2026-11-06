@@ -23,6 +23,7 @@ export interface LoadResult {
 }
 
 const BAD_SAVE_NOTICE = 'The save could not be read, so a new game has started. The old save was set aside.';
+const NOT_SET_ASIDE_NOTICE = 'The save could not be read or set aside, so a new game has started and will replace it.';
 const NO_STORAGE_NOTICE = 'Saves could not be read here, so a new game has started.';
 
 /** deserializeGame alone checks the version. */
@@ -54,9 +55,13 @@ export function loadSave(store: SaveStore): LoadResult {
   if (saved) return { saved, notice: null };
   try {
     store.write(BAD_SAVE_KEY, text);
+  } catch (error) {
+    return { saved: null, notice: `${NOT_SET_ASIDE_NOTICE} ${error instanceof Error ? error.message : String(error)}` };
+  }
+  try {
     store.remove(SAVE_KEY);
   } catch {
-    // The notice below stands. A later write that fails raises its own warning.
+    // A copy is safe under BAD_SAVE_KEY, and the next write replaces this one.
   }
   return { saved: null, notice: BAD_SAVE_NOTICE };
 }
