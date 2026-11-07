@@ -3,7 +3,7 @@
 // demo script, and `checkins` plays the Wall on a schedule of check-ins. docs/plans/poc-demo-results.md records them. Each exits non-zero if a trigger trips, a target misses, or none is found.
 import { createServer } from 'vite';
 
-const SEEDS = 200;
+const SEEDS = Number(process.env.BALANCE_SEEDS ?? 200);
 const LEVEL = 7;
 const POINTS = LEVEL - 1;
 const MAX_RANK = 5;
@@ -382,6 +382,23 @@ function equipPoisonAnswer(game) {
   }
 }
 
+/** For each Hero and Slot, the Stash's highest score above what's worn. */
+function equipBestBy(game, score) {
+  for (const heroId of ANSWER_HERO_ORDER) {
+    for (const slot of SLOTS) {
+      const hero = viewGame(game).heroes.find(({ id }) => id === heroId);
+      const worn = hero.equipment[slot];
+      const wearable = viewStash(game).filter((item) => item.slot === slot && canWear(hero, item));
+      const best = wearable.reduce((top, item) => (top === null || score(item.stats) > score(top.stats) ? item : top), null);
+      if (best && score(best.stats) > (worn ? score(worn.stats) : 0)) applyAction(game, { type: 'equipItem', heroId, itemId: best.id });
+    }
+  }
+}
+
+const toughness = (stats) => stats.armour + stats.maxHealth / 3;
+/** A player reading both Phases: poison resistance for the first, armour and health for the second. */
+const bothPhases = (stats) => stats.poisonResistance * 2 + toughness(stats);
+
 const newLedger = () => ({
   battleTicks: [],
   floorTicks: [],
@@ -648,6 +665,7 @@ const CHECK_IN_GAPS_HOURS = [4, 8, 12];
 const TUNED_GAP_HOURS = 8;
 const CHECK_INS = 3;
 const UNTENDED_HOURS = 24;
+const PATIENT_HOURS = 72;
 const FULL_ABSENCE_HOURS = CATCH_UP_CAP_MS / HOUR_MS;
 const TICKS_PER_HOUR = 60 * TICKS_PER_MINUTE;
 
@@ -658,6 +676,8 @@ function playToKill(game, record, endTick) {
       if (event.type === 'guardianFell') {
         record.killTick = tick + 1;
         record.killLevel = viewGame(game).heroes[0].level;
+      } else if (event.type === 'phaseChanged' && event.unitName === GUARDIAN_NAME) {
+        record.secondPhaseTick ??= tick + 1;
       } else if ((event.type === 'wipe' || event.type === 'draw') && event.enemyName === GUARDIAN_NAME) {
         record.guardianSetbacks++;
       }
@@ -665,7 +685,7 @@ function playToKill(game, record, endTick) {
   }
 }
 
-const newCheckInRecord = (guardianSetbacks = 0) => ({ checkIns: 0, killTick: null, killLevel: null, guardianSetbacks });
+const newCheckInRecord = (guardianSetbacks = 0, secondPhaseTick = null) => ({ checkIns: 0, killTick: null, killLevel: null, guardianSetbacks, secondPhaseTick });
 
 /** Each acts at every check-in, on all the points and Stash they have by then. */
 const CHECK_IN_PLAYERS = {
@@ -673,13 +693,21 @@ const CHECK_IN_PLAYERS = {
     spendPoints(game);
     for (const item of viewStash(game)) equipUpgrade(game, item);
   },
-  Answer: WALL_PLAYERS.Answer,
+  Answer: (game) => {
+    spendReferencePoints(game);
+    equipBestBy(game, bothPhases);
+  },
+  'Poison only': WALL_PLAYERS.Answer,
+  'Armour only': (game) => {
+    spendReferencePoints(game);
+    equipBestBy(game, toughness);
+  },
 };
 
 /** One tended player, from the end of the first absence that every player shares. */
-function playCheckIns(saved, setbacks, act, gapHours) {
+function playCheckIns(saved, setbacks, secondPhaseTick, act, gapHours) {
   const game = deserializeGame(saved);
-  const record = newCheckInRecord(setbacks);
+  const record = newCheckInRecord(setbacks, secondPhaseTick);
   for (let checkIns = 1; checkIns <= CHECK_INS && record.killTick === null; checkIns++) {
     record.checkIns = checkIns;
     act(game);
@@ -693,7 +721,7 @@ function runCheckIns(firstSeed) {
   for (const gapHours of CHECK_IN_GAPS_HOURS) {
     results.tended[gapHours] = Object.fromEntries(Object.keys(CHECK_IN_PLAYERS).map((name) => [name, []]));
   }
-  const stops = [...new Set([...CHECK_IN_GAPS_HOURS, FULL_ABSENCE_HOURS, UNTENDED_HOURS])].sort((a, b) => a - b);
+  const stops = [...new Set([...CHECK_IN_GAPS_HOURS, FULL_ABSENCE_HOURS, UNTENDED_HOURS, PATIENT_HOURS])].sort((a, b) => a - b);
   for (let seed = firstSeed; seed < firstSeed + SEEDS; seed++) {
     const game = createGame({ seed });
     const untended = { ...newCheckInRecord(), levels: {} };
@@ -704,7 +732,7 @@ function runCheckIns(firstSeed) {
       untended.levels[hours] = viewGame(game).heroes[0].level;
       if (!CHECK_IN_GAPS_HOURS.includes(hours)) continue;
       for (const [name, act] of Object.entries(CHECK_IN_PLAYERS)) {
-        const record = untended.killTick !== null ? { ...untended } : playCheckIns(serializeGame(game), untended.guardianSetbacks, act, hours);
+        const record = untended.killTick !== null ? { ...untended } : playCheckIns(serializeGame(game), untended.guardianSetbacks, untended.secondPhaseTick, act, hours);
         results.tended[hours][name].push(record);
       }
     }
@@ -734,7 +762,7 @@ function measureCheckIns(firstSeed) {
   const levels = [...CHECK_IN_GAPS_HOURS, UNTENDED_HOURS].map((hours) => `${hours} h: ${medianOf(untended.map((record) => record.levels[hours]))}`);
 
   console.log(`Check-ins: ${SEEDS} Seeds from ${firstSeed}. Each player acts at up to ${CHECK_INS} check-ins, and the last gets a full gap to play out.\n`);
-  console.log(`  Untended: killed by ${FULL_ABSENCE_HOURS} h ${percent(killedBy(FULL_ABSENCE_HOURS))}, by ${UNTENDED_HOURS} h ${percent(killedBy(UNTENDED_HOURS))}. Median level at ${levels.join(', ')}.\n`);
+  console.log(`  Untended: killed by ${FULL_ABSENCE_HOURS} h ${percent(killedBy(FULL_ABSENCE_HOURS))}, by ${UNTENDED_HOURS} h ${percent(killedBy(UNTENDED_HOURS))}, by ${PATIENT_HOURS} h ${percent(killedBy(PATIENT_HOURS))}. Median level at ${levels.join(', ')}.\n`);
   console.log(`  ${''.padEnd(16)}First kill, by check-ins made`);
   console.log(`  ${'gap'.padEnd(6)}${'player'.padEnd(10)}${['0', '1', '2', '3', 'none'].map((label) => label.padEnd(8)).join('')}${'median'.padEnd(10)}${'level'.padEnd(8)}Guardian Setbacks`);
   for (const gapHours of CHECK_IN_GAPS_HOURS) {
@@ -743,7 +771,13 @@ function measureCheckIns(firstSeed) {
 
   const answer = tended[TUNED_GAP_HOURS].Answer;
   const answerInTime = killedAfter(answer, 2) + killedAfter(answer, 3);
+  const killedAtAll = (records) => (records.filter(({ killTick }) => killTick !== null).length / records.length) * 100;
+  const reachedInTime = (answer.filter(({ secondPhaseTick }) => secondPhaseTick !== null && secondPhaseTick <= 2 * TUNED_GAP_HOURS * TICKS_PER_HOUR).length / answer.length) * 100;
+  const oneAnswerGap = killedAtAll(answer) - Math.max(killedAtAll(tended[TUNED_GAP_HOURS]['Poison only']), killedAtAll(tended[TUNED_GAP_HOURS]['Armour only']));
   const targets = [
+    [`Untended: killed by ${PATIENT_HOURS} h`, 'at least 80%', percent(killedBy(PATIENT_HOURS)), killedBy(PATIENT_HOURS) >= 80],
+    ['Answer: Phase 2 reached by the 2nd check-in', 'at least 80%', percent(reachedInTime), reachedInTime >= 80],
+    ['One answer only: kills below Answer', 'at least 20 points', `${oneAnswerGap.toFixed(0)} points`, oneAnswerGap >= 20],
     [`Untended: killed by ${FULL_ABSENCE_HOURS} h`, 'at most 10%', percent(killedBy(FULL_ABSENCE_HOURS)), killedBy(FULL_ABSENCE_HOURS) <= 10],
     [`Answer, ${TUNED_GAP_HOURS} h gap: first kill after 2-3 check-ins`, 'at least 80%', percent(answerInTime), answerInTime >= 80],
   ];

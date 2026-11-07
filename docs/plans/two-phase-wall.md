@@ -42,6 +42,20 @@ Each is its own PR and leaves the game runnable.
 
 Dropping Spore Breath from Phase 2 made the Wall easier: the median first kill moved from 8 hours to 1.7 hours at the 8-hour gap, because Poison is what kills the Party. So Phase 2 keeps a weaker Poison, and step 5 tunes it.
 
+## First tuning sweep
+
+40 Seeds, numbers only, on 2026-11-06. Nothing here is applied yet. "Answer" gears for both Phases, at the 8-hour gap.
+
+| Health, Slam, Maul, Breath stack | Untended by 12 h | Untended by 72 h | Answer: first kill after 2–3 check-ins | One answer: below Answer |
+|---|---|---|---|---|
+| 1,100, 18, 40, 2 (today) | 100% | 100% | 0% | 0 points |
+| 1,800, 18, 40, 2 | 0% | 95% | 0% | 0 points |
+| 1,800, 30, 70, 3 | 0% | 83% | 0% | 0 points |
+| 2,000, 90, 220, 8 | 0% | 0% | 60% | 0 points |
+| 2,200, 110, 260, 9 | 0% | 0% | 70% | Passes |
+
+**Numbers alone can't meet the safety net and the check-in target together.** An untended Party spends no points and equips nothing, while 8 hours of Stash and points make a first check-in far stronger than 72 hours of slowed levels. Plain upgrades (Routine) also did at least as well as Answer in these runs. The human decides what gives.
+
 ## Targets
 
 | Target | Value |
