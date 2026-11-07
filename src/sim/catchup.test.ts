@@ -202,6 +202,30 @@ describe('the Away Report', () => {
     expect(first!.mainDamageShare).toBeGreaterThan(0.5);
   });
 
+  it('the Away Report tracks attempts at the Guardian, and the next compares with the last', () => {
+    const game = newGame(1, { ...atGuardian, battleTicks: 300 });
+    const first = catchUp(game, 45_000).guardianAttempts!;
+    expect(first.attempts).toBeGreaterThan(0);
+    expect(first.bestHealthShare).toBeGreaterThan(0);
+    expect(first.bestHealthShare).toBeLessThanOrEqual(1);
+    expect(first.previousBestHealthShare).toBeNull();
+
+    const report = catchUp(game, 3 * HOUR_MS);
+    const second = report.guardianAttempts!;
+    expect(second.previousBestHealthShare).toBe(first.bestHealthShare);
+  });
+
+  it('counts an attempt that reached the second Phase', () => {
+    // Strong enough to pass half the Warden's health, and cut off before the kill.
+    const { guardianAttempts } = catchUp(newGame(1, { ...atGuardian, heroLevel: 12, battleTicks: 240 }), 30_000);
+    expect(guardianAttempts!.reachedSecondPhase).toBeGreaterThan(0);
+    expect(guardianAttempts!.bestHealthShare).toBeLessThanOrEqual(0.5);
+  });
+
+  it('a report with no Guardian Setback has no attempts', () => {
+    expect(catchUp(newGame(1), 60_000).guardianAttempts).toBeNull();
+  });
+
   it('the Away Report notes a fall back and a relit Lamp', () => {
     const fallen = catchUp(newGame(1, atGuardian), HOUR_MS);
     expect(fallen.fellBack).toBe(true);

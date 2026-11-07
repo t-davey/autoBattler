@@ -13,6 +13,16 @@ const setback = (changes: Partial<AwaySetback> = {}): AwaySetback => ({
   ...changes,
 });
 
+describe('mergeAwayReports, Guardian attempts', () => {
+  it('adds attempts, keeps the lowest health, and keeps the earlier previous best', () => {
+    const base = { elapsedMs: 0, appliedMs: 0, capped: false, floorsCleared: 0, deepestFloor: 0, setbacks: [], guardianKills: 0, lampRelit: false, fellBack: false, levels: [], loot: { common: 0, magic: 0, rare: 0, notable: [] }, unspentSkillPoints: 0 };
+    const earlier = { ...base, guardianAttempts: { attempts: 2, reachedSecondPhase: 0, bestHealthShare: 0.6, previousBestHealthShare: 0.8 } };
+    const later = { ...base, guardianAttempts: { attempts: 1, reachedSecondPhase: 1, bestHealthShare: 0.4, previousBestHealthShare: 0.6 } };
+    expect(mergeAwayReports(earlier, later).guardianAttempts).toEqual({ attempts: 3, reachedSecondPhase: 1, bestHealthShare: 0.4, previousBestHealthShare: 0.8 });
+    expect(mergeAwayReports(earlier, { ...base, guardianAttempts: null }).guardianAttempts).toEqual(earlier.guardianAttempts);
+  });
+});
+
 describe('describeSetbacks', () => {
   it('groups Setbacks at one enemy with one main damage type', () => {
     expect(describeSetbacks([setback(), setback({ mainDamageShare: 0.6 })])).toEqual(['2 Wipes at the Mouldering Warden, mostly poison damage']);
@@ -45,6 +55,7 @@ describe('mergeAwayReports', () => {
     deepestFloor: 1,
     setbacks: [],
     guardianKills: 0,
+    guardianAttempts: null,
     lampRelit: false,
     fellBack: false,
     levels: [],

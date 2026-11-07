@@ -5,6 +5,8 @@ export interface WallState {
   /** Setbacks since the count last cleared. Stops at SETBACKS_TO_FALL_BACK. */
   setbacks: number;
   fallenBack: boolean;
+  /** The lowest share of its health the Guardian has reached in a Setback. */
+  bestAttempt?: number;
 }
 
 export type WallEvent =
@@ -24,14 +26,20 @@ export function createWall({ lampLit = false, setbacks = 0 }: { readonly lampLit
 /** Whether saved data is a Wall that createWall and these transitions could have made. */
 export function isWallState(value: unknown): boolean {
   if (typeof value !== 'object' || value === null) return false;
-  const { lampLit, setbacks, fallenBack } = value as Record<string, unknown>;
+  const { lampLit, setbacks, fallenBack, bestAttempt } = value as Record<string, unknown>;
   return (
+    (bestAttempt === undefined || (typeof bestAttempt === 'number' && bestAttempt >= 0 && bestAttempt <= 1)) &&
     typeof lampLit === 'boolean' &&
     Number.isInteger(setbacks) &&
     (setbacks as number) >= 0 &&
     (setbacks as number) <= SETBACKS_TO_FALL_BACK &&
     fallenBack === (setbacks === SETBACKS_TO_FALL_BACK)
   );
+}
+
+/** Keeps the lowest health share a Guardian has been left on. */
+export function recordBestAttempt(wall: WallState, healthShare: number): void {
+  wall.bestAttempt = Math.min(wall.bestAttempt ?? 1, healthShare);
 }
 
 /** A Party that has fallen back turns back before the Guardian Room. */

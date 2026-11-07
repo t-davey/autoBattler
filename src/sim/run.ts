@@ -1,4 +1,4 @@
-import { createBattle, stepBattle, type BattleEvent, type BattleState, type TeamId } from './battle';
+import { createBattle, maxHealthOf, stepBattle, type BattleEvent, type BattleState, type TeamId } from './battle';
 import { CHEST_LINES } from './content/chests';
 import { rollPack } from './content/enemies';
 import { MOULDERING_WARDEN } from './content/guardian';
@@ -10,7 +10,7 @@ import { BATTLE_XP, FLOOR_SCALE, generateFloor, xpShare, type FloorLayout, type 
 import { clampToMaximums, gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
 import { rollItemSpec, viewItem, type ItemState, type ItemView } from './items';
 import { nextFloat, nextInt, type Rng } from './rng';
-import { recordGrowth, recordGuardianKill, recordSetback, turnsBackBeforeGuardian, type WallEvent, type WallState } from './wall';
+import { recordGrowth, recordGuardianKill, recordBestAttempt, recordSetback, turnsBackBeforeGuardian, type WallEvent, type WallState } from './wall';
 
 /** The Team the Party fights on. */
 export const PARTY_TEAM = 'a' satisfies TeamId;
@@ -37,7 +37,7 @@ export type RunEvent =
   | { readonly type: 'chestOpened'; readonly line: string }
   | { readonly type: 'itemFound'; readonly item: ItemView }
   // A Setback. battleEnded comes first and says how the Battle went; only these two count towards falling back.
-  | { readonly type: 'wipe' | 'draw'; readonly floor: FloorNumber; readonly enemyName: string }
+  | { readonly type: 'wipe' | 'draw'; readonly floor: FloorNumber; readonly enemyName: string; readonly guardianHealthShare: number | null }
   | { readonly type: 'returnedToTown'; readonly reason: TownReason }
   | { readonly type: 'partySent' }
   | WallEvent;
@@ -191,7 +191,9 @@ function outcomeOf(battle: BattleState): BattleOutcome {
 
 function setback(world: RunWorld, type: 'wipe' | 'draw', battle: BattleState, sink: EventSink): void {
   const firstEnemy = battle.units.find((unit) => unit.team === ENEMY_TEAM);
-  sink({ type, floor: world.run.floor!, enemyName: firstEnemy?.spec.name ?? '' });
+  const guardianHealthShare = firstEnemy && currentRoom(world.run).kind === 'guardian' ? Math.max(0, firstEnemy.health) / maxHealthOf(firstEnemy) : null;
+  if (guardianHealthShare !== null) recordBestAttempt(world.wall, guardianHealthShare);
+  sink({ type, floor: world.run.floor!, enemyName: firstEnemy?.spec.name ?? '', guardianHealthShare });
   recordSetback(world.wall, sink);
   returnToTown(world, 'setback', sink);
 }

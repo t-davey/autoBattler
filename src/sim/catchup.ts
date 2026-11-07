@@ -22,6 +22,17 @@ export interface AwayLevelGain {
   readonly to: number;
 }
 
+/** How the Party fared against a Guardian in this report's Setbacks. */
+export interface GuardianAttempts {
+  /** Setbacks at the Guardian. */
+  readonly attempts: number;
+  readonly reachedSecondPhase: number;
+  /** The lowest share of its health the Guardian was left on. */
+  readonly bestHealthShare: number;
+  /** The same, across all play before this report. Null if there was none. */
+  readonly previousBestHealthShare: number | null;
+}
+
 export interface AwayReport {
   readonly elapsedMs: number;
   readonly appliedMs: number;
@@ -31,6 +42,8 @@ export interface AwayReport {
   readonly deepestFloor: number;
   readonly setbacks: readonly AwaySetback[];
   readonly guardianKills: number;
+  /** Null if no Setback came at a Guardian. */
+  readonly guardianAttempts: GuardianAttempts | null;
   readonly lampRelit: boolean;
   readonly fellBack: boolean;
   readonly levels: readonly AwayLevelGain[];
@@ -49,6 +62,10 @@ interface Tally {
   deepestFloor: number;
   setbacks: AwaySetback[];
   guardianKills: number;
+  guardianAttempts: GuardianAttempts | null;
+  /** Whether the current Battle's Guardian has entered its second Phase. */
+  inSecondPhase: boolean;
+  previousBest: number | null;
   lampRelit: boolean;
   fellBack: boolean;
   levels: AwayLevelGain[];
@@ -91,10 +108,24 @@ function addLevel(levels: AwayLevelGain[], heroId: HeroId, level: number): void 
   else levels[index] = entry;
 }
 
+function addAttempt(tally: Tally, healthShare: number): void {
+  const soFar = tally.guardianAttempts;
+  tally.guardianAttempts = {
+    attempts: (soFar?.attempts ?? 0) + 1,
+    reachedSecondPhase: (soFar?.reachedSecondPhase ?? 0) + (tally.inSecondPhase ? 1 : 0),
+    bestHealthShare: Math.min(soFar?.bestHealthShare ?? 1, healthShare),
+    previousBestHealthShare: tally.previousBest,
+  };
+}
+
 function fold(tally: Tally, event: GameEvent): void {
   switch (event.type) {
     case 'battleStarted':
       tally.battleDamage = {};
+      tally.inSecondPhase = false;
+      return;
+    case 'phaseChanged':
+      tally.inSecondPhase = true;
       return;
     case 'attack':
     case 'effectDamage':
@@ -108,6 +139,7 @@ function fold(tally: Tally, event: GameEvent): void {
     case 'wipe':
     case 'draw':
       tally.setbacks.push({ kind: event.type, floor: event.floor, enemyName: event.enemyName, ...mainDamage(tally.battleDamage) });
+      if (event.guardianHealthShare !== null) addAttempt(tally, event.guardianHealthShare);
       return;
     case 'fellBack':
       tally.fellBack = true;
@@ -148,6 +180,9 @@ export function beginCatchUp(game: Game, elapsedMs: number): CatchUp {
       deepestFloor: state.run.floor ?? 0,
       setbacks: [],
       guardianKills: 0,
+      guardianAttempts: null,
+      inSecondPhase: false,
+      previousBest: state.wall.bestAttempt ?? null,
       lampRelit: false,
       fellBack: false,
       levels: [],
@@ -166,7 +201,7 @@ export function continueCatchUp(game: Game, catchUp: CatchUp, maxTicks: number):
   catchUp.ticksLeft -= ticks;
   if (catchUp.ticksLeft > 0) return null;
 
-  const { battleDamage: _battleDamage, ...tally } = catchUp.tally;
+  const { battleDamage: _battleDamage, inSecondPhase: _inSecondPhase, previousBest: _previousBest, ...tally } = catchUp.tally;
   return {
     ...tally,
     elapsedMs: catchUp.elapsedMs,

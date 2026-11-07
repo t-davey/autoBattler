@@ -22,7 +22,7 @@ XP falloff slows levels, but the first check-in still wins, so choices barely ma
 | Phase 2 | A weaker, slower Spore Breath, so poison gear still counts. Grave Slam gets faster and harder, plus a slow, big hit on one front-Row Hero |
 | Phase 2 answer | Armour and health on any Hero in front, on top of poison resistance |
 | The big hit's name | "Grave Maul" is a placeholder for the human to replace |
-| Best attempt | The lowest Guardian health in an Away Report, shown beside the previous report's |
+| Best attempt | The lowest Guardian health in an Away Report, shown beside the lowest from all play before it |
 | Finding | Facts only, such as "Reached Phase 2 in 3 of 5 attempts. Best: 31% health left, was 62%. Mostly physical damage." It opens the Stash on the stat for the Phase that caused the most Setbacks |
 | Phase cue | A Live Log line and harsher Room light, with no new sprite |
 | Timers | No enrage. The 120-second draw stays. If it cuts fights short, raise the Warden's damage rather than its health |
@@ -33,8 +33,8 @@ Each is its own PR and leaves the game runnable.
 
 | # | Work | State |
 |---|---|---|
-| 1 | Guardian Phases in the sim | In progress |
-| 2 | Best attempt and its Finding | Not started |
+| 1 | Guardian Phases in the sim | Built |
+| 2 | Best attempt, as a line in the Setbacks Finding | Built |
 | 3 | Phase cue in the Battle scene | Not started |
 | 4 | `checkins` reports Phases, 24–72 hours, and one-answer players, and the Answer player answers Phase 2 | Not started |
 | 5 | Tune numbers only, in order: Warden health, Phase 2 damage, threshold, then XP. Confirm on Seeds 1001-1200, then retire the `wall` targets that assume one action at minute 60, and find a new demo Seed | Not started |
