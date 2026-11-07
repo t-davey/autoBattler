@@ -1,6 +1,6 @@
 # Two-phase Wall: plan
 
-XP falloff slows levels, but the first check-in still wins, so choices barely matter. This slice gives the first Wall two Phases, so a player beats it over 2–3 check-ins and sees progress at each one. A good build wins sooner, and waiting still wins eventually.
+XP falloff slows levels, but the first check-in still wins, so choices barely matter. This slice gives the first Wall two Phases, so a player beats it over 2–3 check-ins and sees progress at each one. A good build wins sooner. Waiting alone doesn't win: the human dropped the 72-hour target, so a player has to check in at least once.
 
 **The question:** does "I got further this time, and now I know what to fix" make coming back feel better?
 
@@ -11,7 +11,7 @@ XP falloff slows levels, but the first check-in still wins, so choices barely ma
 1. **Check-in 1:** Wipes, mostly poison, with a best attempt. The player equips poison resistance.
 2. **Check-in 2:** Phase 2 reached, with a better best attempt, mostly physical. The player gears for it.
 3. **Check-in 3:** The Guardian falls and the Lamp relights.
-4. **A player who only waits:** levels get there in days rather than hours.
+4. **A player who only waits:** the Wall holds until they check in.
 
 ## Decisions
 
@@ -54,7 +54,20 @@ Dropping Spore Breath from Phase 2 made the Wall easier: the median first kill m
 | 2,000, 90, 220, 8 | 0% | 0% | 60% | 0 points |
 | 2,200, 110, 260, 9 | 0% | 0% | 70% | Passes |
 
-**Numbers alone can't meet the safety net and the check-in target together.** An untended Party spends no points and equips nothing, while 8 hours of Stash and points make a first check-in far stronger than 72 hours of slowed levels. Plain upgrades (Routine) also did at least as well as Answer in these runs. The human decides what gives.
+**Numbers alone can't meet the safety net and the check-in target together.** An untended Party spends no points and equips nothing, while 8 hours of Stash and points make a first check-in far stronger than 72 hours of slowed levels. Plain upgrades (Routine) also did at least as well as Answer in these runs. The human chose to drop the 72-hour target on 2026-11-06.
+
+## Applied numbers
+
+The Warden now has 2,300 health. Phase 2 is Spore Breath with 9 Poison stack damage every 90 Ticks, Grave Slam for 90 every 50, and Grave Maul for 220 every 120. Phase 1 is unchanged. Measured with `npm run balance -- checkins`:
+
+| Measure | Target | Seeds 1-200 | Seeds 1001-1200 |
+|---|---|---|---|
+| Untended: killed by 12 hours | At most 10% | 0% | 0% |
+| Answer, 8-hour gap: first kill after 2–3 check-ins | At least 80% | 77%, a miss | 81% |
+| Answer: Phase 2 reached by the 2nd check-in | At least 80% | 100% | 100% |
+| One answer only: kills below Answer | At least 20 points | 22 | 21 |
+
+Routine, who equips plain upgrades, kills on 94% of Seeds against Answer's 81%, and sooner. So a smart player doesn't yet win sooner, and the demo Seed no longer plays its script. The `wall` targets that assume one action at minute 60 are retired.
 
 ## Targets
 
@@ -63,7 +76,6 @@ Dropping Spore Breath from Phase 2 made the Wall easier: the median first kill m
 | Untended: killed by 12 hours | At most 10% |
 | Answer, 8-hour gap: first kill after 2–3 check-ins | At least 80% |
 | Answer: Phase 2 reached by the 2nd check-in | At least 80% |
-| Untended: killed by 72 hours | At least 80% |
 | One answer only, 8-hour gap: kills by the 3rd check-in | At least 20 points below Answer |
 
 The Battle, Floor, early Wipe, and first rare targets stay.

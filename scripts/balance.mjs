@@ -557,9 +557,6 @@ function measureWall(firstSeed) {
     ['At least one rare by 60 minutes', 'at least 80%', formatted(rares, '%'), rares >= 80],
     ['Guardian Wipes mainly poison', 'at least 90%', `${formatted(poisonWipes, '%')} of ${guardianWipes}`, poisonWipes >= 90],
     ['Untended: Guardian killed in 2 hours', 'at most 10%', formatted(killShare(untended), '%'), killShare(untended) <= 10],
-    ['Answer: Guardian killed in 2 hours', 'at least 80%', formatted(answerKills, '%'), answerKills >= 80],
-    ['Answer: median first kill', '60-120 min', formatted(medianKill(answer), ' min'), within(medianKill(answer), 60, 120)],
-    ['Points only: kill rate below Answer', 'at least 20 points', `${formatted(killShare(pointsOnly), '%')}, ${formatted(gap)} points below`, gap >= 20],
   ];
 
   console.log(`Wall: ${WALL_MINUTES} minutes of Party time over ${SEEDS} Seeds from ${firstSeed}, acting at minute ${ACT_AT_MINUTE}.`);
@@ -775,7 +772,6 @@ function measureCheckIns(firstSeed) {
   const reachedInTime = (answer.filter(({ secondPhaseTick }) => secondPhaseTick !== null && secondPhaseTick <= 2 * TUNED_GAP_HOURS * TICKS_PER_HOUR).length / answer.length) * 100;
   const oneAnswerGap = killedAtAll(answer) - Math.max(killedAtAll(tended[TUNED_GAP_HOURS]['Poison only']), killedAtAll(tended[TUNED_GAP_HOURS]['Armour only']));
   const targets = [
-    [`Untended: killed by ${PATIENT_HOURS} h`, 'at least 80%', percent(killedBy(PATIENT_HOURS)), killedBy(PATIENT_HOURS) >= 80],
     ['Answer: Phase 2 reached by the 2nd check-in', 'at least 80%', percent(reachedInTime), reachedInTime >= 80],
     ['One answer only: kills below Answer', 'at least 20 points', `${oneAnswerGap.toFixed(0)} points`, oneAnswerGap >= 20],
     [`Untended: killed by ${FULL_ABSENCE_HOURS} h`, 'at most 10%', percent(killedBy(FULL_ABSENCE_HOURS)), killedBy(FULL_ABSENCE_HOURS) <= 10],
