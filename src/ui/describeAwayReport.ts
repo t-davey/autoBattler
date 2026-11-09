@@ -71,6 +71,8 @@ export function mergeAwayReports(earlier: AwayReport, later: AwayReport): AwayRe
     deepestFloor: Math.max(earlier.deepestFloor, later.deepestFloor),
     setbacks: [...earlier.setbacks, ...later.setbacks],
     guardianKills: earlier.guardianKills + later.guardianKills,
+    damageDealt: earlier.damageDealt + later.damageDealt,
+    healed: earlier.healed + later.healed,
     guardianAttempts: mergeAttempts(earlier.guardianAttempts, later.guardianAttempts),
     lampRelit: earlier.lampRelit || later.lampRelit,
     fellBack: earlier.fellBack || later.fellBack,

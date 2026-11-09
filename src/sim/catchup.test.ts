@@ -222,6 +222,12 @@ describe('the Away Report', () => {
     expect(guardianAttempts!.bestHealthShare).toBeLessThanOrEqual(0.5);
   });
 
+  it('the Away Report totals damage the Heroes dealt and health they healed', () => {
+    const report = catchUp(newGame(1, { skillRanks: { lamplighter: { 'mend-by-lamplight': 1 } }, heroLevel: 2 }), HOUR_MS);
+    expect(report.damageDealt).toBeGreaterThan(1_000);
+    expect(report.healed).toBeGreaterThan(0);
+  });
+
   it('a report with no Guardian Setback has no attempts', () => {
     expect(catchUp(newGame(1), 60_000).guardianAttempts).toBeNull();
   });

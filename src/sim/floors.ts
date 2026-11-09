@@ -17,7 +17,7 @@ export interface FloorLayout {
 
 export const GRID_WIDTH = 9;
 export const GRID_HEIGHT = 7;
-const LAST_FLOOR: FloorNumber = 5;
+export const LAST_FLOOR: FloorNumber = 5;
 
 const MIN_ROOMS = 8;
 const MAX_ROOMS = 12;

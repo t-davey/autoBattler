@@ -523,9 +523,9 @@ const formatted = (value, unit = '') => (value === null ? 'none' : `${value.toFi
 const within = (value, low, high) => value !== null && value >= low && value <= high;
 
 function printPlayers(results) {
-  console.log(`\n  ${'player'.padEnd(42)}${'killed'.padEnd(8)}${'median kill'.padEnd(13)}${'kills/Seed'.padEnd(12)}${'Wipes/Seed, Floors 1/2/3'.padEnd(26)}${'at Guardian'.padEnd(13)}level`);
+  console.log(`\n  ${'player'.padEnd(42)}${'killed'.padEnd(8)}${'median kill'.padEnd(13)}${'kills/Seed'.padEnd(12)}${'Wipes/Seed, Floors 1-5'.padEnd(26)}${'at Guardian'.padEnd(13)}level`);
   for (const [name, ledgers] of Object.entries(results)) {
-    const wipes = [1, 2, 3].map((floor) => (sum(ledgers.map(({ wipesByFloor }) => wipesByFloor[floor] ?? 0)) / SEEDS).toFixed(1)).join(' / ');
+    const wipes = [1, 2, 3, 4, 5].map((floor) => (sum(ledgers.map(({ wipesByFloor }) => wipesByFloor[floor] ?? 0)) / SEEDS).toFixed(1)).join(' / ');
     const atGuardian = (sum(ledgers.map(({ guardianWipes }) => guardianWipes)) / SEEDS).toFixed(1);
     const median = medianKill(ledgers);
     const kills = (sum(ledgers.map(({ kills: count }) => count)) / SEEDS).toFixed(1);
@@ -550,7 +550,7 @@ function measureWall(firstSeed) {
   const gap = answerKills - killShare(pointsOnly);
 
   const targets = [
-    ['Median Battle length, Floors 1-3', '20-30 s', formatted(battleSeconds, ' s'), within(battleSeconds, 20, 30)],
+    ['Median Battle length, Floors 1-5', '20-30 s', formatted(battleSeconds, ' s'), within(battleSeconds, 20, 30)],
     ['Median Floor length', '4-6 min', formatted(floorMinutes, ' min'), within(floorMinutes, 4, 6)],
     ['First Guardian attempt, median', '13-20 min', `${formatted(medianOf(attempts), ' min')}, reached in ${attempts.length} of ${SEEDS} Seeds`, within(medianOf(attempts), 13, 20)],
     ['New Party Wipes in first 5 minutes', 'under 5%', formatted(earlyWipes, '%'), earlyWipes < 5],

@@ -55,6 +55,10 @@ export interface AwayReport {
     readonly notable: readonly ItemView[];
   };
   readonly unspentSkillPoints: number;
+  /** Damage the Heroes dealt, Bleed included. */
+  readonly damageDealt: number;
+  /** Health the Heroes restored with skills. */
+  readonly healed: number;
 }
 
 interface Tally {
@@ -62,6 +66,8 @@ interface Tally {
   deepestFloor: number;
   setbacks: AwaySetback[];
   guardianKills: number;
+  damageDealt: number;
+  healed: number;
   guardianAttempts: GuardianAttempts | null;
   /** Whether the current Battle's Guardian has entered its second Phase. */
   inSecondPhase: boolean;
@@ -130,6 +136,10 @@ function fold(tally: Tally, event: GameEvent): void {
     case 'attack':
     case 'effectDamage':
       if (isHero(event.targetId)) tally.battleDamage[event.damageType] = (tally.battleDamage[event.damageType] ?? 0) + event.damage + event.absorbed;
+      else tally.damageDealt += event.damage;
+      return;
+    case 'heal':
+      tally.healed += event.amount;
       return;
     case 'floorEntered':
       // Each Run starts at Floor 1, so reaching a later Floor means the one above was cleared.
@@ -180,6 +190,8 @@ export function beginCatchUp(game: Game, elapsedMs: number): CatchUp {
       deepestFloor: state.run.floor ?? 0,
       setbacks: [],
       guardianKills: 0,
+      damageDealt: 0,
+      healed: 0,
       guardianAttempts: null,
       inSecondPhase: false,
       previousBest: state.wall.bestAttempt ?? null,

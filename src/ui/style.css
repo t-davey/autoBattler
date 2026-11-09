@@ -697,6 +697,11 @@ select {
   left: 0.75rem;
 }
 
+.floor-progress {
+  margin: 0 0 0.35rem;
+  color: var(--tallow-dim);
+}
+
 .floor-map h2 {
   margin-bottom: 0.25rem;
   font-size: 1.5rem;
