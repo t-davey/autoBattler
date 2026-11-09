@@ -22,7 +22,7 @@ type Scenario = NonNullable<GameSetup['scenario']>;
 
 const HOUR_MS = 3_600_000;
 const SLICES = [16, 33, 100, 1_000, 7_000];
-const atGuardian = { startAt: { floor: 3, room: 'guardian' } } satisfies Scenario;
+const atGuardian = { startAt: { floor: 5, room: 'guardian' } } satisfies Scenario;
 
 const newGame = (seed: number, scenario: Scenario = {}): Game => createGame({ seed, scenario });
 
@@ -197,7 +197,7 @@ describe('the Away Report', () => {
     }
 
     const [first] = report.setbacks;
-    expect(first).toMatchObject({ kind: 'wipe', floor: 3, enemyName: 'The Mouldering Warden', mainDamageType: 'poison' });
+    expect(first).toMatchObject({ kind: 'wipe', floor: 5, enemyName: 'The Mouldering Warden', mainDamageType: 'poison' });
     expect(first!.mainDamageShare).toBeCloseTo(poison / total);
     expect(first!.mainDamageShare).toBeGreaterThan(0.5);
   });
@@ -210,7 +210,7 @@ describe('the Away Report', () => {
     expect(first.bestHealthShare).toBeLessThanOrEqual(1);
     expect(first.previousBestHealthShare).toBeNull();
 
-    const report = catchUp(game, 3 * HOUR_MS);
+    const report = catchUp(game, 8 * HOUR_MS);
     const second = report.guardianAttempts!;
     expect(second.previousBestHealthShare).toBe(first.bestHealthShare);
   });
@@ -249,7 +249,7 @@ describe('the Away Report', () => {
   it('the Away Report lists a draw as a draw, with its main damage type', () => {
     const report = catchUp(newGame(1, { ...atGuardian, heroLevel: 40, battleTicks: 100 }), 30_000);
     const [first] = report.setbacks;
-    expect(first).toMatchObject({ kind: 'draw', floor: 3, enemyName: 'The Mouldering Warden', mainDamageType: 'poison' });
+    expect(first).toMatchObject({ kind: 'draw', floor: 5, enemyName: 'The Mouldering Warden', mainDamageType: 'poison' });
     expect(first!.mainDamageShare).toBeGreaterThan(0.5);
   });
 

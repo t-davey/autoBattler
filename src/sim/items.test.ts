@@ -321,7 +321,7 @@ describe('item saves', () => {
 
 describe('drops', () => {
   const strong = { heroLevel: 40 } satisfies Scenario;
-  const atGuardian = { heroLevel: 40, startAt: { floor: 3, room: 'guardian' } } satisfies Scenario;
+  const atGuardian = { heroLevel: 40, startAt: { floor: 5, room: 'guardian' } } satisfies Scenario;
 
   /** The most recent event before each itemFound that says where it came from. */
   function sources(seen: readonly GameEvent[]): string[] {
@@ -357,7 +357,7 @@ describe('drops', () => {
   });
 
   it('a lost Battle drops nothing', () => {
-    const played = game({ startAt: { floor: 3, room: 'guardian' } });
+    const played = game({ startAt: { floor: 5, room: 'guardian' } });
     const seen: GameEvent[] = [];
     stepUntil(played, 'wipe', seen);
     expect(seen.some((event) => event.type === 'itemFound')).toBe(false);

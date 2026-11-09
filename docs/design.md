@@ -116,14 +116,14 @@ There are 3 Acts of 10 floors each. Names are provisional.
 
 ### Lamps and walls
 
-- A Lamp sits every 3 floors, guarded by a Guardian. A last Guardian ends each Act, making 12 walls per Difficulty Tier.
+- A Lamp sits every 5 floors, guarded by a Guardian. A last Guardian ends each Act, making 6 walls per Difficulty Tier. The human chose 5 over 3 on 2026-11-08, so each stretch shows more progress.
 - Each Party relights Lamps for itself, and they go dark again at each new Difficulty Tier.
 - Each wall leans on a particular damage type or role, without requiring a specific Class.
 - Guardians respawn on each visit. The first kill guarantees a rare item.
 
 ### Why 2 weeks
 
-Offline progress means about 300 hours of Party time in the first Difficulty Tier, while a clean pass through all 30 floors takes about 2.5 hours. Power walls fill the gap: most of that time goes to farming, and about 35 check-ins against 12 walls means breaking through one about every 3 check-ins. Farming going stale is the main risk, so loot and Elites have to stay interesting.
+Offline progress means about 300 hours of Party time in the first Difficulty Tier, while a clean pass through all 30 floors takes about 2.5 hours. Power walls fill the gap: most of that time goes to farming, and about 35 check-ins against 6 walls means breaking through one about every 6 check-ins. _That no longer matches the 2–3 check-ins per Wall in [the second Wall's plan](plans/second-wall.md): see [Open questions](#open-questions)._ Farming going stale is the main risk, so loot and Elites have to stay interesting.
 
 ### Loot sources
 
@@ -241,7 +241,7 @@ Each Class also gets one Class-specific unique that visibly changes a skill, so 
 
 ## Proof-of-concept demo
 
-A smaller build comes before the first playable, to test one thing: is it satisfying to come back to loot, make a build decision, and see that decision beat a Wall? It has a preset Party of Sin-Eater, Huntsman, and Lamplighter, one Branch each, and Floors 1–3 of the Undercroft ending in one Guardian and one Lamp.
+A smaller build comes before the first playable, to test one thing: is it satisfying to come back to loot, make a build decision, and see that decision beat a Wall? It has a preset Party of Sin-Eater, Huntsman, and Lamplighter, one Branch each, and Floors 1–5 of the Undercroft ending in one Guardian and one Lamp. It began with Floors 1–3.
 
 [The demo plan](plans/poc-demo.md) holds its scope, its rules, and its milestones. Where it differs from this document, it applies to the demo only.
 
@@ -249,4 +249,6 @@ The demo's answer was yes. It now grows by [a second Wall](plans/second-wall.md)
 
 ## Open questions
 
-None for the game as a whole. [The second Wall](plans/second-wall.md#still-open) lists those for its slice of the demo.
+1. **Walls per Difficulty Tier.** With a Lamp every 5 Floors there are 6 Walls, so the roughly 300 hours per Tier give about 50 hours, or 6 check-ins, per Wall, against the second Wall plan's 2–3. Either the Tier gets shorter, Acts get more Floors, or Walls take longer.
+
+Otherwise none for the game as a whole. [The second Wall](plans/second-wall.md#still-open) lists those for its slice of the demo.

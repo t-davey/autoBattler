@@ -2,7 +2,7 @@
 
 The [proof-of-concept demo](poc-demo.md) answered its question with yes, but it holds about an hour of game: [after the first Wall falls, nothing threatens the Party again](poc-demo-results.md#after-the-verdict-12-hours-of-play). This slice tests the next question: **does the loop still hold when a player meets a second Wall, needing a different answer, over several days of real check-ins?**
 
-**Status: decided, not built.** The human made the decisions below on 2026-11-06. Only the Wall module and the check-in measurement are done. Some questions stay [open](#still-open), including parts of falling back. Where this plan differs from [the demo plan](poc-demo.md), this plan applies. [The two-phase Wall](two-phase-wall.md) comes next, and sets how the first Wall meets these targets.
+**Status: decided, not built. Since 2026-11-08 a Lamp sits every 5 Floors, so where this plan says Floors 4–6 and Floor 6, read Floors 6–10 and Floor 10.** The human made the decisions below on 2026-11-06. Only the Wall module and the check-in measurement are done. Some questions stay [open](#still-open), including parts of falling back. Where this plan differs from [the demo plan](poc-demo.md), this plan applies. [The two-phase Wall](two-phase-wall.md) comes next, and sets how the first Wall meets these targets.
 
 ## Decisions
 
@@ -73,7 +73,7 @@ Every field is for the human to fill in. "Fixed" marks what the design or lore a
 | **Name** | _TBD_ | Open in [the bible](../lore/bible.md#open-questions). The first Guardian's name is also a stand-in, and has left the lore. |
 | **Look** | _TBD_ | Fixed: an automaton, gothic and steampunk, powered by Oil, with [brass and iron among the mould](../lore/bible.md#the-guardians) (that last part Provisional). No dialog. |
 | **Sprite** | _TBD_ | Generated from shapes in `src/ui/battleScene`, as the first Guardian's is. |
-| **Place** | Floor 6's Guardian Room | Fixed: a Lamp every 3 Floors. |
+| **Place** | Floor 10's Guardian Room | Fixed: a Lamp every 5 Floors, since 2026-11-08. |
 | **Damage lean** | _TBD_ | Fixed: Undercroft enemies lean physical and poison. Suggestion: physical, so armour and Bulwark matter and the first Wall's poison gear isn't enough. |
 | **The answer** | _TBD_ | The stat or role that beats it, which never requires a specific Class. Physical resistance isn't on any item yet, so a physical lean's answers today are armour and health. |
 | **Health** | _TBD_ | For scale, the first Guardian has 1,100. |

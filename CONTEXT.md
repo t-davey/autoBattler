@@ -239,7 +239,7 @@ A Lamp in the wilderness of Act 1, part of the ward that keeps the Dark from rea
 _Avoid_: Beacon
 
 **Guardian**:
-A tough, named, hand-designed automaton: one guards each Lamp, and the last in an Act ends it, making 12 per Difficulty Tier.
+A tough, named, hand-designed automaton: one guards each Lamp, and the last in an Act ends it, making 6 per Difficulty Tier.
 _Avoid_: Boss, miniboss, gatekeeper, final enemy
 
 **Stance**:

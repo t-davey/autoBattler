@@ -1,6 +1,6 @@
 import { createRng, nextInt, shuffled, type Rng } from './rng';
 
-export type FloorNumber = 1 | 2 | 3;
+export type FloorNumber = 1 | 2 | 3 | 4 | 5;
 export const ROOM_KINDS = ['battle', 'chest', 'stairs', 'guardian'] as const;
 export type RoomKind = (typeof ROOM_KINDS)[number];
 
@@ -17,7 +17,7 @@ export interface FloorLayout {
 
 export const GRID_WIDTH = 9;
 export const GRID_HEIGHT = 7;
-const LAST_FLOOR: FloorNumber = 3;
+const LAST_FLOOR: FloorNumber = 5;
 
 const MIN_ROOMS = 8;
 const MAX_ROOMS = 12;
@@ -25,8 +25,8 @@ const BATTLE_SHARE = 2 / 3;
 const STEPS = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const;
 
 /** Enemy health, power, and Poison stack damage by Floor. */
-export const FLOOR_SCALE: Readonly<Record<FloorNumber, number>> = { 1: 1, 2: 1.15, 3: 1.3 };
-export const BATTLE_XP: Readonly<Record<FloorNumber, number>> = { 1: 15, 2: 20, 3: 25 };
+export const FLOOR_SCALE: Readonly<Record<FloorNumber, number>> = { 1: 1, 2: 1.15, 3: 1.3, 4: 1.45, 5: 1.6 };
+export const BATTLE_XP: Readonly<Record<FloorNumber, number>> = { 1: 15, 2: 20, 3: 25, 4: 30, 5: 35 };
 
 /** XP falloff: full XP up to Floor level + this many levels, then less for each level past it. */
 const XP_GRACE_LEVELS = 1;
@@ -41,7 +41,7 @@ export function xpShare(heroLevel: number, floor: FloorNumber): number {
   return Math.max(MIN_XP_SHARE, 1 - levelsPast * XP_LOST_PER_LEVEL);
 }
 
-export const isFloorNumber = (value: unknown): value is FloorNumber => value === 1 || value === 2 || value === 3;
+export const isFloorNumber = (value: unknown): value is FloorNumber => value === 1 || value === 2 || value === 3 || value === 4 || value === 5;
 
 const cellKey = (x: number, y: number): number => y * GRID_WIDTH + x;
 
