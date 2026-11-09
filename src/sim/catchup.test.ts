@@ -216,10 +216,12 @@ describe('the Away Report', () => {
   });
 
   it('counts an attempt that reached the second Phase', () => {
-    // Strong enough to pass half the Warden's health, and cut off before the kill.
-    const { guardianAttempts } = catchUp(newGame(1, { ...atGuardian, heroLevel: 12, battleTicks: 500 }), 60_000);
-    expect(guardianAttempts!.reachedSecondPhase).toBeGreaterThan(0);
-    expect(guardianAttempts!.bestHealthShare).toBeLessThanOrEqual(0.5);
+    // Some level is strong enough to pass half the Warden's health and still fall short, whatever its numbers.
+    const reports = [8, 10, 12, 14, 16, 20, 25, 30].map((heroLevel) => catchUp(newGame(1, { ...atGuardian, heroLevel }), 10 * 60_000).guardianAttempts);
+    const reached = reports.find((attempts) => attempts !== null && attempts.reachedSecondPhase > 0);
+    expect(reached).toBeDefined();
+    expect(reached!.bestHealthShare).toBeLessThanOrEqual(0.5);
+    for (const attempts of reports) if (attempts) expect(attempts.reachedSecondPhase).toBeLessThanOrEqual(attempts.attempts);
   });
 
   it('the Away Report totals damage the Heroes dealt and health they healed', () => {

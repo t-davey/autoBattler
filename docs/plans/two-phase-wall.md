@@ -58,16 +58,16 @@ Dropping Spore Breath from Phase 2 made the Wall easier: the median first kill m
 
 ## Applied numbers
 
-The Warden now has 2,300 health. Phase 2 is Spore Breath with 9 Poison stack damage every 90 Ticks, Grave Slam for 90 every 50, and Grave Maul for 220 every 120. Phase 1 is unchanged. Measured with `npm run balance -- checkins`:
+Re-tuned on 2026-11-08 after the first Lamp moved to Floor 5, whose extra Floors gave more XP and loot. The Warden now has 2,600 health. Phase 2 is Spore Breath with 12 Poison stack damage every 90 Ticks, Grave Slam for 130 every 50, and Grave Maul for 300 every 120. Phase 1 is unchanged. Measured with `npm run balance -- checkins`:
 
 | Measure | Target | Seeds 1-200 | Seeds 1001-1200 |
 |---|---|---|---|
 | Untended: killed by 12 hours | At most 10% | 0% | 0% |
-| Answer, 8-hour gap: first kill after 2–3 check-ins | At least 80% | 77%, a miss | 81% |
+| Answer, 8-hour gap: first kill after 2–3 check-ins | At least 80% | 82% | 82% |
 | Answer: Phase 2 reached by the 2nd check-in | At least 80% | 100% | 100% |
-| One answer only: kills below Answer | At least 20 points | 22 | 21 |
+| One answer only: kills below Answer | At least 20 points | 29 | 19, a miss |
 
-Routine, who equips plain upgrades, kills on 94% of Seeds against Answer's 81%, and sooner. So a smart player doesn't yet win sooner, and the demo Seed no longer plays its script. The `wall` targets that assume one action at minute 60 are retired.
+At the 8-hour gap, Answer kills by the 3rd check-in on 96% of Seeds and Routine, who equips plain upgrades, on 80%. So a smart player now wins more often, though not sooner: both medians are about 16.5 hours. The demo Seed no longer plays its script. The `wall` targets that assume one action at minute 60 are retired, and "First Guardian attempt, 13–20 min" misses at 66.5 minutes, since it was set for 3 Floors.
 
 ## Targets
 
