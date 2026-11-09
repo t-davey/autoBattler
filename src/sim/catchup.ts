@@ -193,7 +193,8 @@ export function beginCatchUp(game: Game, elapsedMs: number): CatchUp {
       damageDealt: 0,
       healed: 0,
       guardianAttempts: null,
-      inSecondPhase: false,
+      // A Battle already under way may have its Guardian in the second Phase.
+      inSecondPhase: state.battle?.units.some((unit) => unit.inSecondPhase === true) ?? false,
       previousBest: state.wall.bestAttempt ?? null,
       lampRelit: false,
       fellBack: false,

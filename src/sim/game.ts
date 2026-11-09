@@ -232,7 +232,10 @@ const isSkillTicks = (value: unknown): boolean =>
 /** A clock for each of the Unit's actions, or an action would silently never come. */
 const hasActionClocks = (spec: Record<string, unknown>, clocks: unknown, inSecondPhase: unknown): boolean => {
   const phase = spec['secondPhase'];
-  const actions = inSecondPhase === true && isRecord(phase) ? phase['actions'] : spec['actions'];
+  if (inSecondPhase !== undefined && typeof inSecondPhase !== 'boolean') return false;
+  // A second Phase needs one to be in.
+  if (inSecondPhase === true && !isRecord(phase)) return false;
+  const actions = inSecondPhase === true ? (phase as Record<string, unknown>)['actions'] : spec['actions'];
   return Array.isArray(clocks) && clocks.every(isNumber) && clocks.length === (Array.isArray(actions) ? actions.length : 0);
 };
 

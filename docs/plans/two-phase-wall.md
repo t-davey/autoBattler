@@ -35,9 +35,9 @@ Each is its own PR and leaves the game runnable.
 |---|---|---|
 | 1 | Guardian Phases in the sim | Built |
 | 2 | Best attempt, as a line in the Setbacks Finding | Built |
-| 3 | Phase cue in the Battle scene | Not started |
-| 4 | `checkins` reports Phases, 24–72 hours, and one-answer players, and the Answer player answers Phase 2 | Not started |
-| 5 | Tune numbers only, in order: Warden health, Phase 2 damage, threshold, then XP. Confirm on Seeds 1001-1200, then retire the `wall` targets that assume one action at minute 60, and find a new demo Seed | Not started |
+| 3 | Phase cue in the Battle scene | Live Log line only |
+| 4 | `checkins` reports Phases, 24–72 hours, and one-answer players, and the Answer player answers Phase 2 | Built |
+| 5 | Tune numbers only, in order: Warden health, Phase 2 damage, threshold, then XP. Confirm on Seeds 1001-1200, then retire the `wall` targets that assume one action at minute 60, and find a new demo Seed | Tuned and confirmed. One-answer misses on the holdout, and no new demo Seed yet |
 | 6 | Rehearse, record results, and get the human's verdict over real days | Not started |
 
 Dropping Spore Breath from Phase 2 made the Wall easier: the median first kill moved from 8 hours to 1.7 hours at the 8-hour gap, because Poison is what kills the Party. So Phase 2 keeps a weaker Poison, and step 5 tunes it.

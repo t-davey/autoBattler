@@ -39,7 +39,7 @@ function attemptsLine({ guardianAttempts, guardianKills }: AwayReport): string |
   const { attempts, reachedSecondPhase, bestHealthShare, previousBestHealthShare } = guardianAttempts;
   const reached = reachedSecondPhase > 0 ? `Reached Phase 2 in ${reachedSecondPhase} of ${attempts} attempt${attempts === 1 ? '' : 's'}. ` : '';
   const was = previousBestHealthShare === null ? '' : `, was ${percentOf(previousBestHealthShare)}`;
-  return `${reached}Guardian's best attempt: ${percentOf(bestHealthShare)} health left${was}`;
+  return `${reached}Best attempt at the Guardian: ${percentOf(bestHealthShare)} of its health left${was}`;
 }
 
 function setbackFinding(report: AwayReport, view: GameView): Finding | null {

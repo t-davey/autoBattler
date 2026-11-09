@@ -305,6 +305,17 @@ describe('saves', () => {
     expect(serializeGame(copy)).toBe(serializeGame(game));
   });
 
+  it('a save refuses a Unit in a second Phase it does not have', () => {
+    const game = newGame(1);
+    for (let i = 0; i < 2_000 && !viewGame(game).battle; i++) advance(game, 100);
+    const saved = JSON.parse(serializeGame(game)) as { game: { battle: { units: Record<string, unknown>[] } } };
+    expect(deserializeGame(JSON.stringify(saved))).not.toBeNull();
+    for (const unit of saved.game.battle.units) unit['inSecondPhase'] = true;
+    expect(deserializeGame(JSON.stringify(saved))).toBeNull();
+    for (const unit of saved.game.battle.units) unit['inSecondPhase'] = 'yes';
+    expect(deserializeGame(JSON.stringify(saved))).toBeNull();
+  });
+
   it('a Game restores at any moment of a long run', () => {
     const game = newGame(8);
     for (let i = 0; i < 400; i++) {
