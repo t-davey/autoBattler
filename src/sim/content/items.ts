@@ -1,5 +1,4 @@
 import type { Reach } from '../battle';
-import type { FloorNumber } from '../floors';
 
 export type Slot = 'weapon' | 'body' | 'trinket';
 export type Rarity = 'common' | 'magic' | 'rare';
@@ -60,23 +59,12 @@ export const AFFIXES: readonly AffixDefinition[] = [
   { id: 'swift', name: 'Swift', stat: 'speed', min: 3, max: 8 },
 ];
 
-/** Percentages of common and magic. The rest is rare. */
-export const RARITY_ODDS: Readonly<Record<FloorNumber, { readonly common: number; readonly magic: number }>> = {
-  1: { common: 78, magic: 19 },
-  2: { common: 70, magic: 23 },
-  3: { common: 60, magic: 28 },
-  4: { common: 52, magic: 31 },
-  5: { common: 44, magic: 34 },
-};
-
 export const AFFIX_COUNTS: Readonly<Record<Rarity, { readonly min: number; readonly max: number }>> = {
   common: { min: 0, max: 0 },
   magic: { min: 1, max: 2 },
   rare: { min: 3, max: 4 },
 };
 
-export const AFFIX_SCALE: Readonly<Record<FloorNumber, number>> = { 1: 1, 2: 1.2, 3: 1.4, 4: 1.6, 5: 1.8 };
-export const LEVEL_REQUIREMENT: Readonly<Record<FloorNumber, number>> = { 1: 1, 2: 3, 3: 4, 4: 5, 5: 6 };
 export const RARE_LEVEL_BONUS = 1;
 
 export const CHEST_DROP_CHANCE = 0.6;

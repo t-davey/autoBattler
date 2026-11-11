@@ -1,14 +1,11 @@
 import type { Reach } from './battle';
 import {
   AFFIX_COUNTS,
-  AFFIX_SCALE,
   AFFIXES,
   BASE_IDS,
   COMMON_BASE_IDS,
   ITEM_BASES,
-  LEVEL_REQUIREMENT,
   RARE_LEVEL_BONUS,
-  RARITY_ODDS,
   type AffixDefinition,
   type AffixId,
   type BaseId,
@@ -17,6 +14,7 @@ import {
   type Rarity,
   type Slot,
 } from './content/items';
+import { depthTuning } from './depth';
 import type { FloorNumber } from './floors';
 import { createRng, nextFloat, nextInt, shuffled, type Rng } from './rng';
 
@@ -58,7 +56,7 @@ const affixById = (id: AffixId): AffixDefinition => AFFIXES.find((affix) => affi
 
 function rollRarity(rng: Rng, floor: FloorNumber): Rarity {
   const roll = nextFloat(rng) * 100;
-  const { common, magic } = RARITY_ODDS[floor];
+  const { common, magic } = depthTuning(floor).rarityOdds;
   if (roll < common) return 'common';
   return roll < common + magic ? 'magic' : 'rare';
 }
@@ -69,7 +67,7 @@ function rollAffixes(rng: Rng, floor: FloorNumber, rarity: Rarity): RolledAffix[
   const chosen = new Set(shuffled(rng, AFFIXES).slice(0, count));
   return AFFIXES.filter((affix) => chosen.has(affix)).map((affix) => {
     const rolled = affix.min + nextInt(rng, affix.max - affix.min + 1);
-    return { id: affix.id, value: Math.round(rolled * AFFIX_SCALE[floor]) };
+    return { id: affix.id, value: Math.round(rolled * depthTuning(floor).affixScale) };
   });
 }
 
@@ -80,7 +78,7 @@ export function rollItemSpec(rng: Rng, floor: FloorNumber, rarity: Rarity = roll
     baseId: bases[nextInt(rng, bases.length)]!,
     rarity,
     affixes: rollAffixes(rng, floor, rarity),
-    levelRequirement: LEVEL_REQUIREMENT[floor] + (rarity === 'rare' ? RARE_LEVEL_BONUS : 0),
+    levelRequirement: depthTuning(floor).levelRequirement + (rarity === 'rare' ? RARE_LEVEL_BONUS : 0),
   };
 }
 

@@ -6,7 +6,8 @@ import { OIL_BETWEEN_ROOMS } from './content/party';
 import type { Rarity } from './content/items';
 import { BATTLE_DROP_CHANCE, CHEST_DROP_CHANCE } from './content/items';
 import { rankValue, type HeroId } from './content/skills';
-import { BATTLE_XP, FLOOR_SCALE, generateFloor, xpShare, type FloorLayout, type FloorNumber, type RoomKind, type RoomLayout } from './floors';
+import { depthTuning } from './depth';
+import { generateFloor, xpShare, type FloorLayout, type FloorNumber, type RoomKind, type RoomLayout } from './floors';
 import { clampToMaximums, gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
 import { rollItemSpec, viewItem, type ItemState, type ItemView } from './items';
 import { nextFloat, nextInt, type Rng } from './rng';
@@ -157,7 +158,7 @@ function enterRoom(world: RunWorld, sink: EventSink): void {
     return;
   }
   run.phase = 'battle';
-  const enemies = kind === 'guardian' ? [MOULDERING_WARDEN] : rollPack(world.rng, FLOOR_SCALE[floor]);
+  const enemies = kind === 'guardian' ? [MOULDERING_WARDEN] : rollPack(world.rng, depthTuning(floor).enemyScale);
   // Units take their stats and skills here, so a build change reaches the next Battle.
   const teams = { [PARTY_TEAM]: world.heroes.map(heroUnitSpec), [ENEMY_TEAM]: enemies };
   const limit = world.battleTicks === null ? {} : { maxTicks: world.battleTicks };
@@ -240,7 +241,7 @@ function finishBattle(world: RunWorld, battle: BattleState, sink: EventSink): vo
   }
   const { run } = world;
   const isGuardian = currentRoom(run).kind === 'guardian';
-  reward(world, isGuardian ? GUARDIAN_XP : BATTLE_XP[run.floor!], sink);
+  reward(world, isGuardian ? GUARDIAN_XP : depthTuning(run.floor!).battleXp, sink);
   if (isGuardian) {
     guardianFell(world, sink);
     return;

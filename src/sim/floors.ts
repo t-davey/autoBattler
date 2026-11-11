@@ -1,3 +1,4 @@
+import { depthTuning } from './depth';
 import { createRng, nextInt, shuffled, type Rng } from './rng';
 
 export type FloorNumber = 1 | 2 | 3 | 4 | 5;
@@ -24,20 +25,15 @@ const MAX_ROOMS = 12;
 const BATTLE_SHARE = 2 / 3;
 const STEPS = [[1, 0], [-1, 0], [0, 1], [0, -1]] as const;
 
-/** Enemy health, power, and Poison stack damage by Floor. */
-export const FLOOR_SCALE: Readonly<Record<FloorNumber, number>> = { 1: 1, 2: 1.15, 3: 1.3, 4: 1.45, 5: 1.6 };
-export const BATTLE_XP: Readonly<Record<FloorNumber, number>> = { 1: 15, 2: 20, 3: 25, 4: 30, 5: 35 };
 
 /** XP falloff: full XP up to Floor level + this many levels, then less for each level past it. */
 const XP_GRACE_LEVELS = 1;
 const XP_LOST_PER_LEVEL = 0.25;
 const MIN_XP_SHARE = 0.1;
 
-const floorLevel = (floor: FloorNumber): number => floor + 3;
-
 /** The share of a Floor's XP that a Hero of this level earns. */
 export function xpShare(heroLevel: number, floor: FloorNumber): number {
-  const levelsPast = Math.max(0, heroLevel - floorLevel(floor) - XP_GRACE_LEVELS);
+  const levelsPast = Math.max(0, heroLevel - depthTuning(floor).floorLevel - XP_GRACE_LEVELS);
   return Math.max(MIN_XP_SHARE, 1 - levelsPast * XP_LOST_PER_LEVEL);
 }
 

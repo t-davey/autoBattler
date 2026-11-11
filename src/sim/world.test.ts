@@ -1,0 +1,42 @@
+import { describe, expect, it } from 'vitest';
+import { ACTS, depthOf, depthTuning, LAMPS, MAX_DEPTH } from './index';
+
+describe('The world map', () => {
+  it('has 3 Acts of 20 Floors with 12 Lamps, one every 5 Floors', () => {
+    expect(ACTS.map((act) => act.act)).toEqual([1, 2, 3]);
+    expect(MAX_DEPTH).toBe(60);
+    expect(LAMPS.map((lamp) => lamp.depth)).toEqual([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]);
+    expect(depthOf(2, 5)).toBe(25);
+  });
+
+  it('places the Mouldering Warden at the Undercroft’s first Lamp and placeholders everywhere else', () => {
+    const built = LAMPS.filter((lamp) => !lamp.placeholder);
+    expect(built).toEqual([{ act: 2, lamp: 1, depth: 25, guardianName: 'The Mouldering Warden', tunedDepth: 5, placeholder: false }]);
+    expect(LAMPS.filter((lamp) => lamp.placeholder)).toHaveLength(11);
+    expect(LAMPS[0]?.guardianName).toBe('Placeholder Guardian (Act 1, Lamp 1)');
+  });
+});
+
+describe('Depth tuning', () => {
+  it('keeps the demo’s tuned values at depths 1–5', () => {
+    expect([1, 2, 3, 4, 5].map((depth) => depthTuning(depth))).toEqual([
+      { enemyScale: 1, battleXp: 15, floorLevel: 4, rarityOdds: { common: 78, magic: 19 }, affixScale: 1, levelRequirement: 1 },
+      { enemyScale: 1.15, battleXp: 20, floorLevel: 5, rarityOdds: { common: 70, magic: 23 }, affixScale: 1.2, levelRequirement: 3 },
+      { enemyScale: 1.3, battleXp: 25, floorLevel: 6, rarityOdds: { common: 60, magic: 28 }, affixScale: 1.4, levelRequirement: 4 },
+      { enemyScale: 1.45, battleXp: 30, floorLevel: 7, rarityOdds: { common: 52, magic: 31 }, affixScale: 1.6, levelRequirement: 5 },
+      { enemyScale: 1.6, battleXp: 35, floorLevel: 8, rarityOdds: { common: 44, magic: 34 }, affixScale: 1.8, levelRequirement: 6 },
+    ].map((tuning) => ({ ...tuning, enemyScale: expect.closeTo(tuning.enemyScale, 10), affixScale: expect.closeTo(tuning.affixScale, 10) })));
+  });
+
+  it('keeps growing to depth 60, with valid rarity odds throughout', () => {
+    for (let depth = 2; depth <= MAX_DEPTH; depth++) {
+      const here = depthTuning(depth);
+      const before = depthTuning(depth - 1);
+      expect(here.enemyScale).toBeGreaterThan(before.enemyScale);
+      expect(here.battleXp).toBeGreaterThan(before.battleXp);
+      expect(here.levelRequirement).toBeGreaterThan(before.levelRequirement);
+      expect(here.rarityOdds.common).toBeLessThanOrEqual(before.rarityOdds.common);
+      expect(here.rarityOdds.common + here.rarityOdds.magic).toBeLessThan(100);
+    }
+  });
+});
