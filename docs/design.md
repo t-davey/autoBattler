@@ -15,6 +15,7 @@ The Party ventures out on its own while the player is away. The player returns t
 - The player's skill is build planning. Light tending adds a small edge while watching.
 - Anything the player can do by hand can also run by rule, so survival never requires watching.
 - Each check-in offers at least one meaningful decision, such as a new item or skill point.
+- Runs are short and roguelite: each one takes a few [Picks](#picks) that last until it ends, so Runs differ and a good one can break a Wall. Levels, gear, and lit Lamps carry between Runs. The human chose this blend of a compressed Tier and roguelite Runs on 2026-11-11.
 
 ## Party and Heroes
 
@@ -121,9 +122,9 @@ There are 3 Acts of 20 floors each. Names are provisional.
 - Each wall leans on a particular damage type or role, without requiring a specific Class.
 - Guardians respawn on each visit. The first kill guarantees a rare item.
 
-### Why 2 weeks
+### Why a weekend
 
-Offline progress means about 300 hours of Party time in the first Difficulty Tier, while a clean pass through all 60 floors takes about 5 hours. Power walls fill the gap: most of that time goes to farming, and about 35 check-ins against 12 walls means breaking through one about every 3 check-ins. Farming going stale is the main risk, so loot and Elites have to stay interesting.
+The first Difficulty Tier takes a weekend, about 30–40 hours of Party time, so the roguelite layer shows up early. A clean pass through all 60 floors takes about 5 hours, and walls fill the rest: about 3 hours each, or 6–12 Runs. A wall falls to a good Run on top of the Party's growth, not to days of farming, so some fall while the player is away and check-ins answer the rest. The human cut this from 2 weeks on 2026-11-11.
 
 ### Loot sources
 
@@ -136,6 +137,18 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 - The Party shares a Belt of healing potions, cleansing tonics, and escape scrolls. Each type has a maximum and, for now, refills free in Town.
 - The player can use consumables at any time, and rules use them when the player is away.
 - Loot goes straight to the Stash, which holds 300 items, each taking one space. The player can lock items. When the Stash is full, the lowest-value unlocked items are salvaged.
+- A Run lasts about 15–30 minutes of Party time, about one stretch between Lamps. It ends at a Setback, a Guardian attempt, or a return to Town, and the Party sets out again on its own.
+
+### Picks
+
+A Pick is a choice of 2–3 offers that lasts until the Run ends. Its name is a working term, still open.
+
+- **Where:** a big Pick at the Lamp a Run sets out from, and another before the next Guardian. Smaller ones at Spigot burners, chests, and Elite kills come later. About 3–5 per Run.
+- **By rule:** each offer carries tags, such as `poison` or `bleed`, and Stance holds a priority list of tags. A default rule ships, so Picks never need watching.
+- **Readable:** each offer reads as one line, so the Away Report can say what the best Run took.
+- **First kinds:** Boons (plain power, such as poison resistance or a Ward each Battle), Stacking (grows with each Floor or Elite this Run), and Wall prep (an answer to the next Guardian).
+- **Later kinds:** Class twists, Sets (3 of a tag unlock a bonus), Bargains (power at a cost), Routes, and Run-only Belt drops.
+- Offers roll from the Seed, so Runs stay deterministic. They must stay small enough that a lucky Run among dozens offline can't skip a wall the Party hasn't grown into.
 
 ## Battles
 
@@ -163,7 +176,7 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 - A covered or minimized window counts the same way: the game catches up from elapsed time when the window returns, under the same cap.
 - The Party pauses during a [check-in](#check-ins), and resumes where it paused when the player sends it back. That time still counts: it runs through Catch-up, under the same cap, so a check-in never costs the Party progress. Its results add to the next Away Report, so sending the Party back leads to the dashboard.
 - Play runs in real time, with an optional 2x once balance holds up.
-- The target is about 2 weeks to finish the first Difficulty Tier, with 2–3 short check-ins a day.
+- The target is a weekend to finish the first Difficulty Tier, with short check-ins through each day.
 
 ## Presentation
 
@@ -249,4 +262,11 @@ The demo's answer was yes. It now grows by [a second Wall](plans/second-wall.md)
 
 ## Open questions
 
-None for the game as a whole. [The second Wall](plans/second-wall.md#still-open) lists those for its slice of the demo.
+For the game as a whole, from the roguelite Runs on 2026-11-11:
+
+- What Picks are called.
+- Whether picking by hand while watching is allowed, or rules only, so watched and idle play match.
+- How many check-ins a weekend expects.
+- How long the later Difficulty Tiers and the level curve become, now the first is a weekend.
+
+[The second Wall](plans/second-wall.md#still-open) lists those for its slice of the demo.

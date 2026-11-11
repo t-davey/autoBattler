@@ -71,6 +71,7 @@ With 4.5%, on the same 20 Seeds:
 | Act 3, Floors 15–20 | | | 3 and 2 |
 
 - **Act 2 now holds.** Act 1's Lamp 2 stays slow, and Act 3 slows as Heroes near level 60 and stop growing, so only 2 of 20 Seeds relight every Lamp within 14 days. Act 3 needs its own look once its content exists.
+- **Superseded on 2026-11-11:** the Tier's target dropped from 2 weeks to a weekend, so [roguelite Runs](roguelite-runs.md) retunes this curve.
 
 ## Consequences to check with the human
 
