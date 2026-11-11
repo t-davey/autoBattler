@@ -63,6 +63,15 @@ Rapid prototyping, as in [Roguelite Runs](roguelite-runs.md): each piece lands o
 | 5 | **Run.** The Battle screen's overlays take the Act tint |
 | 6 | **Picks and Findings.** Pick offers as chits, and Findings as Council notices |
 
+## The Council desk
+
+**Decided by the human on 2026-11-11:** the Away Report, Planning, and the Stash become one screen, the Council desk, in place of three tabs. [The mockup](../../mockups/council-desk.html) runs on a real game.
+
+- **The ledger,** on the left: the Away Report's figures with dot leaders, its Findings as paper notes, the Pick rule as standing orders, and Send.
+- **The dossier,** in the middle: one Hero at a time behind index tabs, with their Battle sprite as a portrait, gauges, gear, stats, compact skills with detail on a chit, and skill order.
+- **The strongbox,** on the right: the Stash at the dossier's Slot, with the picked item's changes for every Hero and an Equip beside each.
+- **A note points rather than opens.** A Finding filters the strongbox and lights the stat, Hero, or skills that answer it, so nothing replaces the report.
+
 ## Open questions
 
 - **Act 1's look.** Its tint waits on the wilderness's name and enemies.
