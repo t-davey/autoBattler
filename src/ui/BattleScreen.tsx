@@ -1,4 +1,4 @@
-import type { GameView, HeroView, UnitView } from '../sim';
+import { floorAt, type GameView, type HeroView, type UnitView } from '../sim';
 import { BattleScene } from './battleScene/BattleScene';
 import { FloorMap } from './FloorMap';
 import { LiveLog } from './LiveLog';
@@ -102,7 +102,7 @@ export function BattleScreen({ view, log, store }: { view: GameView; log: readon
   const { battle, phase } = view;
   const party = battle ? battle.party : view.heroes.map(heroAsUnit);
   return (
-    <main className="battle-screen" aria-label="Battle">
+    <main className="battle-screen" aria-label="Battle" data-act={view.floor === null ? undefined : floorAt(view.floor).act}>
       <BattleScene store={store} />
       <div className="battle-overlay">
         <FloorMap view={view} />

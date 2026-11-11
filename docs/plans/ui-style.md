@@ -56,7 +56,7 @@ Rapid prototyping, as in [Roguelite Runs](roguelite-runs.md): each piece lands o
 
 | # | Work |
 |---|---|
-| 1 | **Tokens.** Act tint tokens on `:root`, set by the Run's Act, and a pixel unit tied to `--ui-scale`. Add the deep shades to [the palette](../design.md#palette) table |
+| 1 | **Tokens.** Act tint tokens on `:root`, set by the Run's Act, and a pixel unit tied to `--ui-scale`. Add the deep shades to [the palette](../design.md#palette) table: **done**. The Battle screen carries `data-act`, which swaps `--act-accent`, `--act-glow`, and `--act-ground`. Nothing reads them until step 5. `--px` rounds the UI scale to whole device pixels, so a chrome pixel is 2 device pixels at 1080p rather than a blurry 1.5 |
 | 2 | **Chrome kit.** Plate, notice, chit, and ledger frames as 9-slice pixel SVGs, with brass push-plate buttons and index tabs |
 | 3 | **Icons.** One die-stamp set on a 16-pixel grid, replacing mismatched icons |
 | 4 | **Town.** The menu as hanging signs, one per place |

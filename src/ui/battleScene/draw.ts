@@ -24,6 +24,11 @@ export function uiScale(windowWidth: number, windowHeight: number, devicePixelRa
   return Math.max(1, snappedDisplayWidth(available, devicePixelRatio) / BASE_WINDOW_WIDTH);
 }
 
+/** One pixel of the UI's pixel-art chrome, in CSS pixels: the UI scale rounded to whole device pixels, so frames stay crisp at any scale. */
+export function chromePixel(uiScale: number, devicePixelRatio: number): number {
+  return Math.max(1, Math.round(uiScale * devicePixelRatio)) / devicePixelRatio;
+}
+
 /** The scene's width in its holder, never ahead of the UI scale, or a window just short of the next size would mix the two. */
 export function sceneDisplayWidth(holderWidth: number, holderHeight: number, windowWidth: number, windowHeight: number, devicePixelRatio: number): number {
   const fits = snappedDisplayWidth(Math.min(holderWidth, (holderHeight * ART_WIDTH) / ART_HEIGHT), devicePixelRatio);

@@ -218,17 +218,27 @@ Starting values, in [the stylesheet](../src/ui/style.css), which also holds each
 |---|---|---|
 | Dark | `#050508` | The scene's backdrop and overlays |
 | Soot | `#100d0c` | The page, and recesses |
-| Char | `#1b1613` | Plates |
+| Char | `#1b1613`, raised `#2a221c` | Plates |
 | Vellum | `#211a13` | The Away Report's ledger page |
 | Iron | `#4c4e54` | Edges, and anything structural |
-| Brass | `#b08a3e`, bright `#d6b460` | Headings, skill names, corner brackets, Guardian Rooms |
-| Flame | `#f4b24a` | Only what is lit, selected, new, or rare |
-| Oil | `#b46f1d`, bright `#e39a36` | The Oil gauge and Catch-up |
+| Brass | `#b08a3e`, bright `#d6b460`, deep `#60461e` | Headings, skill names, corner brackets, Guardian Rooms |
+| Flame | `#f4b24a`, core `#ffe2a0` | Only what is lit, selected, new, or rare |
+| Oil | `#b46f1d`, bright `#e39a36`, deep `#6a3d10` | The Oil gauge and Catch-up |
 | Tallow | `#e0d3b2`, dim `#a89a80` | Text |
-| Blood | `#b03e32` | Health bars and the ledger's margin |
+| Blood | `#b03e32`, bright `#d9604c`, deep `#6e1f1a` | Health bars and the ledger's margin |
 | Rust | `#e58a6c` | Refusals, warnings, and stat losses |
 | Verdigris | `#7cc4ab` | Stat gains, drawn from Foxfire's glow |
 | Rime | `#8fb7d9` | Magic items |
+
+During a Run, three accent tokens tint by Act: `--act-accent`, `--act-glow`, and `--act-ground`. Town keeps brass, flame glow, and soot. The tints are provisional, and Flame, text, and the stat colours never tint.
+
+| Act | Accent | Ground |
+|---|---|---|
+| 1. The wilderness | Lantern green `#9fae7a` | `#0b0e0d` |
+| 2. The Undercroft | Verdigris `#7cc4ab` | `#0c0f0d` |
+| 3. The Ember Works | Slag `#d8743a` | `#140c09` |
+
+Pixel-art chrome draws in `--px`, one chrome pixel kept to whole device pixels as the UI scales, or `--px-zoomed` inside a region that zooms with `--ui-scale`.
 
 Panels are iron-bound plates with brass corners, and the Away Report reads as a ledger page. That look is styling only, and [the ledger Fragment's form](lore/bible.md#open-questions) stays open. Headings use Pirata One and text uses EB Garamond, both bundled so the game looks the same offline.
 

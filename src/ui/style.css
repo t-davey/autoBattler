@@ -39,8 +39,17 @@
   --verdigris: #7cc4ab;
   --rime: #8fb7d9;
 
+  /* The Act tint: accents that shift with the Run's Act, on the same shapes. Town keeps brass, flame, and soot.
+     Flame, text, and the stat colours never tint. docs/plans/ui-style.md#tint-by-act. */
+  --act-accent: var(--brass);
+  --act-glow: var(--flame-glow);
+  --act-ground: var(--soot);
+
   --display: 'Pirata One', Georgia, serif;
   --ui-scale: 1;
+  /* One pixel of the chrome's pixel art, kept to whole device pixels by useUiScale. Inside a zoomed region, use --px-zoomed. */
+  --px: 1px;
+  --px-zoomed: calc(var(--px) / var(--ui-scale));
   --header-height: calc(40px * var(--ui-scale));
   font-family: 'EB Garamond', Georgia, 'Times New Roman', serif;
   /* Garamond runs small, and the stats need numerals that read at a glance. */
@@ -50,6 +59,27 @@
   background: var(--soot);
   scrollbar-color: var(--iron) transparent;
   scrollbar-width: thin;
+}
+
+/* Act 1, the wilderness: mist and lantern green, cold. Provisional until Act 1 has a look. */
+[data-act='1'] {
+  --act-accent: #9fae7a;
+  --act-glow: color-mix(in srgb, #9fae7a 30%, transparent);
+  --act-ground: #0b0e0d;
+}
+
+/* Act 2, the Undercroft: Foxfire and mould. */
+[data-act='2'] {
+  --act-accent: var(--verdigris);
+  --act-glow: color-mix(in srgb, var(--verdigris) 30%, transparent);
+  --act-ground: #0c0f0d;
+}
+
+/* Act 3, the Ember Works: slag and soot. Provisional until Act 3's Oil source settles. */
+[data-act='3'] {
+  --act-accent: #d8743a;
+  --act-glow: color-mix(in srgb, #d8743a 35%, transparent);
+  --act-ground: #140c09;
 }
 
 * {

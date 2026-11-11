@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { advance, createGame, viewGame, type Game, type GameEvent, type GameView } from '../../sim';
 import { ART_HEIGHT, ART_WIDTH, wayPoint } from './iso';
-import { drawScene, sceneDisplayWidth, snappedDisplayWidth, uiScale } from './draw';
+import { chromePixel, drawScene, sceneDisplayWidth, snappedDisplayWidth, uiScale } from './draw';
 import { roomLookOf } from './roomLook';
 import { bakeRoom } from './roomBake';
 import { createScene, type SceneFrame, type Scene, type UnitFrame } from './scene';
@@ -223,6 +223,14 @@ describe('the scene’s display size', () => {
     expect(uiScale(1920, 1079, 1)).toBe(1.25);
     expect(sceneDisplayWidth(1920, 1029, 1920, 1079, 1)).toBe(1600);
     expect(sceneDisplayWidth(1920, 1020, 1920, 1080, 1)).toBe(1920);
+  });
+
+  it('keeps each chrome pixel a whole number of device pixels', () => {
+    expect(chromePixel(1, 1)).toBe(1);
+    expect(chromePixel(1.5, 1)).toBe(2);
+    expect(chromePixel(1.25, 1)).toBe(1);
+    expect(chromePixel(1.6, 1.25)).toBe(1.6);
+    expect(chromePixel(1, 1.5)).toBeCloseTo(2 / 1.5);
   });
 
   it('never scales the UI below its base size', () => {
