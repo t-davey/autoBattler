@@ -1,7 +1,10 @@
 import { depthTuning } from './depth';
 import { createRng, nextInt, shuffled, type Rng } from './rng';
 
-export type FloorNumber = 1 | 2 | 3 | 4 | 5;
+import { MAX_DEPTH } from './content/world';
+
+/** How deep a Floor is across the whole world, 1–60. floorAt turns it into an Act and a Floor. */
+export type Depth = number;
 export const ROOM_KINDS = ['battle', 'chest', 'stairs', 'guardian'] as const;
 export type RoomKind = (typeof ROOM_KINDS)[number];
 
@@ -18,7 +21,8 @@ export interface FloorLayout {
 
 export const GRID_WIDTH = 9;
 export const GRID_HEIGHT = 7;
-export const LAST_FLOOR: FloorNumber = 5;
+/** The deepest Floor a Party reaches, and the one whose Guardian guards the only Lamp, until there is one Wall per Lamp. */
+export const LAST_FLOOR: Depth = 5;
 
 const MIN_ROOMS = 8;
 const MAX_ROOMS = 12;
@@ -32,12 +36,12 @@ const XP_LOST_PER_LEVEL = 0.25;
 const MIN_XP_SHARE = 0.1;
 
 /** The share of a Floor's XP that a Hero of this level earns. */
-export function xpShare(heroLevel: number, floor: FloorNumber): number {
+export function xpShare(heroLevel: number, floor: Depth): number {
   const levelsPast = Math.max(0, heroLevel - depthTuning(floor).floorLevel - XP_GRACE_LEVELS);
   return Math.max(MIN_XP_SHARE, 1 - levelsPast * XP_LOST_PER_LEVEL);
 }
 
-export const isFloorNumber = (value: unknown): value is FloorNumber => value === 1 || value === 2 || value === 3 || value === 4 || value === 5;
+export const isDepth = (value: unknown): value is Depth => Number.isInteger(value) && (value as number) >= 1 && (value as number) <= MAX_DEPTH;
 
 const cellKey = (x: number, y: number): number => y * GRID_WIDTH + x;
 
@@ -66,7 +70,7 @@ function walk(rng: Rng, length: number): { x: number; y: number }[] {
   }
 }
 
-function roomKinds(rng: Rng, roomCount: number, floor: FloorNumber): RoomKind[] {
+function roomKinds(rng: Rng, roomCount: number, floor: Depth): RoomKind[] {
   const others = roomCount - 1;
   const battles = Math.round(others * BATTLE_SHARE);
   const mixed = shuffled<RoomKind>(rng, Array.from({ length: others }, (_, index) => (index < battles ? 'battle' : 'chest')));
@@ -74,7 +78,7 @@ function roomKinds(rng: Rng, roomCount: number, floor: FloorNumber): RoomKind[] 
 }
 
 /** Lays out a Floor from its Seed. Floor 3's Guardian Room comes after its usual 8-12 Rooms. */
-export function generateFloor(seed: number, floor: FloorNumber): FloorLayout {
+export function generateFloor(seed: number, floor: Depth): FloorLayout {
   const rng = createRng(seed);
   const kinds = roomKinds(rng, MIN_ROOMS + nextInt(rng, MAX_ROOMS - MIN_ROOMS + 1), floor);
   const cells = walk(rng, kinds.length);

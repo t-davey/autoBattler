@@ -2,7 +2,7 @@ import type { UnitSpec } from './battle';
 import { AFFIXES, ITEM_BASES, RARITIES, SLOTS, type Rarity, type Slot } from './content/items';
 import { CLASSES, HERO_IDS, MAX_NAME_LENGTH } from './content/party';
 import { isSkillId, MAX_SKILL_RANK, SKILLS, type HeroId, type SkillId } from './content/skills';
-import { isFloorNumber, ROOM_KINDS } from './floors';
+import { isDepth, ROOM_KINDS } from './floors';
 import { clampToMaximums, createParty, heroUnitSpec, unspentPoints, type HeroState } from './heroes';
 import { slotOf, starterItem, type ItemId, type ItemSpec, type ItemState } from './items';
 import { createRng, type Rng } from './rng';
@@ -318,7 +318,7 @@ function isRunState(value: unknown): value is RunState {
   const { phase, floor, layout, room } = value;
   if (phase === 'town') return floor === null && layout === null;
   if (phase !== 'travelling' && phase !== 'battle' && phase !== 'chest') return false;
-  if (!isFloorNumber(floor) || !isRecord(layout) || !Array.isArray(layout['rooms']) || !layout['rooms'].every(isRoom)) return false;
+  if (!isDepth(floor) || !isRecord(layout) || !Array.isArray(layout['rooms']) || !layout['rooms'].every(isRoom)) return false;
   return Number.isInteger(room) && (room as number) >= 0 && (room as number) < layout['rooms'].length;
 }
 

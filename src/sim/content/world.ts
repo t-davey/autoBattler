@@ -52,3 +52,17 @@ export const LAMPS: readonly LampDefinition[] = ACTS.flatMap(({ act }) =>
 );
 
 export const MAX_DEPTH = ACTS.length * FLOORS_PER_ACT;
+
+export interface FloorPosition {
+  readonly act: ActNumber;
+  /** 1–20 within its Act. */
+  readonly floor: number;
+  readonly actName: string;
+}
+
+/** Where a depth (1–60) falls: its Act, and its Floor within that Act. */
+export function floorAt(depth: number): FloorPosition {
+  const act = ACTS[Math.ceil(depth / FLOORS_PER_ACT) - 1];
+  if (!act) throw new Error(`No Act holds depth ${depth}`);
+  return { act: act.act, floor: depth - (act.act - 1) * FLOORS_PER_ACT, actName: act.name };
+}

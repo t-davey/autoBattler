@@ -1,4 +1,5 @@
-import type { GameView, RoomKind, RoomView } from '../sim';
+import { floorAt, type GameView, type RoomKind, type RoomView } from '../sim';
+import { floorLabel } from './floorLabel';
 import { PixelIcon, type IconName } from './PixelIcon';
 
 const ROOM_ICONS: Readonly<Record<RoomKind, IconName>> = { battle: 'battle', chest: 'chest', stairs: 'stairs', guardian: 'cog' };
@@ -24,7 +25,7 @@ const TILE_GAP_PX = 2;
  *  It crops to the Rooms in use, and its tiles fill the corner up to a cap. */
 export function FloorMap({ view }: { view: GameView }) {
   const { map, floor } = view;
-  if (!map) return null;
+  if (!map || floor === null) return null;
   const left = Math.min(...map.rooms.map((room) => room.x));
   const top = Math.min(...map.rooms.map((room) => room.y));
   const columns = Math.max(...map.rooms.map((room) => room.x)) - left + 1;
@@ -39,7 +40,7 @@ export function FloorMap({ view }: { view: GameView }) {
   };
   return (
     <section className="floor-map" aria-label="Floor map">
-      <h2>Floor {floor} of {view.lampFloor}</h2>
+      <h2>{floorLabel(floor)} of {floorAt(view.lampFloor).floor}</h2>
       <p className="floor-progress">Rooms cleared: {map.rooms.filter((room) => room.state === 'cleared').length} of {map.rooms.length}</p>
       <ol className="room-grid" style={style}>
         {map.rooms.map((room, index) => (

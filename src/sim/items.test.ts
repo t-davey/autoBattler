@@ -11,7 +11,7 @@ import {
   TICK_MS,
   viewGame,
   viewStash,
-  type FloorNumber,
+  type Depth,
   type Game,
   type GameEvent,
   type GameSetup,
@@ -23,9 +23,9 @@ import {
 } from './index';
 
 const SEEDS = 20_000;
-const rolls = (floor: FloorNumber, count = SEEDS): ItemSpec[] =>
+const rolls = (floor: Depth, count = SEEDS): ItemSpec[] =>
   Array.from({ length: count }, (_, seed) => rollItem(seed, floor));
-const withRarity = (floor: FloorNumber, rarity: Rarity): ItemSpec[] =>
+const withRarity = (floor: Depth, rarity: Rarity): ItemSpec[] =>
   rolls(floor).filter((item) => item.rarity === rarity);
 
 describe('rolling items', () => {
@@ -50,7 +50,7 @@ describe('rolling items', () => {
   });
 
   it('every Rarity drops on every Floor, commons most and rares least, and rares grow deeper', () => {
-    const share = (floor: FloorNumber, rarity: Rarity) => withRarity(floor, rarity).length / SEEDS;
+    const share = (floor: Depth, rarity: Rarity) => withRarity(floor, rarity).length / SEEDS;
     for (const floor of [1, 2, 3] as const) {
       expect(share(floor, 'rare')).toBeGreaterThan(0);
       expect(share(floor, 'common')).toBeGreaterThan(share(floor, 'magic'));
@@ -67,7 +67,7 @@ describe('rolling items', () => {
   });
 
   it('Affix values roll in their range, scaled by Floor', () => {
-    const keens = (floor: FloorNumber) =>
+    const keens = (floor: Depth) =>
       rolls(floor).flatMap((item) => item.affixes.filter((affix) => affix.id === 'keen').map((affix) => affix.value));
     expect([...new Set(keens(1))].sort((a, b) => a - b)).toEqual([1, 2, 3, 4]);
     // 1-4 × 1.4 rounds to 1, 3, 4, 6.
@@ -75,7 +75,7 @@ describe('rolling items', () => {
   });
 
   it('the level requirement follows the Floor, and a rare adds 1', () => {
-    const requirement = (floor: FloorNumber, rarity: Rarity) =>
+    const requirement = (floor: Depth, rarity: Rarity) =>
       new Set(withRarity(floor, rarity).map((item) => item.levelRequirement));
     expect(requirement(1, 'common')).toEqual(new Set([1]));
     expect(requirement(1, 'rare')).toEqual(new Set([2]));

@@ -35,9 +35,9 @@ export {
 } from './game';
 export { depthTuning } from './depth';
 export type { DepthTuning, RarityOdds } from './depth';
-export { ACTS, depthOf, FLOORS_PER_ACT, FLOORS_PER_LAMP, LAMPS, MAX_DEPTH } from './content/world';
-export type { ActDefinition, ActNumber, LampDefinition } from './content/world';
-export type { FloorNumber, RoomKind } from './floors';
+export { ACTS, depthOf, floorAt, FLOORS_PER_ACT, FLOORS_PER_LAMP, LAMPS, MAX_DEPTH } from './content/world';
+export type { ActDefinition, ActNumber, FloorPosition, LampDefinition } from './content/world';
+export type { Depth, RoomKind } from './floors';
 export type { ActionRefusal, ActionResult, Game, GameSetup, PlayerAction } from './game';
 export type { HeroStats } from './heroes';
 export type { BattleOutcome, EventSink, GameEvent, Phase, StartAt, TownReason } from './run';

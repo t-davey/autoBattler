@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { AwayReport, GameView, ItemView } from '../sim';
 import { describeAbsence } from './describeAwayReport';
+import { floorLabel } from './floorLabel';
 import { describeFindings, type Finding, type FindingKind } from './describeFindings';
 import { PartyStash } from './PartyStash';
 import { PixelIcon, type IconName } from './PixelIcon';
@@ -36,7 +37,7 @@ export function CheckIn({ report, view, stash, seenItemId, dispatch, onSendBack 
       <section className="check-in-report" aria-label="Away Report">
         <h2>Away Report</h2>
         <p className="hint">
-          {describeAbsence(report)} Floors cleared: {report.floorsCleared}. Deepest Floor: {report.deepestFloor}. Damage dealt: {Math.round(report.damageDealt).toLocaleString('en-GB')}. Healed: {Math.round(report.healed).toLocaleString('en-GB')}.
+          {describeAbsence(report)} Floors cleared: {report.floorsCleared}. Deepest Floor: {report.deepestFloor > 0 ? floorLabel(report.deepestFloor) : 'none'}. Damage dealt: {Math.round(report.damageDealt).toLocaleString('en-GB')}. Healed: {Math.round(report.healed).toLocaleString('en-GB')}.
         </p>
         <ul className="findings">
           {findings.map((finding) => (

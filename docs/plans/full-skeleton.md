@@ -31,7 +31,7 @@ Rapid prototyping: each piece lands as a commit straight on `main`, with no PR, 
 | # | Work |
 |---|---|
 | 1 | World data, and depth formulas that keep today’s values at depths 1–5: **done** |
-| 2 | Floors as `{ act, floor }` through the sim, view, and UI labels; new games start at Act 1, Floor 1 |
+| 2 | Floors as `{ act, floor }` through the sim, view, and UI labels; new games start at Act 1, Floor 1: **done**. The sim keeps a depth, and `floorAt` gives its Act and Floor. Undercroft content shows in Act 1 until step 4 |
 | 3 | One Wall per Lamp, Runs that start from a Lamp, and falling back one Lamp |
 | 4 | Placeholder Families and Guardians for every empty slot, with the placeholder test |
 | 5 | Placeholder art and text in the UI |

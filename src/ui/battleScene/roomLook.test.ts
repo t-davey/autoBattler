@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { advance, createGame, viewGame, type FloorMapView, type FloorNumber } from '../../sim';
+import { advance, createGame, viewGame, type FloorMapView, type Depth } from '../../sim';
 import { roomLookOf } from './roomLook';
 
 /** A real layout, read from a Game when it first reaches a Floor. */
-function mapOf(seed: number): { map: FloorMapView; floor: FloorNumber } {
+function mapOf(seed: number): { map: FloorMapView; floor: Depth } {
   const game = createGame({ seed });
   for (let i = 0; i < 200; i++) {
     const { map, floor } = viewGame(game);

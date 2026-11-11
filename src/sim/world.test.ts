@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACTS, depthOf, depthTuning, LAMPS, MAX_DEPTH } from './index';
+import { ACTS, createGame, depthOf, depthTuning, floorAt, LAMPS, MAX_DEPTH, viewGame } from './index';
 
 describe('The world map', () => {
   it('has 3 Acts of 20 Floors with 12 Lamps, one every 5 Floors', () => {
@@ -7,6 +7,19 @@ describe('The world map', () => {
     expect(MAX_DEPTH).toBe(60);
     expect(LAMPS.map((lamp) => lamp.depth)).toEqual([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]);
     expect(depthOf(2, 5)).toBe(25);
+  });
+
+  it('turns a depth into its Act and the Floor within it', () => {
+    expect(floorAt(1)).toEqual({ act: 1, floor: 1, actName: 'The Wilderness' });
+    expect(floorAt(20)).toEqual({ act: 1, floor: 20, actName: 'The Wilderness' });
+    expect(floorAt(25)).toEqual({ act: 2, floor: 5, actName: 'The Undercroft' });
+    expect(floorAt(60)).toEqual({ act: 3, floor: 20, actName: 'The Ember Works' });
+    expect(() => floorAt(61)).toThrow();
+  });
+
+  it('starts a new game at Act 1, Floor 1', () => {
+    const { floor } = viewGame(createGame({ seed: 1 }));
+    expect(floor && floorAt(floor)).toMatchObject({ act: 1, floor: 1 });
   });
 
   it('places the Mouldering Warden at the Undercroft’s first Lamp and placeholders everywhere else', () => {

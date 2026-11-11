@@ -548,7 +548,7 @@ describe('saves', () => {
     const bad = [
       withGame({ run: null }),
       withGame({ run: { ...run, phase: 'elsewhere' } }),
-      withGame({ run: { ...run, floor: 9 } }),
+      withGame({ run: { ...run, floor: 61 } }),
       withGame({ run: { ...run, room: 99 } }),
       withGame({ run: { ...run, layout: { rooms: [{ x: 'a', y: 0, kind: 'battle' }] } } }),
       withGame({ run: { ...run, phase: 'battle' } }),

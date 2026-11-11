@@ -7,7 +7,7 @@ import type { Rarity } from './content/items';
 import { BATTLE_DROP_CHANCE, CHEST_DROP_CHANCE } from './content/items';
 import { rankValue, type HeroId } from './content/skills';
 import { depthTuning } from './depth';
-import { generateFloor, xpShare, type FloorLayout, type FloorNumber, type RoomKind, type RoomLayout } from './floors';
+import { generateFloor, xpShare, type FloorLayout, type Depth, type RoomKind, type RoomLayout } from './floors';
 import { clampToMaximums, gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
 import { rollItemSpec, viewItem, type ItemState, type ItemView } from './items';
 import { nextFloat, nextInt, type Rng } from './rng';
@@ -33,12 +33,12 @@ export type RunEvent =
   | { readonly type: 'battleEnded'; readonly outcome: BattleOutcome }
   | { readonly type: 'levelUp'; readonly heroId: HeroId; readonly heroName: string; readonly level: number }
   | { readonly type: 'heroRose'; readonly heroId: HeroId; readonly heroName: string; readonly health: number }
-  | { readonly type: 'floorEntered'; readonly floor: FloorNumber }
-  | { readonly type: 'roomEntered'; readonly floor: FloorNumber; readonly room: number; readonly kind: RoomKind }
+  | { readonly type: 'floorEntered'; readonly floor: Depth }
+  | { readonly type: 'roomEntered'; readonly floor: Depth; readonly room: number; readonly kind: RoomKind }
   | { readonly type: 'chestOpened'; readonly line: string }
   | { readonly type: 'itemFound'; readonly item: ItemView }
   // A Setback. battleEnded comes first and says how the Battle went; only these two count towards falling back.
-  | { readonly type: 'wipe' | 'draw'; readonly floor: FloorNumber; readonly enemyName: string; readonly guardianHealthShare: number | null }
+  | { readonly type: 'wipe' | 'draw'; readonly floor: Depth; readonly enemyName: string; readonly guardianHealthShare: number | null }
   | { readonly type: 'returnedToTown'; readonly reason: TownReason }
   | { readonly type: 'partySent' }
   | WallEvent;
@@ -53,7 +53,7 @@ export interface RunState {
   phase: Phase;
   /** Ticks left of travel, a chest search, or waiting in Town. */
   ticksLeft: number;
-  floor: FloorNumber | null;
+  floor: Depth | null;
   layout: FloorLayout | null;
   /** The Room the Party is in, or travelling to. */
   room: number;
@@ -77,7 +77,7 @@ export interface RunWorld {
 }
 
 export interface StartAt {
-  readonly floor: FloorNumber;
+  readonly floor: Depth;
   readonly room: number | 'guardian';
 }
 
@@ -90,7 +90,7 @@ function travelTo(run: RunState, room: number): void {
 }
 
 /** Each visit to a Floor draws a new layout. */
-function enterFloor(world: RunWorld, floor: FloorNumber): void {
+function enterFloor(world: RunWorld, floor: Depth): void {
   world.run.floor = floor;
   world.run.layout = generateFloor(nextInt(world.rng, SEED_RANGE), floor);
   travelTo(world.run, 0);
@@ -143,7 +143,7 @@ function leaveRoom(world: RunWorld, sink: EventSink): void {
   const next = run.layout!.rooms[run.room + 1];
   if (next?.kind === 'guardian' && turnsBackBeforeGuardian(wall)) returnToTown(world, 'turnedBack', sink);
   else if (next) travelTo(run, run.room + 1);
-  else enterFloor(world, (run.floor! + 1) as FloorNumber);
+  else enterFloor(world, run.floor! + 1);
 }
 
 function enterRoom(world: RunWorld, sink: EventSink): void {

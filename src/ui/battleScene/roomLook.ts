@@ -1,4 +1,4 @@
-import type { FloorMapView, FloorNumber, RoomKind } from '../../sim';
+import type { FloorMapView, Depth, RoomKind } from '../../sim';
 import { WALL_WAY_AT, type BackWall, type Edge } from './iso';
 
 export interface Way {
@@ -91,7 +91,7 @@ function waysOf(map: FloorMapView, index: number): Way[] {
 }
 
 /** Decides a Room's ways through and light sources from its Floor layout alone. */
-export function roomLookOf(map: FloorMapView, floor: FloorNumber, index: number): RoomLook {
+export function roomLookOf(map: FloorMapView, floor: Depth, index: number): RoomLook {
   const room = map.rooms[index]!;
   const layoutSeed = map.rooms.reduce<number>((seed, { x, y }) => mix(mix(seed, x), y), floor);
   const seed = mix(layoutSeed, index);

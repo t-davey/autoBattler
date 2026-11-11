@@ -15,7 +15,7 @@ import {
   type Slot,
 } from './content/items';
 import { depthTuning } from './depth';
-import type { FloorNumber } from './floors';
+import type { Depth } from './floors';
 import { createRng, nextFloat, nextInt, shuffled, type Rng } from './rng';
 
 export interface RolledAffix {
@@ -54,14 +54,14 @@ export interface ItemView {
 
 const affixById = (id: AffixId): AffixDefinition => AFFIXES.find((affix) => affix.id === id)!;
 
-function rollRarity(rng: Rng, floor: FloorNumber): Rarity {
+function rollRarity(rng: Rng, floor: Depth): Rarity {
   const roll = nextFloat(rng) * 100;
   const { common, magic } = depthTuning(floor).rarityOdds;
   if (roll < common) return 'common';
   return roll < common + magic ? 'magic' : 'rare';
 }
 
-function rollAffixes(rng: Rng, floor: FloorNumber, rarity: Rarity): RolledAffix[] {
+function rollAffixes(rng: Rng, floor: Depth, rarity: Rarity): RolledAffix[] {
   const { min, max } = AFFIX_COUNTS[rarity];
   const count = min + nextInt(rng, max - min + 1);
   const chosen = new Set(shuffled(rng, AFFIXES).slice(0, count));
@@ -72,7 +72,7 @@ function rollAffixes(rng: Rng, floor: FloorNumber, rarity: Rarity): RolledAffix[
 }
 
 /** Rolls an item from a Floor's table, or at a set Rarity. */
-export function rollItemSpec(rng: Rng, floor: FloorNumber, rarity: Rarity = rollRarity(rng, floor)): ItemSpec {
+export function rollItemSpec(rng: Rng, floor: Depth, rarity: Rarity = rollRarity(rng, floor)): ItemSpec {
   const bases = rarity === 'common' ? COMMON_BASE_IDS : BASE_IDS;
   return {
     baseId: bases[nextInt(rng, bases.length)]!,
@@ -83,7 +83,7 @@ export function rollItemSpec(rng: Rng, floor: FloorNumber, rarity: Rarity = roll
 }
 
 /** The item a Seed gives on a Floor, on its own. Play draws from the Game's Seed instead. */
-export const rollItem = (seed: number, floor: FloorNumber): ItemSpec => rollItemSpec(createRng(seed), floor);
+export const rollItem = (seed: number, floor: Depth): ItemSpec => rollItemSpec(createRng(seed), floor);
 
 const NO_STATS: ItemStats = { power: 0, maxHealth: 0, armour: 0, poisonResistance: 0, critChance: 0, speed: 0 };
 

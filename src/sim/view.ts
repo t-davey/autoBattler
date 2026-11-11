@@ -1,6 +1,6 @@
 import { maxHealthOf, type BattleState, type Reach, type Row, type TeamId } from './battle';
 import type { Slot } from './content/items';
-import { GRID_HEIGHT, GRID_WIDTH, LAST_FLOOR, type FloorNumber, type RoomKind } from './floors';
+import { GRID_HEIGHT, GRID_WIDTH, LAST_FLOOR, type Depth, type RoomKind } from './floors';
 import { CLASSES, xpToNextLevel } from './content/party';
 import { MAX_SKILL_RANK, rankValue, SKILL_IDS, SKILLS, type HeroId, type SkillId, type SkillKind, type SkillReach } from './content/skills';
 import { heroesOf, stateOf, type Game } from './game';
@@ -105,9 +105,9 @@ export interface GameView {
   readonly phase: Phase;
   readonly battle: BattleView | null;
   readonly map: FloorMapView | null;
-  readonly floor: FloorNumber | null;
+  readonly floor: Depth | null;
   /** The Floor whose Guardian guards the Lamp. */
-  readonly lampFloor: FloorNumber;
+  readonly lampFloor: Depth;
   /** The countdown until the Party leaves Town. */
   readonly townTicksLeft: number | null;
   readonly wall: WallView;

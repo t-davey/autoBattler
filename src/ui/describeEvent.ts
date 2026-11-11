@@ -1,4 +1,5 @@
-import type { GameEvent } from '../sim';
+import { floorAt, type GameEvent } from '../sim';
+import { floorLabel } from './floorLabel';
 
 const OUTCOME_LINES = {
   won: 'The enemy is broken. The Party stands.',
@@ -73,7 +74,7 @@ export function describeEvent(event: GameEvent): string {
     case 'heroRose':
       return `${event.heroName} rises, barely.`;
     case 'floorEntered':
-      return `Floor ${event.floor} of the Undercroft.`;
+      return `${floorLabel(event.floor)}: ${floorAt(event.floor).actName}.`;
     case 'roomEntered':
       return ROOM_LINES[event.kind];
     case 'chestOpened':
@@ -81,9 +82,9 @@ export function describeEvent(event: GameEvent): string {
     case 'itemFound':
       return `Found a ${event.item.rarity}: ${event.item.name}.`;
     case 'wipe':
-      return `A Wipe on Floor ${event.floor}, before ${event.enemyName}.`;
+      return `A Wipe on ${floorLabel(event.floor)}, before ${event.enemyName}.`;
     case 'draw':
-      return `A draw on Floor ${event.floor}, against ${event.enemyName}. The Party withdraws.`;
+      return `A draw on ${floorLabel(event.floor)}, against ${event.enemyName}. The Party withdraws.`;
     case 'returnedToTown':
       return TOWN_LINES[event.reason];
     case 'partySent':
