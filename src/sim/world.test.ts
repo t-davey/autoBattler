@@ -66,14 +66,14 @@ describe('Placeholders', () => {
 });
 
 describe('Depth tuning', () => {
-  it('keeps the demo’s tuned values at depths 1–5', () => {
+  it('keeps the demo’s tuned values at depths 1–5, with XP at 1.25×', () => {
     expect([1, 2, 3, 4, 5].map((depth) => depthTuning(depth))).toEqual([
       { enemyScale: 1, battleXp: 15, floorLevel: 4, rarityOdds: { common: 78, magic: 19 }, affixScale: 1, levelRequirement: 1 },
       { enemyScale: 1.15, battleXp: 20, floorLevel: 5, rarityOdds: { common: 70, magic: 23 }, affixScale: 1.2, levelRequirement: 3 },
       { enemyScale: 1.3, battleXp: 25, floorLevel: 6, rarityOdds: { common: 60, magic: 28 }, affixScale: 1.4, levelRequirement: 4 },
       { enemyScale: 1.45, battleXp: 30, floorLevel: 7, rarityOdds: { common: 52, magic: 31 }, affixScale: 1.6, levelRequirement: 5 },
       { enemyScale: 1.6, battleXp: 35, floorLevel: 8, rarityOdds: { common: 44, magic: 34 }, affixScale: 1.8, levelRequirement: 6 },
-    ].map((tuning) => ({ ...tuning, enemyScale: expect.closeTo(tuning.enemyScale, 10), affixScale: expect.closeTo(tuning.affixScale, 10) })));
+    ].map((tuning) => ({ ...tuning, battleXp: tuning.battleXp * 1.25, enemyScale: expect.closeTo(tuning.enemyScale, 10), affixScale: expect.closeTo(tuning.affixScale, 10) })));
   });
 
   it('grows enemy scale linearly through Act 1, then compounds by 4.5% a Floor', () => {

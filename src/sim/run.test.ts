@@ -221,20 +221,20 @@ describe('carrying over', () => {
     }
 
     it.each([
-      [1, 15],
-      [5, 15],
-      [6, 11],
-      [7, 7],
-      [8, 3],
+      [1, 18],
+      [5, 18],
+      [6, 14],
+      [7, 9],
+      [8, 4],
       [9, 1],
       [30, 1],
-    ])('on Floor 1, a level %i Hero earns %i of its 15 XP', (level, xp) => {
+    ])('on Floor 1, a level %i Hero earns %i of its 18.75 XP', (level, xp) => {
       expect(xpFromWin(level)).toBe(xp);
     });
 
     it('a deeper Floor keeps its full XP for longer', () => {
-      expect(xpFromWin(7, { floor: 3, room: 0 })).toBe(25);
-      expect(xpFromWin(8, { floor: 3, room: 0 })).toBe(18);
+      expect(xpFromWin(7, { floor: 3, room: 0 })).toBe(31);
+      expect(xpFromWin(8, { floor: 3, room: 0 })).toBe(23);
     });
 
     it("a Guardian's XP falls off like its Floor's", () => {
@@ -306,7 +306,7 @@ describe('Enemy scale', () => {
       expect(powerOf[floor]! / powerOf[21]!).toBeCloseTo(scale);
       expect(stackOf[floor]! / stackOf[21]!).toBeCloseTo(scale);
     }
-    expect([xpOf[21], xpOf[22], xpOf[23]]).toEqual([115, 120, 125]);
+    expect([xpOf[21], xpOf[22], xpOf[23]]).toEqual([143, 150, 156]);
   });
 });
 
@@ -458,24 +458,24 @@ describe('falling back', () => {
 });
 
 describe('the Guardian', () => {
-  it('fields the Mouldering Warden at the Undercroft’s first Lamp, scaled up from the depth it was tuned at', () => {
+  it('fields the Mouldering Warden at the Undercroft’s first Lamp, at half strength, scaled up from the depth it was tuned at', () => {
     const played = game(1, { startAt: { floor: 25, room: 'guardian' } });
     stepUntil(played, 'battleStarted');
     const scale = depthTuning(25).enemyScale / depthTuning(5).enemyScale;
-    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'The Mouldering Warden', maxHealth: expect.closeTo(2_600 * scale, 6), placeholder: false }]);
+    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'The Mouldering Warden', maxHealth: expect.closeTo(1_300 * scale, 6), placeholder: false }]);
   });
 
   it('fields a placeholder Guardian scaled to its depth at a later Lamp', () => {
     const played = game(1, { startAt: { floor: 10, room: 'guardian' } });
     stepUntil(played, 'battleStarted');
-    // Floor scale 2.35 at depth 10, against 1.6 at depth 5.
-    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'Placeholder Guardian (Act 1, Lamp 2)', maxHealth: expect.closeTo(3_818.75, 6), placeholder: true }]);
+    // Half of 2,600, at floor scale 2.35 at depth 10 against 1.6 at depth 5.
+    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'Placeholder Guardian (Act 1, Lamp 2)', maxHealth: expect.closeTo(1_909.375, 6), placeholder: true }]);
   });
 
   it('fields a placeholder copy of the Mouldering Warden at the first Lamp, alone in the front Row', () => {
     const played = game(1, atGuardian);
     stepUntil(played, 'battleStarted');
-    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'Placeholder Guardian (Act 1, Lamp 1)', row: 'front', maxHealth: 2_600, placeholder: true }]);
+    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'Placeholder Guardian (Act 1, Lamp 1)', row: 'front', maxHealth: 1_300, placeholder: true }]);
     const [warden] = viewGame(played).battle!.enemies;
     expect(warden!.health).toBe(warden!.maxHealth);
   });

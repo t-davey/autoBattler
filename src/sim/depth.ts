@@ -1,6 +1,6 @@
 /**
- * How a Floor's numbers grow with depth (1–60). Depths 1–5 keep the demo's tuned values; deeper Floors extend
- * the curve as placeholders until they are tuned.
+ * How a Floor's numbers grow with depth (1–60), at the weekend pace. Depths 1–5 keep the demo's values apart
+ * from XP; deeper Floors extend the curve as placeholders until they are tuned.
  */
 
 export interface RarityOdds {
@@ -42,6 +42,9 @@ const LINEAR_STEP = 0.15;
 /** 4.5% a Floor, the best fit of 3%–10% in `npm run balance -- world` on 2026-11-11. */
 const COMPOUND_RATE = 0.045;
 
+/** Battle XP runs 25% above the demo's, part of the weekend pace measured on 2026-11-11. */
+const XP_RATE = 1.25;
+
 function enemyScale(depth: number): number {
   const linear = (until: number) => 1 + LINEAR_STEP * (until - 1);
   if (depth <= LINEAR_UNTIL) return linear(depth);
@@ -51,7 +54,7 @@ function enemyScale(depth: number): number {
 export function depthTuning(depth: number): DepthTuning {
   return {
     enemyScale: enemyScale(depth),
-    battleXp: 10 + 5 * depth,
+    battleXp: XP_RATE * (10 + 5 * depth),
     floorLevel: depth + 3,
     rarityOdds: rarityOdds(depth),
     affixScale: 1 + 0.2 * (depth - 1),

@@ -344,7 +344,7 @@ describe('drops', () => {
     );
   });
 
-  it('chests hold an item 60% of the time, Battles 10%, and Guardian kills always', () => {
+  it('chests hold an item 60% of the time, Battles 30%, and Guardian kills always', () => {
     const seen: GameEvent[] = [];
     for (let seed = 1; seed <= 5; seed++) advance(game(strong, seed), 7_200_000, (event) => seen.push(event));
     const found = sources(seen);
@@ -352,7 +352,7 @@ describe('drops', () => {
     const events = (type: GameEvent['type']) => seen.filter((event) => event.type === type).length;
     const battlesOutsideGuardian = events('battleEnded') - events('guardianFell');
     expect(count('chestOpened') / events('chestOpened')).toBeCloseTo(0.6, 1);
-    expect(count('battleEnded') / battlesOutsideGuardian).toBeCloseTo(0.1, 1);
+    expect(count('battleEnded') / battlesOutsideGuardian).toBeCloseTo(0.3, 1);
     expect(count('guardianFell')).toBe(events('guardianFell'));
   });
 

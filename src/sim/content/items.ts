@@ -68,4 +68,5 @@ export const AFFIX_COUNTS: Readonly<Record<Rarity, { readonly min: number; reado
 export const RARE_LEVEL_BONUS = 1;
 
 export const CHEST_DROP_CHANCE = 0.6;
-export const BATTLE_DROP_CHANCE = 0.1;
+/** Tripled from the demo's 0.1 for the weekend pace on 2026-11-11. */
+export const BATTLE_DROP_CHANCE = 0.3;

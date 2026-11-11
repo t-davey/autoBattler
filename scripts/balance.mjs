@@ -793,18 +793,19 @@ function measureCheckIns(firstSeed) {
 }
 
 const WORLD_SEEDS = Number(process.env.WORLD_SEEDS ?? 10);
-const WORLD_DAYS = 14;
-const WORLD_GAP_HOURS = 8;
-/** The design's pace: about 25 hours of Party time per Wall, about 300 for the first Difficulty Tier. */
-const WALL_HOURS_TARGET = [16, 32];
+const WORLD_HOURS = 48;
+const WORLD_GAP_HOURS = 3;
+/** The design's weekend pace: about 3 hours of Party time per Wall, 30-40 for the first Difficulty Tier. */
+const WALL_HOURS_TARGET = [2, 4];
+const TIER_HOURS_TARGET = [30, 40];
 
-/** Plays the whole world with the Routine player checking in every 8 hours, and records each Lamp's first relight. */
+/** Plays the whole world with the Routine player checking in every few hours, and records each Lamp's first relight. */
 function playWorld(seed) {
   const game = createGame({ seed });
   const relitAt = [];
   let deepest = 1;
   let wipes = 0;
-  for (let hour = 0; hour < WORLD_DAYS * 24; hour += WORLD_GAP_HOURS) {
+  for (let hour = 0; hour < WORLD_HOURS; hour += WORLD_GAP_HOURS) {
     CHECK_IN_PLAYERS.Routine(game);
     for (let step = 0; step < WORLD_GAP_HOURS * 60; step++) {
       advance(game, 60_000, (event) => {
@@ -818,8 +819,8 @@ function playWorld(seed) {
 }
 
 function measureWorld(firstSeed) {
-  console.log(`World: ${WORLD_DAYS} days of Party time over ${WORLD_SEEDS} Seeds from ${firstSeed}, Routine player checking in every ${WORLD_GAP_HOURS} h.`);
-  console.log(`Target: each Wall takes ${WALL_HOURS_TARGET[0]}-${WALL_HOURS_TARGET[1]} h of Party time.
+  console.log(`World: ${WORLD_HOURS} hours of Party time over ${WORLD_SEEDS} Seeds from ${firstSeed}, Routine player checking in every ${WORLD_GAP_HOURS} h.`);
+  console.log(`Target: each Wall takes ${WALL_HOURS_TARGET[0]}-${WALL_HOURS_TARGET[1]} h of Party time, the Tier ${TIER_HOURS_TARGET[0]}-${TIER_HOURS_TARGET[1]} h.
 `);
   const runs = Array.from({ length: WORLD_SEEDS }, (_, index) => playWorld(firstSeed + index));
   console.log(`  ${'Lamp'.padEnd(26)}${'relit in'.padEnd(10)}${'median h'.padEnd(10)}${'h since last'.padEnd(14)}${'level'.padEnd(7)}verdict`);
@@ -840,8 +841,11 @@ function measureWorld(firstSeed) {
   const { act, floor } = floorAt(deepest);
   console.log(`
   Median deepest Floor: Act ${act}, Floor ${floor}. Median level at the end: ${medianOf(runs.map((run) => run.level))}. Median Wipes: ${medianOf(runs.map((run) => run.wipes))}.`);
+  const tierHours = medianOf(runs.map(({ relitAt }) => (relitAt.length === LAMPS.length ? relitAt.at(-1).hours : Infinity)));
+  const tierOnPace = tierHours !== null && within(tierHours, ...TIER_HOURS_TARGET);
+  console.log(`  Tier finished: ${runs.filter(({ relitAt }) => relitAt.length === LAMPS.length).length}/${runs.length} Seeds, median ${formatted(tierHours)} h${tierOnPace ? '' : ', off target'}.`);
   console.log(`World: ${misses} of ${LAMPS.length} Walls off the target pace.`);
-  if (misses > 0) process.exitCode = 1;
+  if (misses > 0 || !tierOnPace) process.exitCode = 1;
 }
 
 const mode = process.argv[2];

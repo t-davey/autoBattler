@@ -77,7 +77,7 @@ describe('levels', () => {
   it('every Hero gets the full XP of a won Battle, and a levelUp is reported', () => {
     const game = createGame({ seed: 1 });
     for (let wins = 0; wins < 3; wins++) stepUntil(game, (event) => event.type === 'battleEnded');
-    expect(viewGame(game).heroes.map((hero) => hero.xp)).toEqual([45, 45, 45]);
+    expect(viewGame(game).heroes.map((hero) => hero.xp)).toEqual([56, 56, 56]); // 3 × 18.75, rounded down in the view.
     const level = stepUntil(game, (event) => event.type === 'levelUp');
     expect(level).toMatchObject({ type: 'levelUp', level: 2 });
   });

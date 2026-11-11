@@ -31,6 +31,9 @@ const MOULDERING_WARDEN: UnitSpec = {
   },
 };
 
+/** Every Guardian at half the Warden's demo strength, so a Wall takes hours, not days: the weekend pace of 2026-11-11. */
+const GUARDIAN_STRENGTH = 0.5;
+
 /**
  * A Lamp's Guardian, scaled from the depth it was tuned at to the Lamp's own. A placeholder copies the Warden's
  * actions under a stand-in name.
@@ -38,5 +41,5 @@ const MOULDERING_WARDEN: UnitSpec = {
 export function guardianFor(lamp: LampDefinition): UnitSpec {
   const scale = depthTuning(lamp.depth).enemyScale / depthTuning(lamp.tunedDepth).enemyScale;
   const base = lamp.placeholder ? { ...MOULDERING_WARDEN, name: lamp.guardianName, placeholder: true } : MOULDERING_WARDEN;
-  return scaleUnit(base, scale);
+  return scaleUnit(base, scale * GUARDIAN_STRENGTH);
 }
