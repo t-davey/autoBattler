@@ -36,9 +36,21 @@ function rarityOdds(depth: number): RarityOdds {
   return { common: Math.max(10, 44 - 2 * past), magic: Math.min(50, 34 + past) };
 }
 
+/** Enemy scale grows linearly through Act 1, then compounds, so it keeps up with a Party whose levels and gear multiply. */
+const LINEAR_UNTIL = 20;
+const LINEAR_STEP = 0.15;
+/** 4.5% a Floor, the best fit of 3%–10% in `npm run balance -- world` on 2026-11-11. */
+const COMPOUND_RATE = 0.045;
+
+function enemyScale(depth: number): number {
+  const linear = (until: number) => 1 + LINEAR_STEP * (until - 1);
+  if (depth <= LINEAR_UNTIL) return linear(depth);
+  return linear(LINEAR_UNTIL) * (1 + COMPOUND_RATE) ** (depth - LINEAR_UNTIL);
+}
+
 export function depthTuning(depth: number): DepthTuning {
   return {
-    enemyScale: 1 + 0.15 * (depth - 1),
+    enemyScale: enemyScale(depth),
     battleXp: 10 + 5 * depth,
     floorLevel: depth + 3,
     rarityOdds: rarityOdds(depth),

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  depthTuning,
   advance,
   applyAction,
   createGame,
@@ -460,8 +461,8 @@ describe('the Guardian', () => {
   it('fields the Mouldering Warden at the Undercroft’s first Lamp, scaled up from the depth it was tuned at', () => {
     const played = game(1, { startAt: { floor: 25, room: 'guardian' } });
     stepUntil(played, 'battleStarted');
-    // Floor scale 4.6 at depth 25, against 1.6 at depth 5.
-    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'The Mouldering Warden', maxHealth: expect.closeTo(7_475, 6), placeholder: false }]);
+    const scale = depthTuning(25).enemyScale / depthTuning(5).enemyScale;
+    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'The Mouldering Warden', maxHealth: expect.closeTo(2_600 * scale, 6), placeholder: false }]);
   });
 
   it('fields a placeholder Guardian scaled to its depth at a later Lamp', () => {

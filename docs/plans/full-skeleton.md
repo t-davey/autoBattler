@@ -55,7 +55,22 @@ Measured on 2026-11-11 with `WORLD_SEEDS=20 npm run balance -- world`: 20 Seeds,
 
 - **Act 1 roughly holds; Acts 2 and 3 collapse.** Every Seed relit all 12 Lamps, the whole Tier in about 169 hours against the design's roughly 300.
 - **The likely cause:** the Party's power grows faster than linear, since levels and gear each grow with depth and multiply each other. Enemy scale grows linearly, by 0.15 a Floor. Hours "since the last" subtract medians, so they are approximate.
-- **For the human to choose:** steepen enemy scale past Act 1, for example by about 7% a Floor compounding; slow XP or Affix growth with depth; or both. These are untuned placeholders, so any of them is a starting value.
+- **The human chose to steepen enemy scale.** It stays linear through Act 1, then compounds by 4.5% a Floor. Of the rates tried on 8 Seeds, 3% stayed too fast, 7% and 10% stalled in Act 2, and 4% left Act 2 fast.
+
+With 4.5%, on the same 20 Seeds:
+
+| Lamp | Relit at, median | Hours since the last | Seeds that relit it |
+|---|---|---|---|
+| Act 1, Floors 5–20 | 23.5–120.4 h | unchanged | 20 |
+| Act 2, Floor 5: the Warden | 144.0 h | 23.6 | 20 |
+| Act 2, Floor 10 | 160.5 h | 16.5 | 20 |
+| Act 2, Floor 15 | 178.0 h | 17.5 | 20 |
+| Act 2, Floor 20 | 199.1 h | 21.1 | 20 |
+| Act 3, Floor 5 | 248.1 h | 48.9, slow | 18 |
+| Act 3, Floor 10 | 272.5 h | 24.5 | 14 |
+| Act 3, Floors 15–20 | | | 3 and 2 |
+
+- **Act 2 now holds.** Act 1's Lamp 2 stays slow, and Act 3 slows as Heroes near level 60 and stop growing, so only 2 of 20 Seeds relight every Lamp within 14 days. Act 3 needs its own look once its content exists.
 
 ## Consequences to check with the human
 

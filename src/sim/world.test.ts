@@ -76,6 +76,12 @@ describe('Depth tuning', () => {
     ].map((tuning) => ({ ...tuning, enemyScale: expect.closeTo(tuning.enemyScale, 10), affixScale: expect.closeTo(tuning.affixScale, 10) })));
   });
 
+  it('grows enemy scale linearly through Act 1, then compounds by 4.5% a Floor', () => {
+    expect(depthTuning(20).enemyScale).toBeCloseTo(3.85);
+    expect(depthTuning(21).enemyScale).toBeCloseTo(3.85 * 1.045);
+    expect(depthTuning(60).enemyScale).toBeCloseTo(3.85 * 1.045 ** 40);
+  });
+
   it('keeps growing to depth 60, with valid rarity odds throughout', () => {
     for (let depth = 2; depth <= MAX_DEPTH; depth++) {
       const here = depthTuning(depth);
