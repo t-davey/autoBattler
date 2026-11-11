@@ -808,10 +808,23 @@ function playWorld(seed) {
   let wipes = 0;
   const runs = [];
   let sentAt = 0;
+  /** Attempts at the frontier Guardian, with the Picks each Run held. */
+  const attempts = [];
+  let picks = [];
+  let attempting = null;
   for (let hour = 0; hour < WORLD_HOURS; hour += WORLD_GAP_HOURS) {
     CHECK_IN_PLAYERS.Routine(game);
     for (let step = 0; step < WORLD_GAP_HOURS * 60; step++) {
       advance(game, 60_000, (event) => {
+        if (event.type === 'pickTaken') picks.push(event.taken.id);
+        else if (event.type === 'roomEntered' && event.kind === 'guardian') {
+          const lamp = event.floor / 5 - 1;
+          attempting = lamp === relitAt.length ? { lamp } : null;
+        } else if (attempting && (event.type === 'lampRelit' || event.type === 'wipe' || event.type === 'draw')) {
+          attempts.push({ ...attempting, won: event.type === 'lampRelit', picks: [...picks] });
+          attempting = null;
+        }
+        if (event.type === 'returnedToTown') picks = [];
         if (event.type === 'lampRelit') relitAt.push({ hours: viewGame(game).tick / TICKS_PER_HOUR, level: viewGame(game).heroes[0].level });
         else if (event.type === 'floorEntered') deepest = Math.max(deepest, event.floor);
         else if (event.type === 'wipe') wipes++;
@@ -820,7 +833,33 @@ function playWorld(seed) {
       });
     }
   }
-  return { relitAt, deepest, wipes, runs, level: viewGame(game).heroes[0].level };
+  return { relitAt, deepest, wipes, runs, attempts, level: viewGame(game).heroes[0].level };
+}
+
+/**
+ * Whether Walls fall to good Runs: tries per first kill, and the frontier Guardian win rate by each Pick held.
+ * A Pick that lifts the rate well above the rest makes Runs differ; a Wall that falls on the first try isn't one.
+ */
+function reportPicks(attempts) {
+  const rate = (list) => (list.length === 0 ? 'none' : `${((list.filter((attempt) => attempt.won).length / list.length) * 100).toFixed(0)}% of ${list.length}`);
+  const tries = LAMPS.map((_, lamp) => {
+    const bySeed = [];
+    let count = 0;
+    for (const attempt of attempts.filter((candidate) => candidate.lamp === lamp)) {
+      count++;
+      if (attempt.won) {
+        bySeed.push(count);
+        count = 0;
+      }
+    }
+    return medianOf(bySeed);
+  });
+  console.log(`
+  Guardian tries to the first kill, median per Lamp: ${tries.map((count) => count ?? '-').join(', ')}.`);
+  console.log(`  Frontier Guardian wins: ${rate(attempts)}. By Pick held:`);
+  for (const id of [...new Set(attempts.flatMap((attempt) => attempt.picks))].sort()) {
+    console.log(`    ${id.padEnd(16)}with ${rate(attempts.filter((attempt) => attempt.picks.includes(id))).padEnd(14)}without ${rate(attempts.filter((attempt) => !attempt.picks.includes(id)))}`);
+  }
 }
 
 function measureWorld(firstSeed) {
@@ -846,6 +885,7 @@ function measureWorld(firstSeed) {
   const { act, floor } = floorAt(deepest);
   console.log(`
   Median deepest Floor: Act ${act}, Floor ${floor}. Median level at the end: ${medianOf(runs.map((run) => run.level))}. Median Wipes: ${medianOf(runs.map((run) => run.wipes))}.`);
+  reportPicks(runs.flatMap((run) => run.attempts));
   const allRuns = runs.flatMap((run) => run.runs);
   const runMinutes = allRuns.map((run) => run.minutes).sort((a, b) => a - b);
   const percentile = (share) => runMinutes[Math.floor(share * (runMinutes.length - 1))] ?? null;

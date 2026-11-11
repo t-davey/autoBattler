@@ -54,5 +54,8 @@ export const picksFor = (moment: PickMoment): readonly PickId[] => PICK_IDS.filt
 
 export const OFFERS_PER_PICK = 3;
 
-/** The rule that chooses while no player rule exists: earlier tags win. Stance will hold the player's own list. */
-export const DEFAULT_PICK_PRIORITY: readonly PickTag[] = ['poison', 'guardian', 'stacking', 'power', 'armour', 'crit'];
+/**
+ * The rule that chooses while no player rule exists: earlier tags win. Stance will hold the player's own list.
+ * Guardian prep leads: in `npm run balance -- world` on 2026-11-11 it doubled frontier Guardian wins, and poison prep didn't help.
+ */
+export const DEFAULT_PICK_PRIORITY: readonly PickTag[] = ['guardian', 'poison', 'stacking', 'power', 'armour', 'crit'];

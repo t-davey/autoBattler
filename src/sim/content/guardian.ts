@@ -31,8 +31,8 @@ const MOULDERING_WARDEN: UnitSpec = {
   },
 };
 
-/** Every Guardian at half the Warden's demo strength, so a Wall takes hours, not days: the weekend pace of 2026-11-11. */
-const GUARDIAN_STRENGTH = 0.5;
+/** Every Guardian at 60% of the Warden's demo strength, so a Wall takes hours, not days: the weekend pace with Picks, 2026-11-11. */
+const GUARDIAN_STRENGTH = 0.6;
 
 /**
  * A Lamp's Guardian, scaled from the depth it was tuned at to the Lamp's own. A placeholder copies the Warden's

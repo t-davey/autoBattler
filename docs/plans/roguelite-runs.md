@@ -21,7 +21,7 @@ Rapid prototyping: each piece lands as a commit straight on `main` and leaves th
 | 1 | **Pace.** Retarget `npm run balance -- world` to about 3 hours per Wall and 30–40 hours per Tier, with shorter check-in gaps. Retune XP, enemy scale, and loot to meet it. This is the compressed Tier on its own, playable before Picks exist: **done**, see [the pace](#the-pace) |
 | 2 | **Short Runs.** A Run ends at a Setback, a Guardian attempt, or a return to Town, and the Party sets out again on its own: **already true**, no sim change. A Run covers at most one stretch, since every Guardian fight sends the Party to Town, won or lost. The `world` mode now reports Run length: on 6 Seeds, 786 Runs took 18–26 minutes from the 10th to the 90th percentile, all within 15–30. 47% ended at a Setback and 53% at a Guardian kill |
 | 3 | **Picks at Lamps.** A Pick of 3 offers when a Run sets out and before its Guardian, from 3–4 placeholder Boons, Stacking offers, and Wall prep. A default tag rule chooses. The Live Log and the view show what was taken: **done**, `SAVE_VERSION` 4. Six placeholder Picks in `src/sim/content/picks.ts`, drawn from their own random stream so other rolls don't shift. The set-out Pick comes in the Run's first Room, so a new Game's first Run gets one. The Floor map lists the Run's Picks. On 20 Seeds the Tier now takes a median 27.9 hours, under the 30–40 target, with Act 1's Walls all under 2 hours: step 4 retunes |
-| 4 | **Measure.** Add a balance mode that reports how much Runs vary and whether Walls fall to good Runs, against the lucky-Run risk the design names. Retune step 1 with Picks in |
+| 4 | **Measure.** Add a balance mode that reports how much Runs vary and whether Walls fall to good Runs, against the lucky-Run risk the design names. Retune step 1 with Picks in: **done**, in the `world` mode, see [Picks in play](#picks-in-play) |
 | 5 | **Rules and reporting.** A tag priority list in Stance, and Away Report Findings about the Picks the best Runs took |
 
 Later, once the base feels right: smaller Picks at Spigot burners, chests, and Elite kills, then Class twists, Sets, Bargains, Routes, and Run-only Belt drops.
@@ -35,6 +35,17 @@ Measured on 2026-11-11 with `WORLD_SEEDS=20 npm run balance -- world`: 48 hours 
 - **The Walls:** 7 of 12 take 2–4 hours. Act 1's Lamps 2 and 4 and the Warden fall in under an hour, since the Party arrives over-levelled. Act 3's last two take about 5.5 hours, as Heroes near the cap.
 - **Levels run high:** about 18 at the end of Act 1 and 52 at the end of the Tier, against the design's 25. The level curve is an [open question](../design.md#open-questions).
 - Step 4 retunes all of this once Picks add power. The `wall` and `checkins` modes still measure the old pace.
+
+## Picks in play
+
+Measured on 2026-11-11 with `WORLD_SEEDS=20 npm run balance -- world`, which now reports the Guardian tries before each Wall's first kill and the frontier Guardian win rate by Pick held.
+
+- **Picks make Runs differ.** Holding Guardian prep lifts the frontier win rate from 11% to 24%. The other Picks barely move it, and poison prep lowers it, from 23% to 9%. Poison prep crowds out Guardian prep, and poison isn't what kills the Party against the Warden's kit.
+- **The default rule now ranks Guardian prep first,** ahead of poison. With poison first, it was choosing the worse Pick.
+- **Guardians are now at 60% of the Warden's demo strength,** up from 50%, to absorb the Picks' power. The Tier takes a median 30.5 hours, and all 20 Seeds finish it.
+- **Most Walls take 4–9 tries.** A Wall falls to a good Run among several, not to the first one. The exceptions are Act 1's Lamp 2 and the Warden, which fall on the first try because the Party arrives over-levelled, and the last two Walls, which take 7–11 tries as Heroes near the cap.
+- **No sign of the lucky-Run risk yet.** The best Pick only doubles a low win rate, so no Wall falls far ahead of the Party's growth. It needs another look once Picks grow stronger or Sets arrive.
+- 7 of 12 Walls are still off the 2–4 hour pace: Act 1's are fast and Act 3's are uneven. The curve's shape waits for real content.
 
 ## Consequences
 

@@ -458,24 +458,24 @@ describe('falling back', () => {
 });
 
 describe('the Guardian', () => {
-  it('fields the Mouldering Warden at the Undercroft’s first Lamp, at half strength, scaled up from the depth it was tuned at', () => {
+  it('fields the Mouldering Warden at the Undercroft’s first Lamp, at 60% strength, scaled up from the depth it was tuned at', () => {
     const played = game(1, { startAt: { floor: 25, room: 'guardian' } });
     stepUntil(played, 'battleStarted');
     const scale = depthTuning(25).enemyScale / depthTuning(5).enemyScale;
-    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'The Mouldering Warden', maxHealth: expect.closeTo(1_300 * scale, 6), placeholder: false }]);
+    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'The Mouldering Warden', maxHealth: expect.closeTo(1_560 * scale, 6), placeholder: false }]);
   });
 
   it('fields a placeholder Guardian scaled to its depth at a later Lamp', () => {
     const played = game(1, { startAt: { floor: 10, room: 'guardian' } });
     stepUntil(played, 'battleStarted');
-    // Half of 2,600, at floor scale 2.35 at depth 10 against 1.6 at depth 5.
-    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'Placeholder Guardian (Act 1, Lamp 2)', maxHealth: expect.closeTo(1_909.375, 6), placeholder: true }]);
+    // 60% of 2,600, at floor scale 2.35 at depth 10 against 1.6 at depth 5.
+    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'Placeholder Guardian (Act 1, Lamp 2)', maxHealth: expect.closeTo(2_291.25, 6), placeholder: true }]);
   });
 
   it('fields a placeholder copy of the Mouldering Warden at the first Lamp, alone in the front Row', () => {
     const played = game(1, atGuardian);
     stepUntil(played, 'battleStarted');
-    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'Placeholder Guardian (Act 1, Lamp 1)', row: 'front', maxHealth: 1_300, placeholder: true }]);
+    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'Placeholder Guardian (Act 1, Lamp 1)', row: 'front', maxHealth: 1_560, placeholder: true }]);
     const [warden] = viewGame(played).battle!.enemies;
     expect(warden!.health).toBe(warden!.maxHealth);
   });
