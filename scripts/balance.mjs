@@ -1,6 +1,6 @@
 // Headless balance measurements. `builds` measures risk R2 and `drops` measures risk R3, both in
 // docs/plans/poc-demo/risks.md. `wall` measures the first Wall's targets, `demo-seed` finds Seeds that play the
-// demo script, and `checkins` plays the Wall on a schedule of check-ins. docs/plans/poc-demo-results.md records them. Each exits non-zero if a trigger trips, a target misses, or none is found.
+// demo script, `checkins` plays the Wall on a schedule of check-ins, and `world` plays all 12 Walls of the full-game skeleton. docs/plans/poc-demo-results.md records them. Each exits non-zero if a trigger trips, a target misses, or none is found.
 import { createServer } from 'vite';
 
 const SEEDS = Number(process.env.BALANCE_SEEDS ?? 200);
@@ -92,7 +92,7 @@ function buildsFor(heroId) {
 }
 
 const server = await createServer({ configFile: false, server: { middlewareMode: true }, appType: 'custom' });
-const { advance, applyAction, beginCatchUp, CATCH_UP_CAP_MS, continueCatchUp, createGame, deserializeGame, partyUnitSpecs, serializeGame, simulateBattle, SLOTS, TICK_MS, viewGame, viewStash } = await server.ssrLoadModule('/src/sim/index.ts');
+const { advance, applyAction, floorAt, LAMPS, beginCatchUp, CATCH_UP_CAP_MS, continueCatchUp, createGame, deserializeGame, partyUnitSpecs, serializeGame, simulateBattle, SLOTS, TICK_MS, viewGame, viewStash } = await server.ssrLoadModule('/src/sim/index.ts');
 
 const referenceRanks = Object.fromEntries(
   Object.entries(REFERENCE_RANKS).map(([heroId, allocation]) => [heroId, ranksFrom(CLASSES[heroId].skills, allocation)]),
@@ -792,6 +792,58 @@ function measureCheckIns(firstSeed) {
   }
 }
 
+const WORLD_SEEDS = Number(process.env.WORLD_SEEDS ?? 10);
+const WORLD_DAYS = 14;
+const WORLD_GAP_HOURS = 8;
+/** The design's pace: about 25 hours of Party time per Wall, about 300 for the first Difficulty Tier. */
+const WALL_HOURS_TARGET = [16, 32];
+
+/** Plays the whole world with the Routine player checking in every 8 hours, and records each Lamp's first relight. */
+function playWorld(seed) {
+  const game = createGame({ seed });
+  const relitAt = [];
+  let deepest = 1;
+  let wipes = 0;
+  for (let hour = 0; hour < WORLD_DAYS * 24; hour += WORLD_GAP_HOURS) {
+    CHECK_IN_PLAYERS.Routine(game);
+    for (let step = 0; step < WORLD_GAP_HOURS * 60; step++) {
+      advance(game, 60_000, (event) => {
+        if (event.type === 'lampRelit') relitAt.push({ hours: viewGame(game).tick / TICKS_PER_HOUR, level: viewGame(game).heroes[0].level });
+        else if (event.type === 'floorEntered') deepest = Math.max(deepest, event.floor);
+        else if (event.type === 'wipe') wipes++;
+      });
+    }
+  }
+  return { relitAt, deepest, wipes, level: viewGame(game).heroes[0].level };
+}
+
+function measureWorld(firstSeed) {
+  console.log(`World: ${WORLD_DAYS} days of Party time over ${WORLD_SEEDS} Seeds from ${firstSeed}, Routine player checking in every ${WORLD_GAP_HOURS} h.`);
+  console.log(`Target: each Wall takes ${WALL_HOURS_TARGET[0]}-${WALL_HOURS_TARGET[1]} h of Party time.
+`);
+  const runs = Array.from({ length: WORLD_SEEDS }, (_, index) => playWorld(firstSeed + index));
+  console.log(`  ${'Lamp'.padEnd(26)}${'relit in'.padEnd(10)}${'median h'.padEnd(10)}${'h since last'.padEnd(14)}${'level'.padEnd(7)}verdict`);
+  let previous = 0;
+  let misses = 0;
+  LAMPS.forEach((lamp, index) => {
+    const relit = runs.flatMap(({ relitAt }) => (relitAt[index] ? [relitAt[index]] : []));
+    const hours = medianOf(relit.map((entry) => entry.hours));
+    const gap = hours === null ? null : hours - previous;
+    const verdict = gap === null ? 'STALL' : within(gap, ...WALL_HOURS_TARGET) ? 'PASS' : gap < WALL_HOURS_TARGET[0] ? 'FAST' : 'SLOW';
+    if (verdict !== 'PASS') misses++;
+    const { act, floor } = floorAt(lamp.depth);
+    const name = `Act ${act}, Floor ${floor}${lamp.placeholder ? '' : ' (built)'}`;
+    console.log(`  ${name.padEnd(26)}${`${relit.length}/${runs.length}`.padEnd(10)}${formatted(hours).padEnd(10)}${formatted(gap).padEnd(14)}${String(medianOf(relit.map((entry) => entry.level)) ?? '-').padEnd(7)}${verdict}`);
+    if (hours !== null) previous = hours;
+  });
+  const deepest = medianOf(runs.map((run) => run.deepest));
+  const { act, floor } = floorAt(deepest);
+  console.log(`
+  Median deepest Floor: Act ${act}, Floor ${floor}. Median level at the end: ${medianOf(runs.map((run) => run.level))}. Median Wipes: ${medianOf(runs.map((run) => run.wipes))}.`);
+  console.log(`World: ${misses} of ${LAMPS.length} Walls off the target pace.`);
+  if (misses > 0) process.exitCode = 1;
+}
+
 const mode = process.argv[2];
 const firstSeed = Number(process.argv[3] ?? 1);
 try {
@@ -800,8 +852,9 @@ try {
   else if (mode === 'wall') measureWall(firstSeed);
   else if (mode === 'demo-seed') searchDemoSeed(firstSeed);
   else if (mode === 'checkins') measureCheckIns(firstSeed);
+  else if (mode === 'world') measureWorld(firstSeed);
   else {
-    console.error('Usage: npm run balance -- builds | drops | wall [firstSeed] | demo-seed [firstSeed] | checkins [firstSeed]');
+    console.error('Usage: npm run balance -- builds | drops | wall [firstSeed] | demo-seed [firstSeed] | checkins [firstSeed] | world [firstSeed]');
     process.exitCode = 2;
   }
 } finally {

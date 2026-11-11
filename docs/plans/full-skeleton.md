@@ -35,7 +35,27 @@ Rapid prototyping: each piece lands as a commit straight on `main`, with no PR, 
 | 3 | One Wall per Lamp, Runs that start from a Lamp, and falling back one Lamp: **done**, `SAVE_VERSION` 3. Runs start after the last lit Lamp; choosing another lit Lamp waits for Stance |
 | 4 | Placeholder Families and Guardians for every empty slot, with the placeholder test: **done**. Act 3 stand-ins hit physical until the sim has fire. The balance script now reads Floor 5’s placeholder Guardian |
 | 5 | Placeholder art and text in the UI: **done**. Magenta blocks, placeholder chest lines and Act intros, and a Town note once every Lamp is lit |
-| 6 | Balance: `npm run balance` across all 60 Floors, to find where the curve breaks |
+| 6 | Balance: `npm run balance` across all 60 Floors, to find where the curve breaks: **measured**, see [where the curve breaks](#where-the-curve-breaks) |
+
+## Where the curve breaks
+
+Measured on 2026-11-11 with `WORLD_SEEDS=20 npm run balance -- world`: 20 Seeds, 14 days of Party time, and a Routine player who spends points in step order and equips plain upgrades every 8 hours. The target is 16–32 hours per Wall, about 25 on average.
+
+| Lamp | Relit at, median | Hours since the last | Level |
+|---|---|---|---|
+| Act 1, Floor 5 | 23.5 h | 23.5 | 14 |
+| Act 1, Floor 10 | 64.8 h | 41.3, slow | 19 |
+| Act 1, Floor 15 | 88.5 h | 23.7 | 23 |
+| Act 1, Floor 20 | 120.4 h | 31.9 | 27 |
+| Act 2, Floor 5: the Warden | 138.2 h | 17.8 | 30 |
+| Act 2, Floor 10 | 144.3 h | 6.1, fast | 33 |
+| Act 2, Floor 15 | 152.5 h | 8.2, fast | 37 |
+| Act 2, Floor 20 | 160.7 h | 8.2, fast | 39 |
+| Act 3, Floors 5–20 | 165.8–168.7 h | 0.2–5.1, fast | 43–51 |
+
+- **Act 1 roughly holds; Acts 2 and 3 collapse.** Every Seed relit all 12 Lamps, the whole Tier in about 169 hours against the design's roughly 300.
+- **The likely cause:** the Party's power grows faster than linear, since levels and gear each grow with depth and multiply each other. Enemy scale grows linearly, by 0.15 a Floor. Hours "since the last" subtract medians, so they are approximate.
+- **For the human to choose:** steepen enemy scale past Act 1, for example by about 7% a Floor compounding; slow XP or Affix growth with depth; or both. These are untuned placeholders, so any of them is a starting value.
 
 ## Consequences to check with the human
 
