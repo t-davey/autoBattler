@@ -1,4 +1,4 @@
-import { floorAt, type GameEvent } from '../sim';
+import { ACTS, floorAt, type GameEvent } from '../sim';
 import { floorLabel } from './floorLabel';
 
 const OUTCOME_LINES = {
@@ -74,7 +74,11 @@ export function describeEvent(event: GameEvent): string {
     case 'heroRose':
       return `${event.heroName} rises, barely.`;
     case 'floorEntered':
-      return `${floorLabel(event.floor)}: ${floorAt(event.floor).actName}.`;
+    {
+      const { act, floor, actName } = floorAt(event.floor);
+      const intro = floor === 1 && ACTS[act - 1]?.placeholder ? ' [placeholder: this Act’s introduction]' : '';
+      return `${floorLabel(event.floor)}: ${actName}.${intro}`;
+    }
     case 'roomEntered':
       return ROOM_LINES[event.kind];
     case 'chestOpened':

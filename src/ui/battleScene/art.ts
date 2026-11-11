@@ -13,6 +13,8 @@ const ramps = {
   fungus: [[28, 18, 26], [54, 30, 42], [86, 46, 54], [122, 66, 66], [158, 94, 78], [196, 132, 98]],
   wax: [[44, 38, 28], [78, 68, 46], [116, 102, 70], [152, 136, 96], [186, 170, 124], [222, 206, 158]],
   brass: [[34, 24, 12], [62, 44, 20], [96, 70, 30], [136, 102, 44], [176, 138, 62], [214, 180, 96]],
+  // Deliberately off the palette, so stand-in content can't pass for finished art.
+  placeholder: [[60, 0, 60], [100, 0, 100], [150, 0, 150], [200, 0, 200], [240, 40, 240], [255, 120, 255]],
 } as const satisfies Readonly<Record<string, readonly Rgb[]>>;
 
 export type Ramp = keyof typeof ramps;
@@ -180,6 +182,9 @@ const FIGURES = {
     ellipse(-8, -7, 2, 2, 'fungus', 1), ellipse(8, -27, 3, 2, 'fungus', 1), ellipse(-11, -31, 2.5, 1.5, 'green', 1),
     dot(9, -29, 'bone', 2), dot(-9, -8, 'bone', 2), dot(-1, -15, 'green', 1), dot(4, -39, 'green', 1),
   ],
+  // Flat blocks for placeholder content: a Pack enemy and a Guardian.
+  placeholder: [box(-6, -20, 6, 0, 'placeholder', 1), box(-6, -20, 6, -18, 'placeholder', 3), dot(-3, -15, 'eye'), dot(2, -15, 'eye')],
+  placeholderGuardian: [box(-13, -44, 13, 0, 'placeholder', 1), box(-13, -44, 13, -41, 'placeholder', 3), box(-6, -36, -3, -34, 'eye'), box(3, -36, 6, -34, 'eye')],
 } as const satisfies Readonly<Record<string, readonly Part[]>>;
 
 export type Figure = keyof typeof FIGURES;
@@ -227,7 +232,7 @@ const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]] as 
 /** How rough each material's surface is. Metal stays smooth, so its banding reads as polish. */
 const GRAIN: Readonly<Record<Material, number>> = {
   iron: 0.25, brass: 0.2, red: 0.55, hood: 0.5, leather: 0.6, green: 0.6, robe: 0.45, skin: 0.3,
-  bone: 0.45, rot: 0.8, fungus: 0.7, wax: 0.35, glow: 0, eye: 0,
+  bone: 0.45, rot: 0.8, fungus: 0.7, wax: 0.35, placeholder: 0, glow: 0, eye: 0,
 };
 
 const grain = (x: number, y: number): number => {
@@ -280,4 +285,7 @@ const FIGURES_BY_ID: Readonly<Record<string, Figure>> = { 'sin-eater': 'sinEater
 const FIGURES_BY_NAME: Readonly<Record<string, Figure>> = { 'Sodden Thrall': 'thrall', 'Tallow Wight': 'wight', 'Bone Chanter': 'chanter', 'Mire Bloat': 'bloat', Sporeling: 'sporeling' };
 
 /** Art isn't a game rule, so a Unit's figure is decided here rather than in the sim. */
-export const figureOf = (unit: { readonly id: string; readonly name: string }): Figure => FIGURES_BY_ID[unit.id] ?? FIGURES_BY_NAME[unit.name] ?? 'thrall';
+export const figureOf = (unit: { readonly id: string; readonly name: string; readonly placeholder?: boolean }): Figure => {
+  if (unit.placeholder) return unit.id === 'guardian' ? 'placeholderGuardian' : 'placeholder';
+  return FIGURES_BY_ID[unit.id] ?? FIGURES_BY_NAME[unit.name] ?? 'thrall';
+};

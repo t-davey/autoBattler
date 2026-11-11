@@ -1,5 +1,5 @@
 import { createBattle, maxHealthOf, stepBattle, type BattleEvent, type BattleState, type TeamId } from './battle';
-import { CHEST_LINES } from './content/chests';
+import { CHEST_LINES_BY_ACT } from './content/chests';
 import { rollPack } from './content/enemies';
 import { guardianFor } from './content/guardian';
 import { OIL_BETWEEN_ROOMS } from './content/party';
@@ -184,7 +184,8 @@ const maybeDropItem = (world: RunWorld, chance: number, sink: EventSink): void =
 };
 
 function finishChest(world: RunWorld, sink: EventSink): void {
-  sink({ type: 'chestOpened', line: CHEST_LINES[nextInt(world.rng, CHEST_LINES.length)]! });
+  const lines = CHEST_LINES_BY_ACT[floorAt(world.run.floor!).act];
+  sink({ type: 'chestOpened', line: lines[nextInt(world.rng, lines.length)]! });
   maybeDropItem(world, CHEST_DROP_CHANCE, sink);
   leaveRoom(world, sink);
 }

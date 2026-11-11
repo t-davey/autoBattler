@@ -46,6 +46,19 @@ describe('Placeholders', () => {
     expect(enemiesAt(21).some((enemy) => enemy.placeholder)).toBe(false);
   });
 
+  it('give placeholder Acts placeholder chest lines', () => {
+    const chestLinesAt = (floor: number) => {
+      const lines = new Set<string>();
+      for (let seed = 0; seed < 20; seed++) {
+        const game = createGame({ seed, scenario: { startAt: { floor, room: 0 }, heroLevel: 60 } });
+        for (let step = 0; step < 300; step++) advance(game, 1_000, (event) => event.type === 'chestOpened' && lines.add(event.line));
+      }
+      return [...lines];
+    };
+    expect(chestLinesAt(1)).toEqual(['[placeholder] A chest. Its story is still to be written.']);
+    expect(chestLinesAt(21).some((line) => line.includes('placeholder'))).toBe(false);
+  });
+
   it('list what is still to design: 2 Acts and 11 Guardians', () => {
     expect(ACTS.filter((act) => act.placeholder).map((act) => act.name)).toEqual(['The Wilderness', 'The Ember Works']);
     expect(LAMPS.filter((lamp) => lamp.placeholder)).toHaveLength(11);
