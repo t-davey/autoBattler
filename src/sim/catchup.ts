@@ -4,7 +4,7 @@ import type { HeroId } from './content/skills';
 import { bankElapsed, CATCH_UP_CAP_MS, heroesOf, stateOf, stepTick, usableElapsed, type Game } from './game';
 import { unspentPoints } from './heroes';
 import type { ItemView } from './items';
-import type { EventSink, GameEvent } from './run';
+import { frontierWall, type EventSink, type GameEvent } from './run';
 
 export interface AwaySetback {
   readonly kind: 'wipe' | 'draw';
@@ -195,7 +195,7 @@ export function beginCatchUp(game: Game, elapsedMs: number): CatchUp {
       guardianAttempts: null,
       // A Battle already under way may have its Guardian in the second Phase.
       inSecondPhase: state.battle?.units.some((unit) => unit.inSecondPhase === true) ?? false,
-      previousBest: state.wall.bestAttempt ?? null,
+      previousBest: frontierWall(state.walls).bestAttempt ?? null,
       lampRelit: false,
       fellBack: false,
       levels: [],

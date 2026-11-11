@@ -7,11 +7,12 @@ import type { Rarity } from './content/items';
 import { BATTLE_DROP_CHANCE, CHEST_DROP_CHANCE } from './content/items';
 import { rankValue, type HeroId } from './content/skills';
 import { depthTuning } from './depth';
-import { generateFloor, xpShare, type FloorLayout, type Depth, type RoomKind, type RoomLayout } from './floors';
+import { generateFloor, lampIndexOf, xpShare, type FloorLayout, type Depth, type RoomKind, type RoomLayout } from './floors';
 import { clampToMaximums, gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
 import { rollItemSpec, viewItem, type ItemState, type ItemView } from './items';
 import { nextFloat, nextInt, type Rng } from './rng';
-import { recordGrowth, recordGuardianKill, recordBestAttempt, recordSetback, turnsBackBeforeGuardian, type WallEvent, type WallState } from './wall';
+import { FLOORS_PER_LAMP } from './content/world';
+import { frontierIndex, recordGrowth, recordGuardianKill, recordBestAttempt, recordSetback, runStretch, turnsBackBeforeGuardian, type WallEvent, type WallState } from './wall';
 
 /** The Team the Party fights on. */
 export const PARTY_TEAM = 'a' satisfies TeamId;
@@ -65,7 +66,8 @@ export interface RunWorld {
   readonly heroes: HeroState[];
   battle: BattleState | null;
   readonly run: RunState;
-  readonly wall: WallState;
+  /** One per Lamp, in order. */
+  readonly walls: readonly WallState[];
   /** Unequipped items, in the order they arrived here. */
   readonly stash: ItemState[];
   /** The id the next item takes. */
@@ -120,10 +122,13 @@ function returnToTown(world: RunWorld, reason: TownReason, sink: EventSink): voi
   sink({ type: 'returnedToTown', reason });
 }
 
-/** Sends the Party out from Town. Every Run starts at Floor 1. */
+/** The Wall the Party is working on, which counts Setbacks and growth. */
+export const frontierWall = (walls: readonly WallState[]): WallState => walls[frontierIndex(walls)]!;
+
+/** Sends the Party out from Town, to the Floor after the Lamp it works from: the last lit one, or one earlier after falling back. */
 export function sendParty(world: RunWorld, sink: EventSink): void {
   sink({ type: 'partySent' });
-  enterFloor(world, 1);
+  enterFloor(world, runStretch(world.walls) * FLOORS_PER_LAMP + 1);
 }
 
 function recoveryShare(heroes: readonly HeroState[]): number {
@@ -132,7 +137,7 @@ function recoveryShare(heroes: readonly HeroState[]): number {
 }
 
 function leaveRoom(world: RunWorld, sink: EventSink): void {
-  const { run, heroes, wall } = world;
+  const { run, heroes, walls } = world;
   const share = recoveryShare(heroes);
   for (const hero of heroes) {
     const { maxHealth, maxOil } = heroStats(hero);
@@ -141,7 +146,7 @@ function leaveRoom(world: RunWorld, sink: EventSink): void {
   }
 
   const next = run.layout!.rooms[run.room + 1];
-  if (next?.kind === 'guardian' && turnsBackBeforeGuardian(wall)) returnToTown(world, 'turnedBack', sink);
+  if (next?.kind === 'guardian' && turnsBackBeforeGuardian(walls[lampIndexOf(run.floor!)]!)) returnToTown(world, 'turnedBack', sink);
   else if (next) travelTo(run, run.room + 1);
   else enterFloor(world, run.floor! + 1);
 }
@@ -193,9 +198,9 @@ function outcomeOf(battle: BattleState): BattleOutcome {
 function setback(world: RunWorld, type: 'wipe' | 'draw', battle: BattleState, sink: EventSink): void {
   const firstEnemy = battle.units.find((unit) => unit.team === ENEMY_TEAM);
   const guardianHealthShare = firstEnemy && currentRoom(world.run).kind === 'guardian' ? Math.max(0, firstEnemy.health) / maxHealthOf(firstEnemy) : null;
-  if (guardianHealthShare !== null) recordBestAttempt(world.wall, guardianHealthShare);
+  if (guardianHealthShare !== null) recordBestAttempt(world.walls[lampIndexOf(world.run.floor!)]!, guardianHealthShare);
   sink({ type, floor: world.run.floor!, enemyName: firstEnemy?.spec.name ?? '', guardianHealthShare });
-  recordSetback(world.wall, sink);
+  recordSetback(frontierWall(world.walls), sink);
   returnToTown(world, 'setback', sink);
 }
 
@@ -203,12 +208,12 @@ function reward(world: RunWorld, xp: number, sink: EventSink): void {
   for (const hero of world.heroes) {
     const levels = gainXp(hero, xp * xpShare(hero.level, world.run.floor!));
     for (const level of levels) sink({ type: 'levelUp', heroId: hero.id, heroName: hero.name, level });
-    if (levels.length > 0) recordGrowth(world.wall, sink);
+    if (levels.length > 0) recordGrowth(frontierWall(world.walls), sink);
   }
 }
 
 function guardianFell(world: RunWorld, sink: EventSink): void {
-  const relit = recordGuardianKill(world.wall, sink);
+  const relit = recordGuardianKill(world.walls[lampIndexOf(world.run.floor!)]!, sink);
   // The Lamp is lit from the first kill on, so the guaranteed rare comes once.
   dropItem(world, sink, relit ? 'rare' : undefined);
   returnToTown(world, relit ? 'lampRelit' : 'guardianFell', sink);

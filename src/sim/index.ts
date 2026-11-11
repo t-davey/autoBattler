@@ -42,6 +42,6 @@ export type { ActionRefusal, ActionResult, Game, GameSetup, PlayerAction } from 
 export type { HeroStats } from './heroes';
 export type { BattleOutcome, EventSink, GameEvent, Phase, StartAt, TownReason } from './run';
 export { itemBlocksLearnedSkill, viewGame, viewStash } from './view';
-export { createWall, isWallState, recordGrowth, recordGuardianKill, recordSetback, SETBACKS_TO_FALL_BACK, turnsBackBeforeGuardian } from './wall';
+export { createWall, frontierIndex, isWallState, runStretch, recordGrowth, recordGuardianKill, recordSetback, SETBACKS_TO_FALL_BACK, turnsBackBeforeGuardian } from './wall';
 export type { WallEvent, WallSink, WallState } from './wall';
 export type { BattleView, FloorMapView, GameView, HeroView, RoomView, SkillValueView, SkillView, UnitView, WallView } from './view';

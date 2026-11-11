@@ -6,14 +6,15 @@ import { isDepth, ROOM_KINDS } from './floors';
 import { clampToMaximums, createParty, heroUnitSpec, unspentPoints, type HeroState } from './heroes';
 import { slotOf, starterItem, type ItemId, type ItemSpec, type ItemState } from './items';
 import { createRng, type Rng } from './rng';
-import { createRun, sendParty, stepRun, type EventSink, type RunState, type RunWorld, type StartAt } from './run';
+import { createRun, frontierWall, sendParty, stepRun, type EventSink, type RunState, type RunWorld, type StartAt } from './run';
 import { isLegalOrder, spendRefusal, type SkillRanks, type SpendRefusal } from './skills';
-import { createWall, isWallState, recordGrowth } from './wall';
+import { LAMPS } from './content/world';
+import { createWall, isWallState, recordGrowth, type WallState } from './wall';
 
 export const TICK_MS = 100;
 /** The longest absence that counts: 12 hours. */
 export const CATCH_UP_CAP_MS = 43_200_000;
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export interface GameSetup {
   readonly seed: number;
@@ -22,8 +23,9 @@ export interface GameSetup {
     readonly heroLevel?: number;
     readonly skillRanks?: Readonly<Partial<Record<HeroId, SkillRanks>>>;
     readonly startAt?: StartAt;
+    /** Lights the first Lamp. */
     readonly lampLit?: boolean;
-    /** Setbacks already counted towards falling back. 3 starts the Game fallen back. */
+    /** Setbacks already counted towards falling back at the frontier Lamp. 3 starts the Game fallen back. */
     readonly setbacks?: number;
     /** Battles draw after this many Ticks, instead of the usual limit. */
     readonly battleTicks?: number;
@@ -60,6 +62,11 @@ export const stateOf = (game: Game): GameState => game as unknown as GameState;
 const gameOf = (state: GameState): Game => state as unknown as Game;
 const ignore: EventSink = () => {};
 
+/** One Wall per Lamp: the first `lit` relit, and the frontier with `setbacks` already counted. */
+function createWalls(lit: number, setbacks: number | undefined): WallState[] {
+  return LAMPS.map((_, index) => createWall({ lampLit: index < lit, setbacks: index === lit ? setbacks : 0 }));
+}
+
 export function createGame(setup: GameSetup): Game {
   const { heroLevel, skillRanks, startAt, lampLit, setbacks, battleTicks, equipped, stash } = setup.scenario ?? {};
   let nextItemId = 1;
@@ -71,7 +78,7 @@ export function createGame(setup: GameSetup): Game {
   }));
   const stashed = (stash ?? []).map(withId);
   const rng = createRng(setup.seed);
-  return gameOf({ rng, tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), wall: createWall({ lampLit, setbacks }), battleTicks: battleTicks ?? null, heroes, stash: stashed, nextItemId, stashRevision: 0 });
+  return gameOf({ rng, tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), walls: createWalls(lampLit ? 1 : 0, setbacks), battleTicks: battleTicks ?? null, heroes, stash: stashed, nextItemId, stashRevision: 0 });
 }
 
 export const heroesOf = (game: Game): readonly HeroState[] => stateOf(game).heroes;
@@ -107,7 +114,7 @@ export function applyAction(game: Game, action: PlayerAction, sink: EventSink = 
       const rank = hero.ranks[skillId] ?? 0;
       hero.ranks[skillId] = rank + 1;
       if (rank === 0 && SKILLS[skillId].kind === 'active') hero.order.push(skillId);
-      recordGrowth(state.wall, sink);
+      recordGrowth(frontierWall(state.walls), sink);
       return ACCEPTED;
     }
     case 'setSkillOrder':
@@ -130,7 +137,7 @@ export function applyAction(game: Game, action: PlayerAction, sink: EventSink = 
       hero.equipped[slot] = item;
       state.stashRevision++;
       clampToMaximums(hero);
-      recordGrowth(state.wall, sink);
+      recordGrowth(frontierWall(state.walls), sink);
       return ACCEPTED;
     }
     case 'unequipItem': {
@@ -344,7 +351,9 @@ const isGameState = (value: unknown): boolean =>
   isNumber(value['tick']) &&
   isNumber(value['bankMs']) &&
   isRunState(value['run']) &&
-  isWallState(value['wall']) &&
+  Array.isArray(value['walls']) &&
+  value['walls'].length === LAMPS.length &&
+  value['walls'].every(isWallState) &&
   (value['battleTicks'] === null || isNumber(value['battleTicks'])) &&
   (value['run'].phase === 'battle') === (value['battle'] !== null) &&
   Array.isArray(value['heroes']) &&

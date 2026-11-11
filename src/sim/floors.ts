@@ -1,7 +1,7 @@
 import { depthTuning } from './depth';
 import { createRng, nextInt, shuffled, type Rng } from './rng';
 
-import { MAX_DEPTH } from './content/world';
+import { FLOORS_PER_LAMP, MAX_DEPTH } from './content/world';
 
 /** How deep a Floor is across the whole world, 1–60. floorAt turns it into an Act and a Floor. */
 export type Depth = number;
@@ -21,8 +21,11 @@ export interface FloorLayout {
 
 export const GRID_WIDTH = 9;
 export const GRID_HEIGHT = 7;
-/** The deepest Floor a Party reaches, and the one whose Guardian guards the only Lamp, until there is one Wall per Lamp. */
-export const LAST_FLOOR: Depth = 5;
+/** Every 5th Floor ends in a Guardian Room, before its Lamp. */
+export const isLampDepth = (depth: Depth): boolean => depth % FLOORS_PER_LAMP === 0;
+
+/** The index of the Lamp at the end of the stretch a depth is in. */
+export const lampIndexOf = (depth: Depth): number => Math.ceil(depth / FLOORS_PER_LAMP) - 1;
 
 const MIN_ROOMS = 8;
 const MAX_ROOMS = 12;
@@ -74,7 +77,7 @@ function roomKinds(rng: Rng, roomCount: number, floor: Depth): RoomKind[] {
   const others = roomCount - 1;
   const battles = Math.round(others * BATTLE_SHARE);
   const mixed = shuffled<RoomKind>(rng, Array.from({ length: others }, (_, index) => (index < battles ? 'battle' : 'chest')));
-  return [...mixed, 'stairs', ...(floor === LAST_FLOOR ? (['guardian'] as const) : [])];
+  return [...mixed, 'stairs', ...(isLampDepth(floor) ? (['guardian'] as const) : [])];
 }
 
 /** Lays out a Floor from its Seed. Floor 3's Guardian Room comes after its usual 8-12 Rooms. */

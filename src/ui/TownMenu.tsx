@@ -1,11 +1,12 @@
-import { TICK_MS, type GameView } from '../sim';
+import { LAMPS, TICK_MS, type GameView } from '../sim';
+import { floorLabel } from './floorLabel';
 import { PixelIcon } from './PixelIcon';
 import type { Store } from './store';
 
 /** Shown while the Party is in Town: a button, a countdown, and how the Wall stands. */
 export function TownMenu({ view, dispatch }: { view: GameView; dispatch: Store['dispatch'] }) {
   const seconds = Math.ceil(((view.townTicksLeft ?? 0) * TICK_MS) / 1_000);
-  const { lampLit, setbacksTowardsFallback, setbacksToFallBack, fallenBack } = view.wall;
+  const { lampLit, lampsLit, setbacksTowardsFallback, setbacksToFallBack, fallenBack } = view.wall;
   return (
     <section className="panel town-menu" aria-label="Town">
       <h2>Town</h2>
@@ -15,11 +16,12 @@ export function TownMenu({ view, dispatch }: { view: GameView; dispatch: Store['
         Send the Party
       </button>
       <p className={lampLit ? 'lamp lamp-lit' : 'lamp'}>
-        <PixelIcon name="lantern" /> {lampLit ? 'The Lamp is lit.' : 'The Lamp is dark.'}
+        <PixelIcon name="lantern" /> Next Run heads for the Lamp at {floorLabel(view.lampFloor)}, which is {lampLit ? 'lit' : 'dark'}.
       </p>
+      <p>Lamps relit: {lampsLit} of {LAMPS.length}.</p>
       <p>
         {fallenBack
-          ? 'Fallen back: Runs turn back before the Guardian until a Hero levels up, a skill point is spent, or an item is equipped.'
+          ? 'Fallen back: Runs stay short of the dark Lamp until a Hero levels up, a skill point is spent, or an item is equipped.'
           : `Setbacks towards falling back: ${setbacksTowardsFallback} of ${setbacksToFallBack}.`}
       </p>
     </section>

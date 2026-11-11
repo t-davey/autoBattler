@@ -1,6 +1,7 @@
 import { maxHealthOf, type BattleState, type Reach, type Row, type TeamId } from './battle';
 import type { Slot } from './content/items';
-import { GRID_HEIGHT, GRID_WIDTH, LAST_FLOOR, type Depth, type RoomKind } from './floors';
+import { FLOORS_PER_LAMP } from './content/world';
+import { GRID_HEIGHT, GRID_WIDTH, lampIndexOf, type Depth, type RoomKind } from './floors';
 import { CLASSES, xpToNextLevel } from './content/party';
 import { MAX_SKILL_RANK, rankValue, SKILL_IDS, SKILLS, type HeroId, type SkillId, type SkillKind, type SkillReach } from './content/skills';
 import { heroesOf, stateOf, type Game } from './game';
@@ -8,7 +9,7 @@ import { heroReach, heroStats, unspentPoints, type HeroState, type HeroStats } f
 import { viewItem, type ItemView } from './items';
 import { ENEMY_TEAM, PARTY_TEAM, type Phase, type RunState } from './run';
 import { pointsToOpen, spendRefusal, spentPoints, type SpendRefusal } from './skills';
-import { SETBACKS_TO_FALL_BACK } from './wall';
+import { frontierIndex, runStretch, SETBACKS_TO_FALL_BACK } from './wall';
 
 export interface UnitView {
   readonly id: string;
@@ -93,7 +94,11 @@ export interface FloorMapView {
 }
 
 export interface WallView {
+  /** Whether the Lamp at the end of the Party's stretch is lit: the one ahead on a Floor, or next Run's from Town. */
   readonly lampLit: boolean;
+  /** Lamps relit so far, of 12. */
+  readonly lampsLit: number;
+  /** The rest count the frontier Lamp, the first dark one. */
   readonly setbacksTowardsFallback: number;
   /** The count at which the Party falls back. */
   readonly setbacksToFallBack: number;
@@ -106,7 +111,7 @@ export interface GameView {
   readonly battle: BattleView | null;
   readonly map: FloorMapView | null;
   readonly floor: Depth | null;
-  /** The Floor whose Guardian guards the Lamp. */
+  /** The Floor whose Guardian guards the Lamp at the end of the Party's stretch. */
   readonly lampFloor: Depth;
   /** The countdown until the Party leaves Town. */
   readonly townTicksLeft: number | null;
@@ -212,15 +217,23 @@ function viewMap({ layout, room }: RunState): FloorMapView | null {
 }
 
 export function viewGame(game: Game): GameView {
-  const { tick, battle, run, wall, stashRevision } = stateOf(game);
+  const { tick, battle, run, walls, stashRevision } = stateOf(game);
+  const ahead = run.floor === null ? runStretch(walls) : lampIndexOf(run.floor);
+  const frontier = walls[frontierIndex(walls)]!;
   return {
     tick,
     phase: run.phase,
     map: viewMap(run),
     floor: run.floor,
-    lampFloor: LAST_FLOOR,
+    lampFloor: (ahead + 1) * FLOORS_PER_LAMP,
     townTicksLeft: run.phase === 'town' ? run.ticksLeft : null,
-    wall: { lampLit: wall.lampLit, setbacksTowardsFallback: wall.setbacks, setbacksToFallBack: SETBACKS_TO_FALL_BACK, fallenBack: wall.fallenBack },
+    wall: {
+      lampLit: walls[ahead]!.lampLit,
+      lampsLit: walls.filter((wall) => wall.lampLit).length,
+      setbacksTowardsFallback: frontier.setbacks,
+      setbacksToFallBack: SETBACKS_TO_FALL_BACK,
+      fallenBack: frontier.fallenBack,
+    },
     battle: battle && { party: viewTeam(battle, PARTY_TEAM), enemies: viewTeam(battle, ENEMY_TEAM) },
     heroes: heroesOf(game).map(viewHero),
     stashRevision,

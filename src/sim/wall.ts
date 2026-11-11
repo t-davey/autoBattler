@@ -76,3 +76,18 @@ export function recordGuardianKill(wall: WallState, sink: WallSink): boolean {
   if (relit) sink({ type: 'lampRelit' });
   return relit;
 }
+
+/** The Lamp a Party is working towards: the first dark one, or the last once every Lamp is lit. */
+export function frontierIndex(walls: readonly WallState[]): number {
+  const dark = walls.findIndex((wall) => !wall.lampLit);
+  return dark === -1 ? walls.length - 1 : dark;
+}
+
+/**
+ * The stretch of Floors a Run covers, by the index of the Lamp at its end: the frontier's, or the one before it
+ * once the Party has fallen back. Falling back from the first Lamp keeps its stretch and turns back before its Guardian.
+ */
+export function runStretch(walls: readonly WallState[]): number {
+  const frontier = frontierIndex(walls);
+  return walls[frontier]!.fallenBack ? Math.max(0, frontier - 1) : frontier;
+}

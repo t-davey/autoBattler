@@ -101,7 +101,7 @@ describe('Rooms', () => {
   });
 
   it('a new visit to a Floor draws a new layout', () => {
-    const played = game(5, { heroLevel: 40 });
+    const played = game(5, { heroLevel: 1 });
     const first = viewGame(played).map!.rooms;
     stepUntil(played, 'returnedToTown');
     stepUntil(played, 'partySent');
@@ -473,7 +473,18 @@ describe('the Guardian', () => {
     expect(types.indexOf('guardianFell')).toBeLessThan(types.indexOf('lampRelit'));
     expect(seen.at(-1)).toMatchObject({ type: 'returnedToTown', reason: 'lampRelit' });
     expect(hero(viewGame(played), 'warrener').xp - xpBefore).toBe(10); // XP falloff's 10%.
-    expect(viewGame(played)).toMatchObject({ phase: 'town', wall: { lampLit: true } });
+    expect(viewGame(played)).toMatchObject({ phase: 'town', wall: { lampsLit: 1 } });
+  });
+
+  it('after relighting a Lamp, the next Run starts on the Floor beyond it', () => {
+    const played = game(1, { heroLevel: 40, ...atGuardian });
+    stepUntil(played, 'lampRelit');
+    expect(viewGame(played)).toMatchObject({ lampFloor: 10, wall: { lampLit: false, lampsLit: 1 } });
+    stepUntil(played, 'partySent');
+    expect(viewGame(played).floor).toBe(6);
+    const seen: GameEvent[] = [];
+    stepUntil(played, (event) => event.type === 'floorEntered' && event.floor === 10, seen);
+    expect(seen.some((event) => event.type === 'roomEntered' && event.kind === 'guardian')).toBe(false);
   });
 
   it('a level 1 Party Wipes at the Guardian, mostly from poison damage', () => {
@@ -494,9 +505,9 @@ describe('the Guardian', () => {
     }
   });
 
-  it('the Guardian respawns on Runs after the Lamp is lit', () => {
-    const played = game(1, { heroLevel: 40, ...atGuardian });
-    stepUntil(played, 'lampRelit');
+  it('a Party fallen back from the second Lamp farms the first stretch, where the Guardian respawns', () => {
+    const played = game(1, { heroLevel: 40, lampLit: true, setbacks: 3 });
+    stepUntil(played, 'returnedToTown');
     stepUntil(played, 'partySent');
     expect(viewGame(played).floor).toBe(1);
     const nextRun: GameEvent[] = [];
@@ -545,6 +556,7 @@ describe('saves', () => {
     const good = JSON.parse(serializeGame(game(1))) as { game: Record<string, unknown> };
     const withGame = (changes: object) => JSON.stringify({ ...good, game: { ...good.game, ...changes } });
     const run = good.game['run'] as object;
+    const walls = good.game['walls'] as object[];
     const bad = [
       withGame({ run: null }),
       withGame({ run: { ...run, phase: 'elsewhere' } }),
@@ -552,11 +564,12 @@ describe('saves', () => {
       withGame({ run: { ...run, room: 99 } }),
       withGame({ run: { ...run, layout: { rooms: [{ x: 'a', y: 0, kind: 'battle' }] } } }),
       withGame({ run: { ...run, phase: 'battle' } }),
-      withGame({ wall: null }),
-      withGame({ wall: { lampLit: 'yes', setbacks: 0, fallenBack: false } }),
-      withGame({ wall: { lampLit: false, setbacks: 9, fallenBack: false } }),
-      withGame({ wall: { lampLit: false, setbacks: 0, fallenBack: true } }),
-      withGame({ wall: { lampLit: false, setbacks: 3, fallenBack: false } }),
+      withGame({ walls: null }),
+      withGame({ walls: walls.slice(1) }),
+      withGame({ walls: [{ lampLit: 'yes', setbacks: 0, fallenBack: false }, ...walls.slice(1)] }),
+      withGame({ walls: [{ lampLit: false, setbacks: 9, fallenBack: false }, ...walls.slice(1)] }),
+      withGame({ walls: [{ lampLit: false, setbacks: 0, fallenBack: true }, ...walls.slice(1)] }),
+      withGame({ walls: [{ lampLit: false, setbacks: 3, fallenBack: false }, ...walls.slice(1)] }),
       withGame({ battleTicks: 'soon' }),
     ];
     for (const text of bad) expect(deserializeGame(text)).toBeNull();
