@@ -39,7 +39,8 @@ export function FloorMap({ view }: { view: GameView }) {
   };
   return (
     <section className="floor-map" aria-label="Floor map">
-      <h2>Floor {floor}</h2>
+      <h2>Floor {floor} of {view.lampFloor}</h2>
+      <p className="floor-progress">Rooms cleared: {map.rooms.filter((room) => room.state === 'cleared').length} of {map.rooms.length}</p>
       <ol className="room-grid" style={style}>
         {map.rooms.map((room, index) => (
           <RoomCell key={`${room.x},${room.y}`} room={room} order={index + 1} column={room.x - left + 1} row={room.y - top + 1} />

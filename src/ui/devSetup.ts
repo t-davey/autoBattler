@@ -9,7 +9,7 @@ export function devSetup(search: string, fresh: GameSetup): GameSetup {
     seed: Number.isInteger(seed) ? seed : fresh.seed,
     scenario: {
       ...(Number.isInteger(level) && level >= 1 ? { heroLevel: level } : {}),
-      ...(query.get('start') === 'guardian' ? { startAt: { floor: 3, room: 'guardian' } } : {}),
+      ...(query.get('start') === 'guardian' ? { startAt: { floor: 5, room: 'guardian' } } : {}),
     },
   };
 }

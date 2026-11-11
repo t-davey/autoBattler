@@ -20,6 +20,9 @@ const report = (changes: Partial<AwayReport> = {}): AwayReport => ({
   deepestFloor: 1,
   setbacks: [],
   guardianKills: 0,
+  guardianAttempts: null,
+  damageDealt: 0,
+  healed: 0,
   lampRelit: false,
   fellBack: false,
   levels: [],
@@ -33,6 +36,24 @@ const newView = (): GameView => viewGame(createGame({ seed: 1 }));
 const withHeroes = (view: GameView, change: (hero: HeroView) => HeroView): GameView => ({ ...view, heroes: view.heroes.map(change) });
 
 describe('describeFindings', () => {
+  const attempts = { attempts: 5, reachedSecondPhase: 3, bestHealthShare: 0.31, previousBestHealthShare: 0.62 };
+
+  it('states Guardian progress beside the previous best', () => {
+    const [finding] = describeFindings(report({ setbacks: [setback()], guardianAttempts: attempts }), newView());
+    expect(finding!.details[0]).toBe("Reached Phase 2 in 3 of 5 attempts. Best attempt at the Guardian: 31% of its health left, was 62%");
+  });
+
+  it('leaves out what has not happened', () => {
+    const guardianAttempts = { ...attempts, reachedSecondPhase: 0, previousBestHealthShare: null };
+    const [finding] = describeFindings(report({ setbacks: [setback()], guardianAttempts }), newView());
+    expect(finding!.details[0]).toBe("Best attempt at the Guardian: 31% of its health left");
+  });
+
+  it('drops the progress once the Guardian has fallen', () => {
+    const [finding] = describeFindings(report({ setbacks: [setback()], guardianAttempts: attempts, guardianKills: 1 }), newView());
+    expect(finding!.details.join()).not.toContain('Best attempt');
+  });
+
   it('has no Findings when nothing happened', () => {
     expect(describeFindings(report(), newView())).toEqual([]);
   });

@@ -99,7 +99,7 @@ One town survives in a world of Dark, held back only by Oil Lamps. In Act 1 the 
 
 The story reaches the player through short act introductions, item descriptions, and Away Report text. [docs/lore/](lore/README.md) holds it, spoilers included.
 
-There are 3 Acts of 10 floors each. Names are provisional.
+There are 3 Acts of 20 floors each. Names are provisional.
 
 | Act | Place | Enemies | Damage leaning |
 |---|---|---|---|
@@ -116,14 +116,14 @@ There are 3 Acts of 10 floors each. Names are provisional.
 
 ### Lamps and walls
 
-- A Lamp sits every 3 floors, guarded by a Guardian. A last Guardian ends each Act, making 12 walls per Difficulty Tier.
+- A Lamp sits every 5 floors, guarded by a Guardian, so each Act has 4. The last Guardian ends the Act, making 12 walls per Difficulty Tier. The human chose 5 Floors per Lamp on 2026-11-08, so each stretch shows more progress, and 20-Floor Acts on 2026-11-10, to keep 12 walls.
 - Each Party relights Lamps for itself, and they go dark again at each new Difficulty Tier.
 - Each wall leans on a particular damage type or role, without requiring a specific Class.
 - Guardians respawn on each visit. The first kill guarantees a rare item.
 
 ### Why 2 weeks
 
-Offline progress means about 300 hours of Party time in the first Difficulty Tier, while a clean pass through all 30 floors takes about 2.5 hours. Power walls fill the gap: most of that time goes to farming, and about 35 check-ins against 12 walls means breaking through one about every 3 check-ins. Farming going stale is the main risk, so loot and Elites have to stay interesting.
+Offline progress means about 300 hours of Party time in the first Difficulty Tier, while a clean pass through all 60 floors takes about 5 hours. Power walls fill the gap: most of that time goes to farming, and about 35 check-ins against 12 walls means breaking through one about every 3 check-ins. Farming going stale is the main risk, so loot and Elites have to stay interesting.
 
 ### Loot sources
 
@@ -226,7 +226,7 @@ Panels are iron-bound plates with brass corners, and the Away Report reads as a 
 
 ## First playable
 
-The full loop, built thin, to test whether coming back to loot feels good: all of the Undercroft (Act 2) with its 4 Guardians, rarity and Affix loot, auto-salvage, Town, and the Away Report. Judge it over a few real days of check-ins, since a single session can't show whether returning feels good.
+The full loop, built thin, to test whether coming back to loot feels good: all 20 Floors of the Undercroft (Act 2) with its 4 Guardians, rarity and Affix loot, auto-salvage, Town, and the Away Report. Judge it over a few real days of check-ins, since a single session can't show whether returning feels good.
 
 All 4 Classes are in, each trimmed to 2 Branches of about 3 skills, about 24 skills in total:
 
@@ -241,7 +241,7 @@ Each Class also gets one Class-specific unique that visibly changes a skill, so 
 
 ## Proof-of-concept demo
 
-A smaller build comes before the first playable, to test one thing: is it satisfying to come back to loot, make a build decision, and see that decision beat a Wall? It has a preset Party of Sin-Eater, Huntsman, and Lamplighter, one Branch each, and Floors 1–3 of the Undercroft ending in one Guardian and one Lamp.
+A smaller build comes before the first playable, to test one thing: is it satisfying to come back to loot, make a build decision, and see that decision beat a Wall? It has a preset Party of Sin-Eater, Huntsman, and Lamplighter, one Branch each, and Floors 1–5 of the Undercroft ending in one Guardian and one Lamp. It began with Floors 1–3.
 
 [The demo plan](plans/poc-demo.md) holds its scope, its rules, and its milestones. Where it differs from this document, it applies to the demo only.
 

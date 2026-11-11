@@ -230,10 +230,14 @@ const isSkillTicks = (value: unknown): boolean =>
   isRecord(value) && Object.entries(value).every(([id, tick]) => isSkillId(id) && isNumber(tick));
 
 /** A clock for each of the Unit's actions, or an action would silently never come. */
-const hasActionClocks = (spec: Record<string, unknown>, clocks: unknown): boolean =>
-  Array.isArray(clocks) &&
-  clocks.every(isNumber) &&
-  clocks.length === (Array.isArray(spec['actions']) ? spec['actions'].length : 0);
+const hasActionClocks = (spec: Record<string, unknown>, clocks: unknown, inSecondPhase: unknown): boolean => {
+  const phase = spec['secondPhase'];
+  if (inSecondPhase !== undefined && typeof inSecondPhase !== 'boolean') return false;
+  // A second Phase needs one to be in.
+  if (inSecondPhase === true && !isRecord(phase)) return false;
+  const actions = inSecondPhase === true ? (phase as Record<string, unknown>)['actions'] : spec['actions'];
+  return Array.isArray(clocks) && clocks.every(isNumber) && clocks.length === (Array.isArray(actions) ? actions.length : 0);
+};
 
 const isUnitState = (value: unknown): boolean =>
   isRecord(value) &&
@@ -242,7 +246,7 @@ const isUnitState = (value: unknown): boolean =>
   isRow(value['row']) &&
   isNumber(value['health']) &&
   isNumber(value['ticksToAction']) &&
-  hasActionClocks(value['spec'] as Record<string, unknown>, value['ticksToEachAction']) &&
+  hasActionClocks(value['spec'] as Record<string, unknown>, value['ticksToEachAction'], value['inSecondPhase']) &&
   isNumber(value['oil']) &&
   isSkillTicks(value['skillReadyAt']) &&
   (value['bleed'] === null || isBleed(value['bleed'])) &&

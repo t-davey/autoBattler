@@ -186,6 +186,14 @@ _Avoid_: Exit, goal
 A Guardian that stops a Party until it grows stronger.
 _Avoid_: Gate, blocker
 
+**Phase**:
+A stage of a Guardian's Battle with its own actions, entered at a share of its health.
+_Avoid_: Stage, form
+
+**Best attempt**:
+The lowest health a Guardian reached in the time an Away Report covers.
+_Avoid_: High score, record
+
 **Catch-up**:
 Running a player's absence, or the time a check-in paused, through the same rules as live play, up to 12 hours, and reporting it in an Away Report.
 _Avoid_: Offline progress, fast-forward

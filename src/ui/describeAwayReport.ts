@@ -45,6 +45,16 @@ export function groupSetbacks(setbacks: readonly AwaySetback[]): readonly Setbac
 }
 
 
+function mergeAttempts(earlier: AwayReport['guardianAttempts'], later: AwayReport['guardianAttempts']): AwayReport['guardianAttempts'] {
+  if (!earlier || !later) return earlier ?? later;
+  return {
+    attempts: earlier.attempts + later.attempts,
+    reachedSecondPhase: earlier.reachedSecondPhase + later.reachedSecondPhase,
+    bestHealthShare: Math.min(earlier.bestHealthShare, later.bestHealthShare),
+    previousBestHealthShare: earlier.previousBestHealthShare,
+  };
+}
+
 /** One report for two absences in a row, so an unread one isn't lost. */
 export function mergeAwayReports(earlier: AwayReport, later: AwayReport): AwayReport {
   const levels = [...earlier.levels];
@@ -61,6 +71,9 @@ export function mergeAwayReports(earlier: AwayReport, later: AwayReport): AwayRe
     deepestFloor: Math.max(earlier.deepestFloor, later.deepestFloor),
     setbacks: [...earlier.setbacks, ...later.setbacks],
     guardianKills: earlier.guardianKills + later.guardianKills,
+    damageDealt: earlier.damageDealt + later.damageDealt,
+    healed: earlier.healed + later.healed,
+    guardianAttempts: mergeAttempts(earlier.guardianAttempts, later.guardianAttempts),
     lampRelit: earlier.lampRelit || later.lampRelit,
     fellBack: earlier.fellBack || later.fellBack,
     levels,

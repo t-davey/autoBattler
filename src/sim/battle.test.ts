@@ -252,6 +252,52 @@ describe('carried health', () => {
   });
 });
 
+describe('Phases', () => {
+  const quiet = { name: 'Quiet', interval: 1_000, target: 'oneFront', damage: 0, damageType: 'physical' } as const;
+  const hard = { name: 'Hard', interval: 20, target: 'oneFront', damage: 1, damageType: 'physical' } as const;
+  const setup = (seed: number, power = 60) => ({
+    seed,
+    teams: {
+      a: [unit('hero', { health: 100_000, power, actionInterval: 30, armour: 0 })],
+      b: [unit('warden', { health: 500, armour: 0, actions: [quiet], secondPhase: { atHealthShare: 0.5, actions: [hard] } })],
+    },
+  });
+  const changesIn = (seed: number, power?: number) =>
+    simulateBattle(setup(seed, power)).log.filter((event) => event.type === 'phaseChanged');
+
+  it('changes once at the threshold, and the new actions replace the old on fresh clocks', () => {
+    const { log, winner } = simulateBattle(setup(1));
+    const actionTicks = (name: string) =>
+      log.flatMap((event) => (event.type === 'action' && event.actionName === name ? [event.tick] : []));
+    expect(winner).toBe('a');
+    const changes = log.filter((event) => event.type === 'phaseChanged');
+    expect(changes).toHaveLength(1);
+    const at = changes[0]!.tick;
+    expect(actionTicks('Hard')[0]).toBe(at + 20);
+    expect(actionTicks('Quiet').every((tick) => tick < at)).toBe(true);
+  });
+
+  it('a burst past the threshold still changes only once', () => {
+    expect(changesIn(1, 300)).toHaveLength(1);
+  });
+
+  it('a Unit killed outright never changes', () => {
+    expect(changesIn(1, 5_000)).toHaveLength(0);
+  });
+
+  it('plays the same from the same Seed', () => {
+    expect(simulateBattle(setup(7))).toEqual(simulateBattle(setup(7)));
+  });
+
+  it('carries on the same after a save in the middle of the second Phase', () => {
+    const live = createBattle(setup(3));
+    while (!live.units.some((candidate) => candidate.health <= 250)) stepBattle(live);
+    stepBattle(live);
+    const resumed = JSON.parse(JSON.stringify(live)) as typeof live;
+    for (let i = 0; i < 40; i++) expect(stepBattle(resumed)).toEqual(stepBattle(live));
+  });
+});
+
 describe('timed actions', () => {
   const slam = { name: 'Slam', interval: 8, target: 'oneFront', damage: 4, damageType: 'physical' } as const;
   const breath = { name: 'Breath', interval: 6, target: 'every', damage: 0, damageType: 'poison', poisonStack: 3 } as const;

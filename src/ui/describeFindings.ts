@@ -31,6 +31,17 @@ function fallbackLine(report: AwayReport, view: GameView): string | null {
   return view.wall.fallenBack ? 'The Party fell back, and turns back before the Guardian' : 'The Party will challenge the Guardian again';
 }
 
+const percentOf = (share: number): string => `${Math.round(share * 100)}%`;
+
+/** Progress on a Guardian still standing, since a kill makes it moot. */
+function attemptsLine({ guardianAttempts, guardianKills }: AwayReport): string | null {
+  if (!guardianAttempts || guardianKills > 0) return null;
+  const { attempts, reachedSecondPhase, bestHealthShare, previousBestHealthShare } = guardianAttempts;
+  const reached = reachedSecondPhase > 0 ? `Reached Phase 2 in ${reachedSecondPhase} of ${attempts} attempt${attempts === 1 ? '' : 's'}. ` : '';
+  const was = previousBestHealthShare === null ? '' : `, was ${percentOf(previousBestHealthShare)}`;
+  return `${reached}Best attempt at the Guardian: ${percentOf(bestHealthShare)} of its health left${was}`;
+}
+
 function setbackFinding(report: AwayReport, view: GameView): Finding | null {
   // Most frequent first, so the title names what stopped the Party most often.
   const [top, ...rest] = [...groupSetbacks(report.setbacks)].sort((a, b) => b.count - a.count);
@@ -38,10 +49,12 @@ function setbackFinding(report: AwayReport, view: GameView): Finding | null {
   const main = mainDamageOf(top.setback);
   const stat = main ? (ANSWERING_STAT[main] ?? null) : null;
   const fallback = fallbackLine(report, view);
+  const attempts = attemptsLine(report);
   return {
     kind: 'setbacks',
     title: top.text,
     details: [
+      ...(attempts ? [attempts] : []),
       ...(rest.length > 0 ? [rest.map((group) => group.text).join(' · ')] : []),
       ...(stat ? [answeringStatLine(stat, view.heroes)] : []),
       ...(fallback ? [fallback] : []),

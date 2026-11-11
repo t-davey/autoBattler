@@ -45,7 +45,7 @@ const hero = (view: GameView, id: HeroId): HeroView => {
 };
 
 const game = (seed: number, scenario: Scenario = {}): Game => createGame({ seed, scenario });
-const atGuardian = { startAt: { floor: 3, room: 'guardian' } } satisfies Scenario;
+const atGuardian = { startAt: { floor: 5, room: 'guardian' } } satisfies Scenario;
 
 /** A Game whose Party has just Wiped, with what it held the Tick before. */
 function afterWipe(seed: number): { game: Game; before: GameView } {
@@ -237,8 +237,8 @@ describe('carrying over', () => {
     });
 
     it("a Guardian's XP falls off like its Floor's", () => {
-      expect(xpFromWin(7, atGuardian.startAt)).toBe(100);
-      expect(xpFromWin(8, atGuardian.startAt)).toBe(75);
+      expect(xpFromWin(9, atGuardian.startAt)).toBe(100);
+      expect(xpFromWin(10, atGuardian.startAt)).toBe(75);
     });
   });
 
@@ -396,7 +396,7 @@ describe('falling back', () => {
     const back = stepUntil(farming, 'returnedToTown', run);
     expect(back).toMatchObject({ reason: 'turnedBack' });
     const floors = new Set(run.flatMap((event) => (event.type === 'floorEntered' ? [event.floor] : [])));
-    expect(floors).toEqual(new Set([1, 2, 3]));
+    expect(floors).toEqual(new Set([1, 2, 3, 4, 5]));
     expect(run.some((event) => event.type === 'roomEntered' && event.kind === 'guardian')).toBe(false);
     expect(viewGame(farming)).toMatchObject({ phase: 'town', wall: { fallenBack: true, setbacksTowardsFallback: 3 } });
   });

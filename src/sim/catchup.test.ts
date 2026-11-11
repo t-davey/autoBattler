@@ -22,7 +22,7 @@ type Scenario = NonNullable<GameSetup['scenario']>;
 
 const HOUR_MS = 3_600_000;
 const SLICES = [16, 33, 100, 1_000, 7_000];
-const atGuardian = { startAt: { floor: 3, room: 'guardian' } } satisfies Scenario;
+const atGuardian = { startAt: { floor: 5, room: 'guardian' } } satisfies Scenario;
 
 const newGame = (seed: number, scenario: Scenario = {}): Game => createGame({ seed, scenario });
 
@@ -197,9 +197,41 @@ describe('the Away Report', () => {
     }
 
     const [first] = report.setbacks;
-    expect(first).toMatchObject({ kind: 'wipe', floor: 3, enemyName: 'The Mouldering Warden', mainDamageType: 'poison' });
+    expect(first).toMatchObject({ kind: 'wipe', floor: 5, enemyName: 'The Mouldering Warden', mainDamageType: 'poison' });
     expect(first!.mainDamageShare).toBeCloseTo(poison / total);
     expect(first!.mainDamageShare).toBeGreaterThan(0.5);
+  });
+
+  it('the Away Report tracks attempts at the Guardian, and the next compares with the last', () => {
+    const game = newGame(1, { ...atGuardian, battleTicks: 300 });
+    const first = catchUp(game, 45_000).guardianAttempts!;
+    expect(first.attempts).toBeGreaterThan(0);
+    expect(first.bestHealthShare).toBeGreaterThan(0);
+    expect(first.bestHealthShare).toBeLessThanOrEqual(1);
+    expect(first.previousBestHealthShare).toBeNull();
+
+    const report = catchUp(game, 8 * HOUR_MS);
+    const second = report.guardianAttempts!;
+    expect(second.previousBestHealthShare).toBe(first.bestHealthShare);
+  });
+
+  it('counts an attempt that reached the second Phase', () => {
+    // Some level is strong enough to pass half the Warden's health and still fall short, whatever its numbers.
+    const reports = [8, 10, 12, 14, 16, 20, 25, 30].map((heroLevel) => catchUp(newGame(1, { ...atGuardian, heroLevel }), 10 * 60_000).guardianAttempts);
+    const reached = reports.find((attempts) => attempts !== null && attempts.reachedSecondPhase > 0);
+    expect(reached).toBeDefined();
+    expect(reached!.bestHealthShare).toBeLessThanOrEqual(0.5);
+    for (const attempts of reports) if (attempts) expect(attempts.reachedSecondPhase).toBeLessThanOrEqual(attempts.attempts);
+  });
+
+  it('the Away Report totals damage the Heroes dealt and health they healed', () => {
+    const report = catchUp(newGame(1, { skillRanks: { lamplighter: { 'mend-by-lamplight': 1 } }, heroLevel: 2 }), HOUR_MS);
+    expect(report.damageDealt).toBeGreaterThan(1_000);
+    expect(report.healed).toBeGreaterThan(0);
+  });
+
+  it('a report with no Guardian Setback has no attempts', () => {
+    expect(catchUp(newGame(1), 60_000).guardianAttempts).toBeNull();
   });
 
   it('the Away Report notes a fall back and a relit Lamp', () => {
@@ -225,7 +257,7 @@ describe('the Away Report', () => {
   it('the Away Report lists a draw as a draw, with its main damage type', () => {
     const report = catchUp(newGame(1, { ...atGuardian, heroLevel: 40, battleTicks: 100 }), 30_000);
     const [first] = report.setbacks;
-    expect(first).toMatchObject({ kind: 'draw', floor: 3, enemyName: 'The Mouldering Warden', mainDamageType: 'poison' });
+    expect(first).toMatchObject({ kind: 'draw', floor: 5, enemyName: 'The Mouldering Warden', mainDamageType: 'poison' });
     expect(first!.mainDamageShare).toBeGreaterThan(0.5);
   });
 
@@ -271,6 +303,17 @@ describe('saves', () => {
     advance(game, 1_800_000);
     catchUp(copy, 1_800_000);
     expect(serializeGame(copy)).toBe(serializeGame(game));
+  });
+
+  it('a save refuses a Unit in a second Phase it does not have', () => {
+    const game = newGame(1);
+    for (let i = 0; i < 2_000 && !viewGame(game).battle; i++) advance(game, 100);
+    const saved = JSON.parse(serializeGame(game)) as { game: { battle: { units: Record<string, unknown>[] } } };
+    expect(deserializeGame(JSON.stringify(saved))).not.toBeNull();
+    for (const unit of saved.game.battle.units) unit['inSecondPhase'] = true;
+    expect(deserializeGame(JSON.stringify(saved))).toBeNull();
+    for (const unit of saved.game.battle.units) unit['inSecondPhase'] = 'yes';
+    expect(deserializeGame(JSON.stringify(saved))).toBeNull();
   });
 
   it('a Game restores at any moment of a long run', () => {

@@ -55,9 +55,9 @@ describe('Floor layouts', () => {
     }
   });
 
-  it('Floor 3 ends in a Guardian Room', () => {
+  it('Floor 5 ends in a Guardian Room', () => {
     for (let seed = 0; seed < 100; seed++) {
-      const kinds = mapOf(seed, { startAt: { floor: 3, room: 0 } }).rooms.map((room) => room.kind);
+      const kinds = mapOf(seed, { startAt: { floor: 5, room: 0 } }).rooms.map((room) => room.kind);
       expect(kinds.at(-1)).toBe('guardian');
       expect(kinds.at(-2)).toBe('stairs');
       expect(kinds.length - 1).toBeGreaterThanOrEqual(8);
