@@ -26,7 +26,7 @@ Lay out the whole first Difficulty Tier as [the design](../design.md#world) desc
 
 ## Work, in order
 
-Each is its own PR and leaves the game runnable.
+Rapid prototyping: each piece lands as a commit straight on `main`, with no PR, and leaves the game runnable.
 
 | # | Work |
 |---|---|
