@@ -52,9 +52,9 @@ All are in `src/ui/battleScene`. Only `BattleScene.tsx` touches React or the DOM
 
 ### Add or replace a figure
 
-1. Add its shapes to `FIGURES` in `art.ts`. Coordinates are scene units with the feet at 0, facing right.
+1. Add its shapes to `FIGURES` in `art.ts`. Coordinates are art pixels with the feet at 0, facing right, so a figure sits on the Room's grid. Detail goes no finer than one art pixel, and `bake` dithers its shading with the Room's pattern.
 2. Map the Unit to it in `FIGURES_BY_ID` or `FIGURES_BY_NAME`. Enemies are matched by name, so **renaming an enemy needs an update here**. An unknown enemy falls back to the Thrall figure.
-3. Add a `WEAPONS` entry if it swings something, and a `LANTERNS` entry if it carries a lantern.
+3. Add a `WEAPONS` entry if it swings something, and a `LANTERNS` entry if it carries a lantern, both in art pixels.
 
 Hand-drawn art can replace a figure by producing the same `SpritePixel` list.
 

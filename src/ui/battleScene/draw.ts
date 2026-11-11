@@ -69,8 +69,8 @@ function lanternLights(frame: SceneFrame): SceneLight[] {
     if (unit.lantern === null || !spot) continue;
     const flicker = 0.06 * Math.sin(frame.time * 9 + unit.x);
     lights.push({
-      x: unit.x + flipOf(unit) * spot.x * 1.15,
-      y: unit.y + spot.y * 1.15,
+      x: unit.x + flipOf(unit) * spot.x * UNITS_PER_PIXEL,
+      y: unit.y + spot.y * UNITS_PER_PIXEL,
       radius: (LANTERN_BASE_RADIUS + LANTERN_OIL_RADIUS * unit.lantern) * spot.reach + unit.lanternFlare * 90,
       strength: LANTERN_BASE_STRENGTH + LANTERN_OIL_STRENGTH * unit.lantern + flicker + unit.lanternFlare * 0.5,
     });
@@ -305,9 +305,9 @@ function drawWeapon(put: Put, unit: UnitFrame, cx: number, cy: number, step: num
   if (!weapon || unit.dissolve > 0) return;
   const flip = flipOf(unit);
   const lean = unit.lean / UNITS_PER_PIXEL;
-  const handX = cx + flip * Math.round((weapon.x * 1.15) / UNITS_PER_PIXEL) + Math.round((lean * -weapon.y) / 60);
-  const handY = cy + Math.round((weapon.y * 1.15) / UNITS_PER_PIXEL);
-  const length = weapon.length / UNITS_PER_PIXEL;
+  const handX = cx + flip * weapon.x + Math.round((lean * -weapon.y) / 30);
+  const handY = cy + weapon.y;
+  const { length } = weapon;
   const ramp = RAMPS[weapon.ramp];
   const body = unit.flash ?? ramp[clamp(2 + step, 0, 5)]!;
   const tip = unit.flash ?? ramp[clamp(3 + step, 0, 5)]!;
