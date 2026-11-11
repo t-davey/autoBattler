@@ -27,7 +27,7 @@ It gives every screen two readings, as [the writing rules](../lore/README.md#wri
 | Element | Civic object | Notes |
 |---|---|---|
 | Panel | An enamelled iron plate, riveted, with brass corner brackets | Today's `plate.svg`. Variants below |
-| Panel title | A stamped title band across the plate's top | Pirata One, like signwriting |
+| Panel title | A struck brass nameplate across the plate's top | Cinzel capitals. Type roles are in [the palette](../design.md#palette) |
 | Notice | A Council notice pinned to a plate | Findings, Act introductions, the end of a Tier |
 | Chit | A small paper slip | Tooltips, item details, Pick offers |
 | Ledger | A ruled page with a red margin | The Away Report, today. Lists of numbers use dot leaders |

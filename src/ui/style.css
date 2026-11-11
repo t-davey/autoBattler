@@ -45,14 +45,21 @@
   --act-glow: var(--flame-glow);
   --act-ground: var(--soot);
 
-  --display: 'Pirata One', Georgia, serif;
+  /* Type, Letterpress civic: each role is named for what it's printed on in Town. docs/design.md#palette. */
+  --font-sign: 'Grenze Gotisch', Georgia, serif;
+  --font-title: 'Grenze Gotisch', Georgia, serif;
+  --font-plate: 'Cinzel', Georgia, serif;
+  --font-print: 'IM Fell English', Georgia, serif;
+  --font-body: 'Alegreya', Georgia, 'Times New Roman', serif;
+  --font-hand: 'Cedarville Cursive', cursive;
+  --display: var(--font-title);
   --ui-scale: 1;
   /* One pixel of the chrome's pixel art, kept to whole device pixels by useUiScale. Inside a zoomed region, use --px-zoomed. */
   --px: 1px;
   --px-zoomed: calc(var(--px) / var(--ui-scale));
   --header-height: calc(40px * var(--ui-scale));
-  font-family: 'EB Garamond', Georgia, 'Times New Roman', serif;
-  /* Garamond runs small, and the stats need numerals that read at a glance. */
+  font-family: var(--font-body);
+  /* Evens out x-heights across the faces, and the stats need numerals that read at a glance. */
   font-size-adjust: ex-height 0.46;
   font-variant-numeric: lining-nums;
   color: var(--tallow);
@@ -129,6 +136,7 @@ h2,
 .lit-button,
 .catch-up p {
   font-family: var(--display);
+  font-weight: 600;
   font-size-adjust: none;
 }
 

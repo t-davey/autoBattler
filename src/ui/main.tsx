@@ -7,10 +7,16 @@ import { startDriver } from './driver';
 import { localStorageSave } from './localStorageSave';
 import { loadSave } from './save';
 import { createStore } from './store';
-import '@fontsource/pirata-one/400.css';
-import '@fontsource/eb-garamond/400.css';
-import '@fontsource/eb-garamond/400-italic.css';
-import '@fontsource/eb-garamond/700.css';
+// Letterpress civic: docs/design.md#palette says what each face is for.
+import '@fontsource/grenze-gotisch/600.css';
+import '@fontsource/grenze-gotisch/800.css';
+import '@fontsource/cinzel/700.css';
+import '@fontsource/im-fell-english/400.css';
+import '@fontsource/im-fell-english/400-italic.css';
+import '@fontsource/alegreya/400.css';
+import '@fontsource/alegreya/400-italic.css';
+import '@fontsource/alegreya/700.css';
+import '@fontsource/cedarville-cursive/400.css';
 import './style.css';
 
 const root = document.querySelector<HTMLElement>('#app');

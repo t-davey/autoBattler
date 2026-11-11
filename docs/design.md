@@ -240,7 +240,15 @@ During a Run, three accent tokens tint by Act: `--act-accent`, `--act-glow`, and
 
 Pixel-art chrome draws in `--px`, one chrome pixel kept to whole device pixels as the UI scales, or `--px-zoomed` inside a region that zooms with `--ui-scale`.
 
-Panels are iron-bound plates with brass corners, and the Away Report reads as a ledger page. That look is styling only, and [the ledger Fragment's form](lore/bible.md#open-questions) stays open. Headings use Pirata One and text uses EB Garamond, both bundled so the game looks the same offline.
+Panels are iron-bound plates with brass corners, and the Away Report reads as a ledger page. That look is styling only, and [the ledger Fragment's form](lore/bible.md#open-questions) stays open. Type is **Letterpress civic**, chosen by the human on 2026-11-11. Each face is named for what it's printed on in Town, and all are bundled through Fontsource so the game looks the same offline:
+
+| Role | Face | Used for |
+|---|---|---|
+| Sign and title | Grenze Gotisch | Headings, Town's signs, notice titles |
+| Plate | Cinzel | Capitals struck into brass nameplates |
+| Print | IM Fell English | The Council's forms: notices and tickets. Its figures are old-style, so columns of numbers stay in the UI face |
+| UI text | Alegreya | Everything else, and every figure |
+| Hand | Cedarville Cursive | A clerk's pencil, rarely |
 
 ## Release
 
