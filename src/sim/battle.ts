@@ -81,6 +81,8 @@ export interface UnitSpec {
   readonly actions?: readonly UnitAction[];
   /** Needs actions. */
   readonly secondPhase?: UnitPhase;
+  /** A stand-in for content not yet designed. Battles ignore it; the UI draws it plainly. */
+  readonly placeholder?: boolean;
 }
 
 export interface BattleSetup {

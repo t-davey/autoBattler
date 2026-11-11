@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ACTS, createGame, depthOf, depthTuning, floorAt, LAMPS, MAX_DEPTH, viewGame } from './index';
+import { ACTS, advance, createGame, depthOf, depthTuning, floorAt, LAMPS, MAX_DEPTH, viewGame } from './index';
 
 describe('The world map', () => {
   it('has 3 Acts of 20 Floors with 12 Lamps, one every 5 Floors', () => {
@@ -27,6 +27,28 @@ describe('The world map', () => {
     expect(built).toEqual([{ act: 2, lamp: 1, depth: 25, guardianName: 'The Mouldering Warden', tunedDepth: 5, placeholder: false }]);
     expect(LAMPS.filter((lamp) => lamp.placeholder)).toHaveLength(11);
     expect(LAMPS[0]?.guardianName).toBe('Placeholder Guardian (Act 1, Lamp 1)');
+  });
+});
+
+describe('Placeholders', () => {
+  it('fill Acts 1 and 3 with stand-in Packs, and the Undercroft with none', () => {
+    const enemiesAt = (floor: number) =>
+      Array.from({ length: 30 }, (_, seed) => {
+        const game = createGame({ seed, scenario: { startAt: { floor, room: 0 } } });
+        while (!viewGame(game).battle) advance(game, 1_000);
+        return viewGame(game).battle!.enemies;
+      }).flat();
+    for (const [floor, act] of [[1, 1], [41, 3]] as const) {
+      const enemies = enemiesAt(floor);
+      expect(enemies.every((enemy) => enemy.placeholder)).toBe(true);
+      expect(new Set(enemies.map((enemy) => enemy.name))).toEqual(new Set([`Placeholder Brute (Act ${act})`, `Placeholder Skulker (Act ${act})`]));
+    }
+    expect(enemiesAt(21).some((enemy) => enemy.placeholder)).toBe(false);
+  });
+
+  it('list what is still to design: 2 Acts and 11 Guardians', () => {
+    expect(ACTS.filter((act) => act.placeholder).map((act) => act.name)).toEqual(['The Wilderness', 'The Ember Works']);
+    expect(LAMPS.filter((lamp) => lamp.placeholder)).toHaveLength(11);
   });
 });
 

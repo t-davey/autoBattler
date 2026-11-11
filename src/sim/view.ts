@@ -24,6 +24,8 @@ export interface UnitView {
   readonly bleeding: boolean;
   readonly poisonStacks: number;
   readonly wardAmount: number;
+  /** A stand-in for content not yet designed. */
+  readonly placeholder: boolean;
 }
 
 export interface BattleView {
@@ -127,6 +129,7 @@ function viewTeam(battle: BattleState, team: TeamId): readonly UnitView[] {
     .map((unit) => ({
       id: unit.spec.id,
       name: unit.spec.name,
+      placeholder: unit.spec.placeholder === true,
       row: unit.row,
       reach: unit.spec.reach,
       health: unit.health,

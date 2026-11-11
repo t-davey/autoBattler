@@ -563,6 +563,7 @@ export function createScene({ random = Math.random, shakes = true }: SceneOption
       ? view.battle.party
       : view.heroes.map((hero) => ({
           id: hero.id,
+          placeholder: false,
           name: hero.name,
           row: hero.row,
           reach: hero.reach,

@@ -1,7 +1,10 @@
 import type { UnitSpec } from '../battle';
+import { depthTuning } from '../depth';
+import { scaleUnit } from './enemies';
+import type { LampDefinition } from './world';
 
 /** Acts only through its actions, so power, actionInterval, and damageType go unused. */
-export const MOULDERING_WARDEN: UnitSpec = {
+const MOULDERING_WARDEN: UnitSpec = {
   id: 'guardian',
   name: 'The Mouldering Warden',
   health: 2_600,
@@ -27,3 +30,13 @@ export const MOULDERING_WARDEN: UnitSpec = {
     ],
   },
 };
+
+/**
+ * A Lamp's Guardian, scaled from the depth it was tuned at to the Lamp's own. A placeholder copies the Warden's
+ * actions under a stand-in name.
+ */
+export function guardianFor(lamp: LampDefinition): UnitSpec {
+  const scale = depthTuning(lamp.depth).enemyScale / depthTuning(lamp.tunedDepth).enemyScale;
+  const base = lamp.placeholder ? { ...MOULDERING_WARDEN, name: lamp.guardianName, placeholder: true } : MOULDERING_WARDEN;
+  return scaleUnit(base, scale);
+}

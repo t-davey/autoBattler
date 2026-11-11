@@ -64,6 +64,7 @@ function heroAsUnit(hero: HeroView): UnitView {
     reach: hero.reach,
     health: hero.health,
     maxHealth: hero.stats.maxHealth,
+    placeholder: false,
     oil: hero.oil,
     maxOil: hero.stats.maxOil,
     bleeding: false,

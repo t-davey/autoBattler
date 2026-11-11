@@ -33,7 +33,7 @@ Rapid prototyping: each piece lands as a commit straight on `main`, with no PR, 
 | 1 | World data, and depth formulas that keep today’s values at depths 1–5: **done** |
 | 2 | Floors as `{ act, floor }` through the sim, view, and UI labels; new games start at Act 1, Floor 1: **done**. The sim keeps a depth, and `floorAt` gives its Act and Floor. Undercroft content shows in Act 1 until step 4 |
 | 3 | One Wall per Lamp, Runs that start from a Lamp, and falling back one Lamp: **done**, `SAVE_VERSION` 3. Runs start after the last lit Lamp; choosing another lit Lamp waits for Stance |
-| 4 | Placeholder Families and Guardians for every empty slot, with the placeholder test |
+| 4 | Placeholder Families and Guardians for every empty slot, with the placeholder test: **done**. Act 3 stand-ins hit physical until the sim has fire. The balance script now reads Floor 5’s placeholder Guardian |
 | 5 | Placeholder art and text in the UI |
 | 6 | Balance: `npm run balance` across all 60 Floors, to find where the curve breaks |
 

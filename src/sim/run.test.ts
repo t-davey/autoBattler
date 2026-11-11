@@ -116,7 +116,7 @@ describe('carrying over', () => {
     let sawLowOil = false;
     const spender = { warrener: { 'bleeders-cut': 3, 'the-long-cut': 3 } };
     for (let seed = 1; seed <= 20; seed++) {
-      const played = game(seed, { heroLevel: 8, skillRanks: spender });
+      const played = game(seed, { heroLevel: 8, skillRanks: spender, startAt: { floor: 21, room: 0 } });
       for (let battles = 0; battles < 6 && viewGame(played).phase !== 'town'; battles++) {
         stepUntil(played, 'battleStarted');
         const next = viewGame(played);
@@ -266,18 +266,20 @@ describe('carrying over', () => {
 });
 
 describe('Enemy scale', () => {
-  const firstBattleAt = (floor: 1 | 2 | 3, seed: number) => {
-    const played = game(seed, { heroLevel: 1, startAt: { floor, room: 0 } });
+  const firstBattleAt = (floor: number, seed: number) => {
+    // Level 25 wins there and earns full XP: Floor level 24, plus the grace level.
+    const played = game(seed, { heroLevel: 25, startAt: { floor, room: 0 } });
     stepUntil(played, 'battleStarted');
     return played;
   };
 
+  // The Undercroft's first Floors, where the Sodden Thrall and fungal Poison live.
   it('deeper Floors scale enemy health, power, and XP', () => {
     const healthOf: Record<number, number> = {};
     const powerOf: Record<number, number> = {};
     const stackOf: Record<number, number> = {};
     const xpOf: Record<number, number> = {};
-    for (const floor of [1, 2, 3] as const) {
+    for (const floor of [21, 22, 23]) {
       for (let seed = 1; seed < 200 && (!healthOf[floor] || !stackOf[floor]); seed++) {
         const played = firstBattleAt(floor, seed);
         const thrall = viewGame(played).battle!.enemies.find((enemy) => enemy.name === 'Sodden Thrall');
@@ -295,15 +297,15 @@ describe('Enemy scale', () => {
         }
       }
     }
-    expect(healthOf[2]).toBeGreaterThan(healthOf[1]!);
-    expect(healthOf[3]).toBeGreaterThan(healthOf[2]!);
+    expect(healthOf[22]).toBeGreaterThan(healthOf[21]!);
+    expect(healthOf[23]).toBeGreaterThan(healthOf[22]!);
     // One scale multiplies all three.
-    for (const floor of [2, 3]) {
-      const scale = healthOf[floor]! / healthOf[1]!;
-      expect(powerOf[floor]! / powerOf[1]!).toBeCloseTo(scale);
-      expect(stackOf[floor]! / stackOf[1]!).toBeCloseTo(scale);
+    for (const floor of [22, 23]) {
+      const scale = healthOf[floor]! / healthOf[21]!;
+      expect(powerOf[floor]! / powerOf[21]!).toBeCloseTo(scale);
+      expect(stackOf[floor]! / stackOf[21]!).toBeCloseTo(scale);
     }
-    expect([xpOf[1], xpOf[2], xpOf[3]]).toEqual([15, 20, 25]);
+    expect([xpOf[21], xpOf[22], xpOf[23]]).toEqual([115, 120, 125]);
   });
 });
 
@@ -455,10 +457,24 @@ describe('falling back', () => {
 });
 
 describe('the Guardian', () => {
-  it('fields the Mouldering Warden alone, in the front Row', () => {
+  it('fields the Mouldering Warden at the Undercroft’s first Lamp, scaled up from the depth it was tuned at', () => {
+    const played = game(1, { startAt: { floor: 25, room: 'guardian' } });
+    stepUntil(played, 'battleStarted');
+    // Floor scale 4.6 at depth 25, against 1.6 at depth 5.
+    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'The Mouldering Warden', maxHealth: expect.closeTo(7_475, 6), placeholder: false }]);
+  });
+
+  it('fields a placeholder Guardian scaled to its depth at a later Lamp', () => {
+    const played = game(1, { startAt: { floor: 10, room: 'guardian' } });
+    stepUntil(played, 'battleStarted');
+    // Floor scale 2.35 at depth 10, against 1.6 at depth 5.
+    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'Placeholder Guardian (Act 1, Lamp 2)', maxHealth: expect.closeTo(3_818.75, 6), placeholder: true }]);
+  });
+
+  it('fields a placeholder copy of the Mouldering Warden at the first Lamp, alone in the front Row', () => {
     const played = game(1, atGuardian);
     stepUntil(played, 'battleStarted');
-    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'The Mouldering Warden', row: 'front' }]);
+    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'Placeholder Guardian (Act 1, Lamp 1)', row: 'front', maxHealth: 2_600, placeholder: true }]);
     const [warden] = viewGame(played).battle!.enemies;
     expect(warden!.health).toBe(warden!.maxHealth);
   });

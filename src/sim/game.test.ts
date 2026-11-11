@@ -23,8 +23,8 @@ const stepUntil = (game: Game, wanted: GameEvent['type']): void => {
 };
 
 /** A Game with its first Battle started. */
-const started = (seed: number): Game => {
-  const game = createGame({ seed });
+const started = (seed: number, floor = 1): Game => {
+  const game = createGame({ seed, scenario: { startAt: { floor, room: 0 } } });
   stepUntil(game, 'battleStarted');
   return game;
 };
@@ -40,12 +40,12 @@ describe('createGame', () => {
     ]);
   });
 
-  it('draws a Pack of 1–2 front and 1–2 back enemies from one Family', () => {
+  it('draws an Undercroft Pack of 1–2 front and 1–2 back enemies from one Family', () => {
     const restlessDead = ['Sodden Thrall', 'Tallow Wight', 'Bone Chanter'];
     const fungalGrowth = ['Mire Bloat', 'Sporeling'];
     const families = new Set<string>();
     for (let seed = 0; seed < 100; seed++) {
-      const enemies = viewGame(started(seed)).battle!.enemies;
+      const enemies = viewGame(started(seed, 21)).battle!.enemies;
       const inRow = (row: string) => enemies.filter((enemy) => enemy.row === row).length;
       expect(inRow('front')).toBeGreaterThanOrEqual(1);
       expect(inRow('front')).toBeLessThanOrEqual(2);

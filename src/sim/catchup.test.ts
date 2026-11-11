@@ -197,7 +197,7 @@ describe('the Away Report', () => {
     }
 
     const [first] = report.setbacks;
-    expect(first).toMatchObject({ kind: 'wipe', floor: 5, enemyName: 'The Mouldering Warden', mainDamageType: 'poison' });
+    expect(first).toMatchObject({ kind: 'wipe', floor: 5, enemyName: 'Placeholder Guardian (Act 1, Lamp 1)', mainDamageType: 'poison' });
     expect(first!.mainDamageShare).toBeCloseTo(poison / total);
     expect(first!.mainDamageShare).toBeGreaterThan(0.5);
   });
@@ -257,7 +257,7 @@ describe('the Away Report', () => {
   it('the Away Report lists a draw as a draw, with its main damage type', () => {
     const report = catchUp(newGame(1, { ...atGuardian, heroLevel: 40, battleTicks: 100 }), 30_000);
     const [first] = report.setbacks;
-    expect(first).toMatchObject({ kind: 'draw', floor: 5, enemyName: 'The Mouldering Warden', mainDamageType: 'poison' });
+    expect(first).toMatchObject({ kind: 'draw', floor: 5, enemyName: 'Placeholder Guardian (Act 1, Lamp 1)', mainDamageType: 'poison' });
     expect(first!.mainDamageShare).toBeGreaterThan(0.5);
   });
 

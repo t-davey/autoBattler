@@ -32,10 +32,12 @@ export interface LampDefinition {
   readonly placeholder: boolean;
 }
 
+/** The Warden was tuned for the demo's Floor 5, before the Undercroft moved to Act 2. Placeholders copy its kit. */
+export const WARDEN_TUNED_DEPTH = 5;
+
 /** Real Guardians, by "act-lamp". Every other Lamp gets a placeholder. */
 const BUILT_GUARDIANS: Readonly<Record<string, { readonly name: string; readonly tunedDepth: number }>> = {
-  // Tuned for the demo's Floor 5, before the Undercroft moved to Act 2.
-  '2-1': { name: 'The Mouldering Warden', tunedDepth: 5 },
+  '2-1': { name: 'The Mouldering Warden', tunedDepth: WARDEN_TUNED_DEPTH },
 };
 
 export const depthOf = (act: ActNumber, floor: number): number => (act - 1) * FLOORS_PER_ACT + floor;
@@ -47,7 +49,7 @@ export const LAMPS: readonly LampDefinition[] = ACTS.flatMap(({ act }) =>
     const built = BUILT_GUARDIANS[`${act}-${lamp}`];
     return built
       ? { act, lamp, depth, guardianName: built.name, tunedDepth: built.tunedDepth, placeholder: false }
-      : { act, lamp, depth, guardianName: `Placeholder Guardian (Act ${act}, Lamp ${lamp})`, tunedDepth: depth, placeholder: true };
+      : { act, lamp, depth, guardianName: `Placeholder Guardian (Act ${act}, Lamp ${lamp})`, tunedDepth: WARDEN_TUNED_DEPTH, placeholder: true };
   }),
 );
 

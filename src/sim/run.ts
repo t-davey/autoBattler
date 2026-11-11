@@ -1,7 +1,7 @@
 import { createBattle, maxHealthOf, stepBattle, type BattleEvent, type BattleState, type TeamId } from './battle';
 import { CHEST_LINES } from './content/chests';
 import { rollPack } from './content/enemies';
-import { MOULDERING_WARDEN } from './content/guardian';
+import { guardianFor } from './content/guardian';
 import { OIL_BETWEEN_ROOMS } from './content/party';
 import type { Rarity } from './content/items';
 import { BATTLE_DROP_CHANCE, CHEST_DROP_CHANCE } from './content/items';
@@ -11,7 +11,7 @@ import { generateFloor, lampIndexOf, xpShare, type FloorLayout, type Depth, type
 import { clampToMaximums, gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
 import { rollItemSpec, viewItem, type ItemState, type ItemView } from './items';
 import { nextFloat, nextInt, type Rng } from './rng';
-import { FLOORS_PER_LAMP } from './content/world';
+import { floorAt, FLOORS_PER_LAMP, LAMPS } from './content/world';
 import { frontierIndex, recordGrowth, recordGuardianKill, recordBestAttempt, recordSetback, runStretch, turnsBackBeforeGuardian, type WallEvent, type WallState } from './wall';
 
 /** The Team the Party fights on. */
@@ -163,7 +163,7 @@ function enterRoom(world: RunWorld, sink: EventSink): void {
     return;
   }
   run.phase = 'battle';
-  const enemies = kind === 'guardian' ? [MOULDERING_WARDEN] : rollPack(world.rng, depthTuning(floor).enemyScale);
+  const enemies = kind === 'guardian' ? [guardianFor(LAMPS[lampIndexOf(floor)]!)] : rollPack(world.rng, floorAt(floor).act, depthTuning(floor).enemyScale);
   // Units take their stats and skills here, so a build change reaches the next Battle.
   const teams = { [PARTY_TEAM]: world.heroes.map(heroUnitSpec), [ENEMY_TEAM]: enemies };
   const limit = world.battleTicks === null ? {} : { maxTicks: world.battleTicks };

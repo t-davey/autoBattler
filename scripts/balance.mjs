@@ -334,7 +334,8 @@ function measureDrops() {
   }
 }
 
-const GUARDIAN_NAME = 'The Mouldering Warden';
+// Floor 5's Guardian: the Warden's kit at its tuned scale, under a stand-in name since the Undercroft moved to Act 2.
+const GUARDIAN_NAME = 'Placeholder Guardian (Act 1, Lamp 1)';
 const TICKS_PER_MINUTE = 60_000 / TICK_MS;
 const WALL_MINUTES = 120;
 const ACT_AT_MINUTE = 60;
