@@ -45,6 +45,6 @@ export { itemBlocksLearnedSkill, viewGame, viewStash } from './view';
 export { createWall, frontierIndex, isWallState, runStretch, recordGrowth, recordGuardianKill, recordSetback, SETBACKS_TO_FALL_BACK, turnsBackBeforeGuardian } from './wall';
 export type { WallEvent, WallSink, WallState } from './wall';
 export type { BattleView, FloorMapView, GameView, HeroView, RoomView, SkillValueView, SkillView, UnitView, WallView } from './view';
-export { DEFAULT_PICK_PRIORITY, OFFERS_PER_PICK, PICK_IDS, PICK_TAGS, PICKS } from './content/picks';
+export { DEFAULT_PICK_PRIORITY, OFFERS_PER_PICK, PICK_IDS, PICK_TAGS, PICKS, picksFor } from './content/picks';
 export type { PickDefinition, PickEffect, PickId, PickKind, PickMoment, PickTag } from './content/picks';
 export type { PickView } from './picks';

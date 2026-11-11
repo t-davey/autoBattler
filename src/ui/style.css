@@ -441,6 +441,41 @@ button:disabled {
   flex: 1;
 }
 
+.pick-tags {
+  margin: 0.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pick-tags li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  border-top: 1px solid var(--iron);
+}
+
+.pick-rank {
+  width: 1.5rem;
+  color: var(--brass-bright);
+  text-align: center;
+}
+
+.pick-tag {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.pick-tag .hint {
+  margin: 0;
+}
+
+.pick-tag strong {
+  font-weight: normal;
+  color: var(--brass-bright);
+}
+
 .respec {
   align-self: flex-start;
   margin-top: 0.5rem;
