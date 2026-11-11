@@ -552,7 +552,7 @@ function measureWall(firstSeed) {
   const targets = [
     ['Median Battle length, Floors 1-5', '20-30 s', formatted(battleSeconds, ' s'), within(battleSeconds, 20, 30)],
     ['Median Floor length', '4-6 min', formatted(floorMinutes, ' min'), within(floorMinutes, 4, 6)],
-    ['First Guardian attempt, median', '13-20 min', `${formatted(medianOf(attempts), ' min')}, reached in ${attempts.length} of ${SEEDS} Seeds`, within(medianOf(attempts), 13, 20)],
+    ['First Guardian attempt, median', '50-80 min', `${formatted(medianOf(attempts), ' min')}, reached in ${attempts.length} of ${SEEDS} Seeds`, within(medianOf(attempts), 50, 80)],
     ['New Party Wipes in first 5 minutes', 'under 5%', formatted(earlyWipes, '%'), earlyWipes < 5],
     ['At least one rare by 60 minutes', 'at least 80%', formatted(rares, '%'), rares >= 80],
     ['Guardian Wipes mainly poison', 'at least 90%', `${formatted(poisonWipes, '%')} of ${guardianWipes}`, poisonWipes >= 90],

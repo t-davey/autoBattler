@@ -23,7 +23,6 @@ export const MOULDERING_WARDEN: UnitSpec = {
     actions: [
       { name: 'Spore Breath', interval: 90, target: 'every', damage: 0, damageType: 'poison', poisonStack: 12 },
       { name: 'Grave Slam', interval: 50, target: 'oneFront', damage: 130, damageType: 'physical' },
-      // A placeholder name, for the human to replace.
       { name: 'Grave Maul', interval: 120, target: 'oneFront', damage: 300, damageType: 'physical' },
     ],
   },

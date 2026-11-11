@@ -21,7 +21,7 @@ XP falloff slows levels, but the first check-in still wins, so choices barely ma
 | Phase 1 | Today's Spore Breath and Grave Slam |
 | Phase 2 | A weaker, slower Spore Breath, so poison gear still counts. Grave Slam gets faster and harder, plus a slow, big hit on one front-Row Hero |
 | Phase 2 answer | Armour and health on any Hero in front, on top of poison resistance |
-| The big hit's name | "Grave Maul" is a placeholder for the human to replace |
+| The big hit's name | Grave Maul, kept by the human on 2026-11-10 |
 | Best attempt | The lowest Guardian health in an Away Report, shown beside the lowest from all play before it |
 | Finding | Facts only, such as "Reached Phase 2 in 3 of 5 attempts. Best: 31% health left, was 62%. Mostly physical damage." It opens the Stash on the stat for the Phase that caused the most Setbacks |
 | Phase cue | A Live Log line and harsher Room light, with no new sprite |
@@ -68,6 +68,13 @@ Re-tuned on 2026-11-08 after the first Lamp moved to Floor 5, whose extra Floors
 | One answer only: kills below Answer | At least 20 points | 29 | 19, a miss |
 
 At the 8-hour gap, Answer kills by the 3rd check-in on 96% of Seeds and Routine, who equips plain upgrades, on 80%. So a smart player now wins more often, though not sooner: both medians are about 16.5 hours. The demo Seed no longer plays its script. The `wall` targets that assume one action at minute 60 are retired, and "First Guardian attempt, 13–20 min" misses at 66.5 minutes, since it was set for 3 Floors.
+
+## Settled after tuning
+
+The human decided these on 2026-11-10:
+
+- **Phase 2's Spore Breath stays as tuned,** at 12 per stack every 90 Ticks, though that is stronger than Phase 1's and the first decision asked for weaker.
+- **First Guardian attempt: 50–80 minutes,** replacing 13–20, which was set for 3 Floors.
 
 ## Targets
 
