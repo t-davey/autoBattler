@@ -192,6 +192,7 @@ A Pick is a choice of 2–3 offers that lasts until the Run ends. Its name is a 
 - Items found since the Party was last sent back from a check-in are marked new.
 - A check-in uses the same Stash, opening filtered to its Finding's stat or rarity, on a Slot with a match.
 - Grim gothic tone, for now.
+- **UI style:** civic lamp-works, the Town Council's notices, forms, and ledgers and the Lamplighters' brass, drawn as pixel chrome. Town keeps one look, and a Run tints by Act. The human chose this on 2026-11-11, and [the UI style plan](plans/ui-style.md) holds the elements and order of work.
 - Audio starts silent, with a few key effects such as a rare drop added later.
 - "autoBattler" is the working title.
 - The window is usually large, with a minimum of 1280x720, so panels can sit side by side.
