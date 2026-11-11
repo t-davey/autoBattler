@@ -10,6 +10,7 @@ import { viewItem, type ItemView } from './items';
 import { ENEMY_TEAM, PARTY_TEAM, type Phase, type RunState } from './run';
 import { pointsToOpen, spendRefusal, spentPoints, type SpendRefusal } from './skills';
 import { viewPick, type PickView } from './picks';
+import type { PickTag } from './content/picks';
 import { frontierIndex, runStretch, SETBACKS_TO_FALL_BACK } from './wall';
 
 export interface UnitView {
@@ -122,6 +123,8 @@ export interface GameView {
   readonly heroes: readonly HeroView[];
   /** Picks taken this Run, in order. Empty in Town. */
   readonly picks: readonly PickView[];
+  /** The player's Pick rule: every tag once, earlier tags win. */
+  readonly pickPriority: readonly PickTag[];
   /** Changes whenever the Stash does, so a reader can call viewStash only then. */
   readonly stashRevision: number;
 }
@@ -243,6 +246,7 @@ export function viewGame(game: Game): GameView {
     battle: battle && { party: viewTeam(battle, PARTY_TEAM), enemies: viewTeam(battle, ENEMY_TEAM) },
     heroes: heroesOf(game).map(viewHero),
     picks: run.picks.map(viewPick),
+    pickPriority: stateOf(game).pickPriority,
     stashRevision,
   };
 }

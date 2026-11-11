@@ -1,5 +1,5 @@
 import type { UnitSpec } from './battle';
-import { DEFAULT_PICK_PRIORITY, OFFERS_PER_PICK, PICKS, picksFor, type PickId, type PickMoment, type PickTag } from './content/picks';
+import { OFFERS_PER_PICK, PICK_TAGS, PICKS, picksFor, type PickId, type PickMoment, type PickTag } from './content/picks';
 import { shuffled, type Rng } from './rng';
 
 export interface PickView {
@@ -21,11 +21,15 @@ function rankOf(id: PickId, priority: readonly PickTag[]): number {
 }
 
 /** Rolls the offers for one Pick and chooses one by the rule. Ties go to the earlier offer. */
-export function rollPick(rng: Rng, moment: PickMoment, priority: readonly PickTag[] = DEFAULT_PICK_PRIORITY): { readonly offers: readonly PickId[]; readonly taken: PickId } {
+export function rollPick(rng: Rng, moment: PickMoment, priority: readonly PickTag[]): { readonly offers: readonly PickId[]; readonly taken: PickId } {
   const offers = shuffled(rng, picksFor(moment)).slice(0, OFFERS_PER_PICK);
   const taken = offers.reduce((best, offer) => (rankOf(offer, priority) < rankOf(best, priority) ? offer : best));
   return { offers, taken };
 }
+
+/** A Pick rule names every tag once. */
+export const isPickPriority = (value: unknown): value is readonly PickTag[] =>
+  Array.isArray(value) && value.length === PICK_TAGS.length && PICK_TAGS.every((tag) => value.includes(tag));
 
 export interface PickContext {
   /** Floors the Run has cleared since it set out. */

@@ -4,6 +4,7 @@ import type { HeroId } from './content/skills';
 import { bankElapsed, CATCH_UP_CAP_MS, heroesOf, stateOf, stepTick, usableElapsed, type Game } from './game';
 import { unspentPoints } from './heroes';
 import type { ItemView } from './items';
+import { viewPick, type PickView } from './picks';
 import { frontierWall, type EventSink, type GameEvent } from './run';
 
 export interface AwaySetback {
@@ -20,6 +21,13 @@ export interface AwayLevelGain {
   readonly heroId: HeroId;
   readonly from: number;
   readonly to: number;
+}
+
+/** How Guardian fights went with a Pick held. */
+export interface AwayPickRecord {
+  readonly pick: PickView;
+  readonly fights: number;
+  readonly kills: number;
 }
 
 /** How the Party fared against a Guardian in this report's Setbacks. */
@@ -46,6 +54,8 @@ export interface AwayReport {
   readonly guardianAttempts: GuardianAttempts | null;
   readonly lampRelit: boolean;
   readonly fellBack: boolean;
+  /** Each Pick held in a Guardian fight, most kills first. */
+  readonly guardianPicks: readonly AwayPickRecord[];
   readonly levels: readonly AwayLevelGain[];
   readonly loot: {
     readonly common: number;
@@ -74,6 +84,9 @@ interface Tally {
   previousBest: number | null;
   lampRelit: boolean;
   fellBack: boolean;
+  guardianPicks: AwayPickRecord[];
+  /** The Picks the current Run holds. */
+  runPicks: PickView[];
   levels: AwayLevelGain[];
   loot: { common: number; magic: number; rare: number; notable: ItemView[] };
   /** Damage the Party has taken in the current Battle. */
@@ -124,6 +137,17 @@ function addAttempt(tally: Tally, healthShare: number): void {
   };
 }
 
+/** Counts a Guardian fight for every Pick the Run holds. */
+function addGuardianFight(tally: Tally, killed: boolean): void {
+  for (const pick of tally.runPicks) {
+    const index = tally.guardianPicks.findIndex((record) => record.pick.id === pick.id);
+    const soFar = tally.guardianPicks[index] ?? { pick, fights: 0, kills: 0 };
+    const record = { pick, fights: soFar.fights + 1, kills: soFar.kills + (killed ? 1 : 0) };
+    if (index === -1) tally.guardianPicks.push(record);
+    else tally.guardianPicks[index] = record;
+  }
+}
+
 function fold(tally: Tally, event: GameEvent): void {
   switch (event.type) {
     case 'battleStarted':
@@ -149,7 +173,16 @@ function fold(tally: Tally, event: GameEvent): void {
     case 'wipe':
     case 'draw':
       tally.setbacks.push({ kind: event.type, floor: event.floor, enemyName: event.enemyName, ...mainDamage(tally.battleDamage) });
-      if (event.guardianHealthShare !== null) addAttempt(tally, event.guardianHealthShare);
+      if (event.guardianHealthShare !== null) {
+        addAttempt(tally, event.guardianHealthShare);
+        addGuardianFight(tally, false);
+      }
+      return;
+    case 'pickTaken':
+      tally.runPicks.push(event.taken);
+      return;
+    case 'returnedToTown':
+      tally.runPicks = [];
       return;
     case 'fellBack':
       tally.fellBack = true;
@@ -158,6 +191,7 @@ function fold(tally: Tally, event: GameEvent): void {
       // The Guardian's Floor has no stairs: its fall clears the Floor.
       tally.floorsCleared++;
       tally.guardianKills++;
+      addGuardianFight(tally, true);
       return;
     case 'lampRelit':
       tally.lampRelit = true;
@@ -198,6 +232,8 @@ export function beginCatchUp(game: Game, elapsedMs: number): CatchUp {
       previousBest: frontierWall(state.walls).bestAttempt ?? null,
       lampRelit: false,
       fellBack: false,
+      guardianPicks: [],
+      runPicks: state.run.picks.map(viewPick),
       levels: [],
       loot: { common: 0, magic: 0, rare: 0, notable: [] },
       battleDamage: {},
@@ -214,9 +250,10 @@ export function continueCatchUp(game: Game, catchUp: CatchUp, maxTicks: number):
   catchUp.ticksLeft -= ticks;
   if (catchUp.ticksLeft > 0) return null;
 
-  const { battleDamage: _battleDamage, inSecondPhase: _inSecondPhase, previousBest: _previousBest, ...tally } = catchUp.tally;
+  const { battleDamage: _battleDamage, inSecondPhase: _inSecondPhase, previousBest: _previousBest, runPicks: _runPicks, ...tally } = catchUp.tally;
   return {
     ...tally,
+    guardianPicks: [...tally.guardianPicks].sort((a, b) => b.kills - a.kills || b.fights - a.fights),
     elapsedMs: catchUp.elapsedMs,
     appliedMs: catchUp.appliedMs,
     capped: catchUp.elapsedMs > catchUp.appliedMs,

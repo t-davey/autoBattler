@@ -21,6 +21,7 @@ export const REFUSAL_TEXT: Readonly<Record<DispatchRefusal, string>> = {
   stepLocked: 'Spend more points in this Branch first.',
   maxRank: 'This skill is at its top rank.',
   badOrder: 'The order must list each learned active skill once.',
+  badPickPriority: 'The Pick rule must list every tag once.',
   emptyName: 'A Hero needs a name.',
   nameTooLong: 'Names can hold 24 characters at most.',
   unknownItem: 'That item is not in the Stash.',

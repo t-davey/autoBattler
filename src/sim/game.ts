@@ -5,7 +5,8 @@ import { isSkillId, MAX_SKILL_RANK, SKILLS, type HeroId, type SkillId } from './
 import { isDepth, ROOM_KINDS } from './floors';
 import { clampToMaximums, createParty, heroUnitSpec, unspentPoints, type HeroState } from './heroes';
 import { slotOf, starterItem, type ItemId, type ItemSpec, type ItemState } from './items';
-import { PICKS } from './content/picks';
+import { DEFAULT_PICK_PRIORITY, PICKS, type PickTag } from './content/picks';
+import { isPickPriority } from './picks';
 import { createRng, type Rng } from './rng';
 import { createRun, frontierWall, sendParty, stepRun, type EventSink, type RunState, type RunWorld, type StartAt } from './run';
 import { isLegalOrder, spendRefusal, type SkillRanks, type SpendRefusal } from './skills';
@@ -15,7 +16,7 @@ import { createWall, isWallState, recordGrowth, type WallState } from './wall';
 export const TICK_MS = 100;
 /** The longest absence that counts: 12 hours. */
 export const CATCH_UP_CAP_MS = 43_200_000;
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 export interface GameSetup {
   readonly seed: number;
@@ -39,6 +40,7 @@ export interface GameSetup {
 
 export type PlayerAction =
   | { readonly type: 'sendParty' }
+  | { readonly type: 'setPickPriority'; readonly priority: readonly PickTag[] }
   | { readonly type: 'renameHero'; readonly heroId: HeroId; readonly name: string }
   | { readonly type: 'spendSkillPoint'; readonly heroId: HeroId; readonly skillId: SkillId }
   | { readonly type: 'setSkillOrder'; readonly heroId: HeroId; readonly order: readonly SkillId[] }
@@ -46,7 +48,7 @@ export type PlayerAction =
   | { readonly type: 'equipItem'; readonly heroId: HeroId; readonly itemId: ItemId }
   | { readonly type: 'unequipItem'; readonly heroId: HeroId; readonly slot: Slot };
 
-export type ActionRefusal = 'notInTown' | 'unknownHero' | 'emptyName' | 'nameTooLong' | 'badOrder' | 'unknownItem' | 'belowLevelRequirement' | 'emptySlot' | SpendRefusal;
+export type ActionRefusal = 'notInTown' | 'unknownHero' | 'emptyName' | 'nameTooLong' | 'badOrder' | 'unknownItem' | 'belowLevelRequirement' | 'emptySlot' | 'badPickPriority' | SpendRefusal;
 export type ActionResult = { readonly ok: true } | { readonly ok: false; readonly reason: ActionRefusal };
 
 /** A running game. The UI never reads inside it: reads go through the view functions. */
@@ -81,7 +83,7 @@ export function createGame(setup: GameSetup): Game {
   const rng = createRng(setup.seed);
   // A fixed offset keeps the Pick stream apart from the main one.
   const pickRng = createRng(setup.seed ^ 0x5bd1e995);
-  return gameOf({ rng, pickRng, tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), walls: createWalls(lampLit ? 1 : 0, setbacks), battleTicks: battleTicks ?? null, heroes, stash: stashed, nextItemId, stashRevision: 0 });
+  return gameOf({ rng, pickRng, pickPriority: [...DEFAULT_PICK_PRIORITY], tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), walls: createWalls(lampLit ? 1 : 0, setbacks), battleTicks: battleTicks ?? null, heroes, stash: stashed, nextItemId, stashRevision: 0 });
 }
 
 export const heroesOf = (game: Game): readonly HeroState[] => stateOf(game).heroes;
@@ -98,6 +100,12 @@ export function applyAction(game: Game, action: PlayerAction, sink: EventSink = 
   if (action.type === 'sendParty') {
     if (state.run.phase !== 'town') return refused('notInTown');
     sendParty(state, sink);
+    return ACCEPTED;
+  }
+  // Any time: it applies from the next Pick.
+  if (action.type === 'setPickPriority') {
+    if (!isPickPriority(action.priority)) return refused('badPickPriority');
+    state.pickPriority = [...action.priority];
     return ACCEPTED;
   }
   const hero = state.heroes.find((candidate) => candidate.id === action.heroId);
@@ -354,6 +362,7 @@ const isGameState = (value: unknown): boolean =>
   isRecord(value) &&
   isRng(value['rng']) &&
   isRng(value['pickRng']) &&
+  isPickPriority(value['pickPriority']) &&
   isNumber(value['tick']) &&
   isNumber(value['bankMs']) &&
   isRunState(value['run']) &&

@@ -61,7 +61,7 @@ export function App({ store }: { store: Store }) {
         )}
         {!awayReport && tab === 'planning' && (
           <main className="planning">
-            <PlanningTab heroes={view.heroes} dispatch={store.dispatch} />
+            <PlanningTab heroes={view.heroes} pickPriority={view.pickPriority} dispatch={store.dispatch} />
           </main>
         )}
         {!awayReport && tab === 'stash' && <StashTab stash={stash} heroes={view.heroes} dispatch={store.dispatch} seenItemId={seenItemId} />}

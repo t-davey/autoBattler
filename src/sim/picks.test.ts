@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
   advance,
+  applyAction,
+  beginCatchUp,
+  continueCatchUp,
   createGame,
   DEFAULT_PICK_PRIORITY,
   deserializeGame,
   OFFERS_PER_PICK,
   partyUnitSpecs,
+  PICK_TAGS,
   PICKS,
   serializeGame,
   TICK_MS,
@@ -14,6 +18,7 @@ import {
   type GameEvent,
   type GameSetup,
   type PickId,
+  type PickTag,
   type UnitSpec,
 } from './index';
 
@@ -123,5 +128,57 @@ describe('Picks', () => {
       return;
     }
     throw new Error('no Seed took Stacking power');
+  });
+});
+
+describe('The Pick rule', () => {
+  it('starts as the default, and the player can reorder it at any time', () => {
+    const game = createGame({ seed: 1 });
+    expect(viewGame(game).pickPriority).toEqual(DEFAULT_PICK_PRIORITY);
+    stepUntil(game, isType('battleStarted'));
+    const critFirst: PickTag[] = ['crit', ...DEFAULT_PICK_PRIORITY.filter((tag) => tag !== 'crit')];
+    expect(applyAction(game, { type: 'setPickPriority', priority: critFirst })).toEqual({ ok: true });
+    expect(viewGame(game).pickPriority).toEqual(critFirst);
+    expect(viewGame(deserializeGame(serializeGame(game))!).pickPriority).toEqual(critFirst);
+  });
+
+  it('refuses a rule that misses or repeats a tag', () => {
+    const game = createGame({ seed: 1 });
+    for (const priority of [PICK_TAGS.slice(1), [...PICK_TAGS.slice(1), 'armour' as const]]) {
+      expect(applyAction(game, { type: 'setPickPriority', priority })).toEqual({ ok: false, reason: 'badPickPriority' });
+    }
+    expect(viewGame(game).pickPriority).toEqual(DEFAULT_PICK_PRIORITY);
+  });
+
+  it('chooses the next Picks', () => {
+    const critFirst: PickTag[] = ['crit', ...DEFAULT_PICK_PRIORITY.filter((tag) => tag !== 'crit')];
+    let offered = 0;
+    for (let seed = 0; seed < 40; seed++) {
+      const game = createGame({ seed });
+      applyAction(game, { type: 'setPickPriority', priority: critFirst });
+      const pick = stepUntil(game, isType('pickTaken')) as PickEvent;
+      if (!pick.offers.some((offer) => offer.id === 'boon-crit')) continue;
+      offered++;
+      expect(pick.taken.id).toBe('boon-crit');
+    }
+    expect(offered).toBeGreaterThan(0);
+  });
+});
+
+describe('The Away Report', () => {
+  it('counts the Guardian fights and kills each Pick was held for', () => {
+    const game = createGame({ seed: 2, scenario: { heroLevel: 40, startAt: { floor: 5, room: 'guardian' } } });
+    const catchUp = beginCatchUp(game, 2 * 3_600_000);
+    const report = continueCatchUp(game, catchUp, Number.MAX_SAFE_INTEGER)!;
+    expect(report.guardianKills).toBeGreaterThan(0);
+    expect(report.guardianPicks.length).toBeGreaterThan(0);
+    const fights = report.guardianKills + (report.guardianAttempts?.attempts ?? 0);
+    for (const record of report.guardianPicks) {
+      expect(record.kills).toBeLessThanOrEqual(Math.min(record.fights, report.guardianKills));
+      expect(record.fights).toBeLessThanOrEqual(fights);
+    }
+    // Most kills first, and every fight held at least its Guardian Pick.
+    expect(report.guardianPicks[0]!.kills).toBe(Math.max(...report.guardianPicks.map((record) => record.kills)));
+    expect(report.guardianPicks.reduce((total, record) => total + record.fights, 0)).toBeGreaterThanOrEqual(fights);
   });
 });

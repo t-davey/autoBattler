@@ -144,8 +144,8 @@ Enemy levels are fixed per floor and Difficulty Tier, and deeper floors drop bet
 A Pick is a choice of 2–3 offers that lasts until the Run ends. Its name is a working term, still open.
 
 - **Where:** a big Pick at the Lamp a Run sets out from, and another before the next Guardian. Smaller ones at Spigot burners, chests, and Elite kills come later. About 3–5 per Run.
-- **By rule:** each offer carries tags, such as `poison` or `bleed`, and Stance holds a priority list of tags. A default rule ships, so Picks never need watching.
-- **Readable:** each offer reads as one line, so the Away Report can say what the best Run took.
+- **By rule:** each offer carries tags, such as `poison` or `bleed`, and the player's Pick rule ranks the tags. A default rule ships, so Picks never need watching. The rule may join Stance once Stance is built.
+- **Readable:** each offer reads as one line, so the Away Report can say which Picks the Guardian kills held.
 - **First kinds:** Boons (plain power, such as poison resistance or a Ward each Battle), Stacking (grows with each Floor or Elite this Run), and Wall prep (an answer to the next Guardian).
 - **Later kinds:** Class twists, Sets (3 of a tag unlock a bonus), Bargains (power at a cost), Routes, and Run-only Belt drops.
 - Offers roll from the Seed, so Runs stay deterministic. They must stay small enough that a lucky Run among dozens offline can't skip a wall the Party hasn't grown into.

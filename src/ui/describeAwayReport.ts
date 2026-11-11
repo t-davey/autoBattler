@@ -1,4 +1,4 @@
-import type { AwayReport, AwaySetback } from '../sim';
+import type { AwayPickRecord, AwayReport, AwaySetback } from '../sim';
 
 const plural = (count: number, word: string): string => `${count} ${word}${count === 1 ? '' : 's'}`;
 
@@ -55,6 +55,17 @@ function mergeAttempts(earlier: AwayReport['guardianAttempts'], later: AwayRepor
   };
 }
 
+function mergePicks(earlier: readonly AwayPickRecord[], later: readonly AwayPickRecord[]): AwayPickRecord[] {
+  const merged = [...earlier];
+  for (const record of later) {
+    const index = merged.findIndex((entry) => entry.pick.id === record.pick.id);
+    const soFar = merged[index];
+    if (soFar) merged[index] = { pick: record.pick, fights: soFar.fights + record.fights, kills: soFar.kills + record.kills };
+    else merged.push(record);
+  }
+  return merged.sort((a, b) => b.kills - a.kills || b.fights - a.fights);
+}
+
 /** One report for two absences in a row, so an unread one isn't lost. */
 export function mergeAwayReports(earlier: AwayReport, later: AwayReport): AwayReport {
   const levels = [...earlier.levels];
@@ -76,6 +87,7 @@ export function mergeAwayReports(earlier: AwayReport, later: AwayReport): AwayRe
     guardianAttempts: mergeAttempts(earlier.guardianAttempts, later.guardianAttempts),
     lampRelit: earlier.lampRelit || later.lampRelit,
     fellBack: earlier.fellBack || later.fellBack,
+    guardianPicks: mergePicks(earlier.guardianPicks, later.guardianPicks),
     levels,
     loot: {
       common: earlier.loot.common + later.loot.common,

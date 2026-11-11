@@ -1,8 +1,9 @@
 import type { AwayReport, GameView, HeroView, ItemStat } from '../sim';
 import { groupSetbacks, mainDamageOf } from './describeAwayReport';
 import { STAT_TEXT } from './describeItem';
+import { TAG_TEXT } from './describePicks';
 
-export type FindingKind = 'setbacks' | 'loot' | 'points';
+export type FindingKind = 'setbacks' | 'picks' | 'loot' | 'points';
 
 /** One entry in the check-in. Its text states facts, and never judges whether a change was enough. */
 export interface Finding {
@@ -63,6 +64,20 @@ function setbackFinding(report: AwayReport, view: GameView): Finding | null {
   };
 }
 
+/** Which Picks the Runs held when they fought a Guardian, and how those fights went. */
+function picksFinding({ guardianPicks }: AwayReport, view: GameView): Finding | null {
+  if (guardianPicks.length === 0) return null;
+  const kills = (count: number) => `${count} kill${count === 1 ? '' : 's'}`;
+  const [top] = guardianPicks;
+  const records = guardianPicks.map(({ pick, fights, kills: killed }) => `${pick.name}: ${kills(killed)} in ${fights} fight${fights === 1 ? '' : 's'}`);
+  return {
+    kind: 'picks',
+    title: top!.kills > 0 ? `Guardian kills held ${top!.pick.name} most` : 'Picks held at the Guardian',
+    details: [records.join(' · '), `Pick rule: ${view.pickPriority.map((tag) => TAG_TEXT[tag]).join(', ')}`],
+    stat: null,
+  };
+}
+
 function lootFinding({ loot }: AwayReport): Finding | null {
   if (loot.common + loot.magic + loot.rare === 0) return null;
   const notable = loot.notable.map((item) => item.name);
@@ -85,5 +100,5 @@ function pointsFinding(report: AwayReport, heroes: readonly HeroView[]): Finding
 
 /** The Findings of a report, as the Party stands now, so they update during the check-in. */
 export function describeFindings(report: AwayReport, view: GameView): readonly Finding[] {
-  return [setbackFinding(report, view), lootFinding(report), pointsFinding(report, view.heroes)].filter((finding) => finding !== null);
+  return [setbackFinding(report, view), picksFinding(report, view), lootFinding(report), pointsFinding(report, view.heroes)].filter((finding) => finding !== null);
 }

@@ -11,7 +11,7 @@ import { generateFloor, lampIndexOf, xpShare, type FloorLayout, type Depth, type
 import { clampToMaximums, gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
 import { rollItemSpec, viewItem, type ItemState, type ItemView } from './items';
 import { nextFloat, nextInt, type Rng } from './rng';
-import type { PickId, PickMoment } from './content/picks';
+import type { PickId, PickMoment, PickTag } from './content/picks';
 import { applyPicks, rollPick, viewPick, type PickView } from './picks';
 import { floorAt, FLOORS_PER_LAMP, LAMPS } from './content/world';
 import { frontierIndex, recordGrowth, recordGuardianKill, recordBestAttempt, recordSetback, runStretch, turnsBackBeforeGuardian, type WallEvent, type WallState } from './wall';
@@ -72,6 +72,8 @@ export interface RunWorld {
   readonly rng: Rng;
   /** Its own stream, so offers don't shift the rest of the Run's rolls. */
   readonly pickRng: Rng;
+  /** The player's Pick rule: every tag once, earlier tags win. */
+  pickPriority: readonly PickTag[];
   readonly heroes: HeroState[];
   battle: BattleState | null;
   readonly run: RunState;
@@ -146,7 +148,7 @@ export function sendParty(world: RunWorld, sink: EventSink): void {
 
 /** Offers a Pick and takes one by the rule. */
 function takePick(world: RunWorld, moment: PickMoment, sink: EventSink): void {
-  const { offers, taken } = rollPick(world.pickRng, moment);
+  const { offers, taken } = rollPick(world.pickRng, moment, world.pickPriority);
   world.run.picks.push(taken);
   sink({ type: 'pickTaken', moment, offers: offers.map(viewPick), taken: viewPick(taken) });
 }

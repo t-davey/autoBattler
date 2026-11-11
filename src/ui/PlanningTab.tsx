@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
-import { SLOTS, type HeroView, type SkillId } from '../sim';
+import { SLOTS, type HeroView, type PickTag, type SkillId } from '../sim';
+import { PickRule } from './PickRule';
 import { lockText, REFUSAL_TEXT, skillFacts, skillValues } from './describeHero';
 import { SLOT_TEXT, statSheet } from './describeItem';
 import type { Dispatch } from './store';
@@ -112,10 +113,11 @@ function HeroCard({ hero, dispatch }: { hero: HeroView; dispatch: Dispatch }) {
   );
 }
 
-export function PlanningTab({ heroes, dispatch }: { heroes: readonly HeroView[]; dispatch: Dispatch }) {
+export function PlanningTab({ heroes, pickPriority, dispatch }: { heroes: readonly HeroView[]; pickPriority: readonly PickTag[]; dispatch: Dispatch }) {
   return (
     <>
       <p className="hint">Changes reach the Party at the start of its next Battle.</p>
+      <PickRule priority={pickPriority} dispatch={dispatch} />
       <div className="hero-cards">
         {heroes.map((hero) => (
           <HeroCard key={hero.id} hero={hero} dispatch={dispatch} />

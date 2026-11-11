@@ -4,7 +4,8 @@
  */
 
 export type PickKind = 'boon' | 'stacking' | 'wallPrep';
-export type PickTag = 'power' | 'armour' | 'crit' | 'poison' | 'guardian' | 'stacking';
+export const PICK_TAGS = ['power', 'armour', 'crit', 'poison', 'guardian', 'stacking'] as const;
+export type PickTag = (typeof PICK_TAGS)[number];
 /** When a Run offers a Pick: as it sets out from Town, and as it reaches its Guardian. */
 export type PickMoment = 'setOut' | 'guardian';
 
@@ -55,7 +56,7 @@ export const picksFor = (moment: PickMoment): readonly PickId[] => PICK_IDS.filt
 export const OFFERS_PER_PICK = 3;
 
 /**
- * The rule that chooses while no player rule exists: earlier tags win. Stance will hold the player's own list.
+ * The Pick rule a new Game starts with: earlier tags win. The player can reorder it.
  * Guardian prep leads: in `npm run balance -- world` on 2026-11-11 it doubled frontier Guardian wins, and poison prep didn't help.
  */
 export const DEFAULT_PICK_PRIORITY: readonly PickTag[] = ['guardian', 'poison', 'stacking', 'power', 'armour', 'crit'];

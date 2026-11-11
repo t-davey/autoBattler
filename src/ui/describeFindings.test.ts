@@ -25,6 +25,7 @@ const report = (changes: Partial<AwayReport> = {}): AwayReport => ({
   healed: 0,
   lampRelit: false,
   fellBack: false,
+  guardianPicks: [],
   levels: [],
   loot: { common: 0, magic: 0, rare: 0, notable: [] },
   unspentSkillPoints: 0,
@@ -52,6 +53,20 @@ describe('describeFindings', () => {
   it('drops the progress once the Guardian has fallen', () => {
     const [finding] = describeFindings(report({ setbacks: [setback()], guardianAttempts: attempts, guardianKills: 1 }), newView());
     expect(finding!.details.join()).not.toContain('Best attempt');
+  });
+
+  it('states the Picks held in Guardian fights, most kills first, beside the Pick rule', () => {
+    const pick = (id: 'prep-guardian' | 'boon-power', name: string) => ({ id, name, line: '', placeholder: true });
+    const guardianPicks = [
+      { pick: pick('prep-guardian', 'Guardian prep'), fights: 4, kills: 2 },
+      { pick: pick('boon-power', 'Power boon'), fights: 1, kills: 0 },
+    ];
+    const finding = describeFindings(report({ guardianPicks }), newView()).find((candidate) => candidate.kind === 'picks');
+    expect(finding?.title).toBe('Guardian kills held Guardian prep most');
+    expect(finding?.details).toEqual([
+      'Guardian prep: 2 kills in 4 fights · Power boon: 0 kills in 1 fight',
+      'Pick rule: Guardian, Poison, Stacking, Power, Armour, Critical chance',
+    ]);
   });
 
   it('has no Findings when nothing happened', () => {

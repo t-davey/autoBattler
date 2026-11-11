@@ -5,14 +5,16 @@ import { floorLabel } from './floorLabel';
 import { describeFindings, type Finding, type FindingKind } from './describeFindings';
 import { PartyStash } from './PartyStash';
 import { PixelIcon, type IconName } from './PixelIcon';
+import { PickRule } from './PickRule';
 import { PlanningTab } from './PlanningTab';
 import { emptyStashQuery, type StashQuery } from './stashQuery';
 import type { Dispatch } from './store';
 
-const FINDING_ICONS: Readonly<Record<FindingKind, IconName>> = { setbacks: 'skull', loot: 'chest', points: 'flame' };
+const FINDING_ICONS: Readonly<Record<FindingKind, IconName>> = { setbacks: 'skull', picks: 'cog', loot: 'chest', points: 'flame' };
 
 function FindingFix({ finding, report, stash, seenItemId, view, dispatch }: { finding: Finding; report: AwayReport; stash: readonly ItemView[]; seenItemId: number; view: GameView; dispatch: Dispatch }) {
-  if (finding.kind === 'points') return <div className="check-in-scroll"><PlanningTab heroes={view.heroes} dispatch={dispatch} /></div>;
+  if (finding.kind === 'points') return <div className="check-in-scroll"><PlanningTab heroes={view.heroes} pickPriority={view.pickPriority} dispatch={dispatch} /></div>;
+  if (finding.kind === 'picks') return <PickRule priority={view.pickPriority} dispatch={dispatch} />;
   const rareFound = report.loot.rare > 0;
   const initial: StashQuery = finding.kind === 'loot' ? { ...emptyStashQuery, rarity: rareFound ? 'rare' : 'all' } : { ...emptyStashQuery, stat: finding.stat ?? 'all' };
   return <PartyStash stash={stash} heroes={view.heroes} dispatch={dispatch} seenItemId={seenItemId} initial={initial} />;
