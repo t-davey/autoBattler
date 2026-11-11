@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chrome kit mockups</title>
+  </head>
+  <body>
+    <main class="kit">
+      <header class="kit-head">
+        <h1>Chrome kit: options for step 2</h1>
+        <p>Throwaway mockups, not the game. Civic lamp-works, drawn in <code>--px</code>. Every brass part reads <code>--act-accent</code>, so the Act rows at the bottom tint for free.</p>
+        <div class="zoom" role="group" aria-label="Chrome pixel">
+          Chrome pixel:
+          <button type="button" data-px="1">1×</button>
+          <button type="button" data-px="2">2×</button>
+          <button type="button" data-px="3">3×</button>
+        </div>
+      </header>
+
+      <section>
+        <h2>1. Plates: the panel everything sits on</h2>
+        <div class="row">
+          <figure>
+            <div class="plate-a">
+              <h3 class="heading">Party</h3>
+              <p>Sin-Eater, level 7. Warrener, level 7. Lamplighter, level 6.</p>
+            </div>
+            <figcaption><b>A. Today's plate.</b> 1-pixel iron edge, brass corner brackets, soft shadow.</figcaption>
+          </figure>
+          <figure>
+            <div class="plate-b">
+              <h3 class="heading">Party</h3>
+              <p>Sin-Eater, level 7. Warrener, level 7. Lamplighter, level 6.</p>
+            </div>
+            <figcaption><b>B. Riveted enamel.</b> 3-pixel bevelled iron, a rivet at each corner, hard 3-pixel drop shadow.</figcaption>
+          </figure>
+          <figure>
+            <div class="plate-b banded">
+              <h3 class="band">Party</h3>
+              <p>Sin-Eater, level 7. Warrener, level 7. Lamplighter, level 6.</p>
+            </div>
+            <figcaption><b>C. B with a stamped band.</b> The title is struck into a brass strip, like a plate on a Council door.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section>
+        <h2>2. Notices: Findings, Act introductions, the end of a Tier</h2>
+        <div class="row">
+          <figure>
+            <div class="notice-pinned">
+              <span class="tack"></span>
+              <p class="notice-kicker">Town Council · Notice</p>
+              <p class="notice-title">2 Setbacks to poison</p>
+              <p>The Warrener fell twice on Floor 4. Poison resistance: 12%.</p>
+            </div>
+            <figcaption><b>A. Pinned vellum.</b> A dark paper notice tacked to the plate. Quiet, and it matches the ledger.</figcaption>
+          </figure>
+          <figure>
+            <div class="notice-enamel">
+              <p class="notice-kicker">Town Council · Notice</p>
+              <p class="notice-title">2 Setbacks to poison</p>
+              <p>The Warrener fell twice on Floor 4. Poison resistance: 12%.</p>
+            </div>
+            <figcaption><b>B. Enamel sign.</b> Cream letters on deep enamel with an inset line, like street signage. Needs one new colour, <code>#1a2230</code>.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section>
+        <h2>3. Chits: tooltips, item details, Pick offers</h2>
+        <div class="row">
+          <figure class="wide">
+            <div class="chits">
+              <div class="chit">
+                <p class="chit-name">Power boon</p>
+                <p>+15% power until the Party returns to Town.</p>
+              </div>
+              <div class="chit taken">
+                <p class="chit-name">Guardian prep</p>
+                <p>+25% power against Guardians.</p>
+                <span class="stamp stamp-taken">Taken</span>
+              </div>
+              <div class="chit">
+                <p class="chit-name">Poison prep</p>
+                <p>+30% poison resistance.</p>
+              </div>
+            </div>
+            <figcaption><b>A. Paper chits.</b> Ink on tallow paper with perforated ends, the one bright surface in the UI, so a chit always reads as "something handed to you". The taken offer is stamped.</figcaption>
+          </figure>
+          <figure>
+            <div class="chit-dark">
+              <p class="chit-name">Iron-bound Sallow Cruel</p>
+              <p class="magic">Magic · Mace · level 6</p>
+              <p>+9 power · +4% crit</p>
+            </div>
+            <figcaption><b>B. Dark chit.</b> Char slip with a torn top edge. Calmer for tooltips, which appear often.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section>
+        <h2>4. Ledger: lists of numbers</h2>
+        <div class="row">
+          <figure>
+            <div class="ledger">
+              <p class="line"><span>Floors cleared</span><span>3</span></p>
+              <p class="line"><span>Deepest Floor</span><span>Act 1, Floor 5</span></p>
+              <p class="line"><span>Damage dealt</span><span>8,647</span></p>
+              <p class="line"><span>Evening supply drawn</span><span>12 measures</span></p>
+              <p class="line"><span>Setbacks</span><span>0</span></p>
+            </div>
+            <figcaption><b>Dot leaders</b> on today's ruled page, so a figure reads across to its label like a clerk's tally. Numbers sit right, in lining numerals.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section>
+        <h2>5. Buttons</h2>
+        <div class="row">
+          <figure>
+            <div class="buttons">
+              <button type="button" class="btn-a">Equip</button>
+              <button type="button" class="btn-a hover">Hover</button>
+              <button type="button" class="btn-a pressed">Pressed</button>
+              <button type="button" class="btn-a" disabled>Disabled</button>
+            </div>
+            <figcaption><b>A. Brass push-plate.</b> Solid brass, ink letters struck in. Loud: suits few buttons per screen.</figcaption>
+          </figure>
+          <figure>
+            <div class="buttons">
+              <button type="button" class="btn-b">Equip</button>
+              <button type="button" class="btn-b hover">Hover</button>
+              <button type="button" class="btn-b pressed">Pressed</button>
+              <button type="button" class="btn-b" disabled>Disabled</button>
+            </div>
+            <figcaption><b>B. Iron plate, brass rim.</b> Dark face, brass letters, bevelled. Quiet: suits the Stash's many buttons.</figcaption>
+          </figure>
+          <figure>
+            <div class="buttons">
+              <button type="button" class="btn-wick">Send the Party back</button>
+            </div>
+            <figcaption><b>Main button: the lit wick.</b> Banded flame with a stepped glow, no blur. One per screen.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section>
+        <h2>6. Tabs</h2>
+        <div class="row">
+          <figure>
+            <div class="index-tabs">
+              <div class="tabrow">
+                <span class="itab" aria-selected="true">Dashboard</span>
+                <span class="itab">Planning <small>(12)</small></span>
+                <span class="itab">Stash <small>(41)</small></span>
+              </div>
+              <div class="tabpage">The selected tab is cut from the same page.</div>
+            </div>
+            <figcaption><b>A. Ledger index tabs.</b> Paper tabs on the page's edge. The selected one joins the page.</figcaption>
+          </figure>
+          <figure>
+            <div class="drawer-tabs">
+              <span class="dtab" aria-selected="true">Dashboard</span>
+              <span class="dtab">Planning <small>(12)</small></span>
+              <span class="dtab">Stash <small>(41)</small></span>
+            </div>
+            <figcaption><b>B. Drawer label holders.</b> A brass frame with a paper card, like a records cabinet. The open drawer's card is lit.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section>
+        <h2>7. Gauges and stamps</h2>
+        <div class="row">
+          <figure>
+            <div class="gauges">
+              <label>Health <span class="gauge gauge-health"><span style="width: 64%"></span></span></label>
+              <label>Oil <span class="gauge gauge-oil"><span style="width: 38%"></span></span></label>
+            </div>
+            <figcaption><b>Lamp glass in a case,</b> banded, with graduations every tenth like a measure.</figcaption>
+          </figure>
+          <figure>
+            <div class="stamps">
+              <span class="stamp stamp-refused">Refused</span>
+              <p class="refusal-reason">The Stash holds nothing for that Slot.</p>
+              <span class="stamp stamp-received">Received</span>
+            </div>
+            <figcaption><b>Rubber stamps.</b> Rust for refusals, iron for receipts. Square, not rotated, to stay pixel-true.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section>
+        <h2>8. Act tints: the same chrome on a Run</h2>
+        <div class="row">
+          <figure><div class="plate-b banded"><h3 class="band">Town</h3><button type="button" class="btn-b">Equip</button></div><figcaption>Town: brass.</figcaption></figure>
+          <figure data-act="1"><div class="plate-b banded"><h3 class="band">Act 1</h3><button type="button" class="btn-b">Equip</button></div><figcaption>The wilderness.</figcaption></figure>
+          <figure data-act="2"><div class="plate-b banded"><h3 class="band">Act 2</h3><button type="button" class="btn-b">Equip</button></div><figcaption>The Undercroft.</figcaption></figure>
+          <figure data-act="3"><div class="plate-b banded"><h3 class="band">Act 3</h3><button type="button" class="btn-b">Equip</button></div><figcaption>The Ember Works.</figcaption></figure>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./chrome-kit.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,353 @@
+/* Throwaway mockups. One art pixel is --art CSS pixels: the Battle scene draws at 4 in the 1280-wide base window. */
+:root {
+  --art: 3px;
+  --ink: #2a1a14;
+  /* Type roles, each named for the object it's printed on. The switcher swaps whole sets. */
+  --plate-case: uppercase;
+  --plate-size: 5.2;
+  --sign-size: 6.5;
+}
+
+.kit {
+  font-family: var(--font-body);
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 5rem;
+}
+
+.kit-head h1,
+.kit h2 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size-adjust: none;
+}
+
+.kit-head h1 {
+  margin: 0;
+  color: var(--brass-bright);
+}
+
+.kit h2 {
+  margin: 3rem 0 1.25rem;
+  color: var(--brass);
+  border-bottom: 1px solid var(--iron);
+}
+
+.note {
+  max-width: 62ch;
+  color: var(--tallow-dim);
+}
+
+.note b {
+  color: var(--tallow);
+}
+
+.scale button {
+  margin-left: 0.25rem;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+/* Every painted element: the canvas sits behind its content, scaled up without smoothing. */
+.art {
+  position: relative;
+  isolation: isolate;
+}
+
+.art > canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.shadowed > canvas {
+  filter: drop-shadow(calc(var(--art) * 2) calc(var(--art) * 2) 0 rgb(0 0 0 / 70%));
+}
+
+/* The Council plate. */
+.plate {
+  flex: 1 1 420px;
+  padding: calc(var(--art) * 10) calc(var(--art) * 11);
+}
+
+.plate p {
+  margin: 0.2rem 0;
+}
+
+.nameplate {
+  height: calc(var(--art) * 28);
+  margin: calc(var(--art) * -4) calc(var(--art) * -6) calc(var(--art) * 2);
+}
+
+.nameplate .label {
+  position: absolute;
+  left: calc(var(--art) * 18);
+  right: calc(var(--art) * 18);
+  top: calc(var(--art) * 8);
+  height: calc(var(--art) * 12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-plate);
+  font-weight: 700;
+  font-size: calc(var(--art) * var(--plate-size));
+  letter-spacing: 0.22em;
+  text-transform: var(--plate-case);
+  color: #2a1c0c;
+  text-shadow: 0 1px rgb(255 230 160 / 45%);
+}
+
+.ledger-line {
+  display: flex;
+  gap: 0.4rem;
+  line-height: 1.75;
+}
+
+.ledger-line span:first-child {
+  display: flex;
+  flex: 1;
+  gap: 0.4rem;
+}
+
+.ledger-line span:first-child::after {
+  content: '';
+  flex: 1;
+  margin-bottom: 0.45em;
+  border-bottom: var(--art) dotted color-mix(in srgb, var(--tallow-dim) 60%, transparent);
+}
+
+.ledger-line span:last-child {
+  color: var(--brass-bright);
+}
+
+/* Gauges. */
+.gauge-row {
+  display: grid;
+  grid-template-columns: 4rem 1fr 3.5rem;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.gauge-art {
+  height: calc(var(--art) * 11);
+}
+
+.gauge-row small {
+  color: var(--tallow-dim);
+  text-align: right;
+}
+
+/* Notices. */
+.notice {
+  font-family: var(--font-print);
+  flex: 0 1 430px;
+  padding: calc(var(--art) * 12) calc(var(--art) * 22) calc(var(--art) * 16) calc(var(--art) * 9);
+  color: var(--ink);
+}
+
+.notice .kicker {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #6a4a32;
+}
+
+.notice .title {
+  margin: 0.15rem 0 0.4rem;
+  font-family: var(--font-title);
+  font-size: 1.6rem;
+  font-size-adjust: none;
+  color: #3a1e12;
+}
+
+.notice p {
+  margin: 0.2rem 0;
+}
+
+/* Pick tickets. */
+.tickets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+}
+
+.ticket {
+  font-family: var(--font-print);
+  width: calc(var(--art) * 86);
+  height: calc(var(--art) * 32);
+  padding: 0 calc(var(--art) * 7) 0 calc(var(--art) * 27);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  color: var(--ink);
+}
+
+.ticket .name {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.ticket .line {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.ticket .kind {
+  margin: 0 0 0.1rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #8a3a2a;
+}
+
+/* Hanging signs. */
+.street {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.sign {
+  width: calc(var(--art) * 82);
+  height: calc(var(--art) * 38);
+}
+
+.sign .label {
+  position: absolute;
+  left: calc(var(--art) * 25);
+  right: calc(var(--art) * 8);
+  top: calc(var(--art) * 13);
+  bottom: calc(var(--art) * 3);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  font-family: var(--font-sign);
+  font-size: calc(var(--art) * var(--sign-size));
+  font-size-adjust: none;
+  line-height: 1;
+  color: #e8d8a8;
+  text-shadow: var(--art) var(--art) 0 rgb(0 0 0 / 45%);
+}
+
+.sign .label small {
+  font-family: 'EB Garamond', serif;
+  font-size: calc(var(--art) * 3.6);
+  color: #c8b488;
+}
+
+.kit h2 small {
+  font-family: 'EB Garamond', serif;
+  font-size: 0.95rem;
+  color: var(--tallow-dim);
+}
+
+.act-switch button[aria-pressed='true'] {
+  color: var(--flame);
+  border-color: var(--brass);
+}
+
+/* The Act's accent reaches the text chrome too: the ledger's figures. */
+[data-run] .ledger-line span:last-child {
+  color: color-mix(in srgb, var(--act-accent), white 20%);
+}
+
+.type-switch button[aria-pressed='true'] {
+  color: var(--flame);
+  border-color: var(--brass);
+}
+
+.type-legend {
+  font-family: 'EB Garamond', serif;
+  font-size: 0.9rem;
+}
+
+.ledger-line span:last-child {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* A clerk's pencilled note beside the tally. */
+.notice .hand {
+  position: absolute;
+  left: calc(var(--art) * 52);
+  bottom: calc(var(--art) * 6);
+  margin: 0;
+  font-family: var(--font-hand);
+  font-size: 0.95rem;
+  color: rgb(62 50 38 / 80%);
+  transform: rotate(-3deg);
+}
+
+/* Letterpress civic: the Council's print shop. Signwritten gothic over doors, engraved capitals on brass,
+   worn letterpress on forms, a readable book face for the UI, and a clerk's pencil. */
+:root[data-type='letterpress'] {
+  --font-sign: 'Grenze Gotisch', serif;
+  --font-plate: 'Cinzel', serif;
+  --font-print: 'IM Fell English', serif;
+  --font-title: 'Grenze Gotisch', serif;
+  --font-body: 'Alegreya', serif;
+  --font-hand: 'Cedarville Cursive', cursive;
+  --plate-size: 5;
+}
+
+:root[data-type='letterpress'] .notice .title,
+:root[data-type='letterpress'] .sign .label {
+  font-weight: 800;
+}
+
+/* Pixel gothic: display type drawn on the same grid as the art. Long text stays a book face. */
+:root[data-type='pixel'] {
+  --font-sign: 'Jacquard 24', serif;
+  --font-plate: 'Silkscreen', monospace;
+  --font-print: 'IM Fell English', serif;
+  --font-title: 'Jacquarda Bastarda 9', serif;
+  --font-body: 'Alegreya', serif;
+  --font-hand: 'Cedarville Cursive', cursive;
+  --plate-size: 4;
+  --sign-size: 8;
+}
+
+:root[data-type='pixel'] .nameplate .label,
+:root[data-type='pixel'] .sign .label,
+:root[data-type='pixel'] .notice .title {
+  font-size-adjust: none;
+  font-weight: 400;
+}
+
+:root[data-type='pixel'] .notice .title {
+  font-size: 1.8rem;
+}
+
+/* Fraktur Council: heavier blackletter authority, period print, small-capital plates. */
+:root[data-type='fraktur'] {
+  --font-sign: 'UnifrakturCook', serif;
+  --font-plate: 'IM Fell English SC', serif;
+  --font-print: 'IM Fell English', serif;
+  --font-title: 'UnifrakturCook', serif;
+  --font-body: 'EB Garamond', serif;
+  --font-hand: 'Homemade Apple', cursive;
+  --plate-case: none;
+  --plate-size: 6;
+}
+
+:root[data-type='fraktur'] .nameplate .label {
+  font-weight: 400;
+  letter-spacing: 0.12em;
+}
+
+:root[data-type='fraktur'] .notice .hand {
+  font-size: 0.75rem;
+}

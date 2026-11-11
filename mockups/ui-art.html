@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UI art mockups</title>
+    <!-- Mockup only: candidate fonts from jsDelivr's copy of the Fontsource packages. The chosen set gets installed with npm. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jacquard-24@5.3.0/400.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/jacquarda-bastarda-9@5.3.0/400.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/grenze-gotisch@5.3.0/600.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/grenze-gotisch@5.3.0/800.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/im-fell-english@5.3.0/400.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/im-fell-english@5.3.0/400-italic.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/im-fell-english-sc@5.3.0/400.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/cinzel@5.3.0/700.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/alegreya@5.3.0/400.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/alegreya@5.3.0/700.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unifrakturcook@5.3.0/700.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/homemade-apple@5.3.0/400.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/cedarville-cursive@5.3.0/400.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/silkscreen@5.3.0/400.css" />
+  </head>
+  <body>
+    <main class="kit">
+      <header class="kit-head">
+        <h1>UI art: civic lamp-works in pixels</h1>
+        <p class="note">Throwaway mockups. Each element paints its own art at the Battle scene's density, from the scene's own colour ramps, and the text sits on top. Nothing here is in the game yet.</p>
+        <p class="note scale">
+          Art pixel:
+          <button type="button" data-scale="2">2 px</button>
+          <button type="button" data-scale="3">3 px</button>
+          <button type="button" data-scale="4">4 px (the scene at 1280 wide)</button>
+        </p>
+        <p class="note scale act-switch">
+          Run's Act:
+          <button type="button" data-act-preview="town" aria-pressed="true">Town</button>
+          <button type="button" data-act-preview="1" aria-pressed="false">1. The wilderness</button>
+          <button type="button" data-act-preview="2" aria-pressed="false">2. The Undercroft</button>
+          <button type="button" data-act-preview="3" aria-pressed="false">3. The Ember Works</button>
+        </p>
+        <p class="note scale type-switch">
+          Type:
+          <button type="button" data-type="current" aria-pressed="true">In the game</button>
+          <button type="button" data-type="letterpress" aria-pressed="false">Letterpress civic</button>
+          <button type="button" data-type="pixel" aria-pressed="false">Pixel gothic</button>
+          <button type="button" data-type="fraktur" aria-pressed="false">Fraktur Council</button>
+        </p>
+        <p class="note type-legend" id="type-legend"></p>
+        <p class="note">Run views (the plate, nameplate, gauges, and Pick tickets) weather by Act: lichen in the wilderness, Foxfire verdigris and mould in the Undercroft, soot, embers, and scorch in the Ember Works. Town's notices and signs never change. Flame and text never tint.</p>
+      </header>
+
+      <h2>The Council plate <small>· Run, weathers by Act</small></h2>
+      <div class="row">
+        <section class="art plate" data-art="plate" data-run>
+          <div class="art nameplate" data-art="nameplate"><span class="label">Away Report</span></div>
+          <p class="ledger-line"><span>Floors cleared</span><span>3</span></p>
+          <p class="ledger-line"><span>Deepest Floor</span><span>Act 1, Floor 5</span></p>
+          <p class="ledger-line"><span>Evening supply drawn</span><span>12 measures</span></p>
+          <p class="ledger-line"><span>Setbacks</span><span>0</span></p>
+          <div class="gauge-row"><span>Oil</span><div class="art gauge-art" data-art="gauge" data-kind="oil" data-fill="0.62"></div><small>62%</small></div>
+          <div class="gauge-row"><span>Health</span><div class="art gauge-art" data-art="gauge" data-kind="health" data-fill="0.38"></div><small>38%</small></div>
+        </section>
+        <div class="note">
+          <p><b>Riveted iron,</b> bevelled and grimed, with cast brass brackets at the corners. Rivets space themselves to the plate's size.</p>
+          <p><b>The nameplate</b> hangs between two lanterns on wrought brackets. Their flames flicker and throw a dithered halo, the way the scene lights a Room.</p>
+          <p><b>One stain:</b> a thin seep of oil runs down the inner edge from a rivet. Grime on first reading, and later the thing itself, leaking through the Council's own fittings.</p>
+          <p><b>Gauges</b> are lamp glass between cast caps, brass for Oil and iron for health, marked in tenths like a measure, with a bright meniscus and the odd bubble.</p>
+        </div>
+      </div>
+
+      <h2>A Council notice: Findings <small>· Town, fixed</small></h2>
+      <div class="row">
+        <article class="art notice shadowed" data-art="notice">
+          <p class="kicker">Town Council · Notice</p>
+          <p class="title">2 Setbacks to poison</p>
+          <p>The Warrener fell twice on Floor 4. Poison resistance: 12%.</p>
+          <p>Open the Stash to poison resistance.</p>
+          <p class="hand">carried forward</p>
+        </article>
+        <div class="note">
+          <p><b>Old paper:</b> ragged edges, foxing, a fold, and a torn corner. The Council's crest is stamped in dry red ink.</p>
+          <p><b>A clerk's tally</b> in pencil at the foot, each group struck through. On a first visit it's a clerk counting something. Once the player has opened a chest and read "a tally of names, each struck through", it's the same hand.</p>
+          <p><b>The tack</b> is brass, with its own shadow on the paper.</p>
+        </div>
+      </div>
+
+      <h2>Pick tickets <small>· Run, weathers by Act</small></h2>
+      <div class="tickets" data-run>
+        <div class="art ticket shadowed" data-art="ticket" data-icon="flame" data-seed="3">
+          <p class="kind">Boon</p><p class="name">Power boon</p><p class="line">+15% power until the Party returns to Town.</p>
+        </div>
+        <div class="art ticket shadowed" data-art="ticket" data-icon="tins" data-seed="5">
+          <p class="kind">Stacking</p><p class="name">Stacking power</p><p class="line">+4% power per Floor cleared this Run.</p>
+        </div>
+        <div class="art ticket shadowed" data-art="ticket" data-icon="cog" data-seed="7" data-taken="true">
+          <p class="kind">Wall prep · taken</p><p class="name">Guardian prep</p><p class="line">+25% power against Guardians.</p>
+        </div>
+        <div class="art ticket shadowed" data-art="ticket" data-icon="vial" data-seed="9">
+          <p class="kind">Wall prep</p><p class="name">Poison prep</p><p class="line">+30% poison resistance.</p>
+        </div>
+      </div>
+      <p class="note"><b>Tickets, like a ration or a ferry,</b> with a stub, a string hole, notches at the perforation, and a printed red rule. The stub carries the kind's mark: a flame for a Boon, stacked tins for Stacking, and for Wall prep a cog against the automata or a vial against poison. The taken ticket is punched through with a flame-shaped clipper, so you can see the page behind it.</p>
+
+      <h2>Town: hanging signs <small>· Town, fixed</small></h2>
+      <div class="street">
+        <div class="art sign shadowed" data-art="sign" data-icon="lantern"><span class="label">Lamplighters' Hall<small>Oil and the Belt</small></span></div>
+        <div class="art sign shadowed" data-art="sign" data-icon="scales"><span class="label">The Merchant<small>Buy and sell</small></span></div>
+        <div class="art sign shadowed" data-art="sign" data-icon="die"><span class="label">The Wager<small>The gamble vendor</small></span></div>
+      </div>
+      <p class="note"><b>Painted planks on chains</b> under a wrought arm with a scroll, bolted to a riveted wall plate, with iron straps and worn paint. Names are placeholders. Town's menu would become a street of these, and relit Lamps could light more of them.</p>
+    </main>
+    <script type="module" src="./ui-art.ts"></script>
+  </body>
+</html>

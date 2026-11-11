@@ -1,0 +1,505 @@
+/* Throwaway mockups for step 2 of docs/plans/ui-style.md. */
+:root {
+  --px: 2px;
+  --p: var(--px);
+  --enamel: #1a2230;
+  --paper: var(--tallow);
+  --ink: #1e1712;
+}
+
+.kit {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.kit-head h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  color: var(--brass-bright);
+  margin: 0;
+}
+
+.kit h2 {
+  margin: 2.5rem 0 1rem;
+  font-family: var(--display);
+  font-weight: 400;
+  color: var(--brass);
+  border-bottom: 1px solid var(--iron);
+}
+
+.zoom button {
+  margin-left: 0.25rem;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+figure {
+  flex: 1 1 260px;
+  margin: 0;
+}
+
+figure.wide {
+  flex-basis: 560px;
+}
+
+figcaption {
+  margin-top: 0.9rem;
+  font-size: 0.92rem;
+  color: var(--tallow-dim);
+}
+
+figcaption b {
+  color: var(--tallow);
+}
+
+p {
+  margin: 0.25rem 0;
+}
+
+.heading {
+  font-size-adjust: none;
+  margin: 0 0 0.5rem;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 1.3rem;
+  color: var(--brass-bright);
+}
+
+/* 1A: today's plate. */
+.plate-a {
+  padding: 1rem;
+  background: linear-gradient(var(--char-raised), var(--char) 3rem);
+  border: 1px solid var(--iron);
+  border-image: url('../src/ui/art/plate.svg') 12 / 12px stretch;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 50%);
+}
+
+/* 1B: riveted enamel. A rivet is a 2-pixel square of the accent with a bright pixel on top. */
+.plate-b {
+  --rivet: linear-gradient(var(--act-accent), var(--act-accent));
+  --rivet-hi: linear-gradient(color-mix(in srgb, var(--act-accent), white 35%), color-mix(in srgb, var(--act-accent), white 35%));
+  --r: calc(2 * var(--p));
+  --in: calc(2 * var(--p));
+  position: relative;
+  padding: calc(1rem + 2 * var(--p));
+  background:
+    var(--rivet-hi) top var(--in) left var(--in) / var(--p) var(--p) no-repeat,
+    var(--rivet-hi) top var(--in) right calc(var(--in) + var(--p)) / var(--p) var(--p) no-repeat,
+    var(--rivet-hi) bottom calc(var(--in) + var(--p)) left var(--in) / var(--p) var(--p) no-repeat,
+    var(--rivet-hi) bottom calc(var(--in) + var(--p)) right calc(var(--in) + var(--p)) / var(--p) var(--p) no-repeat,
+    var(--rivet) top var(--in) left var(--in) / var(--r) var(--r) no-repeat,
+    var(--rivet) top var(--in) right var(--in) / var(--r) var(--r) no-repeat,
+    var(--rivet) bottom var(--in) left var(--in) / var(--r) var(--r) no-repeat,
+    var(--rivet) bottom var(--in) right var(--in) / var(--r) var(--r) no-repeat,
+    var(--char);
+  border: calc(3 * var(--p)) solid var(--iron);
+  border-top-color: var(--iron-bright);
+  border-left-color: var(--iron-bright);
+  border-right-color: #2c2e33;
+  border-bottom-color: #2c2e33;
+  box-shadow:
+    0 0 0 var(--p) var(--dark),
+    calc(3 * var(--p)) calc(3 * var(--p)) 0 var(--p) rgb(0 0 0 / 70%);
+}
+
+.plate-b.banded {
+  padding-top: 0;
+}
+
+/* 1C: the stamped band. */
+.band {
+  margin: 0 calc(-1rem - 2 * var(--p)) 0.75rem;
+  padding: 0.3rem 1rem 0.2rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--ink);
+  background: linear-gradient(color-mix(in srgb, var(--act-accent), white 30%) 0 var(--p), var(--act-accent) var(--p) calc(100% - var(--p)), color-mix(in srgb, var(--act-accent), black 45%) calc(100% - var(--p)));
+  text-shadow: 0 var(--p) color-mix(in srgb, var(--act-accent), white 35%);
+  box-shadow: 0 var(--p) 0 var(--dark);
+}
+
+/* 2A: pinned vellum. */
+.notice-pinned {
+  position: relative;
+  padding: 1rem 1.1rem 0.9rem;
+  background: repeating-linear-gradient(transparent 0 1.5rem, color-mix(in srgb, var(--tallow) 6%, transparent) 1.5rem calc(1.5rem + var(--p))), var(--vellum);
+  border: var(--p) solid #3a2e22;
+  box-shadow: calc(2 * var(--p)) calc(2 * var(--p)) 0 rgb(0 0 0 / 70%);
+}
+
+.tack {
+  position: absolute;
+  top: calc(3 * var(--p));
+  left: 50%;
+  width: calc(3 * var(--p));
+  height: calc(3 * var(--p));
+  background: var(--act-accent);
+  box-shadow: inset var(--p) var(--p) 0 color-mix(in srgb, var(--act-accent), white 40%), var(--p) var(--p) 0 #000;
+}
+
+.notice-kicker {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--tallow-dim);
+}
+
+.notice-title {
+  font-size-adjust: none;
+  font-family: var(--display);
+  font-size: 1.35rem;
+  color: var(--brass-bright);
+}
+
+/* 2B: enamel sign. */
+.notice-enamel {
+  padding: 1rem 1.1rem 0.9rem;
+  color: var(--tallow);
+  background: var(--enamel);
+  border: calc(2 * var(--p)) solid var(--enamel);
+  outline: var(--p) solid var(--tallow);
+  outline-offset: calc(-4 * var(--p));
+  box-shadow: 0 0 0 var(--p) var(--dark), calc(3 * var(--p)) calc(3 * var(--p)) 0 rgb(0 0 0 / 70%);
+}
+
+.notice-enamel .notice-kicker {
+  color: color-mix(in srgb, var(--tallow), var(--enamel) 35%);
+}
+
+.notice-enamel .notice-title {
+  color: var(--tallow);
+}
+
+/* 3A: paper chits, ink on tallow, perforated top and bottom. */
+.chits {
+  display: flex;
+  gap: 1rem;
+}
+
+.chit {
+  --hole: calc(2 * var(--p));
+  position: relative;
+  flex: 1;
+  padding: 0.9rem 0.8rem 0.8rem;
+  color: var(--ink);
+  background:
+    repeating-linear-gradient(90deg, var(--soot) 0 var(--hole), transparent var(--hole) calc(3 * var(--hole))) top / 100% var(--p) no-repeat,
+    repeating-linear-gradient(90deg, var(--soot) 0 var(--hole), transparent var(--hole) calc(3 * var(--hole))) bottom / 100% var(--p) no-repeat,
+    linear-gradient(var(--paper), color-mix(in srgb, var(--paper), var(--oil-deep) 12%));
+  box-shadow: calc(2 * var(--p)) calc(2 * var(--p)) 0 rgb(0 0 0 / 70%);
+}
+
+.chit-name {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.chit.taken {
+  outline: var(--p) solid var(--flame);
+  outline-offset: calc(2 * var(--p));
+}
+
+/* 3B: dark chit with a torn top. */
+.chit-dark {
+  padding: 1rem 0.9rem 0.8rem;
+  background:
+    linear-gradient(135deg, var(--soot) 25%, transparent 25%) top left / calc(4 * var(--p)) calc(4 * var(--p)) repeat-x,
+    linear-gradient(225deg, var(--soot) 25%, transparent 25%) top left / calc(4 * var(--p)) calc(4 * var(--p)) repeat-x,
+    var(--char-raised);
+  border-bottom: var(--p) solid var(--iron);
+  box-shadow: calc(2 * var(--p)) calc(2 * var(--p)) 0 rgb(0 0 0 / 70%);
+}
+
+.chit-dark .chit-name {
+  color: var(--tallow);
+}
+
+.magic {
+  color: var(--rime);
+  font-size: 0.9rem;
+}
+
+/* 4: ledger with dot leaders. */
+.ledger {
+  padding: 0.8rem 1rem 0.8rem 2.6rem;
+  background:
+    linear-gradient(90deg, transparent 1.8rem, color-mix(in srgb, var(--blood) 55%, transparent) 1.8rem calc(1.8rem + var(--p)), transparent calc(1.8rem + var(--p))),
+    var(--vellum);
+  box-shadow: calc(2 * var(--p)) calc(2 * var(--p)) 0 rgb(0 0 0 / 70%);
+}
+
+.line {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0;
+  line-height: 1.7;
+}
+
+.line span:first-child {
+  display: flex;
+  flex: 1;
+  gap: 0.4rem;
+}
+
+.line span:first-child::after {
+  content: '';
+  flex: 1;
+  margin-bottom: 0.45em;
+  border-bottom: var(--p) dotted var(--tallow-dim);
+}
+
+.line span:last-child {
+  color: var(--brass-bright);
+}
+
+/* 5: buttons. */
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.buttons button {
+  font-size: 1rem;
+  border-radius: 0;
+}
+
+.btn-a,
+.btn-a:hover:not(:disabled) {
+  padding: 0.3rem 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+  text-shadow: 0 var(--p) color-mix(in srgb, var(--act-accent), white 35%);
+  background: linear-gradient(color-mix(in srgb, var(--act-accent), white 30%) 0 var(--p), var(--act-accent) var(--p) calc(100% - 2 * var(--p)), color-mix(in srgb, var(--act-accent), black 45%) calc(100% - 2 * var(--p)));
+  border: var(--p) solid var(--dark);
+  box-shadow: var(--p) var(--p) 0 #000;
+}
+
+.btn-a.hover,
+.btn-a:hover:not(:disabled) {
+  background: linear-gradient(color-mix(in srgb, var(--act-accent), white 55%) 0 var(--p), color-mix(in srgb, var(--act-accent), white 18%) var(--p) calc(100% - 2 * var(--p)), color-mix(in srgb, var(--act-accent), black 35%) calc(100% - 2 * var(--p)));
+}
+
+.btn-a.pressed,
+.btn-a:active:not(:disabled) {
+  background: linear-gradient(color-mix(in srgb, var(--act-accent), black 45%) 0 calc(2 * var(--p)), color-mix(in srgb, var(--act-accent), black 12%) calc(2 * var(--p)));
+  box-shadow: none;
+  transform: translate(var(--p), var(--p));
+}
+
+.btn-a:disabled,
+.btn-b:disabled {
+  color: var(--tallow-dim);
+  text-shadow: none;
+  background: var(--soot);
+  border: var(--p) solid var(--iron);
+  box-shadow: none;
+  opacity: 1;
+}
+
+.btn-b,
+.btn-b:hover:not(:disabled) {
+  padding: 0.3rem 0.9rem;
+  color: color-mix(in srgb, var(--act-accent), white 25%);
+  background: var(--char-raised);
+  border: var(--p) solid var(--act-accent);
+  box-shadow:
+    inset 0 var(--p) 0 color-mix(in srgb, var(--act-accent) 45%, transparent),
+    inset 0 calc(-1 * var(--p)) 0 var(--soot),
+    0 0 0 var(--p) var(--dark),
+    var(--p) calc(2 * var(--p)) 0 var(--p) #000;
+}
+
+.btn-b.hover,
+.btn-b:hover:not(:disabled) {
+  color: var(--flame-core);
+  background: color-mix(in srgb, var(--char-raised), var(--act-accent) 18%);
+}
+
+.btn-b.pressed,
+.btn-b:active:not(:disabled) {
+  background: var(--soot);
+  box-shadow: inset 0 calc(2 * var(--p)) 0 #000, 0 0 0 var(--p) var(--dark);
+  transform: translateY(var(--p));
+}
+
+.btn-wick,
+.btn-wick:hover:not(:disabled) {
+  padding: 0.55rem 1.4rem;
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: linear-gradient(var(--flame-core) 0 30%, var(--flame) 30% 70%, var(--oil-bright) 70%);
+  border: var(--p) solid var(--flame-core);
+  box-shadow:
+    0 0 0 var(--p) var(--dark),
+    0 0 0 calc(3 * var(--p)) color-mix(in srgb, var(--flame) 30%, transparent),
+    0 0 0 calc(6 * var(--p)) color-mix(in srgb, var(--flame) 14%, transparent),
+    0 0 0 calc(10 * var(--p)) color-mix(in srgb, var(--flame) 6%, transparent);
+}
+
+/* 6A: ledger index tabs. */
+.tabrow {
+  display: flex;
+  gap: calc(2 * var(--p));
+  padding-left: 0.75rem;
+}
+
+.itab {
+  padding: 0.3rem 0.8rem 0.2rem;
+  color: var(--tallow-dim);
+  background: color-mix(in srgb, var(--vellum), black 35%);
+  border: var(--p) solid #3a2e22;
+  border-bottom: none;
+  transform: translateY(calc(2 * var(--p)));
+}
+
+.itab[aria-selected='true'] {
+  position: relative;
+  z-index: 1;
+  color: var(--flame);
+  background: var(--vellum);
+  transform: none;
+  margin-bottom: calc(-1 * var(--p));
+  padding-bottom: calc(0.2rem + var(--p));
+}
+
+.tabpage {
+  padding: 0.8rem 1rem;
+  color: var(--tallow-dim);
+  background: var(--vellum);
+  border: var(--p) solid #3a2e22;
+}
+
+/* 6B: drawer label holders: a brass frame round a paper card. */
+.drawer-tabs {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.dtab {
+  --card: color-mix(in srgb, var(--paper), black 38%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  min-width: 6rem;
+  height: 2.1rem;
+  padding: 0 0.8rem;
+  font-weight: 700;
+  font-variant: small-caps;
+  color: var(--ink);
+  background:
+    linear-gradient(var(--card), var(--card)) calc(2 * var(--p)) calc(2 * var(--p)) / calc(100% - 4 * var(--p)) calc(100% - 4 * var(--p)) no-repeat,
+    var(--act-accent);
+  box-shadow: inset 0 var(--p) 0 color-mix(in srgb, var(--act-accent), white 35%), var(--p) var(--p) 0 #000;
+  cursor: pointer;
+}
+
+.dtab[aria-selected='true'] {
+  --card: var(--paper);
+  box-shadow: inset 0 var(--p) 0 color-mix(in srgb, var(--act-accent), white 35%), var(--p) var(--p) 0 #000, 0 0 0 calc(3 * var(--p)) var(--flame-glow);
+}
+
+/* 7: gauges and stamps. */
+.gauges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.gauges label {
+  display: grid;
+  grid-template-columns: 3.5rem 1fr;
+  align-items: center;
+}
+
+.gauge {
+  position: relative;
+  display: block;
+  height: calc(7 * var(--p));
+  padding: var(--p);
+  background: var(--dark);
+  border: var(--p) solid var(--iron);
+  box-shadow: 0 0 0 var(--p) var(--dark);
+}
+
+.gauge-oil {
+  border-color: var(--act-accent);
+}
+
+.gauge > span {
+  display: block;
+  height: 100%;
+}
+
+.gauge-health > span {
+  background: linear-gradient(var(--blood-bright) 0 35%, var(--blood) 35% 70%, var(--blood-deep) 70%);
+}
+
+.gauge-oil > span {
+  background: var(--oil-bands);
+}
+
+.gauge::after {
+  content: '';
+  position: absolute;
+  inset: var(--p);
+  background: repeating-linear-gradient(90deg, transparent 0 calc(10% - var(--p)), rgb(0 0 0 / 55%) calc(10% - var(--p)) 10%);
+}
+
+.stamps {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+}
+
+.stamp {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  border: var(--p) solid currentcolor;
+  outline: var(--p) solid currentcolor;
+  outline-offset: var(--p);
+}
+
+.stamp-refused {
+  color: var(--rust);
+}
+
+.stamp-received {
+  margin-top: 0.6rem;
+  color: var(--iron-bright);
+}
+
+.stamp-taken {
+  position: absolute;
+  right: 0.6rem;
+  bottom: 0.5rem;
+  color: var(--blood);
+  font-size: 0.7rem;
+}
+
+.refusal-reason {
+  color: var(--tallow-dim);
+  font-size: 0.92rem;
+}
+
+/* 8: Act rows, sized down. */
+section:last-child figure {
+  flex-basis: 200px;
+}
