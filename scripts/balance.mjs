@@ -798,6 +798,7 @@ const WORLD_GAP_HOURS = 3;
 /** The design's weekend pace: about 3 hours of Party time per Wall, 30-40 for the first Difficulty Tier. */
 const WALL_HOURS_TARGET = [2, 4];
 const TIER_HOURS_TARGET = [30, 40];
+const RUN_MINUTES_TARGET = [15, 30];
 
 /** Plays the whole world with the Routine player checking in every few hours, and records each Lamp's first relight. */
 function playWorld(seed) {
@@ -805,6 +806,8 @@ function playWorld(seed) {
   const relitAt = [];
   let deepest = 1;
   let wipes = 0;
+  const runs = [];
+  let sentAt = 0;
   for (let hour = 0; hour < WORLD_HOURS; hour += WORLD_GAP_HOURS) {
     CHECK_IN_PLAYERS.Routine(game);
     for (let step = 0; step < WORLD_GAP_HOURS * 60; step++) {
@@ -812,10 +815,12 @@ function playWorld(seed) {
         if (event.type === 'lampRelit') relitAt.push({ hours: viewGame(game).tick / TICKS_PER_HOUR, level: viewGame(game).heroes[0].level });
         else if (event.type === 'floorEntered') deepest = Math.max(deepest, event.floor);
         else if (event.type === 'wipe') wipes++;
+        else if (event.type === 'partySent') sentAt = viewGame(game).tick;
+        else if (event.type === 'returnedToTown') runs.push({ minutes: (viewGame(game).tick - sentAt) / (TICKS_PER_HOUR / 60), reason: event.reason });
       });
     }
   }
-  return { relitAt, deepest, wipes, level: viewGame(game).heroes[0].level };
+  return { relitAt, deepest, wipes, runs, level: viewGame(game).heroes[0].level };
 }
 
 function measureWorld(firstSeed) {
@@ -841,6 +846,12 @@ function measureWorld(firstSeed) {
   const { act, floor } = floorAt(deepest);
   console.log(`
   Median deepest Floor: Act ${act}, Floor ${floor}. Median level at the end: ${medianOf(runs.map((run) => run.level))}. Median Wipes: ${medianOf(runs.map((run) => run.wipes))}.`);
+  const allRuns = runs.flatMap((run) => run.runs);
+  const runMinutes = allRuns.map((run) => run.minutes).sort((a, b) => a - b);
+  const percentile = (share) => runMinutes[Math.floor(share * (runMinutes.length - 1))] ?? null;
+  const runShare = (test) => `${((allRuns.filter(test).length / allRuns.length) * 100).toFixed(0)}%`;
+  const reasons = [...new Set(allRuns.map((run) => run.reason))].map((reason) => `${reason} ${runShare((run) => run.reason === reason)}`).join(', ');
+  console.log(`  Runs: ${allRuns.length}, minutes at the 10th/50th/90th percentile ${formatted(percentile(0.1))}/${formatted(percentile(0.5))}/${formatted(percentile(0.9))}, ${runShare((run) => run.minutes >= RUN_MINUTES_TARGET[0] && run.minutes <= RUN_MINUTES_TARGET[1])} within ${RUN_MINUTES_TARGET[0]}-${RUN_MINUTES_TARGET[1]}. Ended by ${reasons}.`);
   const tierHours = medianOf(runs.map(({ relitAt }) => (relitAt.length === LAMPS.length ? relitAt.at(-1).hours : Infinity)));
   const tierOnPace = tierHours !== null && within(tierHours, ...TIER_HOURS_TARGET);
   console.log(`  Tier finished: ${runs.filter(({ relitAt }) => relitAt.length === LAMPS.length).length}/${runs.length} Seeds, median ${formatted(tierHours)} h${tierOnPace ? '' : ', off target'}.`);
