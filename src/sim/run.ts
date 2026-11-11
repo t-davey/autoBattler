@@ -11,6 +11,8 @@ import { generateFloor, lampIndexOf, xpShare, type FloorLayout, type Depth, type
 import { clampToMaximums, gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
 import { rollItemSpec, viewItem, type ItemState, type ItemView } from './items';
 import { nextFloat, nextInt, type Rng } from './rng';
+import type { PickId, PickMoment } from './content/picks';
+import { applyPicks, rollPick, viewPick, type PickView } from './picks';
 import { floorAt, FLOORS_PER_LAMP, LAMPS } from './content/world';
 import { frontierIndex, recordGrowth, recordGuardianKill, recordBestAttempt, recordSetback, runStretch, turnsBackBeforeGuardian, type WallEvent, type WallState } from './wall';
 
@@ -42,6 +44,7 @@ export type RunEvent =
   | { readonly type: 'wipe' | 'draw'; readonly floor: Depth; readonly enemyName: string; readonly guardianHealthShare: number | null }
   | { readonly type: 'returnedToTown'; readonly reason: TownReason }
   | { readonly type: 'partySent' }
+  | { readonly type: 'pickTaken'; readonly moment: PickMoment; readonly offers: readonly PickView[]; readonly taken: PickView }
   | WallEvent;
 
 export type GameEvent = BattleEvent | RunEvent;
@@ -58,11 +61,17 @@ export interface RunState {
   layout: FloorLayout | null;
   /** The Room the Party is in, or travelling to. */
   room: number;
+  /** The Floor this Run set out to. Null in Town. */
+  startFloor: Depth | null;
+  /** Taken this Run, in order. They end with it. */
+  picks: PickId[];
 }
 
 /** The part of the Game that Runs read and change. */
 export interface RunWorld {
   readonly rng: Rng;
+  /** Its own stream, so offers don't shift the rest of the Run's rolls. */
+  readonly pickRng: Rng;
   readonly heroes: HeroState[];
   battle: BattleState | null;
   readonly run: RunState;
@@ -104,7 +113,7 @@ export function createRun(rng: Rng, startAt: StartAt = { floor: 1, room: 0 }): R
   const last = layout.rooms.length - 1;
   if (startAt.room === 'guardian' && layout.rooms[last]?.kind !== 'guardian') throw new Error(`Floor ${startAt.floor} has no Guardian Room`);
   const room = startAt.room === 'guardian' ? last : Math.min(startAt.room, last);
-  return { phase: 'travelling', ticksLeft: TRAVEL_TICKS, floor: startAt.floor, layout, room };
+  return { phase: 'travelling', ticksLeft: TRAVEL_TICKS, floor: startAt.floor, layout, room, startFloor: startAt.floor, picks: [] };
 }
 
 function returnToTown(world: RunWorld, reason: TownReason, sink: EventSink): void {
@@ -114,6 +123,8 @@ function returnToTown(world: RunWorld, reason: TownReason, sink: EventSink): voi
   run.floor = null;
   run.layout = null;
   run.room = 0;
+  run.startFloor = null;
+  run.picks = [];
   for (const hero of world.heroes) {
     const { maxHealth, maxOil } = heroStats(hero);
     hero.health = maxHealth;
@@ -128,7 +139,16 @@ export const frontierWall = (walls: readonly WallState[]): WallState => walls[fr
 /** Sends the Party out from Town, to the Floor after the Lamp it works from: the last lit one, or one earlier after falling back. */
 export function sendParty(world: RunWorld, sink: EventSink): void {
   sink({ type: 'partySent' });
-  enterFloor(world, runStretch(world.walls) * FLOORS_PER_LAMP + 1);
+  const floor = runStretch(world.walls) * FLOORS_PER_LAMP + 1;
+  enterFloor(world, floor);
+  world.run.startFloor = floor;
+}
+
+/** Offers a Pick and takes one by the rule. */
+function takePick(world: RunWorld, moment: PickMoment, sink: EventSink): void {
+  const { offers, taken } = rollPick(world.pickRng, moment);
+  world.run.picks.push(taken);
+  sink({ type: 'pickTaken', moment, offers: offers.map(viewPick), taken: viewPick(taken) });
 }
 
 function recoveryShare(heroes: readonly HeroState[]): number {
@@ -157,15 +177,19 @@ function enterRoom(world: RunWorld, sink: EventSink): void {
   const { kind } = currentRoom(run);
   if (run.room === 0) sink({ type: 'floorEntered', floor });
   sink({ type: 'roomEntered', floor, room: run.room, kind });
+  // The Run's first Room, so a new Game's first Run gets its Pick too.
+  if (run.room === 0 && floor === run.startFloor && run.picks.length === 0) takePick(world, 'setOut', sink);
   if (kind === 'chest') {
     run.phase = 'chest';
     run.ticksLeft = CHEST_TICKS;
     return;
   }
   run.phase = 'battle';
+  if (kind === 'guardian') takePick(world, 'guardian', sink);
   const enemies = kind === 'guardian' ? [guardianFor(LAMPS[lampIndexOf(floor)]!)] : rollPack(world.rng, floorAt(floor).act, depthTuning(floor).enemyScale);
   // Units take their stats and skills here, so a build change reaches the next Battle.
-  const teams = { [PARTY_TEAM]: world.heroes.map(heroUnitSpec), [ENEMY_TEAM]: enemies };
+  const context = { floorsCleared: floor - (run.startFloor ?? floor), guardian: kind === 'guardian' };
+  const teams = { [PARTY_TEAM]: world.heroes.map((hero) => applyPicks(heroUnitSpec(hero), run.picks, context)), [ENEMY_TEAM]: enemies };
   const limit = world.battleTicks === null ? {} : { maxTicks: world.battleTicks };
   world.battle = createBattle({ seed: nextInt(world.rng, SEED_RANGE), teams, ...limit });
   sink({ type: 'battleStarted', enemyNames: enemies.map((enemy) => enemy.name) });

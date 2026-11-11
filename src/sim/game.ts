@@ -5,6 +5,7 @@ import { isSkillId, MAX_SKILL_RANK, SKILLS, type HeroId, type SkillId } from './
 import { isDepth, ROOM_KINDS } from './floors';
 import { clampToMaximums, createParty, heroUnitSpec, unspentPoints, type HeroState } from './heroes';
 import { slotOf, starterItem, type ItemId, type ItemSpec, type ItemState } from './items';
+import { PICKS } from './content/picks';
 import { createRng, type Rng } from './rng';
 import { createRun, frontierWall, sendParty, stepRun, type EventSink, type RunState, type RunWorld, type StartAt } from './run';
 import { isLegalOrder, spendRefusal, type SkillRanks, type SpendRefusal } from './skills';
@@ -14,7 +15,7 @@ import { createWall, isWallState, recordGrowth, type WallState } from './wall';
 export const TICK_MS = 100;
 /** The longest absence that counts: 12 hours. */
 export const CATCH_UP_CAP_MS = 43_200_000;
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export interface GameSetup {
   readonly seed: number;
@@ -78,7 +79,9 @@ export function createGame(setup: GameSetup): Game {
   }));
   const stashed = (stash ?? []).map(withId);
   const rng = createRng(setup.seed);
-  return gameOf({ rng, tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), walls: createWalls(lampLit ? 1 : 0, setbacks), battleTicks: battleTicks ?? null, heroes, stash: stashed, nextItemId, stashRevision: 0 });
+  // A fixed offset keeps the Pick stream apart from the main one.
+  const pickRng = createRng(setup.seed ^ 0x5bd1e995);
+  return gameOf({ rng, pickRng, tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), walls: createWalls(lampLit ? 1 : 0, setbacks), battleTicks: battleTicks ?? null, heroes, stash: stashed, nextItemId, stashRevision: 0 });
 }
 
 export const heroesOf = (game: Game): readonly HeroState[] => stateOf(game).heroes;
@@ -322,8 +325,10 @@ const isRoom = (value: unknown): boolean =>
 
 function isRunState(value: unknown): value is RunState {
   if (!isRecord(value) || !isNumber(value['ticksLeft']) || !isNumber(value['room'])) return false;
-  const { phase, floor, layout, room } = value;
-  if (phase === 'town') return floor === null && layout === null;
+  const { phase, floor, layout, room, startFloor, picks } = value;
+  if (!Array.isArray(picks) || !picks.every((id) => typeof id === 'string' && id in PICKS)) return false;
+  if (phase === 'town') return floor === null && layout === null && startFloor === null && picks.length === 0;
+  if (!isDepth(startFloor)) return false;
   if (phase !== 'travelling' && phase !== 'battle' && phase !== 'chest') return false;
   if (!isDepth(floor) || !isRecord(layout) || !Array.isArray(layout['rooms']) || !layout['rooms'].every(isRoom)) return false;
   return Number.isInteger(room) && (room as number) >= 0 && (room as number) < layout['rooms'].length;
@@ -348,6 +353,7 @@ function hasSoundItems(game: Record<string, unknown>): boolean {
 const isGameState = (value: unknown): boolean =>
   isRecord(value) &&
   isRng(value['rng']) &&
+  isRng(value['pickRng']) &&
   isNumber(value['tick']) &&
   isNumber(value['bankMs']) &&
   isRunState(value['run']) &&

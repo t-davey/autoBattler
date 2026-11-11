@@ -707,6 +707,15 @@ select {
   font-size: 1.5rem;
 }
 
+.run-picks {
+  margin: 0 0 0.35rem;
+  padding: 0;
+  list-style: none;
+  max-width: 22rem;
+  color: var(--tallow-dim);
+  font-size: 0.9rem;
+}
+
 .room-grid {
   display: grid;
   margin: 0;

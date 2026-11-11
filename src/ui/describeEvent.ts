@@ -93,6 +93,12 @@ export function describeEvent(event: GameEvent): string {
       return TOWN_LINES[event.reason];
     case 'partySent':
       return 'The Party goes down again.';
+    case 'pickTaken': {
+      const passed = event.offers.filter((offer) => offer.id !== event.taken.id).map((offer) => offer.name);
+      const marker = event.taken.placeholder ? '[placeholder] ' : '';
+      const over = passed.length > 0 ? `, over ${passed.join(' and ')}` : '';
+      return `${marker}The Party takes ${event.taken.name}: ${event.taken.line} until it returns to Town${over}.`;
+    }
     case 'fellBack':
       return 'One Setback too many. The Party will turn back before the Guardian until it grows stronger.';
     case 'retryingGuardian':

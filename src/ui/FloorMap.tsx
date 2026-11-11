@@ -42,6 +42,16 @@ export function FloorMap({ view }: { view: GameView }) {
     <section className="floor-map" aria-label="Floor map">
       <h2>{floorLabel(floor)} of {floorAt(view.lampFloor).floor}</h2>
       <p className="floor-progress">Rooms cleared: {map.rooms.filter((room) => room.state === 'cleared').length} of {map.rooms.length}</p>
+      {view.picks.length > 0 && (
+        <ul className="run-picks" aria-label="Picks this Run">
+          {view.picks.map((pick, index) => (
+            <li key={index} title={pick.line}>
+              {pick.placeholder && '[placeholder] '}
+              {pick.name}: {pick.line}
+            </li>
+          ))}
+        </ul>
+      )}
       <ol className="room-grid" style={style}>
         {map.rooms.map((room, index) => (
           <RoomCell key={`${room.x},${room.y}`} room={room} order={index + 1} column={room.x - left + 1} row={room.y - top + 1} />
