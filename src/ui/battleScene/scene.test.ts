@@ -123,11 +123,11 @@ describe('the Battle scene', () => {
     const scene = sceneOf();
     scene.sync(start);
     const wayIn = wayPoint(firstRoom.ways.find((way) => way.role === 'in')!.edge);
-    const arrived = unitIn(scene.frame(), 'huntsman');
+    const arrived = unitIn(scene.frame(), 'warrener');
     expect(arrived.x).toBeCloseTo(wayIn.x, 0);
     expect(arrived.y).toBeCloseTo(wayIn.y, 0);
     settle(scene, 8);
-    expect(Math.hypot(unitIn(scene.frame(), 'huntsman').x - wayIn.x, unitIn(scene.frame(), 'huntsman').y - wayIn.y)).toBeGreaterThan(40);
+    expect(Math.hypot(unitIn(scene.frame(), 'warrener').x - wayIn.x, unitIn(scene.frame(), 'warrener').y - wayIn.y)).toBeGreaterThan(40);
   });
 
   it('leaves through the way out, then changes Room', () => {
@@ -184,9 +184,9 @@ describe('the Battle scene', () => {
     const scene = sceneOf();
     scene.sync(view);
     settle(scene, 8);
-    const before = unitIn(scene.frame(), 'huntsman').x;
+    const before = unitIn(scene.frame(), 'warrener').x;
     scene.advance(0);
-    expect(unitIn(scene.frame(), 'huntsman').x).toBe(before);
+    expect(unitIn(scene.frame(), 'warrener').x).toBe(before);
   });
 
   it('dims with the Party’s Oil', () => {

@@ -22,7 +22,7 @@ This file is the demo's source of truth for its skills. [Adaptations](#adaptatio
 | 2 | **Iron Penance** | Passive | Either | | | | Bonus armour | |
 | 3 | **Shared Burden** | Passive | Front | | | | Part of each direct hit and Poison tick on a back-Row Hero goes to this Hero instead | |
 
-### Huntsman: Bloodletting
+### Warrener: Bloodletting
 
 | Step | Skill | Kind | Row | Reach | Oil | Cooldown (Ticks) | Effect | Fires when |
 |---|---|---|---|---|---|---|---|---|
@@ -82,7 +82,7 @@ Each change from [First playable skills](first-playable-skills.md), with its rea
 | **Poison stacks are per Unit**, not per enemy | Enemies poison Heroes here, and no Hero poisons enemies (G15). |
 | **Hearth's reach is "Any Hero" or "Every Hero"**, not spell | No Hero skill in the demo casts a spell at an enemy, so the sim needs no spell reach. |
 | **No limit of 3 active skills** | Each Hero has at most 2, so the limit never binds. |
-| **A Huntsman with a ranged weapon can't use its melee skills** | From G14. The planning tab says so. |
+| **A Warrener with a ranged weapon can't use its melee skills** | From G14. The planning tab says so. |
 
 ## Rules the source leaves unsaid
 
@@ -95,7 +95,7 @@ The plan doesn't settle these, and the human accepted them on 2026-11-05.
 - **Bleed** divides evenly across its 6 ticks, with the first 10 Ticks after it lands. Its total is set from power when applied.
 - **Poison:** each stack ticks on its own clock, with its first tick 20 Ticks after it lands. A refresh changes when stacks expire, not when they tick.
 - **Critical hits:** Bleeder's Cut's hit can be critical. Bleed, The Long Cut, Poison, heals, and Wards can't.
-- **Open Veins** applies to this Huntsman's basic attack and The Long Cut, whose target still counts as Bleeding. It doesn't apply to Bleed ticks, and Bleeder's Cut only ever hits enemies that aren't Bleeding.
+- **Open Veins** applies to this Warrener's basic attack and The Long Cut, whose target still counts as Bleeding. It doesn't apply to Bleed ticks, and Bleeder's Cut only ever hits enemies that aren't Bleeding.
 - **The Long Cut** works like Bleed: it ignores armour, and physical resistance reduces it.
 
 **Damage and targets**
@@ -116,11 +116,11 @@ The plan doesn't settle these, and the human accepted them on 2026-11-05.
 
 **Builds:** each Hero has 11 legal 6-point builds at level 7, and all 9 skills are reachable. Those builds reach rank 2 at most in a step 3 skill.
 
-**Oil:** the first-playable draft estimates that a Huntsman using The Long Cut and Bleeder's Cut runs dry after about 3 Battles, which [the measurement](plans/poc-demo-m2-review.md#estimates-to-compare) didn't bear out. A Lamplighter using Lantern Ward and Mend by Lamplight spends less than that draft's Hearth build, which also included Votive Spark and ran dry after about 4–5 Battles. That is a hand estimate, not yet measured.
+**Oil:** the first-playable draft estimates that a Warrener using The Long Cut and Bleeder's Cut runs dry after about 3 Battles, which [the measurement](plans/poc-demo-m2-review.md#estimates-to-compare) didn't bear out. A Lamplighter using Lantern Ward and Mend by Lamplight spends less than that draft's Hearth build, which also included Votive Spark and ran dry after about 4–5 Battles. That is a hand estimate, not yet measured.
 
 **Lantern Ward:** its cooldown of 250 Ticks outlasts its 80-Tick Ward, so with one Lamplighter, "No Hero holds a Ward" never blocks it in the demo.
 
-**Row penalty:** Sin-Eater and Huntsman start in front and never move, so only the Lamplighter can pay it, once it steps forward. Its heals and Wards then run at 60%, just as the Party is losing.
+**Row penalty:** Sin-Eater and Warrener start in front and never move, so only the Lamplighter can pay it, once it steps forward. Its heals and Wards then run at 60%, just as the Party is losing.
 
 ## Rules added during the build
 

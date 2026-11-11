@@ -13,7 +13,7 @@ import { createWall, isWallState, recordGrowth } from './wall';
 export const TICK_MS = 100;
 /** The longest absence that counts: 12 hours. */
 export const CATCH_UP_CAP_MS = 43_200_000;
-export const SAVE_VERSION = 1;
+export const SAVE_VERSION = 2;
 
 export interface GameSetup {
   readonly seed: number;

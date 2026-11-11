@@ -14,14 +14,14 @@ const CALIBRATION_STEPS = 12;
 /** Each Class's skills in step order, with which are active. */
 const CLASSES = {
   'sin-eater': { skills: ['bar-the-way', 'iron-penance', 'shared-burden'], actives: ['bar-the-way'] },
-  huntsman: { skills: ['bleeders-cut', 'open-veins', 'the-long-cut'], actives: ['bleeders-cut', 'the-long-cut'] },
+  warrener: { skills: ['bleeders-cut', 'open-veins', 'the-long-cut'], actives: ['bleeders-cut', 'the-long-cut'] },
   lamplighter: { skills: ['mend-by-lamplight', 'warm-hands', 'lantern-ward'], actives: ['mend-by-lamplight', 'lantern-ward'] },
 };
 
 /** G25: only this measurement uses them. */
 const REFERENCE_RANKS = {
   'sin-eater': [2, 2, 2],
-  huntsman: [2, 2, 2],
+  warrener: [2, 2, 2],
   lamplighter: [4, 0, 2],
 };
 
@@ -140,7 +140,7 @@ const SALLOW_MAX = 70;
 
 /** R2 against the real Guardian, fought through a Run so that nothing about it is a stand-in. Each Hero wears the same shroud. */
 function wardenWinRate(sallow, heroId, build) {
-  const equipped = { 'sin-eater': shroudWith(sallow), huntsman: shroudWith(sallow), lamplighter: shroudWith(sallow) };
+  const equipped = { 'sin-eater': shroudWith(sallow), warrener: shroudWith(sallow), lamplighter: shroudWith(sallow) };
   const skillRanks = heroId ? { ...referenceRanks, [heroId]: build.ranks } : referenceRanks;
   let wins = 0;
   for (let seed = 1; seed <= SEEDS; seed++) {
@@ -340,7 +340,7 @@ const WALL_MINUTES = 120;
 const ACT_AT_MINUTE = 60;
 const EARLY_WIPE_MINUTES = 5;
 /** Weakest first, so the Hero Poison kills soonest gets first pick of the Stash. */
-const ANSWER_HERO_ORDER = ['lamplighter', 'huntsman', 'sin-eater'];
+const ANSWER_HERO_ORDER = ['lamplighter', 'warrener', 'sin-eater'];
 
 /** Same Reach only, so no skill is lost. */
 const canWear = (hero, item) => {
@@ -484,13 +484,13 @@ const WALL_PLAYERS = {
 const WALL_VARIANTS = {
   'Gear only': equipPoisonAnswer,
   // A build that skips The Long Cut, with no gear, to test whether points alone can beat the Wall.
-  'Points only, every Hero 5/1/0': (game) => spendReferencePoints(game, { 'sin-eater': [5, 1, 0], huntsman: [5, 1, 0], lamplighter: [5, 1, 0] }),
-  'Points only, Huntsman 5/1/0': (game) => spendReferencePoints(game, { ...REFERENCE_RANKS, huntsman: [5, 1, 0] }),
+  'Points only, every Hero 5/1/0': (game) => spendReferencePoints(game, { 'sin-eater': [5, 1, 0], warrener: [5, 1, 0], lamplighter: [5, 1, 0] }),
+  'Points only, Warrener 5/1/0': (game) => spendReferencePoints(game, { ...REFERENCE_RANKS, warrener: [5, 1, 0] }),
   'Answer, Sin-Eater spends nothing': answerWith({ 'sin-eater': null }),
-  'Answer, Huntsman spends nothing': answerWith({ huntsman: null }),
+  'Answer, Warrener spends nothing': answerWith({ warrener: null }),
   'Answer, Lamplighter spends nothing': answerWith({ lamplighter: null }),
   'Answer, Lamplighter 2/2/2 (Warm Hands)': answerWith({ lamplighter: [2, 2, 2] }),
-  'Answer, Huntsman 5/1/0 (no Long Cut)': answerWith({ huntsman: [5, 1, 0] }),
+  'Answer, Warrener 5/1/0 (no Long Cut)': answerWith({ warrener: [5, 1, 0] }),
 };
 
 const medianOf = (values) => [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)] ?? null;

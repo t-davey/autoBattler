@@ -94,15 +94,15 @@ describe('store', () => {
     let calls = 0;
     store.subscribe(() => calls++);
 
-    expect(store.dispatch({ type: 'renameHero', heroId: 'huntsman', name: 'Old Marrow' })).toEqual({ ok: true });
+    expect(store.dispatch({ type: 'renameHero', heroId: 'warrener', name: 'Old Marrow' })).toEqual({ ok: true });
     expect(calls).toBe(1);
     expect(store.getSnapshot().log).toBe(log);
-    expect(store.getSnapshot().view.heroes.find((hero) => hero.id === 'huntsman')?.name).toBe('Old Marrow');
+    expect(store.getSnapshot().view.heroes.find((hero) => hero.id === 'warrener')?.name).toBe('Old Marrow');
   });
 
   it('dispatch adds the lines of what an action caused to the Live Log', () => {
     const store = createStore(createGame({ seed: 1, scenario: { heroLevel: 2, setbacks: 3 } }));
-    store.dispatch({ type: 'spendSkillPoint', heroId: 'huntsman', skillId: 'bleeders-cut' });
+    store.dispatch({ type: 'spendSkillPoint', heroId: 'warrener', skillId: 'bleeders-cut' });
     expect(store.getSnapshot().log.map((line) => line.text)).toEqual([describeEvent({ type: 'retryingGuardian' })]);
   });
 
@@ -118,7 +118,7 @@ describe('store', () => {
     expect(line?.rarity).toBe(found?.rarity);
     expect(line?.text).toContain(found?.name);
 
-    expect(store.dispatch({ type: 'equipItem', heroId: 'huntsman', itemId: found!.id })).toEqual({ ok: true });
+    expect(store.dispatch({ type: 'equipItem', heroId: 'warrener', itemId: found!.id })).toEqual({ ok: true });
     expect(store.getSnapshot().stash.some((item) => item.id === found!.id)).toBe(false);
   });
 
@@ -139,7 +139,7 @@ describe('store', () => {
     let calls = 0;
     store.subscribe(() => calls++);
 
-    expect(store.dispatch({ type: 'renameHero', heroId: 'huntsman', name: ' ' })).toEqual({ ok: false, reason: 'emptyName' });
+    expect(store.dispatch({ type: 'renameHero', heroId: 'warrener', name: ' ' })).toEqual({ ok: false, reason: 'emptyName' });
     expect(calls).toBe(0);
     expect(store.getSnapshot()).toBe(before);
   });
@@ -210,12 +210,12 @@ describe('store', () => {
 
       store.advance(10_000);
       store.catchUp(HOUR_MS);
-      expect(store.dispatch({ type: 'renameHero', heroId: 'huntsman', name: 'Old Marrow' })).toEqual({ ok: false, reason: 'catchingUp' });
+      expect(store.dispatch({ type: 'renameHero', heroId: 'warrener', name: 'Old Marrow' })).toEqual({ ok: false, reason: 'catchingUp' });
       expect(store.getSnapshot().view.tick).toBe(0);
 
       vi.advanceTimersByTime(0);
       expect(store.getSnapshot().view.tick).toBe(600);
-      expect(store.dispatch({ type: 'renameHero', heroId: 'huntsman', name: 'Old Marrow' })).toEqual({ ok: true });
+      expect(store.dispatch({ type: 'renameHero', heroId: 'warrener', name: 'Old Marrow' })).toEqual({ ok: true });
     });
 
     it('a second absence adds to an undismissed Away Report', () => {

@@ -53,7 +53,7 @@ These are new concepts, and their rules aren't in the design, so they need the h
 | 2 | **Iron Penance** | Passive | Either | | | | +10% → +30% armour | |
 | 3 | **Shared Burden** | Passive | Front | | | | 10% → 30% of the damage dealt to back-Row Heroes goes to this Hero instead | |
 
-## Huntsman
+## Warrener
 
 ### Bloodletting
 
@@ -114,11 +114,11 @@ Each Hero has this skill from the start at a fixed strength, and it takes no ski
 | Class | Skill | Row | Reach | Cost | Effect | Fires when | Damage type restored |
 |---|---|---|---|---|---|---|---|
 | Sin-Eater | **Consume Sin** | Front | Melee | 8 Oil | 110% of power as holy damage, healing 3% of max health | A reachable enemy lives | Holy, from Litany |
-| Huntsman | **Tainted Shaft** | Back | Ranged | 7 Oil | 40% of power as poison damage, plus 1 Poison stack dealing 8% of power each time | An enemy lives | Poison, from Snares |
+| Warrener | **Tainted Shaft** | Back | Ranged | 7 Oil | 40% of power as poison damage, plus 1 Poison stack dealing 8% of power each time | An enemy lives | Poison, from Snares |
 | Hexer | **Chill Word** | Back | Spell | 8 Oil | 100% of power as cold damage, plus 15% Slow for 4 seconds | An enemy lives | Cold, from Rime |
 | Lamplighter | **Votive Spark** | Back | Spell | 6 Oil | 110% of power as holy damage | An enemy lives | Holy, from Vigil |
 
-Tainted Shaft gives the Huntsman its change of role by Row: Bleeds from the front, Poison from the back, with Fall Back moving between them.
+Tainted Shaft gives the Warrener its change of role by Row: Bleeds from the front, Poison from the back, with Fall Back moving between them.
 
 ## Checks
 
@@ -129,7 +129,7 @@ Under the [reference values](#decisions), a Hero gets 90 Oil per Battle and the 
 | Build | Oil per Battle | Net | Runs dry after |
 |---|---|---|---|
 | Sin-Eater: Bar the Way, Penitent Blow, Consume Sin | 62, plus 16% max health | +28 | Never |
-| Huntsman: The Long Cut, Bleeder's Cut | 120 | -30 | About 3 Battles |
+| Warrener: The Long Cut, Bleeder's Cut | 120 | -30 | About 3 Battles |
 | Hexer: Bloom, Wasting Curse, Sow Rot | 116 | -26 | About 4 Battles |
 | Lamplighter (Hearth): Lantern Ward, Mend by Lamplight, Votive Spark | 112 | -22 | About 4–5 Battles |
 | Lamplighter (Flame): Flare, Votive Spark | 120 | -30 | About 3 Battles |
@@ -142,7 +142,7 @@ Real Battles use less, since Bleed, Curses, and heals are often not needed on ev
 The design says any trio can finish. Each Class has its own healing and survivability, so a Party with no Lamplighter still has an answer:
 
 - **Sin-Eater:** Consume Sin, Bulwark's armour, and Red Tithe against packs. Red Tithe needs 2 enemies, so it won't fire against a lone Guardian.
-- **Huntsman:** Fall Back, Light Step, and Bind the Wound.
+- **Warrener:** Fall Back, Light Step, and Bind the Wound.
 - **Hexer:** Wasting Curse and Leech Hex.
 
 Cutting Vigil removes the only skill-based cleansing, so cleansing tonics in the Belt are the sole cleanse in the first playable.

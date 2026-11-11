@@ -51,13 +51,13 @@ Each row plays the same first hour, then acts at minute 60. Seeds 1-200.
 | Points only | 4% | 119 min | 5.6 |
 | Gear only | 32% | 89 min | 5.2 |
 | **Answer: points and gear** | **85%** | **74 min** | **3.9** |
-| Points only, Huntsman 5/1/0 | 51% | 114 min | 5.5 |
+| Points only, Warrener 5/1/0 | 51% | 114 min | 5.5 |
 | Points only, every Hero 5/1/0 | 47% | 116 min | 5.6 |
 | Answer, Sin-Eater spends nothing | 93% | 74 min | 3.7 |
-| Answer, Huntsman spends nothing | 60% | 75 min | 4.4 |
+| Answer, Warrener spends nothing | 60% | 75 min | 4.4 |
 | Answer, Lamplighter spends nothing | 46% | 87 min | 5.0 |
 | Answer, Lamplighter 2/2/2 (Warm Hands) | 86% | 74 min | 3.9 |
-| Answer, Huntsman 5/1/0 (no Long Cut) | 100% | 70 min | 3.1 |
+| Answer, Warrener 5/1/0 (no Long Cut) | 100% | 70 min | 3.1 |
 
 Poison gear and points together beat the Wall most reliably, and each alone falls well short on these builds. The reference build understates points, though: see finding 1. Answer equips only weapons of the same Reach, so no Hero loses a skill, which the plan's wording doesn't state. Holdout rows from the first table's players differ by at most 8 points.
 
@@ -70,7 +70,7 @@ No target misses and no risk trips, and none of these is changed here, since eac
 3. **The Long Cut lowers the kill rate.** Skipping it raises the Answer from 85% to 100%. The likely reason, not measured: it fires as soon as a target is Bleeding, so it ends a nearly full Bleed, along with Open Veins' bonus, and spends Oil and an action doing so.
 4. **Warm Hands shows no effect on the Wall**, as G27 asked: 86% at 2/2/2, 85% at 4/0/2, with the same Wipes. This is a weak test: the 2 builds also differ in Mend and Lantern Ward ranks, which could offset it, and it only spends at minute 60.
 5. **The Warden is a sharp cliff.** At level 7, the reference Party in a Waxed Shroud each wins 0% at 8% poison resistance, 12% at 12%, and 86% at 14%. This is likely why one rare can feel decisive, and also why a small number change can move a kill rate a lot.
-6. **The Huntsman now runs dry.** Battles are longer, and Oil reached 0 at level 7 on 2/2/2, where the M2 review measured never under 10. A dry Hero uses the basic attack, which is no loss given finding 3.
+6. **The Warrener now runs dry.** Battles are longer, and Oil reached 0 at level 7 on 2/2/2, where the M2 review measured never under 10. A dry Hero uses the basic attack, which is no loss given finding 3.
 7. **The Live Log rounds small Poison ticks.** A 0.5 stack reads "sickens for 1" while health falls by 0.5. The rule is right and the line overstates it, which is a UI change for its own PR.
 
 ## Risks re-measured
@@ -80,7 +80,7 @@ No target misses and no risk trips, and none of these is changed here, since eac
 | Class | Physical Pack: best / worst | Poison-leaning enemy: best / worst | Warden: best / worst |
 |---|---|---|---|
 | Sin-Eater | 67% / 39% | 56% / 47% | 86% / 66% |
-| Huntsman | 93% / 49% | 92% / 50% | 100% / 86% |
+| Warrener | 93% / 49% | 92% / 50% | 100% / 86% |
 | Lamplighter | 50% / 4% | 50% / 26% | 86% / 4% |
 
 The Lamplighter's soft pass from M2 hardens at the real Wall into one answer: 4/0/2 is its only viable build there, either skill first. It still passes on the stand-ins.

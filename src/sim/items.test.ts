@@ -140,39 +140,39 @@ describe('equipping', () => {
   it('equipItem is refused below the level requirement', () => {
     const start = game({ heroLevel: 3, stash: [item({ levelRequirement: 4 })] });
     const before = serializeGame(start);
-    expect(applyAction(start, { type: 'equipItem', heroId: 'huntsman', itemId: firstInStash(start) })).toEqual({ ok: false, reason: 'belowLevelRequirement' });
+    expect(applyAction(start, { type: 'equipItem', heroId: 'warrener', itemId: firstInStash(start) })).toEqual({ ok: false, reason: 'belowLevelRequirement' });
     expect(serializeGame(start)).toBe(before);
   });
 
   it('equipItem accepts a Hero exactly at the level requirement', () => {
     const start = game({ heroLevel: 4, stash: [item({ levelRequirement: 4 })] });
-    expect(applyAction(start, { type: 'equipItem', heroId: 'huntsman', itemId: firstInStash(start) })).toEqual({ ok: true });
+    expect(applyAction(start, { type: 'equipItem', heroId: 'warrener', itemId: firstInStash(start) })).toEqual({ ok: true });
   });
 
   it('equipItem swaps the old item back into the Stash', () => {
     const start = game({ stash: [BONE_SLING] });
-    const oldWeapon = heroIn(start, 'huntsman').equipment.weapon!;
+    const oldWeapon = heroIn(start, 'warrener').equipment.weapon!;
     const newId = firstInStash(start);
-    expect(applyAction(start, { type: 'equipItem', heroId: 'huntsman', itemId: newId })).toEqual({ ok: true });
-    expect(heroIn(start, 'huntsman').equipment.weapon?.id).toBe(newId);
+    expect(applyAction(start, { type: 'equipItem', heroId: 'warrener', itemId: newId })).toEqual({ ok: true });
+    expect(heroIn(start, 'warrener').equipment.weapon?.id).toBe(newId);
     expect(stashIds(start)).toEqual([oldWeapon.id]);
   });
 
   it('equipping an item during fallback resumes Guardian attempts', () => {
     const start = game({ setbacks: 3, stash: [item()] });
     const seen: GameEvent[] = [];
-    applyAction(start, { type: 'equipItem', heroId: 'huntsman', itemId: firstInStash(start) }, (event) => seen.push(event));
+    applyAction(start, { type: 'equipItem', heroId: 'warrener', itemId: firstInStash(start) }, (event) => seen.push(event));
     expect(viewGame(start).wall).toMatchObject({ fallenBack: false, setbacksTowardsFallback: 0 });
     expect(seen.map((event) => event.type)).toEqual(['retryingGuardian']);
   });
 
   it('equipping before the 3rd Setback does not clear the count, and unequipping never ends a fallback', () => {
     const counting = game({ setbacks: 2, stash: [item()] });
-    applyAction(counting, { type: 'equipItem', heroId: 'huntsman', itemId: firstInStash(counting) });
+    applyAction(counting, { type: 'equipItem', heroId: 'warrener', itemId: firstInStash(counting) });
     expect(viewGame(counting).wall.setbacksTowardsFallback).toBe(2);
 
     const fallen = game({ setbacks: 3 });
-    applyAction(fallen, { type: 'unequipItem', heroId: 'huntsman', slot: 'weapon' });
+    applyAction(fallen, { type: 'unequipItem', heroId: 'warrener', slot: 'weapon' });
     expect(viewGame(fallen).wall.fallenBack).toBe(true);
   });
 
@@ -199,9 +199,9 @@ describe('equipping', () => {
   it('an unknown itemId is refused and changes nothing', () => {
     const start = game({ stash: [item()] });
     const before = serializeGame(start);
-    expect(applyAction(start, { type: 'equipItem', heroId: 'huntsman', itemId: 999 })).toEqual({ ok: false, reason: 'unknownItem' });
+    expect(applyAction(start, { type: 'equipItem', heroId: 'warrener', itemId: 999 })).toEqual({ ok: false, reason: 'unknownItem' });
     const equippedElsewhere = heroIn(start, 'sin-eater').equipment.weapon!.id;
-    expect(applyAction(start, { type: 'equipItem', heroId: 'huntsman', itemId: equippedElsewhere })).toEqual({ ok: false, reason: 'unknownItem' });
+    expect(applyAction(start, { type: 'equipItem', heroId: 'warrener', itemId: equippedElsewhere })).toEqual({ ok: false, reason: 'unknownItem' });
     expect(serializeGame(start)).toBe(before);
   });
 
@@ -265,34 +265,34 @@ describe('equipping', () => {
   });
 
   it('a Swift item shortens the time between actions', () => {
-    const start = game({ equipped: { huntsman: [item({ baseId: 'saints-knuckle', affixes: [{ id: 'swift', value: 40 }] })] } });
-    expect(heroIn(game(), 'huntsman').stats.actionInterval).toBe(27);
-    expect(heroIn(start, 'huntsman').stats.actionInterval).toBe(20);
+    const start = game({ equipped: { warrener: [item({ baseId: 'saints-knuckle', affixes: [{ id: 'swift', value: 40 }] })] } });
+    expect(heroIn(game(), 'warrener').stats.actionInterval).toBe(27);
+    expect(heroIn(start, 'warrener').stats.actionInterval).toBe(20);
   });
 
   it('a ranged weapon makes melee skills unavailable', () => {
-    const skillRanks = { huntsman: { 'bleeders-cut': 1 } };
+    const skillRanks = { warrener: { 'bleeders-cut': 1 } };
     const enemy: UnitSpec = { id: 'e', name: 'E', health: 2_000, power: 1, actionInterval: 30, row: 'front', reach: 'melee', targeting: 'frontFirst', damageType: 'physical', armour: 0, resistances: {}, critChance: 0 };
     const cuts = (start: Game): number =>
-      simulateBattle({ seed: 1, teams: { a: partyUnitSpecs(start).filter((unit) => unit.id === 'huntsman'), b: [enemy] }, maxTicks: 300 })
+      simulateBattle({ seed: 1, teams: { a: partyUnitSpecs(start).filter((unit) => unit.id === 'warrener'), b: [enemy] }, maxTicks: 300 })
         .log.filter((event) => event.type === 'skill' && event.skillId === 'bleeders-cut').length;
-    const blocked = (start: Game) => heroIn(start, 'huntsman').skills.find((skill) => skill.id === 'bleeders-cut')?.blockedByWeapon;
+    const blocked = (start: Game) => heroIn(start, 'warrener').skills.find((skill) => skill.id === 'bleeders-cut')?.blockedByWeapon;
 
     const start = game({ heroLevel: 2, skillRanks, stash: [BONE_SLING] });
     expect(cuts(start)).toBeGreaterThan(0);
     expect(blocked(start)).toBe(false);
 
-    applyAction(start, { type: 'equipItem', heroId: 'huntsman', itemId: firstInStash(start) });
-    expect(partyUnitSpecs(start).find((unit) => unit.id === 'huntsman')?.reach).toBe('ranged');
+    applyAction(start, { type: 'equipItem', heroId: 'warrener', itemId: firstInStash(start) });
+    expect(partyUnitSpecs(start).find((unit) => unit.id === 'warrener')?.reach).toBe('ranged');
     expect(cuts(start)).toBe(0);
     expect(blocked(start)).toBe(true);
-    expect(heroIn(start, 'huntsman').skills.filter((skill) => skill.blockedByWeapon).map((skill) => skill.id)).toEqual(['bleeders-cut', 'the-long-cut']);
+    expect(heroIn(start, 'warrener').skills.filter((skill) => skill.blockedByWeapon).map((skill) => skill.id)).toEqual(['bleeders-cut', 'the-long-cut']);
   });
 });
 
 describe('item saves', () => {
   it('serializeGame round-trips a Game with items', () => {
-    const start = game({ stash: [SALLOW_MAIL, BONE_SLING], equipped: { huntsman: [HALE_MAIL] } });
+    const start = game({ stash: [SALLOW_MAIL, BONE_SLING], equipped: { warrener: [HALE_MAIL] } });
     applyAction(start, { type: 'equipItem', heroId: 'sin-eater', itemId: firstInStash(start) });
     advance(start, 60_000);
     const text = serializeGame(start);
@@ -422,7 +422,7 @@ describe('drops', () => {
     stepUntil(played, 'itemFound');
     const found = revision();
     expect(found).toBeGreaterThan(start);
-    applyAction(played, { type: 'equipItem', heroId: 'huntsman', itemId: viewStash(played)[0]!.id });
+    applyAction(played, { type: 'equipItem', heroId: 'warrener', itemId: viewStash(played)[0]!.id });
     expect(revision()).toBeGreaterThan(found);
   });
 });

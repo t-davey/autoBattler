@@ -35,7 +35,7 @@ describe('createGame', () => {
     expect(phase).toBe('battle');
     expect(battle?.party.map(({ name, row }) => [name, row])).toEqual([
       ['Sin-Eater', 'front'],
-      ['Huntsman', 'front'],
+      ['Warrener', 'front'],
       ['Lamplighter', 'back'],
     ]);
   });
@@ -171,6 +171,8 @@ describe('saves', () => {
     ];
     for (const text of badData) expect(deserializeGame(text)).toBeNull();
     expect(deserializeGame(JSON.stringify({ ...good, version: SAVE_VERSION + 1 }))).toBeNull();
+    // Version 1 saves predate the Huntsman becoming the Warrener.
+    expect(deserializeGame(JSON.stringify({ ...good, version: 1 }))).toBeNull();
     expect(deserializeGame(JSON.stringify(good))).not.toBeNull();
   });
 });

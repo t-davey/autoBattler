@@ -29,7 +29,7 @@ This table overrides [docs/design.md](../design.md) for the demo only. Build not
 
 | Area | In the demo | Cut |
 |---|---|---|
-| Party | Preset trio: Sin-Eater, Huntsman, Lamplighter; editable names | Hexer, Party creation, multiple Parties |
+| Party | Preset trio: Sin-Eater, Warrener, Lamplighter; editable names | Hexer, Party creation, multiple Parties |
 | Skills | 1 Branch per Class (Bulwark, Bloodletting, Hearth), 3 skills each, plus a basic attack; player-set skill order; free respec | Other Branches, gold respec cost |
 | Battles | Rows, Oil, cooldowns, physical and poison damage with resistances | Other damage types, Elites |
 | World | Act 1 Floors 1–3, ending in 1 Guardian and 1 Lamp. Since 2026-11-08, Floors 1–5 | Other Floors and Acts, Boss, Difficulty Tiers |

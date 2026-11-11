@@ -72,7 +72,7 @@ describe('catch-up', () => {
   });
 
   it('catch-up and live play stay identical when the same action lands on the same Tick', () => {
-    const action: PlayerAction = { type: 'spendSkillPoint', heroId: 'huntsman', skillId: 'bleeders-cut' };
+    const action: PlayerAction = { type: 'spendSkillPoint', heroId: 'warrener', skillId: 'bleeders-cut' };
     const scenario = { heroLevel: 5 };
 
     const live = newGame(3, scenario);

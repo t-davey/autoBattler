@@ -114,7 +114,7 @@ describe('carrying over', () => {
   it('health and Oil carry between Rooms', () => {
     let sawHurt = false;
     let sawLowOil = false;
-    const spender = { huntsman: { 'bleeders-cut': 3, 'the-long-cut': 3 } };
+    const spender = { warrener: { 'bleeders-cut': 3, 'the-long-cut': 3 } };
     for (let seed = 1; seed <= 20; seed++) {
       const played = game(seed, { heroLevel: 8, skillRanks: spender });
       for (let battles = 0; battles < 6 && viewGame(played).phase !== 'town'; battles++) {
@@ -166,24 +166,24 @@ describe('carrying over', () => {
   it('leaving a chest adds 30 Oil, up to the maximum', () => {
     const low = atChest({}, 10, 40);
     stepUntil(low, 'chestOpened');
-    expect(hero(viewGame(low), 'huntsman').oil).toBe(70);
+    expect(hero(viewGame(low), 'warrener').oil).toBe(70);
 
     const high = atChest({}, 10, 90);
     stepUntil(high, 'chestOpened');
-    expect(hero(viewGame(high), 'huntsman').oil).toBe(100);
+    expect(hero(viewGame(high), 'warrener').oil).toBe(100);
   });
 
   it('a Hero who falls in a won Battle rises at 20% health', () => {
     const played = game(1, { heroLevel: 40 });
     stepUntil(played, 'battleStarted');
-    // The Huntsman dies to Poison next Tick, and the enemies never act and die to one blow.
+    // The Warrener dies to Poison next Tick, and the enemies never act and die to one blow.
     const saved = JSON.parse(serializeGame(played)) as {
       game: { battle: { tick: number; units: { team: string; spec: { id: string }; health: number; poison: object[]; ticksToAction: number }[] } };
     };
     const { battle } = saved.game;
     for (const unit of battle.units) {
       if (unit.team === 'b') Object.assign(unit, { health: 0.01, ticksToAction: 100_000 });
-      if (unit.spec.id === 'huntsman') Object.assign(unit, { health: 1, poison: [{ damage: 50, nextTickAt: battle.tick + 1, expiresAt: battle.tick + 100 }] });
+      if (unit.spec.id === 'warrener') Object.assign(unit, { health: 1, poison: [{ damage: 50, nextTickAt: battle.tick + 1, expiresAt: battle.tick + 100 }] });
     }
     const fallen = deserializeGame(JSON.stringify(saved))!;
     const xpBefore = hero(viewGame(fallen), 'sin-eater').xp;
@@ -191,8 +191,8 @@ describe('carrying over', () => {
     const ended = stepUntil(fallen, 'battleEnded', seen);
     expect(ended).toMatchObject({ outcome: 'won' });
 
-    const risen = hero(viewGame(fallen), 'huntsman');
-    expect(seen.find((event) => event.type === 'heroRose')).toMatchObject({ heroId: 'huntsman' });
+    const risen = hero(viewGame(fallen), 'warrener');
+    expect(seen.find((event) => event.type === 'heroRose')).toMatchObject({ heroId: 'warrener' });
     const rose = seen.find((event) => event.type === 'heroRose');
     if (rose?.type !== 'heroRose') throw new Error('no heroRose');
     expect(rose.health).toBeCloseTo(risen.stats.maxHealth * 0.2);
@@ -287,9 +287,9 @@ describe('Enemy scale', () => {
           powerOf[floor] = JSON.parse(serializeGame(played)).game.battle.units.find((unit: { spec: { name: string } }) => unit.spec.name === 'Sodden Thrall').spec.power;
         }
         const seen: GameEvent[] = [];
-        const xpBefore = hero(viewGame(played), 'huntsman').xp;
+        const xpBefore = hero(viewGame(played), 'warrener').xp;
         stepUntil(played, 'battleEnded', seen);
-        xpOf[floor] = hero(viewGame(played), 'huntsman').xp - xpBefore;
+        xpOf[floor] = hero(viewGame(played), 'warrener').xp - xpBefore;
         for (const event of seen) {
           if (event.type === 'effectDamage' && event.effect === 'poison') stackOf[floor] = event.damage;
         }
@@ -356,7 +356,7 @@ describe('Setbacks', () => {
     expect(seen.find((event) => event.type === 'battleEnded')).toMatchObject({ outcome: 'draw' });
     expect(seen.find((event) => event.type === 'draw')).toMatchObject({ floor: 1, enemyName: expect.stringMatching(/\w/) });
     expect(viewGame(played)).toMatchObject({ phase: 'town', wall: { setbacksTowardsFallback: 1, fallenBack: false } });
-    expect(hero(viewGame(played), 'huntsman').xp).toBe(0);
+    expect(hero(viewGame(played), 'warrener').xp).toBe(0);
   });
 
   it('a Battle in which every Hero falls is a Wipe even if every enemy falls too', () => {
@@ -420,23 +420,23 @@ describe('falling back', () => {
   it('spending a skill point during fallback resumes Guardian attempts and clears the count', () => {
     const played = game(1, { heroLevel: 2, setbacks: 3 });
     const seen: GameEvent[] = [];
-    applyAction(played, { type: 'spendSkillPoint', heroId: 'huntsman', skillId: 'bleeders-cut' }, (event) => seen.push(event));
+    applyAction(played, { type: 'spendSkillPoint', heroId: 'warrener', skillId: 'bleeders-cut' }, (event) => seen.push(event));
     expect(seen.map((event) => event.type)).toEqual(['retryingGuardian']);
     expect(viewGame(played).wall).toMatchObject({ setbacksTowardsFallback: 0, fallenBack: false });
   });
 
   it("other actions don't end a fallback, and a refused spend doesn't either", () => {
     const played = game(1, { heroLevel: 2, setbacks: 3 });
-    applyAction(played, { type: 'respec', heroId: 'huntsman' });
-    applyAction(played, { type: 'renameHero', heroId: 'huntsman', name: 'Old Marrow' });
-    applyAction(played, { type: 'spendSkillPoint', heroId: 'huntsman', skillId: 'the-long-cut' });
+    applyAction(played, { type: 'respec', heroId: 'warrener' });
+    applyAction(played, { type: 'renameHero', heroId: 'warrener', name: 'Old Marrow' });
+    applyAction(played, { type: 'spendSkillPoint', heroId: 'warrener', skillId: 'the-long-cut' });
     expect(viewGame(played).wall).toMatchObject({ setbacksTowardsFallback: 3, fallenBack: true });
   });
 
   it("spending a skill point before the 3rd Setback doesn't clear the count", () => {
     const played = game(1, { heroLevel: 2, setbacks: 2 });
     const seen: GameEvent[] = [];
-    applyAction(played, { type: 'spendSkillPoint', heroId: 'huntsman', skillId: 'bleeders-cut' }, (event) => seen.push(event));
+    applyAction(played, { type: 'spendSkillPoint', heroId: 'warrener', skillId: 'bleeders-cut' }, (event) => seen.push(event));
     expect(seen).toEqual([]);
     expect(viewGame(played).wall.setbacksTowardsFallback).toBe(2);
   });
@@ -466,13 +466,13 @@ describe('the Guardian', () => {
   it('a level 40 Party kills the Guardian and relights the Lamp', () => {
     const played = game(1, { heroLevel: 40, ...atGuardian });
     expect(viewGame(played).wall.lampLit).toBe(false);
-    const xpBefore = hero(viewGame(played), 'huntsman').xp;
+    const xpBefore = hero(viewGame(played), 'warrener').xp;
     const seen: GameEvent[] = [];
     stepUntil(played, 'returnedToTown', seen);
     const types = seen.map((event) => event.type);
     expect(types.indexOf('guardianFell')).toBeLessThan(types.indexOf('lampRelit'));
     expect(seen.at(-1)).toMatchObject({ type: 'returnedToTown', reason: 'lampRelit' });
-    expect(hero(viewGame(played), 'huntsman').xp - xpBefore).toBe(10); // XP falloff's 10%.
+    expect(hero(viewGame(played), 'warrener').xp - xpBefore).toBe(10); // XP falloff's 10%.
     expect(viewGame(played)).toMatchObject({ phase: 'town', wall: { lampLit: true } });
   });
 

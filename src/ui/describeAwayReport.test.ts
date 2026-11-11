@@ -78,10 +78,10 @@ describe('mergeAwayReports', () => {
 
   it('runs a Hero\'s levels from the first report to the last', () => {
     const merged = mergeAwayReports(
-      report({ levels: [{ heroId: 'huntsman', from: 1, to: 3 }] }),
-      report({ levels: [{ heroId: 'huntsman', from: 3, to: 4 }, { heroId: 'lamplighter', from: 2, to: 3 }] }),
+      report({ levels: [{ heroId: 'warrener', from: 1, to: 3 }] }),
+      report({ levels: [{ heroId: 'warrener', from: 3, to: 4 }, { heroId: 'lamplighter', from: 2, to: 3 }] }),
     );
-    expect(merged.levels).toEqual([{ heroId: 'huntsman', from: 1, to: 4 }, { heroId: 'lamplighter', from: 2, to: 3 }]);
+    expect(merged.levels).toEqual([{ heroId: 'warrener', from: 1, to: 4 }, { heroId: 'lamplighter', from: 2, to: 3 }]);
   });
 });
 

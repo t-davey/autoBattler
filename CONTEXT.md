@@ -65,8 +65,8 @@ The kind of Hero that determines their skill tree and role.
 _Avoid_: Job, archetype
 
 **Warrener**:
-The Class that replaces the Huntsman. The code and other docs say Huntsman until it is renamed.
-_Avoid_: Huntsman, in new writing
+The Class that hunts what crawls up from the cellars, with traps and bleeds.
+_Avoid_: Huntsman
 
 **Branch**:
 One of the 3 themed sections of a Class's skill tree.

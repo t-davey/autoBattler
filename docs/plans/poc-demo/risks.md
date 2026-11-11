@@ -31,7 +31,7 @@ Only 5 of the 9 skills are active, and the Sin-Eater has just 1, so skill order 
 
 1. Change skill numbers.
 2. Let the player choose each Hero's Row (S3), which also makes the out-of-Row penalty a real choice.
-3. Add Tainted Shaft, the Huntsman's poison skill, giving it a third active and a Row trade-off (S3).
+3. Add Tainted Shaft, the Warrener's poison skill, giving it a third active and a Row trade-off (S3).
 
 ## R3: 6 Affixes make drops feel samey
 

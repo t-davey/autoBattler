@@ -187,7 +187,7 @@ describe('driver', () => {
 
   it('saves after a player action and after catch-up finishes', () => {
     const { store, saves } = start();
-    store.dispatch({ type: 'renameHero', heroId: 'huntsman', name: 'Old Marrow' });
+    store.dispatch({ type: 'renameHero', heroId: 'warrener', name: 'Old Marrow' });
     expect(saves.writes()).toBe(1);
     store.catchUp(3_600_000);
     expect(saves.writes()).toBe(1);

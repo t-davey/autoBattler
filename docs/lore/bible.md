@@ -52,7 +52,7 @@ The Party gathers information along the way through Fragments. [CONTEXT.md](../.
 | Warrener | Hired to deal with what crawls up from the cellars, the warren beneath Town. They know traps and tracking in the dark | Nothing. The one honest job, which contrasts with the rest |
 | Hexer | Cunning-folk: hedge healers and layers-out who know cold, rot, and herbs. Tolerated, not honoured | They know how the dead keep and spoil, without knowing why anyone needs it |
 
-**Canon:** Warrener replaces Huntsman as the Class name. The code and the other docs still say Huntsman until renamed.
+**Canon:** Warrener replaced Huntsman as the Class name.
 
 ## The Penitents' Order
 

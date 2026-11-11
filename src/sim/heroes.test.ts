@@ -53,8 +53,8 @@ const STRONG: GameSetup['scenario'] = { heroLevel: 40 };
 
 describe('levels', () => {
   it('a new Hero is level 1 with no points, skills, or order', () => {
-    expect(heroIn(createGame({ seed: 1 }), 'huntsman')).toMatchObject({
-      name: 'Huntsman',
+    expect(heroIn(createGame({ seed: 1 }), 'warrener')).toMatchObject({
+      name: 'Warrener',
       level: 1,
       xp: 0,
       xpToNext: 60,
@@ -92,7 +92,7 @@ describe('levels', () => {
     const losing = deserializeGame(JSON.stringify(saved))!;
     const ended = stepUntil(losing, (event) => event.type === 'battleEnded');
     expect(ended).toMatchObject({ outcome: 'lost' });
-    expect(heroIn(losing, 'huntsman').xp).toBe(0);
+    expect(heroIn(losing, 'warrener').xp).toBe(0);
   });
 
   it('a drawn Battle gives no XP', () => {
@@ -102,13 +102,13 @@ describe('levels', () => {
     saved.game.battle.maxTicks = saved.game.battle.tick + 1;
     const drawing = deserializeGame(JSON.stringify(saved))!;
     expect(stepUntil(drawing, (event) => event.type === 'battleEnded')).toMatchObject({ outcome: 'draw' });
-    expect(heroIn(drawing, 'huntsman').xp).toBe(0);
+    expect(heroIn(drawing, 'warrener').xp).toBe(0);
   });
 
   it("stats rise by Class rates, and speed and crit stay fixed, with starter weapons in hand", () => {
     const game = atLevel(7);
     expect(specOf(game, 'sin-eater')).toMatchObject({ health: 256, power: 20, armour: 38, actionInterval: 32, critChance: 3, maxOil: 100 });
-    expect(specOf(game, 'huntsman')).toMatchObject({ health: 170, power: 29, armour: 14, actionInterval: 27, critChance: 10 });
+    expect(specOf(game, 'warrener')).toMatchObject({ health: 170, power: 29, armour: 14, actionInterval: 27, critChance: 10 });
     expect(specOf(game, 'lamplighter')).toMatchObject({ health: 149, power: 20, armour: 11, actionInterval: 30, critChance: 5 });
   });
 
@@ -122,93 +122,93 @@ describe('levels', () => {
 describe('spending points', () => {
   it('spending a point raises a rank and uses the point', () => {
     const game = atLevel(2);
-    expect(spend(game, 'huntsman', 'bleeders-cut')).toEqual({ ok: true });
-    expect(rankOf(game, 'huntsman', 'bleeders-cut')).toBe(1);
-    expect(heroIn(game, 'huntsman').unspentPoints).toBe(0);
+    expect(spend(game, 'warrener', 'bleeders-cut')).toEqual({ ok: true });
+    expect(rankOf(game, 'warrener', 'bleeders-cut')).toBe(1);
+    expect(heroIn(game, 'warrener').unspentPoints).toBe(0);
   });
 
   it('spending a point is refused below a step\'s requirement', () => {
     const game = atLevel(7);
-    expect(spend(game, 'huntsman', 'open-veins')).toEqual({ ok: false, reason: 'stepLocked' });
-    spend(game, 'huntsman', 'bleeders-cut');
-    expect(spend(game, 'huntsman', 'open-veins')).toEqual({ ok: false, reason: 'stepLocked' });
-    spend(game, 'huntsman', 'bleeders-cut');
-    expect(spend(game, 'huntsman', 'open-veins')).toEqual({ ok: true });
-    expect(spend(game, 'huntsman', 'the-long-cut')).toEqual({ ok: false, reason: 'stepLocked' });
-    spend(game, 'huntsman', 'open-veins');
-    expect(spend(game, 'huntsman', 'the-long-cut')).toEqual({ ok: true });
+    expect(spend(game, 'warrener', 'open-veins')).toEqual({ ok: false, reason: 'stepLocked' });
+    spend(game, 'warrener', 'bleeders-cut');
+    expect(spend(game, 'warrener', 'open-veins')).toEqual({ ok: false, reason: 'stepLocked' });
+    spend(game, 'warrener', 'bleeders-cut');
+    expect(spend(game, 'warrener', 'open-veins')).toEqual({ ok: true });
+    expect(spend(game, 'warrener', 'the-long-cut')).toEqual({ ok: false, reason: 'stepLocked' });
+    spend(game, 'warrener', 'open-veins');
+    expect(spend(game, 'warrener', 'the-long-cut')).toEqual({ ok: true });
   });
 
   it('spending a point is refused with no points', () => {
-    expect(spend(createGame({ seed: 1 }), 'huntsman', 'bleeders-cut')).toEqual({ ok: false, reason: 'noPoints' });
+    expect(spend(createGame({ seed: 1 }), 'warrener', 'bleeders-cut')).toEqual({ ok: false, reason: 'noPoints' });
   });
 
   it('spending a point is refused above rank 5', () => {
     const game = atLevel(10);
-    for (let i = 0; i < 5; i++) expect(spend(game, 'huntsman', 'bleeders-cut')).toEqual({ ok: true });
-    expect(spend(game, 'huntsman', 'bleeders-cut')).toEqual({ ok: false, reason: 'maxRank' });
+    for (let i = 0; i < 5; i++) expect(spend(game, 'warrener', 'bleeders-cut')).toEqual({ ok: true });
+    expect(spend(game, 'warrener', 'bleeders-cut')).toEqual({ ok: false, reason: 'maxRank' });
   });
 
   it("spending a point is refused on another Class's skill", () => {
-    expect(spend(atLevel(5), 'huntsman', 'mend-by-lamplight')).toEqual({ ok: false, reason: 'otherClass' });
+    expect(spend(atLevel(5), 'warrener', 'mend-by-lamplight')).toEqual({ ok: false, reason: 'otherClass' });
   });
 
   it('an unknown Hero or skill is refused', () => {
     const game = atLevel(5);
     expect(applyAction(game, { type: 'spendSkillPoint', heroId: 'nobody' as HeroId, skillId: 'bleeders-cut' })).toEqual({ ok: false, reason: 'unknownHero' });
-    expect(spend(game, 'huntsman', 'constructor' as SkillId)).toEqual({ ok: false, reason: 'unknownSkill' });
+    expect(spend(game, 'warrener', 'constructor' as SkillId)).toEqual({ ok: false, reason: 'unknownSkill' });
   });
 
   it('learning an active skill adds it to the end of the order', () => {
     const game = atLevel(7);
-    spend(game, 'huntsman', 'bleeders-cut');
-    expect(heroIn(game, 'huntsman').order).toEqual(['bleeders-cut']);
-    spend(game, 'huntsman', 'bleeders-cut');
-    spend(game, 'huntsman', 'open-veins');
-    spend(game, 'huntsman', 'open-veins');
-    spend(game, 'huntsman', 'the-long-cut');
-    expect(heroIn(game, 'huntsman').order).toEqual(['bleeders-cut', 'the-long-cut']);
+    spend(game, 'warrener', 'bleeders-cut');
+    expect(heroIn(game, 'warrener').order).toEqual(['bleeders-cut']);
+    spend(game, 'warrener', 'bleeders-cut');
+    spend(game, 'warrener', 'open-veins');
+    spend(game, 'warrener', 'open-veins');
+    spend(game, 'warrener', 'the-long-cut');
+    expect(heroIn(game, 'warrener').order).toEqual(['bleeders-cut', 'the-long-cut']);
   });
 });
 
 describe('skill order and respec', () => {
-  const builtHuntsman = (): Game =>
-    atLevel(7, { skillRanks: { huntsman: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
+  const builtWarrener = (): Game =>
+    atLevel(7, { skillRanks: { warrener: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
 
   it('setSkillOrder changes the order', () => {
-    const game = builtHuntsman();
+    const game = builtWarrener();
     const order = ['the-long-cut', 'bleeders-cut'] as const;
-    expect(applyAction(game, { type: 'setSkillOrder', heroId: 'huntsman', order })).toEqual({ ok: true });
-    expect(heroIn(game, 'huntsman').order).toEqual(order);
+    expect(applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order })).toEqual({ ok: true });
+    expect(heroIn(game, 'warrener').order).toEqual(order);
   });
 
   it('setSkillOrder is refused unless it lists exactly the learned active skills', () => {
-    const game = builtHuntsman();
+    const game = builtWarrener();
     const refused = { ok: false, reason: 'badOrder' };
-    const tryOrder = (order: readonly SkillId[]) => applyAction(game, { type: 'setSkillOrder', heroId: 'huntsman', order });
+    const tryOrder = (order: readonly SkillId[]) => applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order });
     expect(tryOrder(['bleeders-cut'])).toEqual(refused);
     expect(tryOrder(['bleeders-cut', 'bleeders-cut'])).toEqual(refused);
     expect(tryOrder(['bleeders-cut', 'open-veins'])).toEqual(refused);
     expect(tryOrder(['bleeders-cut', 'the-long-cut', 'open-veins'])).toEqual(refused);
-    expect(heroIn(game, 'huntsman').order).toEqual(['bleeders-cut', 'the-long-cut']);
+    expect(heroIn(game, 'warrener').order).toEqual(['bleeders-cut', 'the-long-cut']);
   });
 
   it('respec refunds every point and clears unlearned skills from the order', () => {
-    const game = builtHuntsman();
-    expect(applyAction(game, { type: 'respec', heroId: 'huntsman' })).toEqual({ ok: true });
-    expect(heroIn(game, 'huntsman')).toMatchObject({ unspentPoints: 6, order: [] });
-    expect(rankOf(game, 'huntsman', 'bleeders-cut')).toBe(0);
+    const game = builtWarrener();
+    expect(applyAction(game, { type: 'respec', heroId: 'warrener' })).toEqual({ ok: true });
+    expect(heroIn(game, 'warrener')).toMatchObject({ unspentPoints: 6, order: [] });
+    expect(rankOf(game, 'warrener', 'bleeders-cut')).toBe(0);
   });
 });
 
 describe('renameHero', () => {
-  const rename = (game: Game, name: string) => applyAction(game, { type: 'renameHero', heroId: 'huntsman', name });
+  const rename = (game: Game, name: string) => applyAction(game, { type: 'renameHero', heroId: 'warrener', name });
 
   it('renameHero trims the name', () => {
     const game = createGame({ seed: 1 });
     expect(rename(game, '  Old Marrow  ')).toEqual({ ok: true });
-    expect(heroIn(game, 'huntsman').name).toBe('Old Marrow');
-    expect(specOf(game, 'huntsman').name).toBe('Old Marrow');
+    expect(heroIn(game, 'warrener').name).toBe('Old Marrow');
+    expect(specOf(game, 'warrener').name).toBe('Old Marrow');
   });
 
   it('renameHero refuses empty names and names over 24 characters', () => {
@@ -221,12 +221,12 @@ describe('renameHero', () => {
 
 describe('between Battles', () => {
   const builtGame = (): Game =>
-    atLevel(40, { skillRanks: { huntsman: { 'bleeders-cut': 2 } } });
+    atLevel(40, { skillRanks: { warrener: { 'bleeders-cut': 2 } } });
 
   it('a build change reaches the next Battle but not the current one', () => {
     const game = atLevel(7);
     stepUntil(game, (event) => event.type === 'battleStarted');
-    spend(game, 'huntsman', 'bleeders-cut');
+    spend(game, 'warrener', 'bleeders-cut');
     let usedInCurrent = false;
     while (viewGame(game).phase === 'battle') {
       advance(game, TICK_MS, (event) => {
@@ -240,11 +240,11 @@ describe('between Battles', () => {
 
   it('a changed order changes what the Hero does in the next Battle', () => {
     const skillsWith = (order: readonly SkillId[]): SkillId[] => {
-      const game = atLevel(7, { skillRanks: { huntsman: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
-      applyAction(game, { type: 'setSkillOrder', heroId: 'huntsman', order });
+      const game = atLevel(7, { skillRanks: { warrener: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
+      applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order });
       const used: SkillId[] = [];
       advance(game, 600_000, (event) => {
-        if (event.type === 'skill' && event.unitId === 'huntsman') used.push(event.skillId);
+        if (event.type === 'skill' && event.unitId === 'warrener') used.push(event.skillId);
       });
       return used;
     };
@@ -263,15 +263,15 @@ describe('between Battles', () => {
     const battleTicks = viewGame(game).tick - startedAt;
     const expected = 10 + Math.floor(battleTicks / 5) + 30;
     expect(expected).toBeLessThan(100);
-    expect(heroIn(game, 'huntsman').oil).toBe(expected);
+    expect(heroIn(game, 'warrener').oil).toBe(expected);
 
     const full = createGame({ seed: 1 });
     stepUntil(full, (event) => event.type === 'battleEnded');
-    expect(heroIn(full, 'huntsman').oil).toBe(100);
+    expect(heroIn(full, 'warrener').oil).toBe(100);
   });
 
   it('cooldowns end with the Battle', () => {
-    const game = atLevel(7, { skillRanks: { huntsman: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
+    const game = atLevel(7, { skillRanks: { warrener: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
     const battleUnits = () => JSON.parse(serializeGame(game)).game.battle?.units ?? [];
     let cooling = false;
     for (let i = 0; i < 20_000 && !cooling; i++) {
@@ -289,14 +289,14 @@ describe('between Battles', () => {
     advance(game, TICK_MS);
     stepUntil(game, (event) => event.type === 'battleEnded');
     stepUntil(game, (event) => event.type === 'battleStarted');
-    const huntsman = viewGame(game).battle?.party.find((unit) => unit.id === 'huntsman');
-    expect(huntsman).toMatchObject({ health: huntsman?.maxHealth, poisonStacks: 0, wardAmount: 0 });
+    const warrener = viewGame(game).battle?.party.find((unit) => unit.id === 'warrener');
+    expect(warrener).toMatchObject({ health: warrener?.maxHealth, poisonStacks: 0, wardAmount: 0 });
   });
 
   it('partyUnitSpecs reflects a Hero\'s level, ranks, and skill order', () => {
-    const game = atLevel(7, { skillRanks: { huntsman: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
-    applyAction(game, { type: 'setSkillOrder', heroId: 'huntsman', order: ['the-long-cut', 'bleeders-cut'] });
-    const spec = specOf(game, 'huntsman');
+    const game = atLevel(7, { skillRanks: { warrener: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
+    applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order: ['the-long-cut', 'bleeders-cut'] });
+    const spec = specOf(game, 'warrener');
     expect(spec.power).toBe(29);
     expect(spec.skills).toEqual([
       { id: 'the-long-cut', rank: 1 },
@@ -311,7 +311,7 @@ describe('saves', () => {
     const game = atLevel(7, {
       skillRanks: {
         'sin-eater': { 'bar-the-way': 2, 'iron-penance': 2, 'shared-burden': 2 },
-        huntsman: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 2 },
+        warrener: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 2 },
         lamplighter: { 'mend-by-lamplight': 4, 'lantern-ward': 2 },
       },
     });

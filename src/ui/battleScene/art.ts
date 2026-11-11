@@ -103,7 +103,7 @@ const FIGURES = {
     polygon([[-4, -21], [-2, -29], [3, -25], [4, -21]], 'hood'), ellipse(0.5, -23, 4, 4.5, 'hood'), ellipse(2, -22.5, 1.8, 2.4, 'skin'),
     line(5, -12, 6, -10, 1, 'iron', 1), box(5, -10, 9, -4, 'iron'), box(6, -9, 8, -5, 'glow'),
   ],
-  huntsman: [
+  warrener: [
     polygon([[-8, -2], [-1, -2], [0, -21], [-5, -21]], 'green'), box(-8, -3, -1, -2, 'green', 1),
     box(-4, -9, -1, 0, 'leather'), box(1, -9, 4, 0, 'leather'), box(-5, -2, -1, 0, 'hood'), box(1, -2, 5, 0, 'hood'),
     polygon([[-3, -8], [4, -8], [4, -19], [-3, -19]], 'leather'), box(-3, -10, 4, -9, 'hood', 1), dot(2, -10, 'brass', 2),
@@ -196,7 +196,7 @@ export interface Weapon {
 
 export const WEAPONS: Readonly<Partial<Record<Figure, Weapon>>> = {
   sinEater: { x: 5, y: -15, length: 12, ramp: 'iron', head: 'mace' },
-  huntsman: { x: 4, y: -14, length: 9, ramp: 'iron', head: 'none' },
+  warrener: { x: 4, y: -14, length: 9, ramp: 'iron', head: 'none' },
   thrall: { x: 4, y: -19, length: 9, ramp: 'bone', head: 'claw' },
   wight: { x: 5, y: -20, length: 10, ramp: 'wax', head: 'claw' },
   bloat: { x: 9, y: -12, length: 8, ramp: 'rot', head: 'claw' },
@@ -206,7 +206,7 @@ export const WEAPONS: Readonly<Partial<Record<Figure, Weapon>>> = {
 /** Where each Hero's lantern hangs, in art pixels facing right. */
 export const LANTERNS: Readonly<Partial<Record<Figure, { readonly x: number; readonly y: number; readonly reach: number }>>> = {
   sinEater: { x: 7, y: -7, reach: 1 },
-  huntsman: { x: -5, y: -6.5, reach: 1 },
+  warrener: { x: -5, y: -6.5, reach: 1 },
   lamplighter: { x: 11, y: -34.5, reach: 1.35 },
 };
 
@@ -276,7 +276,7 @@ function bake(parts: readonly Part[]): readonly SpritePixel[] {
 const figureNames = Object.keys(FIGURES) as Figure[];
 export const SPRITES = Object.fromEntries(figureNames.map((figure) => [figure, bake(FIGURES[figure])])) as unknown as Readonly<Record<Figure, readonly SpritePixel[]>>;
 
-const FIGURES_BY_ID: Readonly<Record<string, Figure>> = { 'sin-eater': 'sinEater', huntsman: 'huntsman', lamplighter: 'lamplighter', guardian: 'guardian' };
+const FIGURES_BY_ID: Readonly<Record<string, Figure>> = { 'sin-eater': 'sinEater', warrener: 'warrener', lamplighter: 'lamplighter', guardian: 'guardian' };
 const FIGURES_BY_NAME: Readonly<Record<string, Figure>> = { 'Sodden Thrall': 'thrall', 'Tallow Wight': 'wight', 'Bone Chanter': 'chanter', 'Mire Bloat': 'bloat', Sporeling: 'sporeling' };
 
 /** Art isn't a game rule, so a Unit's figure is decided here rather than in the sim. */

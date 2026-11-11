@@ -1,6 +1,6 @@
 import type { Row } from '../battle';
 
-export type HeroId = 'sin-eater' | 'huntsman' | 'lamplighter';
+export type HeroId = 'sin-eater' | 'warrener' | 'lamplighter';
 export type ActiveSkillId = 'bar-the-way' | 'bleeders-cut' | 'the-long-cut' | 'mend-by-lamplight' | 'lantern-ward';
 export type PassiveSkillId = 'iron-penance' | 'shared-burden' | 'open-veins' | 'warm-hands';
 export type SkillId = ActiveSkillId | PassiveSkillId;
@@ -68,7 +68,7 @@ export const SKILLS: Readonly<Record<SkillId, SkillDefinition>> = {
     values: [{ label: 'Damage redirected', rank1: 10, rank5: 30 }],
   },
   'bleeders-cut': {
-    id: 'bleeders-cut', name: "Bleeder's Cut", heroId: 'huntsman', branch: 'Bloodletting', step: 1,
+    id: 'bleeders-cut', name: "Bleeder's Cut", heroId: 'warrener', branch: 'Bloodletting', step: 1,
     kind: 'active', row: 'front', reach: 'melee', oil: 10, cooldown: 0,
     summary: "Physical damage, plus Bleed over 60 Ticks. Fires when a reachable enemy isn't Bleeding.",
     values: [
@@ -77,13 +77,13 @@ export const SKILLS: Readonly<Record<SkillId, SkillDefinition>> = {
     ],
   },
   'open-veins': {
-    id: 'open-veins', name: 'Open Veins', heroId: 'huntsman', branch: 'Bloodletting', step: 2,
+    id: 'open-veins', name: 'Open Veins', heroId: 'warrener', branch: 'Bloodletting', step: 2,
     ...passive, row: 'front',
     summary: 'More damage to Bleeding enemies, except from Bleed itself.',
     values: [{ label: 'Bonus damage', rank1: 10, rank5: 30 }],
   },
   'the-long-cut': {
-    id: 'the-long-cut', name: 'The Long Cut', heroId: 'huntsman', branch: 'Bloodletting', step: 3,
+    id: 'the-long-cut', name: 'The Long Cut', heroId: 'warrener', branch: 'Bloodletting', step: 3,
     kind: 'active', row: 'front', reach: 'melee', oil: 20, cooldown: 150,
     summary: "Ends a target's Bleed, dealing its remaining damage multiplied. Fires when a reachable enemy is Bleeding.",
     values: [{ label: 'Remaining Bleed', rank1: 150, rank5: 200 }],

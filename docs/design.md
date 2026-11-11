@@ -40,7 +40,7 @@ Names are provisional.
 | Class | Usual row | Role | Damage | Core idea |
 |---|---|---|---|---|
 | **Sin-Eater** | Front | Tank and bruiser | Physical, holy | Takes harm into itself and turns it into power |
-| **Huntsman** | Either | Sustained damage | Physical, poison | Traps and bleeds, with skills that change by row |
+| **Warrener** | Either | Sustained damage | Physical, poison | Traps and bleeds, with skills that change by row |
 | **Hexer** | Back | Debuffs and damage over time | Cold, poison | Weakens enemies, with damage that builds slowly |
 | **Lamplighter** | Back | Support and burst | Holy, fire | Wards and heals, or burns with the same light |
 
@@ -51,9 +51,9 @@ Each Class has 3 Branches. A starred Branch is that Class's survivability option
 | Sin-Eater | Flagellation | Spending health for damage |
 | Sin-Eater | Bulwark\* | Armour, shielding allies, drawing attacks |
 | Sin-Eater | Litany | Holy damage and auras |
-| Huntsman | Bloodletting | Physical bleeds, stronger from the front |
-| Huntsman | Snares | Poison traps and control, stronger from the back |
-| Huntsman | Fieldcraft\* | Evasion, self-healing, changing rows |
+| Warrener | Bloodletting | Physical bleeds, stronger from the front |
+| Warrener | Snares | Poison traps and control, stronger from the back |
+| Warrener | Fieldcraft\* | Evasion, self-healing, changing rows |
 | Hexer | Rime | Cold damage and slows |
 | Hexer | Rot | Stacking poison over time |
 | Hexer | Malediction\* | Curses that weaken enemies, health drain |
@@ -231,7 +231,7 @@ The full loop, built thin, to test whether coming back to loot feels good: all 2
 All 4 Classes are in, each trimmed to 2 Branches of about 3 skills, about 24 skills in total:
 
 - **Sin-Eater:** Flagellation and Bulwark
-- **Huntsman:** Bloodletting and Fieldcraft
+- **Warrener:** Bloodletting and Fieldcraft
 - **Hexer:** Rot and Malediction
 - **Lamplighter:** Flame and Hearth
 
@@ -241,7 +241,7 @@ Each Class also gets one Class-specific unique that visibly changes a skill, so 
 
 ## Proof-of-concept demo
 
-A smaller build comes before the first playable, to test one thing: is it satisfying to come back to loot, make a build decision, and see that decision beat a Wall? It has a preset Party of Sin-Eater, Huntsman, and Lamplighter, one Branch each, and Floors 1–5 of the Undercroft ending in one Guardian and one Lamp. It began with Floors 1–3.
+A smaller build comes before the first playable, to test one thing: is it satisfying to come back to loot, make a build decision, and see that decision beat a Wall? It has a preset Party of Sin-Eater, Warrener, and Lamplighter, one Branch each, and Floors 1–5 of the Undercroft ending in one Guardian and one Lamp. It began with Floors 1–3.
 
 [The demo plan](plans/poc-demo.md) holds its scope, its rules, and its milestones. Where it differs from this document, it applies to the demo only.
 
