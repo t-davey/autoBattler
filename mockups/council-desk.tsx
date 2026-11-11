@@ -134,6 +134,7 @@ function Ledger({ findings, focus, onFocus, priority, lampsLit, dispatch }: Ledg
   const { loot } = REPORT;
   return (
     <Painted kind="ledger" tag="section" className="ledger" aria-label="Away Report">
+      <div className="ledger-page">
       <h2>Away Report</h2>
       <p className="absence">{describeAbsence(REPORT)}</p>
       <div className="ledger-lines">
@@ -171,6 +172,7 @@ function Ledger({ findings, focus, onFocus, priority, lampsLit, dispatch }: Ledg
         {findings.length === 0 && <li className="hint">Nothing to act on.</li>}
       </ul>
       <StandingOrders priority={priority} flagged={focus === 'picks'} dispatch={dispatch} />
+      </div>
       <div className="send-dock">
         <button type="button" className="lit-button send-back" onClick={() => alert('Mockup: the Party would set out again.')}>
           Send the Party back
@@ -243,6 +245,7 @@ function Dossier({ heroes, heroIndex, onHero, slot, onSlot, selected, flaggedSta
         ))}
       </nav>
       <Painted kind="folder" className="folder">
+        <div className="folder-page">
         <div className="dossier-top">
           <Painted kind="portrait" className="portrait" data={{ hero: hero.id, oil: (hero.oil / hero.stats.maxOil).toFixed(2) }} />
           <div className="dossier-id">
@@ -317,6 +320,7 @@ function Dossier({ heroes, heroIndex, onHero, slot, onSlot, selected, flaggedSta
               Respec, free
             </button>
           </div>
+        </div>
         </div>
       </Painted>
     </section>
@@ -529,7 +533,10 @@ function Lanterns() {
 }
 
 void artPx;
-createRoot(document.querySelector('#desk')!).render(
+// Hot reload re-runs this module, so reuse the root it made the first time.
+const holder = document.querySelector('#desk') as HTMLElement & { root?: ReturnType<typeof createRoot> };
+holder.root ??= createRoot(holder);
+holder.root.render(
   <>
     <Desk />
     <Lanterns />

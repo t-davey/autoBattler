@@ -532,13 +532,15 @@ export function paint(el: HTMLElement): void {
   }
   W = el.closest('[data-run]') ? WEATHER[act] : WEATHER.town;
   const scale = artPx();
-  const w = Math.ceil(el.clientWidth / scale);
-  const h = Math.ceil(el.clientHeight / scale);
+  // The canvas fills its element exactly and never overhangs it. An overhang can add a scrollbar, which resizes
+  // the element, which repaints: a loop that jitters every frame.
+  const w = Math.max(1, Math.round(el.clientWidth / scale));
+  const h = Math.max(1, Math.round(el.clientHeight / scale));
   if (w < 4 || h < 4) return;
   canvas.width = w;
   canvas.height = h;
-  canvas.style.width = `${w * scale}px`;
-  canvas.style.height = `${h * scale}px`;
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   ctx.clearRect(0, 0, w, h);
