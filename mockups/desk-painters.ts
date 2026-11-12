@@ -1,6 +1,6 @@
 /* Painters for the Council desk mockup: the desk, the ledger, the dossier, the strongbox, slips, and portraits. */
 import { figureOf, LANTERNS, RAMPS, SPRITES } from '../src/ui/battleScene/art';
-import { Art, BRASS, dither, IRON, K, LEATHER, noise, PAINTERS, paper, rivet, type Mask } from './painters';
+import { Art, BRASS, dither, FLAME, IRON, K, LEATHER, noise, PAINTERS, paper, rivet, type Mask } from './painters';
 
 const rgb = ([r, g, b]: readonly number[], a = 1) => (a === 1 ? `rgb(${r} ${g} ${b})` : `rgb(${r} ${g} ${b} / ${a})`);
 
@@ -195,39 +195,84 @@ function paintPortrait(a: Art, el: HTMLElement): void {
     }
 }
 
-/** The hand bell that sends the Party: brass, on a turned wooden handle, its shadow on the desk. */
-function paintBell(a: Art): void {
+/** The Party's lamp: a glass chimney over an oil font on a brass foot. Lit, it flares and throws a halo. */
+function paintOilLamp(a: Art, el: HTMLElement): void {
   const { w, h } = a;
-  const cx = (w - 1) / 2;
-  const top = 7;
-  const lip = h - 4;
-  const half = (y: number) => {
-    const t = (y - top) / (lip - top);
-    return 2.5 + Math.pow(t, 1.6) * (w / 2 - 3.5) + (y >= lip - 1 ? 1 : 0);
-  };
-  // Shadow.
-  for (let x = 1; x < w - 1; x++) for (let y = h - 3; y < h; y++) if (Math.abs(x - cx) < w / 2 - 1 - (h - 1 - y) && dither(x, y, 0.6)) a.px(x, y, 'rgb(0 0 0 / 0.55)');
-  // The handle, turned wood with a knob.
-  for (let y = 0; y < top; y++)
-    for (let x = 0; x < w; x++) {
-      const r = y < 3 ? 2 : 1;
-      const d = Math.abs(x - cx);
-      if (d > r + 0.5) continue;
-      a.px(x, y, d > r - 0.5 ? K : x < cx ? LEATHER[4]! : LEATHER[2]!);
+  const lit = el.dataset.lit === 'true';
+  const cx = Math.floor(w / 2);
+  const collar = Math.floor(h * 0.48);
+  const font = collar + 2;
+  const foot = h - 5;
+  a.halo(cx, 6, lit ? Math.floor(w * 0.75) : 4);
+  // The chimney: clear glass, sooted at the top.
+  for (let y = 2; y < collar; y++) {
+    const half = y < 4 ? 2 : 3;
+    for (let x = cx - half; x <= cx + half; x++) {
+      const edge = x === cx - half || x === cx + half;
+      a.px(x, y, edge ? K : y < 4 ? 'rgb(40 34 30 / 0.7)' : x === cx - half + 1 ? 'rgb(230 240 245 / 0.45)' : 'rgb(170 190 200 / 0.18)');
     }
-  // The bell.
-  for (let y = top; y <= lip; y++)
+  }
+  // The flame, low until the lamp is filled.
+  const tall = lit ? 7 : 3;
+  for (let i = 0; i < tall; i++) {
+    const y = collar - 1 - i;
+    const spread = i < tall - 2 ? (lit && i > 0 && i < tall - 3 ? 1 : 0) : 0;
+    for (let x = cx - spread; x <= cx + spread; x++) a.px(x, y, i < 2 ? FLAME.core : i < tall - 1 ? FLAME.flame : FLAME.oil);
+  }
+  // The brass collar and burner.
+  for (let x = cx - 4; x <= cx + 4; x++) {
+    a.px(x, collar, K);
+    a.px(x, collar + 1, x < cx ? BRASS[4]! : BRASS[2]!);
+  }
+  // The font: a round glass belly with oil in it.
+  const r = Math.min(w / 2 - 1, (foot - font) / 2 + 1);
+  const fy = font + (foot - font) / 2;
+  for (let y = font; y < foot; y++)
     for (let x = 0; x < w; x++) {
-      const hw = half(y);
-      const d = x - cx;
-      if (Math.abs(d) > hw + 0.5) continue;
-      const edge = Math.abs(d) > hw - 0.5 || y === top || y === lip;
-      const t = (d + hw) / (2 * hw);
-      let c = BRASS[t < 0.2 ? 5 : t < 0.45 ? 4 : t < 0.75 ? 3 : 2]!;
-      if (y === lip - 2) c = BRASS[1]!;
-      if (dither(x, y, 0.12) && t > 0.6) c = BRASS[1]!;
+      const d = Math.hypot((x - cx) / r, (y - fy) / ((foot - font) / 2 + 0.5));
+      if (d > 1) continue;
+      let c = d > 0.82 ? K : y > fy - 1 ? (dither(x, y, 0.5) ? FLAME.oil : FLAME.oilMid) : 'rgb(170 190 200 / 0.2)';
+      if (d <= 0.82 && x === cx - Math.floor(r * 0.5) && y < fy + 1) c = 'rgb(240 245 250 / 0.6)';
+      a.px(x, y, c);
+    }
+  // The foot.
+  for (let y = foot; y < h; y++) {
+    const half = 2 + (y - foot);
+    for (let x = cx - half; x <= cx + half; x++) a.px(x, y, x === cx - half || x === cx + half || y === h - 1 ? K : x < cx ? BRASS[4]! : BRASS[2]!);
+  }
+}
+
+/** A tin of lamp oil with a long spout, ready to tip into the lamp beside it. */
+function paintOilCan(a: Art): void {
+  const { w, h } = a;
+  const x0 = 4;
+  const x1 = w - 5;
+  const y0 = Math.floor(h * 0.38);
+  const y1 = h - 1;
+  for (let y = y0; y <= y1; y++)
+    for (let x = x0; x <= x1; x++) {
+      const edge = x === x0 || x === x1 || y === y0 || y === y1;
+      let c = x < x0 + 3 ? IRON[4]! : x < x1 - 2 ? IRON[3]! : IRON[2]!;
+      if (y === y0 + 3 || y === y1 - 2) c = BRASS[3]!;
+      if (noise(x, y, 91) < 0.05) c = '#5a3220';
       a.px(x, y, edge ? K : c);
     }
+  // The cap, and the handle on the far side.
+  for (let x = x0 + 3; x <= x0 + 5; x++) for (let y = y0 - 2; y < y0; y++) a.px(x, y, y === y0 - 2 ? K : BRASS[4]!);
+  for (let y = y0 + 1; y <= y0 + 6; y++) {
+    a.px(x1 + 3, y, K);
+    a.px(x1 + 2, y, y === y0 + 1 || y === y0 + 6 ? K : IRON[3]!);
+  }
+  a.px(x1 + 1, y0 + 1, K);
+  a.px(x1 + 1, y0 + 6, K);
+  // The spout, rising towards the lamp.
+  for (let i = 0; i < x0 + 2; i++) {
+    const x = x0 - i;
+    const y = y0 + 3 - i;
+    a.px(x, y, K);
+    a.px(x, y + 1, IRON[4]!);
+    a.px(x, y + 2, K);
+  }
 }
 
 /** A blob of red sealing wax, pressed with a ring. */
@@ -267,7 +312,8 @@ function paintMedallion(a: Art): void {
 }
 
 Object.assign(PAINTERS, {
-  bell: paintBell,
+  oilLamp: paintOilLamp,
+  oilCan: paintOilCan,
   seal: paintSeal,
   medallion: paintMedallion,
   desk: paintDesk,

@@ -38,6 +38,10 @@ const GLYPHS = {
   weapon: [['......kk', '.....kHk', '....kHk.', '.k.kHk..', '..kHk...', '..kbk...', '.kbkk...', 'kk......'], { H: IRON.hi, b: BRASS.mid }],
   body: [['.kk..kk.', 'kHHkkHHk', 'kHHHHHik', '.kHHHik.', '.kHHHik.', '.kHHHik.', '.kHHHik.', '.kkkkkk.'], { H: IRON.hi, i: IRON.lo }],
   trinket: [['..kkkk..', '.kb..bk.', '.kb..bk.', '..kkkk..', '...kk...', '..kggk..', '.kgGggk.', '..kkkk..'], { b: BRASS.mid, g: '#c0402f', G: '#ec8a78' }],
+  // Classes, larger at 12 × 12: the Sin-Eater's funeral bread, the Warrener's trap, the Lamplighter's wick pole.
+  sinEater: [['............', '............', '....kkkk....', '..kkLLLLkk..', '.kLLlLLlLLk.', 'kLlLLlLLlLLk', 'kLLLLLLLLLLk', 'kLLLLLLLLLDk', 'kDLLLLLLLDDk', 'kDDDDDDDDDDk', '.kkkkkkkkkk.', '............'], { L: '#e0b468', l: '#8a5a28', D: '#a86e32' }],
+  warrener: [['...kkkkkk...', '.kkIIIIIIkk.', 'kIIkTkTkTIIk', 'kIT......TIk', 'kI........Ik', 'kIT......TIk', 'kIIkTkTkTIIk', '.kkIIIIIIkk.', '...kkkkkk...', '.....kk.....', '....k..k....', '.....kk.....'], { I: IRON.hi, T: '#ddd2b6' }],
+  lamplighter: [['.........y..', '........yfy.', '........kfk.', '.......kbbk.', '......kbkbk.', '.....kwk.k..', '....kwk.....', '...kwk......', '..kwk.......', '.kwk........', 'kwk.........', 'kk..........'], { y: '#ffe2a0', f: '#f4b24a', b: BRASS.hi, w: '#9a7048' }],
   battle: [['kk....kk', 'kHk..kHk', '.kHkkHk.', '..kHHk..', '..kHHk..', '.kbkkbk.', 'kbk..kbk', 'kk....kk'], { H: IRON.hi, b: BRASS.mid }],
 } as const satisfies Record<string, readonly [readonly string[], Record<string, string>]>;
 
@@ -70,7 +74,7 @@ export function Glyph({ name, label, className, colour }: { name: GlyphName; lab
   return (
     <svg
       className={className ? `glyph ${className}` : 'glyph'}
-      viewBox="0 0 8 8"
+      viewBox={`0 0 ${rows[0]!.length} ${rows.length}`}
       shapeRendering="crispEdges"
       style={colour ? { color: colour } : undefined}
       role={label ? 'img' : undefined}

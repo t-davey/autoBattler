@@ -90,6 +90,7 @@ function Painted({ kind, tag = 'div', className = '', data = {}, children, ...re
 
 const FINDING_GLYPHS: Readonly<Record<FindingKind, GlyphName>> = { setbacks: 'guardian', picks: 'stacking', loot: 'gem', points: 'star' };
 const CLASS_TEXT: Readonly<Record<string, string>> = { 'sin-eater': 'Sin-Eater', warrener: 'Warrener', lamplighter: 'Lamplighter' };
+const CLASS_GLYPH: Readonly<Record<string, GlyphName>> = { 'sin-eater': 'sinEater', warrener: 'warrener', lamplighter: 'lamplighter' };
 const STAT_ROWS: readonly { stat: ItemStat; label: string; value: (hero: HeroView) => string }[] = [
   { stat: 'maxHealth', label: 'Health', value: (hero) => `${Math.round(hero.stats.maxHealth)}` },
   { stat: 'power', label: 'Power', value: (hero) => `${Math.round(hero.stats.power)}` },
@@ -296,7 +297,7 @@ interface LedgerProps {
 
 function Ledger({ findings, focus, onFocus, priority, lampsLit, dispatch }: LedgerProps) {
   const { loot } = REPORT;
-  const [ringing, setRinging] = useState(false);
+  const [pouring, setPouring] = useState(false);
   const deepest = REPORT.deepestFloor > 0 ? floorAt(REPORT.deepestFloor) : null;
   return (
     <Painted kind="ledger" tag="section" className="ledger" aria-label="Away Report">
@@ -306,6 +307,19 @@ function Ledger({ findings, focus, onFocus, priority, lampsLit, dispatch }: Ledg
             <span>{describeDuration(REPORT.elapsedMs)}</span>
           </Painted>
           <h2 className="sr-only">Away Report</h2>
+          <button
+            type="button"
+            className={pouring ? 'send-lamp pouring' : 'send-lamp'}
+            aria-label="Fill the lamp and send the Party back"
+            title="Fill the lamp and send the Party back"
+            onClick={() => {
+              setPouring(true);
+              setTimeout(() => setPouring(false), 1400);
+            }}
+          >
+            <Painted kind="oilLamp" tag="span" className="oil-lamp" data={{ lit: pouring }} />
+            <Painted kind="oilCan" tag="span" className="oil-can" />
+          </button>
           {REPORT.lampRelit && <p className="stamp stamp-lit">Relit</p>}
         </div>
         <div className="tallies">
@@ -344,21 +358,6 @@ function Ledger({ findings, focus, onFocus, priority, lampsLit, dispatch }: Ledg
           })}
         </ul>
         <StandingOrders priority={priority} flagged={focus === 'picks'} dispatch={dispatch} />
-      </div>
-      <div className="send-dock">
-        <Painted
-          kind="bell"
-          tag="button"
-          className={ringing ? 'bell ringing' : 'bell'}
-          aria-label="Send the Party back"
-          title="Send the Party back"
-          onClick={() => {
-            setRinging(true);
-            setTimeout(() => setRinging(false), 700);
-          }}
-          onAnimationEnd={() => setRinging(false)}
-        />
-        <span className="send-plate" aria-hidden="true">Send</span>
       </div>
     </Painted>
   );
@@ -423,7 +422,7 @@ function HeroTabs({ heroes, heroIndex, onHero, onEquip }: Pick<DossierProps, 'he
           onClick={() => onHero(index)}
           {...equipDrop(other, onEquip)}
         >
-          <Bust hero={other} className="tab-bust" />
+          <Glyph name={CLASS_GLYPH[other.id] ?? 'battle'} className="tab-glyph" />
           {other.unspentPoints > 0 && <span className="tab-points">{other.unspentPoints}</span>}
         </button>
       ))}
