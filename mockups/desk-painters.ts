@@ -137,11 +137,16 @@ function paintPortrait(a: Art, el: HTMLElement): void {
   const { w, h } = a;
   const oil = Number(el.dataset.oil ?? 1);
   const figure = figureOf({ id: el.dataset.hero ?? 'warrener', name: '' });
-  const cx = Math.floor(w / 2);
   const pixels = SPRITES[figure];
   const top = Math.min(...pixels.map((pixel) => pixel.y));
-  // Stand the figure on the frame's floor, or lift it so a tall one still fits under the top edge.
-  const cy = Math.min(h - 6, Math.round((h - top) / 2 + 2));
+  // A bust frames the head and shoulders: find the body's middle, ignoring poles and lanterns held out to the side.
+  const bust = el.dataset.frame === 'bust';
+  const xs = pixels.map((pixel) => pixel.x).sort((p, q) => p - q);
+  const middle = xs[Math.floor(xs.length / 2)] ?? 0;
+  const head = Math.min(...pixels.filter((pixel) => Math.abs(pixel.x - middle) <= 3).map((pixel) => pixel.y));
+  const cx = Math.floor(w / 2) - (bust ? middle : 0);
+  // Full length stands the figure on the frame's floor, lifted so a tall one still fits under the top edge.
+  const cy = bust ? 4 - head : Math.min(h - 6, Math.round((h - top) / 2 + 2));
   const lantern = LANTERNS[figure];
   const lx = cx + (lantern?.x ?? 0);
   const ly = cy + (lantern?.y ?? -20);

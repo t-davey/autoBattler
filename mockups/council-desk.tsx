@@ -12,6 +12,7 @@ import '../src/ui/style.css';
 import './ui-art.css';
 import './council-desk.css';
 import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
+import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import {
   applyAction,
@@ -446,8 +447,8 @@ function Strongbox({ stash, heroes, hero, slot, onSlot, rarity, onRarity, stat, 
       {lidOpen ? (
         <div className="box-open">
           <ul className="tag-grid">
-            {groups.map((group) => (
-              <li key={group.key}>
+            {groups.map((group, index) => (
+              <li key={group.key} style={{ '--i': Math.min(index, 24) } as React.CSSProperties}>
                 <button type="button" className={`tag tag-${group.item.rarity}${group.key === selected?.key ? ' active' : ''}`} onClick={() => onSelect(group.key)}>
                   <PixelIcon name={group.item.slot} className={`slot-icon slot-icon-${group.item.rarity}`} />
                   <span className={`tag-name rarity-${group.item.rarity}`}>{group.item.name}</span>
@@ -513,7 +514,7 @@ function Spine({ heroes, heroIndex, onHero, slot, selected, onEquip }: SpineProp
         return (
           <Painted key={each.id} kind="folder" className={index === heroIndex ? 'spine-card active' : 'spine-card'}>
             <button type="button" className="spine-pick" aria-pressed={index === heroIndex} onClick={() => onHero(index)}>
-              <Painted kind="portrait" className="spine-portrait" data={{ hero: each.id, oil: (each.oil / each.stats.maxOil).toFixed(2) }} />
+              <Painted kind="portrait" className="spine-portrait" data={{ frame: 'bust', hero: each.id, oil: (each.oil / each.stats.maxOil).toFixed(2) }} />
               <span className="spine-who">
                 <strong>{each.name}</strong>
                 <span className="hint">Level {each.level}</span>
@@ -584,6 +585,17 @@ function Desk() {
 
   const hero = view.heroes[heroIndex] ?? view.heroes[0]!;
   const groups = groupItems(queryStash(stash, { sort, slot, rarity, stat }));
+  /** The lid swings as a view transition: the browser animates between pictures of the desk before and after,
+   *  so the painted canvases never repaint mid-swing. Reduced motion, or a browser without it, just swaps. */
+  const toggleLid = () => {
+    const swap = () => setLidOpen((open) => !open);
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const start = (document as Document & { startViewTransition?: (update: () => void) => unknown }).startViewTransition;
+    if (!start || reduced) return swap();
+    document.documentElement.dataset.lid = lidOpen ? 'closing' : 'opening';
+    const transition = start.call(document, () => flushSync(swap)) as { finished: Promise<void> };
+    void transition.finished.finally(() => delete document.documentElement.dataset.lid);
+  };
   const equip = (item: ItemView, target: HeroView) => {
     const result = dispatch({ type: 'equipItem', heroId: target.id, itemId: item.id });
     setRefusal(result.ok ? '' : (REFUSAL_TEXT as Record<string, string>)[result.reason ?? ''] ?? 'Refused.');
@@ -633,7 +645,7 @@ function Desk() {
           selectedKey={selectedKey}
           onSelect={setSelectedKey}
           lidOpen={lidOpen}
-          onLid={() => setLidOpen(!lidOpen)}
+          onLid={toggleLid}
           onEquip={equip}
           refusal={refusal}
         />

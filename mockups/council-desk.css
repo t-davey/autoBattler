@@ -646,9 +646,117 @@ body {
 
 /* ---------- Lifting the lid. ---------- */
 
-/* The desk widens the strongbox in a few hard steps, like a lid swinging, not a smooth slide. */
-.desk {
-  transition: grid-template-columns 220ms steps(4, end);
+/* Lifting the lid is a view transition. Each column is its own named layer, so the browser moves and resizes
+   them as pictures between the closed and open desk: the ledger holds still, the party folds, the box grows. */
+.ledger {
+  view-transition-name: ledger;
+}
+
+.dossier,
+.spine {
+  view-transition-name: party;
+}
+
+.strongbox {
+  view-transition-name: strongbox;
+}
+
+::view-transition-group(*) {
+  animation-duration: 460ms;
+  animation-timing-function: cubic-bezier(0.22, 0.8, 0.24, 1);
+}
+
+/* The box grows from its right edge, so its pictures stay pinned to that edge and are clipped, not stretched. */
+::view-transition-image-pair(strongbox),
+::view-transition-image-pair(party) {
+  overflow: hidden;
+}
+
+::view-transition-old(strongbox),
+::view-transition-new(strongbox) {
+  width: auto;
+  height: 100%;
+  object-fit: none;
+  object-position: right top;
+  left: auto;
+  right: 0;
+}
+
+::view-transition-old(strongbox) {
+  animation: 200ms ease-in both lid-fade-out;
+}
+
+::view-transition-new(strongbox) {
+  animation: 300ms 120ms ease-out both lid-fade-in;
+}
+
+/* The dossier folds away to the left as the box crowds it; the cards slide in from the same side. */
+::view-transition-old(party),
+::view-transition-new(party) {
+  width: auto;
+  height: 100%;
+  object-fit: none;
+  object-position: left top;
+}
+
+::view-transition-old(party) {
+  animation: 220ms cubic-bezier(0.5, 0, 0.75, 0) both party-fold-out;
+}
+
+::view-transition-new(party) {
+  animation: 320ms 180ms cubic-bezier(0.22, 0.8, 0.24, 1) both party-fold-in;
+}
+
+@keyframes lid-fade-out {
+  to { opacity: 0; }
+}
+
+@keyframes lid-fade-in {
+  from { opacity: 0; }
+}
+
+@keyframes party-fold-out {
+  to { opacity: 0; transform: translateX(-24px) scaleX(0.92); transform-origin: left center; }
+}
+
+@keyframes party-fold-in {
+  from { opacity: 0; transform: translateX(-16px); }
+}
+
+/* Once the lid is up, the tags settle into the box a few at a time. */
+.strongbox.open .tag-grid li {
+  animation: tag-settle 260ms cubic-bezier(0.22, 0.8, 0.24, 1) both;
+  animation-delay: calc(260ms + var(--i, 0) * 16ms);
+}
+
+@keyframes tag-settle {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
+.spine-card {
+  animation: card-in 300ms cubic-bezier(0.22, 0.8, 0.24, 1) both;
+}
+
+.spine-card:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.spine-card:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateX(-10px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  .strongbox.open .tag-grid li,
+  .spine-card {
+    animation: none !important;
+  }
 }
 
 .desk.lid-open {
