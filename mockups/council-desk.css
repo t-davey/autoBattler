@@ -643,3 +643,281 @@ body {
   padding: 0 0.5rem;
   font-size: 0.85rem;
 }
+
+/* ---------- Lifting the lid. ---------- */
+
+/* The desk widens the strongbox in a few hard steps, like a lid swinging, not a smooth slide. */
+.desk {
+  transition: grid-template-columns 220ms steps(4, end);
+}
+
+.desk.lid-open {
+  grid-template-columns: 330px 200px minmax(0, 1fr);
+}
+
+.strongbox-head {
+  gap: 0.6rem;
+}
+
+.strongbox-head h2 {
+  margin-right: auto;
+}
+
+.lid-handle {
+  padding: 0.1rem 0.7rem;
+  font-family: var(--font-plate);
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--soot);
+  background: linear-gradient(var(--brass-bright) 0 25%, var(--brass) 25% 75%, var(--brass-deep) 75%);
+  border: calc(var(--art) * 1) solid var(--dark);
+  box-shadow: calc(var(--art) * 1) calc(var(--art) * 1) 0 #000;
+}
+
+.lid-handle:hover:not(:disabled) {
+  color: var(--soot);
+  background: linear-gradient(var(--flame-core) 0 25%, var(--brass-bright) 25% 75%, var(--brass) 75%);
+}
+
+.strongbox.open .strongbox-head {
+  margin-top: calc(var(--art) * 1);
+}
+
+.strongbox.open .strongbox-head h2 {
+  color: var(--tallow);
+}
+
+.slot-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.slot-tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.7rem;
+}
+
+.slot-tabs button[aria-pressed='true'] {
+  color: var(--flame);
+  border-color: var(--brass);
+  background: color-mix(in srgb, var(--flame) 10%, var(--soot));
+}
+
+.box-open {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 12px;
+  align-items: start;
+}
+
+.tag-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+  gap: 6px;
+  max-height: 100%;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  list-style: none;
+  background: rgb(0 0 0 / 30%);
+  box-shadow: inset 0 calc(var(--art) * 2) 0 #000;
+}
+
+/* A luggage tag: a dark card, a punched hole, a rarity-coloured edge. */
+.tag {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: 'icon name' 'marks marks';
+  gap: 0.15rem 0.4rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.35rem 0.45rem 0.3rem 0.85rem;
+  text-align: left;
+  background: var(--char-raised);
+  border: calc(var(--art) * 1) solid var(--iron);
+  border-left-width: calc(var(--art) * 2);
+  box-shadow: calc(var(--art) * 1) calc(var(--art) * 1) 0 #000;
+}
+
+.tag::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: calc(var(--art) * 1);
+  width: calc(var(--art) * 2);
+  height: calc(var(--art) * 2);
+  background: var(--soot);
+  box-shadow: 0 0 0 calc(var(--art) * 0.5) var(--iron);
+}
+
+.tag-common {
+  border-left-color: #8a8070;
+}
+
+.tag-magic {
+  border-left-color: var(--rime);
+}
+
+.tag-rare {
+  border-left-color: var(--brass-bright);
+}
+
+.tag:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--char-raised), var(--flame) 6%);
+}
+
+.tag.active {
+  border-color: var(--flame);
+  box-shadow: 0 0 0 calc(var(--art) * 1) var(--flame-glow), calc(var(--art) * 1) calc(var(--art) * 1) 0 #000;
+}
+
+.tag .slot-icon {
+  grid-area: icon;
+}
+
+.tag-name {
+  grid-area: name;
+  font-size: 0.86rem;
+  line-height: 1.15;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tag-count {
+  position: absolute;
+  top: 0.15rem;
+  right: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--tallow-dim);
+}
+
+/* One mark per Hero, in Party order: what the item would do for them. */
+.tag-marks {
+  grid-area: marks;
+  display: flex;
+  gap: calc(var(--art) * 2);
+  padding-left: 1.4rem;
+}
+
+.mark {
+  width: calc(var(--art) * 3);
+  height: calc(var(--art) * 3);
+  box-shadow: 0 0 0 calc(var(--art) * 0.5) #000;
+}
+
+.mark-gain {
+  background: var(--verdigris);
+}
+
+.mark-loss {
+  background: var(--rust);
+}
+
+.mark-mixed {
+  background: linear-gradient(135deg, var(--verdigris) 50%, var(--rust) 50%);
+}
+
+.mark-none {
+  background: var(--iron);
+}
+
+.box-open .item-chit {
+  position: sticky;
+  top: 0;
+}
+
+/* ---------- The spine. ---------- */
+
+.spine {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+.spine-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: calc(var(--art) * 5) calc(var(--art) * 5);
+  overflow: hidden;
+}
+
+.spine-card.active {
+  outline: calc(var(--art) * 1) solid var(--brass);
+}
+
+.spine-pick {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0;
+  text-align: left;
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+.spine-pick:hover:not(:disabled),
+.spine-pick:active:not(:disabled) {
+  background: none;
+  box-shadow: none;
+}
+
+.spine-portrait {
+  flex: none;
+  width: calc(var(--art) * 20);
+  height: calc(var(--art) * 24);
+}
+
+.spine-who {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.spine-worn {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+
+.spine-compare {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding-top: 4px;
+  border-top: 1px dotted rgb(224 211 178 / 20%);
+}
+
+.spine-changes {
+  font-size: 0.8rem;
+  line-height: 1.25;
+}
+
+.spine-changes .ink-gain {
+  color: var(--verdigris);
+}
+
+.spine-changes .ink-loss {
+  color: var(--rust);
+}
+
+.spine-compare button {
+  padding: 0 0.7rem;
+}
+
+.spine-lock {
+  font-size: 0.8rem;
+  color: var(--rust);
+}

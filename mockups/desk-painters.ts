@@ -69,7 +69,7 @@ function paintFolder(a: Art): void {
 }
 
 /** The strongbox: a heavy iron box, lid hinged across the top, with a brass escutcheon. */
-function paintStrongbox(a: Art): void {
+function paintStrongbox(a: Art, el: HTMLElement): void {
   const { w, h } = a;
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
@@ -84,8 +84,17 @@ function paintStrongbox(a: Art): void {
       if (d >= 1 && d <= 5 && n > 0.985) c = '#5a3220';
       a.px(x, y, c);
     }
-  // The lid's seam and its two hinge straps.
+  // The lid's seam and its two hinge straps. Lifted, the lid shows its underside: oxblood felt.
   const lid = 22;
+  const open = el.dataset.open === 'true';
+  if (open)
+    for (let y = 7; y < lid; y++)
+      for (let x = 7; x < w - 7; x++) {
+        let c = dither(x, y, 0.4) ? '#3a1c18' : '#2e1612';
+        if (y === 7) c = K;
+        if (y === lid - 1) c = '#1a0c0a';
+        a.px(x, y, c);
+      }
   for (let x = 7; x < w - 7; x++) {
     a.px(x, lid, K);
     a.px(x, lid + 1, IRON[3]!);
@@ -97,7 +106,8 @@ function paintStrongbox(a: Art): void {
         a.px(sx + x, y, edge ? K : x === 1 ? IRON[4]! : IRON[2]!);
         if (!edge && (y - 9) % 7 === 0 && x === 2) rivet(a, sx + 2, y);
       }
-  // The escutcheon and keyhole.
+  // The escutcheon and keyhole sit on the lid's face, so they're hidden while it's up.
+  if (open) return;
   const ex = Math.floor(w / 2) - 4;
   for (let y = 0; y < 12; y++)
     for (let x = 0; x < 9; x++) {

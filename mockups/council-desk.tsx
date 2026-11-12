@@ -327,38 +327,102 @@ function Dossier({ heroes, heroIndex, onHero, slot, onSlot, selected, flaggedSta
   );
 }
 
-/* ---------- The strongbox: the Stash, opened at the dossier's Slot, comparing across the Party. ---------- */
+/* ---------- The strongbox: the Stash at the dossier's Slot. Lift the lid and it widens over the dossier. ---------- */
+
+type Mark = 'gain' | 'loss' | 'mixed' | 'none';
+const MARK_TEXT: Readonly<Record<Mark, string>> = { gain: 'only gains', loss: 'only losses', mixed: 'gains and losses', none: 'no change' };
+
+/** What an item would do for a Hero, stated rather than judged: all up, all down, both, or nothing. */
+function markFor(item: ItemView, hero: HeroView): Mark {
+  const changes = changedStats(item, [hero]).map((key) => statChange(item, hero, key));
+  if (changes.length === 0) return 'none';
+  if (changes.every((change) => change > 0)) return 'gain';
+  if (changes.every((change) => change < 0)) return 'loss';
+  return 'mixed';
+}
+
+function Changes({ item, hero, limit = 3 }: { item: ItemView; hero: HeroView; limit?: number }) {
+  const keys = changedStats(item, [hero]).slice(0, limit);
+  if (keys.length === 0) return <>No change</>;
+  return (
+    <>
+      {keys.map((key) => {
+        const change = statChange(item, hero, key);
+        return <span key={key} className={change > 0 ? 'ink-gain' : 'ink-loss'}>{formatChange(key, change)} {STAT_TEXT[key]} </span>;
+      })}
+    </>
+  );
+}
+
+function ItemChit({ item, heroes, onEquip }: { item: ItemView; heroes: readonly HeroView[] | null; onEquip: (item: ItemView, hero: HeroView) => void }) {
+  return (
+    <Painted kind="slip" className="item-chit" data={{ seed: 77 }}>
+      <strong className={`chit-name rarity-${item.rarity}-ink`}>{item.name}</strong>
+      <span className="chit-facts">{SLOT_TEXT[item.slot]}{item.reach ? `, ${item.reach}` : ''} · needs level {item.levelRequirement}</span>
+      <span>{itemStatsText(item.stats)}</span>
+      {heroes && (
+        <ul className="on-each">
+          {heroes.map((other) => (
+            <li key={other.id}>
+              <span className="on-each-name">{other.name}</span>
+              <span className="on-each-changes"><Changes item={item} hero={other} /></span>
+              {other.level < item.levelRequirement ? (
+                <span className="chit-lock">Level {item.levelRequirement}</span>
+              ) : (
+                <button type="button" onClick={() => onEquip(item, other)}>Equip</button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+    </Painted>
+  );
+}
 
 interface StrongboxProps {
   readonly stash: readonly ItemView[];
   readonly heroes: readonly HeroView[];
   readonly hero: HeroView;
   readonly slot: Slot;
+  readonly onSlot: (slot: Slot) => void;
   readonly rarity: Rarity | 'all';
   readonly onRarity: (rarity: Rarity | 'all') => void;
   readonly stat: ItemStat | 'all';
   readonly onStat: (stat: ItemStat | 'all') => void;
+  readonly sort: StashSort;
+  readonly onSort: (sort: StashSort) => void;
   readonly selectedKey: string | null;
   readonly onSelect: (key: string) => void;
-  readonly dispatch: (action: PlayerAction) => { ok: boolean; reason?: string };
+  readonly lidOpen: boolean;
+  readonly onLid: () => void;
+  readonly onEquip: (item: ItemView, hero: HeroView) => void;
+  readonly refusal: string;
 }
 
-function Strongbox({ stash, heroes, hero, slot, rarity, onRarity, stat, onStat, selectedKey, onSelect, dispatch }: StrongboxProps) {
-  const [sort, setSort] = useState<StashSort>('rarity');
-  const [refusal, setRefusal] = useState('');
+function Strongbox({ stash, heroes, hero, slot, onSlot, rarity, onRarity, stat, onStat, sort, onSort, selectedKey, onSelect, lidOpen, onLid, onEquip, refusal }: StrongboxProps) {
   const groups = useMemo(() => groupItems(queryStash(stash, { sort, slot, rarity, stat })), [stash, sort, slot, rarity, stat]);
   const selected = groups.find((group) => group.key === selectedKey) ?? groups[0] ?? null;
-  const equip = (item: ItemView, target: HeroView) => {
-    const result = dispatch({ type: 'equipItem', heroId: target.id, itemId: item.id });
-    setRefusal(result.ok ? '' : (REFUSAL_TEXT as Record<string, string>)[result.reason ?? ''] ?? 'Refused.');
-  };
+  const empty = <p className="hint">Nothing for this Slot{rarity !== 'all' || stat !== 'all' ? ' with these filters' : ''}.</p>;
   return (
-    <Painted kind="strongbox" tag="section" className="strongbox" aria-label="Stash">
+    <Painted kind="strongbox" tag="section" className={lidOpen ? 'strongbox open' : 'strongbox'} data={{ open: lidOpen }} aria-label="Stash">
       <div className="strongbox-head">
         <h2>Strongbox</h2>
         <span className="hint">{stash.length} items</span>
+        <button type="button" className="lid-handle" aria-expanded={lidOpen} onClick={onLid}>
+          {lidOpen ? 'Lower the lid' : 'Lift the lid'}
+        </button>
       </div>
-      <p className="strongbox-for">{SLOT_TEXT[slot]} items, compared on <strong>{hero.name}</strong></p>
+      {lidOpen ? (
+        <nav className="slot-tabs" aria-label="Slot">
+          {SLOTS.map((each) => (
+            <button key={each} type="button" aria-pressed={each === slot} onClick={() => onSlot(each)}>
+              <PixelIcon name={each} /> {SLOT_TEXT[each]}
+            </button>
+          ))}
+        </nav>
+      ) : (
+        <p className="strongbox-for">{SLOT_TEXT[slot]} items, compared on <strong>{hero.name}</strong></p>
+      )}
       <div className="strongbox-filters">
         <select aria-label="Rarity" value={rarity} onChange={(event) => onRarity(event.target.value as Rarity | 'all')}>
           <option value="all">Any rarity</option>
@@ -372,62 +436,107 @@ function Strongbox({ stash, heroes, hero, slot, rarity, onRarity, stat, onStat, 
             <option key={key} value={key}>{STAT_TEXT[key]}</option>
           ))}
         </select>
-        <select aria-label="Sort" value={sort} onChange={(event) => setSort(event.target.value as StashSort)}>
+        <select aria-label="Sort" value={sort} onChange={(event) => onSort(event.target.value as StashSort)}>
           <option value="rarity">By rarity</option>
           <option value="newest">Newest</option>
           <option value="levelRequirement">By level</option>
         </select>
       </div>
-      <ul className="strongbox-rows">
-        {groups.map((group) => {
-          const changes = changedStats(group.item, [hero]).slice(0, 2);
-          return (
-            <li key={group.key}>
-              <button type="button" className={group.key === selected?.key ? 'box-row active' : 'box-row'} onClick={() => onSelect(group.key)}>
-                <PixelIcon name={group.item.slot} className={`slot-icon slot-icon-${group.item.rarity}`} />
-                <span className={`box-name rarity-${group.item.rarity}`}>{group.item.name}{group.count > 1 && <span className="hint"> ×{group.count}</span>}</span>
-                <span className="box-change">
-                  {changes.map((key) => {
-                    const change = statChange(group.item, hero, key);
-                    return <span key={key} className={change > 0 ? 'stat-gain' : 'stat-loss'}>{formatChange(key, change)} {STAT_TEXT[key]}</span>;
-                  })}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-        {groups.length === 0 && <li className="hint">Nothing for this Slot{rarity !== 'all' || stat !== 'all' ? ' with these filters' : ''}.</li>}
-      </ul>
       {refusal && <p className="stamp stamp-refused" role="alert">{refusal}</p>}
-      {selected && (
-        <Painted kind="slip" className="item-chit" data={{ seed: 77 }}>
-          <strong className={`chit-name rarity-${selected.item.rarity}-ink`}>{selected.item.name}</strong>
-          <span className="chit-facts">{SLOT_TEXT[selected.item.slot]}{selected.item.reach ? `, ${selected.item.reach}` : ''} · needs level {selected.item.levelRequirement}</span>
-          <span>{itemStatsText(selected.item.stats)}</span>
-          <ul className="on-each">
-            {heroes.map((other) => {
-              const keys = changedStats(selected.item, [other]).slice(0, 3);
-              return (
-                <li key={other.id}>
-                  <span className="on-each-name">{other.name}</span>
-                  <span className="on-each-changes">
-                    {keys.length === 0 ? 'No change' : keys.map((key) => {
-                      const change = statChange(selected.item, other, key);
-                      return <span key={key} className={change > 0 ? 'ink-gain' : 'ink-loss'}>{formatChange(key, change)} {STAT_TEXT[key]} </span>;
+      {lidOpen ? (
+        <div className="box-open">
+          <ul className="tag-grid">
+            {groups.map((group) => (
+              <li key={group.key}>
+                <button type="button" className={`tag tag-${group.item.rarity}${group.key === selected?.key ? ' active' : ''}`} onClick={() => onSelect(group.key)}>
+                  <PixelIcon name={group.item.slot} className={`slot-icon slot-icon-${group.item.rarity}`} />
+                  <span className={`tag-name rarity-${group.item.rarity}`}>{group.item.name}</span>
+                  {group.count > 1 && <span className="tag-count">×{group.count}</span>}
+                  <span className="tag-marks">
+                    {heroes.map((each) => {
+                      const mark = markFor(group.item, each);
+                      return <span key={each.id} className={`mark mark-${mark}`} title={`${each.name}: ${MARK_TEXT[mark]}`} />;
                     })}
                   </span>
-                  {other.level < selected.item.levelRequirement ? (
-                    <span className="chit-lock">Level {selected.item.levelRequirement}</span>
-                  ) : (
-                    <button type="button" onClick={() => equip(selected.item, other)}>Equip</button>
-                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+          {groups.length === 0 && empty}
+          {selected && <ItemChit item={selected.item} heroes={null} onEquip={onEquip} />}
+        </div>
+      ) : (
+        <>
+          <ul className="strongbox-rows">
+            {groups.map((group) => {
+              const changes = changedStats(group.item, [hero]).slice(0, 2);
+              return (
+                <li key={group.key}>
+                  <button type="button" className={group.key === selected?.key ? 'box-row active' : 'box-row'} onClick={() => onSelect(group.key)}>
+                    <PixelIcon name={group.item.slot} className={`slot-icon slot-icon-${group.item.rarity}`} />
+                    <span className={`box-name rarity-${group.item.rarity}`}>{group.item.name}{group.count > 1 && <span className="hint"> ×{group.count}</span>}</span>
+                    <span className="box-change">
+                      {changes.map((key) => {
+                        const change = statChange(group.item, hero, key);
+                        return <span key={key} className={change > 0 ? 'stat-gain' : 'stat-loss'}>{formatChange(key, change)} {STAT_TEXT[key]}</span>;
+                      })}
+                    </span>
+                  </button>
                 </li>
               );
             })}
+            {groups.length === 0 && <li>{empty}</li>}
           </ul>
-        </Painted>
+          {selected && <ItemChit item={selected.item} heroes={heroes} onEquip={onEquip} />}
+        </>
       )}
     </Painted>
+  );
+}
+
+/* ---------- The spine: with the lid up, the dossier folds to three Hero cards that carry the comparison. ---------- */
+
+interface SpineProps {
+  readonly heroes: readonly HeroView[];
+  readonly heroIndex: number;
+  readonly onHero: (index: number) => void;
+  readonly slot: Slot;
+  readonly selected: ItemView | null;
+  readonly onEquip: (item: ItemView, hero: HeroView) => void;
+}
+
+function Spine({ heroes, heroIndex, onHero, slot, selected, onEquip }: SpineProps) {
+  return (
+    <section className="spine" aria-label="The Party">
+      {heroes.map((each, index) => {
+        const worn = each.equipment[slot];
+        return (
+          <Painted key={each.id} kind="folder" className={index === heroIndex ? 'spine-card active' : 'spine-card'}>
+            <button type="button" className="spine-pick" aria-pressed={index === heroIndex} onClick={() => onHero(index)}>
+              <Painted kind="portrait" className="spine-portrait" data={{ hero: each.id, oil: (each.oil / each.stats.maxOil).toFixed(2) }} />
+              <span className="spine-who">
+                <strong>{each.name}</strong>
+                <span className="hint">Level {each.level}</span>
+              </span>
+            </button>
+            <p className="spine-worn">
+              <span className="hint">{SLOT_TEXT[slot]}: </span>
+              {worn ? <span className={`rarity-${worn.rarity}`}>{worn.name}</span> : <span className="hint">empty</span>}
+            </p>
+            {selected && selected.slot === slot && (
+              <div className="spine-compare">
+                <span className="spine-changes"><Changes item={selected} hero={each} limit={4} /></span>
+                {each.level < selected.levelRequirement ? (
+                  <span className="spine-lock">Needs level {selected.levelRequirement}</span>
+                ) : (
+                  <button type="button" onClick={() => onEquip(selected, each)}>Equip</button>
+                )}
+              </div>
+            )}
+          </Painted>
+        );
+      })}
+    </section>
   );
 }
 
@@ -444,6 +553,9 @@ function Desk() {
   const [rarity, setRarity] = useState<Rarity | 'all'>('all');
   const [stat, setStat] = useState<ItemStat | 'all'>('all');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [sort, setSort] = useState<StashSort>('rarity');
+  const [lidOpen, setLidOpen] = useState(false);
+  const [refusal, setRefusal] = useState('');
 
   const dispatch = (action: PlayerAction) => {
     const result = applyAction(game, action);
@@ -471,7 +583,11 @@ function Desk() {
   };
 
   const hero = view.heroes[heroIndex] ?? view.heroes[0]!;
-  const groups = groupItems(queryStash(stash, { sort: 'rarity', slot, rarity, stat }));
+  const groups = groupItems(queryStash(stash, { sort, slot, rarity, stat }));
+  const equip = (item: ItemView, target: HeroView) => {
+    const result = dispatch({ type: 'equipItem', heroId: target.id, itemId: item.id });
+    setRefusal(result.ok ? '' : (REFUSAL_TEXT as Record<string, string>)[result.reason ?? ''] ?? 'Refused.');
+  };
   const selected = (groups.find((group) => group.key === selectedKey) ?? groups[0])?.item ?? null;
 
   return (
@@ -485,8 +601,11 @@ function Desk() {
           <button type="button" onClick={() => setScale(4)}>4</button>
         </span>
       </header>
-      <Painted kind="desk" tag="div" className="desk">
+      <Painted kind="desk" tag="div" className={lidOpen ? 'desk lid-open' : 'desk'}>
         <Ledger findings={findings} focus={focus} onFocus={onFocus} priority={view.pickPriority} lampsLit={view.wall.lampsLit} dispatch={dispatch} />
+        {lidOpen ? (
+          <Spine heroes={view.heroes} heroIndex={heroIndex} onHero={setHeroIndex} slot={slot} selected={selected} onEquip={equip} />
+        ) : (
         <Dossier
           heroes={view.heroes}
           heroIndex={heroIndex}
@@ -498,18 +617,25 @@ function Desk() {
           flagSkills={focus === 'points'}
           dispatch={dispatch}
         />
+        )}
         <Strongbox
           stash={stash}
           heroes={view.heroes}
           hero={hero}
           slot={slot}
+          onSlot={setSlot}
           rarity={rarity}
           onRarity={setRarity}
           stat={stat}
           onStat={setStat}
+          sort={sort}
+          onSort={setSort}
           selectedKey={selectedKey}
           onSelect={setSelectedKey}
-          dispatch={dispatch}
+          lidOpen={lidOpen}
+          onLid={() => setLidOpen(!lidOpen)}
+          onEquip={equip}
+          refusal={refusal}
         />
       </Painted>
     </div>
