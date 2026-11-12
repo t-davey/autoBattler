@@ -317,8 +317,8 @@ function Ledger({ findings, focus, onFocus, priority, lampsLit, dispatch }: Ledg
               setTimeout(() => setPouring(false), 1400);
             }}
           >
-            <Painted kind="oilLamp" tag="span" className="oil-lamp" data={{ lit: pouring }} />
-            <Painted kind="oilCan" tag="span" className="oil-can" />
+            <Painted kind="oilLamp" tag="span" className="oil-lamp" data={{ lit: pouring, density: 2 }} />
+            <Painted kind="oilCan" tag="span" className="oil-can" data={{ density: 2 }} />
           </button>
           {REPORT.lampRelit && <p className="stamp stamp-lit">Relit</p>}
         </div>

@@ -531,7 +531,8 @@ export function paint(el: HTMLElement): void {
     el.prepend(canvas);
   }
   W = el.closest('[data-run]') ? WEATHER[act] : WEATHER.town;
-  const scale = artPx();
+  // A finer element paints at a multiple of the art density: `data-density="2"` halves its pixels.
+  const scale = artPx() / (Number(el.dataset.density) || 1);
   // The canvas fills its element exactly and never overhangs it. An overhang can add a scrollbar, which resizes
   // the element, which repaints: a loop that jitters every frame.
   const w = Math.max(1, Math.round(el.clientWidth / scale));
