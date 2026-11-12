@@ -57,11 +57,11 @@ Rapid prototyping, as in [Roguelite Runs](roguelite-runs.md): each piece lands o
 | # | Work |
 |---|---|
 | 1 | **Tokens.** Act tint tokens on `:root`, set by the Run's Act, and a pixel unit tied to `--ui-scale`. Add the deep shades to [the palette](../design.md#palette) table: **done**. The Battle screen carries `data-act`, which swaps `--act-accent`, `--act-glow`, and `--act-ground`. Nothing reads them until step 5. `--px` rounds the UI scale to whole device pixels, so a chrome pixel is 2 device pixels at 1080p rather than a blurry 1.5 |
-| 2 | **Chrome kit.** Plate, notice, chit, and ledger frames as 9-slice pixel SVGs, with brass push-plate buttons and index tabs |
+| 2 | **Chrome kit.** Became painted pixel art rather than 9-slice SVGs, and moves into the game with [the Council desk](council-desk.md), step 1 |
 | 3 | **Icons.** One die-stamp set on a 16-pixel grid, replacing mismatched icons |
-| 4 | **Town.** The menu as hanging signs, one per place |
+| 4 | **Town.** The menu as hanging signs, one per place. [The Council desk](council-desk.md), step 4, takes Town's menu first, and the signs wait for Town to need more than one place |
 | 5 | **Run.** The Battle screen's overlays take the Act tint |
-| 6 | **Picks and Findings.** Pick offers as chits, and Findings as Council notices |
+| 6 | **Picks and Findings.** Findings became notes on [the Council desk](council-desk.md). Pick offers as tickets still need a home |
 
 ## The Council desk
 
