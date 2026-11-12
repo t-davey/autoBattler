@@ -78,7 +78,7 @@ body {
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  padding: 14px 14px 10px 50px;
+  padding: 44px 14px 14px 50px;
   overflow-y: auto;
   scrollbar-gutter: stable;
 }
@@ -1024,8 +1024,8 @@ body {
   gap: 2px;
   margin: 0.55rem 0 0.2rem;
   padding: 4px 6px;
-  background: rgb(0 0 0 / 30%);
-  box-shadow: inset 0 var(--art) 0 #000;
+  background: linear-gradient(#3c404a 0 2px, #22252c 2px calc(100% - 3px), #14151a calc(100% - 3px));
+  box-shadow: 0 0 0 1px #0a0a10, 0 2px 0 rgb(0 0 0 / 50%);
 }
 
 .lamp-row .glyph {
@@ -1096,12 +1096,13 @@ body {
   padding: 2px 8px 2px 4px;
   font-family: var(--font-body);
   color: var(--tallow);
-  background: rgb(0 0 0 / 22%);
+  background: linear-gradient(#34373f 0 1px, #23262d 1px);
   border-left: var(--art) solid var(--brass-deep);
+  box-shadow: 0 0 0 1px #0a0a10, 0 2px 0 rgb(0 0 0 / 45%);
 }
 
 .order-slips li:hover {
-  background: color-mix(in srgb, var(--flame) 8%, rgb(0 0 0 / 22%));
+  background: linear-gradient(#44403a 0 1px, #2e2a26 1px);
 }
 
 .order-rank {

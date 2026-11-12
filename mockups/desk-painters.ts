@@ -24,19 +24,112 @@ function paintDesk(a: Art): void {
     }
 }
 
-/** The ledger: a dark ruled page with a red margin, the binding's shadow at its left, and page edges at its right. */
+/** The report: a tablet of grey ashlar set in a riveted iron frame. A brass supply pipe climbs its left side and runs
+ *  under the lintel to the Party's lamp, weeping oil at its joints. The lamp's light warms the stone near it and its
+ *  smoke soots the top. */
+const STONE = ['#18181c', '#222227', '#2b2b31', '#34343b', '#3f3f47', '#4d4d56'];
+const LAMPLIT = ['#1f1914', '#2a2119', '#352a1f', '#413326', '#4e3d2d', '#5e4a36'];
+
 function paintLedger(a: Art): void {
   const { w, h } = a;
+  const frame = 5;
+  const course = 9;
+  const block = 22;
+  const pipeX = 11;
+  const pipeY = frame + 3;
+  const lampX = w - 37;
+  const lampY = pipeY + 25;
+
+  // The stone, block by block: each its own tone, bevelled light from the top left, pitted.
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
-      let c = noise(x, y, 41) < 0.03 ? '#2a2118' : '#211a13';
-      if ((y - 18) % 7 === 0 && y > 14 && x > 3 && x < w - 5) c = '#2b231a';
-      if (x === 12 || x === 13) c = x === 12 ? '#5a2620' : '#3e1d17';
-      if (x < 5 && dither(x, y, (5 - x) / 6)) c = '#0e0b08';
-      if (x >= w - 4) c = (x + (y >> 1)) % 2 ? '#3a3024' : '#18130e';
-      if (x === w - 1 || y === 0 || y === h - 1) c = K;
+      const row = Math.floor(y / course);
+      const offset = (row % 2) * (block >> 1) + (noise(row, 0, 3) < 0.5 ? 3 : 0);
+      const col = Math.floor((x + offset) / block);
+      const jx = (x + offset) % block;
+      const jy = y % course;
+      const tone = noise(col, row, 13);
+      let i = 2 + (tone > 0.7 ? 1 : tone < 0.22 ? -1 : 0);
+      if (jx === 1 || jy === 1) i += 1;
+      if (jx === block - 1 || jy === course - 1) i -= 1;
+      if (noise(x, y, 17) < 0.06) i -= 1;
+      else if (noise(x, y, 19) > 0.985) i += 1;
+      // Soot from the lamp, thickest at the top and round the lamp.
+      const soot = Math.max(0, 1 - y / (h * 0.18)) * 0.6 + Math.max(0, 1 - Math.hypot(x - lampX, (y - lampY) * 0.6) / 20) * 0.4;
+      if (dither(x, y, soot)) i -= 1;
+      i = Math.max(0, Math.min(5, i));
+      // Lamplight falls warm on the stone near the lamp, dithered off into the grey.
+      const warm = Math.max(0, 1 - Math.hypot(x - lampX, (y - lampY) * 1.15) / 52);
+      const lit = dither(x, y, warm * 0.95);
+      let c = lit ? LAMPLIT[Math.min(5, i + (warm > 0.55 ? 1 : 0))]! : STONE[i]!;
+      if (jx === 0 || jy === 0) c = lit ? '#140f0b' : '#101013';
       a.px(x, y, c);
     }
+
+  // Oil weeping from the pipe's joints, darkening the stone below them.
+  const joints: number[] = [];
+  for (let y = pipeY + 30; y < h - frame - 6; y += 46) joints.push(y);
+  for (const jy of joints)
+    for (let y = jy + 2; y < Math.min(h - frame, jy + 14 + Math.round(noise(jy, 1, 23) * 16)); y++) {
+      const x = pipeX + 4 + (noise(jy, y >> 3, 29) < 0.5 ? 0 : 1);
+      a.px(x, y, 'rgb(60 36 12 / 0.75)');
+      if (dither(x + 1, y, 0.4)) a.px(x + 1, y, 'rgb(60 36 12 / 0.35)');
+    }
+
+  // The supply pipe: up the left side, round an elbow, and along under the lintel to the lamp.
+  // k runs 0..4 across the pipe: outline, highlight, body, shadow, outline.
+  const shade = (k: number) => (k === 0 || k === 4 ? K : BRASS[k === 1 ? 5 : k === 2 ? 4 : 2]!);
+  for (let y = pipeY; y < h - frame; y++) for (let k = 0; k < 5; k++) a.px(pipeX + k, y, shade(k));
+  for (let x = pipeX; x <= lampX; x++) for (let k = 0; k < 5; k++) a.px(x, pipeY + k, shade(k));
+  // The elbow, a brass casting with a rivet.
+  for (let y = pipeY - 1; y < pipeY + 6; y++)
+    for (let x = pipeX - 1; x < pipeX + 6; x++) {
+      const edge = x === pipeX - 1 || y === pipeY - 1 || x === pipeX + 5 || y === pipeY + 5;
+      a.px(x, y, edge ? K : x + y < pipeX + pipeY + 3 ? BRASS[5]! : BRASS[3]!);
+    }
+  rivet(a, pipeX + 2, pipeY + 2);
+  // Flanged joints, bolted.
+  for (const jy of joints)
+    for (let y = jy - 1; y <= jy + 1; y++)
+      for (let x = pipeX - 1; x <= pipeX + 4; x++) a.px(x, y, x === pipeX - 1 || x === pipeX + 4 || y !== jy ? K : BRASS[4]!);
+  for (let x = pipeX + 40; x < lampX - 6; x += 46)
+    for (let x2 = x - 1; x2 <= x + 1; x2++)
+      for (let y = pipeY - 1; y <= pipeY + 4; y++) a.px(x2, y, y === pipeY - 1 || y === pipeY + 4 || x2 !== x ? K : BRASS[4]!);
+  // A valve wheel low on the pipe, and the feed dropping down to the lamp.
+  const vy = h - frame - 26;
+  for (let dy = -4; dy <= 4; dy++)
+    for (let dx = -4; dx <= 4; dx++) {
+      const r = Math.hypot(dx, dy);
+      if (r > 4.4) continue;
+      a.px(pipeX + 2 + dx, vy + dy, r > 3.6 ? K : r > 2.4 ? (dx + dy < 0 ? BRASS[5]! : BRASS[3]!) : dx === 0 || dy === 0 ? BRASS[4]! : r < 1 ? K : IRON[1]!);
+    }
+  for (let y = pipeY + 4; y < pipeY + 8; y++) for (let k = 0; k < 3; k++) a.px(lampX - 1 + k, y, k === 0 || k === 2 ? K : BRASS[4]!);
+
+  // The iron frame: a bevelled strap, riveted, with brass corner caps.
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const d = Math.min(x, y, w - 1 - x, h - 1 - y);
+      if (d >= frame) continue;
+      const far = Math.min(w - 1 - x, h - 1 - y) < Math.min(x, y);
+      let c = [K, IRON[far ? 2 : 4]!, IRON[3]!, IRON[far ? 1 : 2]!, K][d]!;
+      if (d > 0 && d < 4 && noise(x, y, 31) < 0.04) c = '#5a3220';
+      a.px(x, y, c);
+    }
+  for (let x = 14; x < w - 10; x += 16) {
+    rivet(a, x, 2);
+    rivet(a, x, h - 3);
+  }
+  for (let y = 16; y < h - 10; y += 16) {
+    rivet(a, 2, y);
+    rivet(a, w - 3, y);
+  }
+  for (const [fx, fy] of [[0, 0], [1, 0], [0, 1], [1, 1]] as const)
+    for (let y = 0; y < 8; y++)
+      for (let x = 0; x < 8 - y; x++) {
+        const px = fx ? w - 1 - x : x;
+        const py = fy ? h - 1 - y : y;
+        a.px(px, py, x === 0 || y === 0 ? BRASS[4]! : x + y === 7 ? K : BRASS[3 - ((x + y) >> 2)]!);
+      }
 }
 
 /** The dossier: an oxblood leather folder, stitched round, with brass corner caps. */
