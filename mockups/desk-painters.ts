@@ -146,7 +146,7 @@ function paintPortrait(a: Art, el: HTMLElement): void {
   const head = Math.min(...pixels.filter((pixel) => Math.abs(pixel.x - middle) <= 3).map((pixel) => pixel.y));
   const cx = Math.floor(w / 2) - (bust ? middle : 0);
   // Full length stands the figure on the frame's floor, lifted so a tall one still fits under the top edge.
-  const cy = bust ? 4 - head : Math.min(h - 6, Math.round((h - top) / 2 + 2));
+  const cy = bust ? (Math.min(w, h) < 24 ? 2 : 4) - head : Math.min(h - 6, Math.round((h - top) / 2 + 2));
   const lantern = LANTERNS[figure];
   const lx = cx + (lantern?.x ?? 0);
   const ly = cy + (lantern?.y ?? -20);
@@ -175,10 +175,16 @@ function paintPortrait(a: Art, el: HTMLElement): void {
       a.px(x, y, rgb(RAMPS[pixel.material][Math.max(0, Math.min(5, pixel.shade + step))]!));
     }
   }
-  // The frame: bevelled iron, brass at the corners.
+  // The frame: bevelled iron, brass at the corners. A small bust gets a thin frame, or it would be all frame.
+  const thin = Math.min(w, h) < 24;
   for (let y = 0; y < h; y++)
     for (let x = 0; x < w; x++) {
       const d = Math.min(x, y, w - 1 - x, h - 1 - y);
+      if (thin) {
+        if (d === 0) a.px(x, y, K);
+        else if (d === 1) a.px(x, y, x === 1 || y === 1 ? BRASS[4]! : IRON[2]!);
+        continue;
+      }
       if (d > 3) continue;
       const far = Math.min(w - 1 - x, h - 1 - y) < Math.min(x, y);
       let c = [K, IRON[4]!, IRON[2]!, K][d]!;
@@ -189,7 +195,81 @@ function paintPortrait(a: Art, el: HTMLElement): void {
     }
 }
 
+/** The hand bell that sends the Party: brass, on a turned wooden handle, its shadow on the desk. */
+function paintBell(a: Art): void {
+  const { w, h } = a;
+  const cx = (w - 1) / 2;
+  const top = 7;
+  const lip = h - 4;
+  const half = (y: number) => {
+    const t = (y - top) / (lip - top);
+    return 2.5 + Math.pow(t, 1.6) * (w / 2 - 3.5) + (y >= lip - 1 ? 1 : 0);
+  };
+  // Shadow.
+  for (let x = 1; x < w - 1; x++) for (let y = h - 3; y < h; y++) if (Math.abs(x - cx) < w / 2 - 1 - (h - 1 - y) && dither(x, y, 0.6)) a.px(x, y, 'rgb(0 0 0 / 0.55)');
+  // The handle, turned wood with a knob.
+  for (let y = 0; y < top; y++)
+    for (let x = 0; x < w; x++) {
+      const r = y < 3 ? 2 : 1;
+      const d = Math.abs(x - cx);
+      if (d > r + 0.5) continue;
+      a.px(x, y, d > r - 0.5 ? K : x < cx ? LEATHER[4]! : LEATHER[2]!);
+    }
+  // The bell.
+  for (let y = top; y <= lip; y++)
+    for (let x = 0; x < w; x++) {
+      const hw = half(y);
+      const d = x - cx;
+      if (Math.abs(d) > hw + 0.5) continue;
+      const edge = Math.abs(d) > hw - 0.5 || y === top || y === lip;
+      const t = (d + hw) / (2 * hw);
+      let c = BRASS[t < 0.2 ? 5 : t < 0.45 ? 4 : t < 0.75 ? 3 : 2]!;
+      if (y === lip - 2) c = BRASS[1]!;
+      if (dither(x, y, 0.12) && t > 0.6) c = BRASS[1]!;
+      a.px(x, y, edge ? K : c);
+    }
+}
+
+/** A blob of red sealing wax, pressed with a ring. */
+function paintSeal(a: Art): void {
+  const { w, h } = a;
+  const cx = (w - 1) / 2;
+  const cy = (h - 1) / 2;
+  const r = Math.min(w, h) / 2 - 1;
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const d = Math.hypot(x - cx, y - cy);
+      const wobble = noise(Math.round(Math.atan2(y - cy, x - cx) * 4), 0, 71) * 1.6;
+      if (d > r - wobble + 0.6) continue;
+      let c = d > r - wobble - 0.6 ? '#4a1410' : (x - cx) + (y - cy) < -r * 0.6 ? '#c45a40' : '#9a3424';
+      if (Math.abs(d - r * 0.62) < 0.6) c = '#6e2018';
+      if (Math.abs(d - r * 0.62 + 1) < 0.5 && x < cx) c = '#b84a34';
+      a.px(x, y, c);
+    }
+}
+
+/** A brass medallion for a level or a rank. */
+function paintMedallion(a: Art): void {
+  const { w, h } = a;
+  const cx = (w - 1) / 2;
+  const cy = (h - 1) / 2;
+  const r = Math.min(w, h) / 2;
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; x++) {
+      const d = Math.hypot(x - cx, y - cy);
+      if (d > r) continue;
+      const t = (x - cx + (y - cy)) / (2 * r) + 0.5;
+      let c = BRASS[t < 0.3 ? 5 : t < 0.6 ? 4 : 3]!;
+      if (d > r - 1) c = K;
+      else if (d > r - 2) c = t < 0.5 ? BRASS[5]! : BRASS[2]!;
+      a.px(x, y, c);
+    }
+}
+
 Object.assign(PAINTERS, {
+  bell: paintBell,
+  seal: paintSeal,
+  medallion: paintMedallion,
   desk: paintDesk,
   ledger: paintLedger,
   folder: paintFolder,

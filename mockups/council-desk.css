@@ -168,43 +168,15 @@ body {
   padding: 0.3rem 0.4rem;
 }
 
-.orders .hint {
-  margin: 0 0 0.3rem;
-  font-size: 0.85rem;
-}
-
 .orders ol {
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.orders li {
-  display: grid;
-  grid-template-columns: 1.4rem 1fr auto auto;
-  align-items: center;
-  gap: 0.25rem;
-  line-height: 1.5;
-}
-
-.order-rank {
-  font-family: var(--font-plate);
-  color: var(--brass);
-  font-size: 0.85rem;
-}
-
-.orders button,
-.skill-order button {
-  padding: 0 0.35rem;
-  font-size: 0.8rem;
-}
 
 .send-dock {
   padding: 8px 18px 14px 50px;
-}
-
-.send-back {
-  width: 100%;
 }
 
 /* ---------- The dossier. ---------- */
@@ -304,11 +276,6 @@ body {
   margin: 0 0 0.2rem;
 }
 
-.dossier-name {
-  margin: 0 0 0.3rem;
-  font-size: 1.05rem;
-}
-
 .dossier-id .gauge-row {
   grid-template-columns: 3.4rem 1fr 4.2rem;
   margin-top: 0.25rem;
@@ -359,30 +326,11 @@ body {
   line-height: 1.15;
 }
 
-.gear-slot-name {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
 .gear-off {
   padding: 0 0.5rem;
   background: none;
   border: none;
   box-shadow: none;
-}
-
-.stats .ledger-line {
-  margin: 0;
-  line-height: 1.6;
-}
-
-.stats .ledger-line.flagged {
-  outline-offset: 0;
-}
-
-.stats em {
-  font-style: normal;
 }
 
 .dossier-skills {
@@ -422,10 +370,6 @@ body {
   outline: none;
   box-shadow: none;
   background: color-mix(in srgb, var(--flame) 10%, transparent);
-}
-
-.skill-row button {
-  padding: 0 0.45rem;
 }
 
 .skill-pips {
@@ -493,11 +437,6 @@ body {
   content: none;
 }
 
-.respec {
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-}
-
 /* ---------- The strongbox. ---------- */
 
 .strongbox {
@@ -555,11 +494,6 @@ body {
   border: none;
   border-bottom: 1px solid rgb(255 255 255 / 4%);
   box-shadow: none;
-}
-
-.box-row .slot-icon {
-  grid-area: icon;
-  align-self: center;
 }
 
 .box-name {
@@ -622,26 +556,12 @@ body {
   border-top: 1px dotted rgb(42 26 20 / 35%);
 }
 
-.on-each-name {
-  font-weight: 700;
-  font-size: 0.88rem;
-}
-
-.on-each-changes {
-  font-size: 0.82rem;
-}
-
 .ink-gain {
   color: #2a6a4a;
 }
 
 .ink-loss {
   color: #9a3a22;
-}
-
-.on-each button {
-  padding: 0 0.5rem;
-  font-size: 0.85rem;
 }
 
 /* ---------- Lifting the lid. ---------- */
@@ -763,37 +683,9 @@ body {
   grid-template-columns: 330px 200px minmax(0, 1fr);
 }
 
-.strongbox-head {
-  gap: 0.6rem;
-}
-
-.strongbox-head h2 {
-  margin-right: auto;
-}
-
-.lid-handle {
-  padding: 0.1rem 0.7rem;
-  font-family: var(--font-plate);
-  font-weight: 700;
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  color: var(--soot);
-  background: linear-gradient(var(--brass-bright) 0 25%, var(--brass) 25% 75%, var(--brass-deep) 75%);
-  border: calc(var(--art) * 1) solid var(--dark);
-  box-shadow: calc(var(--art) * 1) calc(var(--art) * 1) 0 #000;
-}
-
-.lid-handle:hover:not(:disabled) {
-  color: var(--soot);
-  background: linear-gradient(var(--flame-core) 0 25%, var(--brass-bright) 25% 75%, var(--brass) 75%);
-}
 
 .strongbox.open .strongbox-head {
   margin-top: calc(var(--art) * 1);
-}
-
-.strongbox.open .strongbox-head h2 {
-  color: var(--tallow);
 }
 
 .slot-tabs {
@@ -883,10 +775,6 @@ body {
 .tag.active {
   border-color: var(--flame);
   box-shadow: 0 0 0 calc(var(--art) * 1) var(--flame-glow), calc(var(--art) * 1) calc(var(--art) * 1) 0 #000;
-}
-
-.tag .slot-icon {
-  grid-area: icon;
 }
 
 .tag-name {
@@ -1008,24 +896,778 @@ body {
   border-top: 1px dotted rgb(224 211 178 / 20%);
 }
 
-.spine-changes {
-  font-size: 0.8rem;
-  line-height: 1.25;
+/* ---------- Pictures over words: glyphs, tallies, and the scene's own objects as controls. ---------- */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.spine-changes .ink-gain {
+/* A glyph is 8 art pixels drawn at two screen pixels each, the size of a line of text. */
+.glyph {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+}
+
+.chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.55rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  white-space: nowrap;
+}
+
+.chip.gain {
   color: var(--verdigris);
 }
 
-.spine-changes .ink-loss {
+.chip.loss {
   color: var(--rust);
 }
 
-.spine-compare button {
-  padding: 0 0.7rem;
+.chip-none {
+  color: var(--tallow-dim);
 }
 
-.spine-lock {
+/* On paper, gains and losses take ink. */
+.item-chit .chip.gain {
+  color: #2a6a4a;
+}
+
+.item-chit .chip.loss {
+  color: #9a3a22;
+}
+
+/* The ledger: a wax seal for the absence, then a tally of glyphs and figures. */
+.ledger-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.5rem;
+}
+
+.seal {
+  display: grid;
+  place-items: center;
+  width: calc(var(--art) * 26);
+  height: calc(var(--art) * 26);
+  font-family: var(--font-plate);
+  font-weight: 700;
+  font-size: 0.72rem;
+  line-height: 1;
+  text-align: center;
+  color: #f0c8a8;
+  text-shadow: 0 1px 0 #3a0e0a;
+  transform: rotate(-8deg);
+}
+
+.seal span {
+  max-width: 3.4rem;
+}
+
+.ledger-head .stamp-lit {
+  margin: 0;
+}
+
+.tallies {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.35rem 0.6rem;
+}
+
+.tally {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--tallow);
+}
+
+.tally small {
+  margin: 0 0.1rem;
+  color: var(--tallow-dim);
+}
+
+.tally.wide {
+  grid-column: span 3;
+}
+
+.gems {
+  display: inline-flex;
+  gap: 0.7rem;
+}
+
+.gem-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.lamp-row {
+  display: flex;
+  gap: 2px;
+  margin: 0.55rem 0 0.2rem;
+  padding: 4px 6px;
+  background: rgb(0 0 0 / 30%);
+  box-shadow: inset 0 var(--art) 0 #000;
+}
+
+.lamp-row .glyph {
+  width: 18px;
+  height: 18px;
+}
+
+.slips {
+  margin-top: 0.7rem;
+}
+
+.slip-text strong {
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.slip-text .gems {
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+
+.slip-icon {
+  width: 20px;
+  height: 20px;
+  margin-top: 0;
+}
+
+/* Standing orders: Pick slips the player shuffles, each with its rank in brass. */
+.orders {
+  margin-top: 0.7rem;
+  padding: 0;
+}
+
+.reorder {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reorder li {
+  cursor: grab;
+}
+
+.reorder li:focus-visible {
+  outline: var(--art) solid var(--flame);
+  outline-offset: 1px;
+}
+
+.reorder li.dragging {
+  opacity: 0.4;
+}
+
+.reorder li.drop-here {
+  box-shadow: 0 calc(var(--art) * -1) 0 var(--flame);
+}
+
+.order-slips {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.order-slips li {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 2px 8px 2px 4px;
+  font-family: var(--font-body);
+  color: var(--tallow);
+  background: rgb(0 0 0 / 22%);
+  border-left: var(--art) solid var(--brass-deep);
+}
+
+.order-slips li:hover {
+  background: color-mix(in srgb, var(--flame) 8%, rgb(0 0 0 / 22%));
+}
+
+.order-rank {
+  display: grid;
+  place-items: center;
+  width: calc(var(--art) * 7);
+  height: calc(var(--art) * 7);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: var(--soot);
+}
+
+/* The hand bell: ring it to send the Party back. */
+.send-dock {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 4px 18px 12px 50px;
+}
+
+.bell {
+  width: calc(var(--art) * 26);
+  height: calc(var(--art) * 28);
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  transform-origin: 50% 10%;
+  cursor: pointer;
+}
+
+.bell:hover:not(:disabled),
+.bell:active:not(:disabled) {
+  background: none;
+  box-shadow: none;
+  filter: drop-shadow(0 0 calc(var(--art) * 3) var(--flame-glow));
+}
+
+.bell:hover:not(:disabled) {
+  transform: rotate(-6deg);
+}
+
+.bell.ringing {
+  animation: ring 620ms steps(8) both;
+}
+
+@keyframes ring {
+  0%, 100% { transform: rotate(0); }
+  15% { transform: rotate(-16deg); }
+  35% { transform: rotate(13deg); }
+  55% { transform: rotate(-9deg); }
+  75% { transform: rotate(5deg); }
+}
+
+.send-plate {
+  margin-bottom: calc(var(--art) * 2);
+  padding: 0 0.5rem;
+  font-family: var(--font-plate);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--soot);
+  background: linear-gradient(var(--brass-bright) 0 25%, var(--brass) 25% 75%, var(--brass-deep) 75%);
+  box-shadow: 0 0 0 var(--art) var(--dark);
+}
+
+/* The dossier: Heroes as busts on the tabs, the level as a medallion on the portrait. */
+.dossier-tabs {
+  gap: 4px;
+}
+
+.dossier-tab {
+  padding: calc(var(--art) * 1) calc(var(--art) * 1) 0;
+}
+
+.tab-bust {
+  display: block;
+  width: calc(var(--art) * 20);
+  height: calc(var(--art) * 20);
+}
+
+.dossier-tab .tab-points {
+  position: absolute;
+  top: calc(var(--art) * -2);
+  right: calc(var(--art) * -2);
+  min-width: 0;
+  margin: 0;
+  padding: 0 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.drop-target {
+  outline: var(--art) dashed var(--flame) !important;
+  outline-offset: 2px;
+}
+
+.portrait-wrap {
+  position: relative;
+}
+
+.level-medallion {
+  position: absolute;
+  right: calc(var(--art) * -3);
+  bottom: calc(var(--art) * -3);
+  display: grid;
+  place-items: center;
+  width: calc(var(--art) * 11);
+  height: calc(var(--art) * 11);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--soot);
+}
+
+.level-medallion.small {
+  width: calc(var(--art) * 8);
+  height: calc(var(--art) * 8);
+  font-size: 0.75rem;
+}
+
+.dossier-class {
+  margin: 0;
+  color: var(--tallow-dim);
+}
+
+.dossier-id .gauge-row {
+  grid-template-columns: 16px 1fr 3rem;
+  gap: 0.5rem;
+}
+
+.gauge-row small {
+  font-variant-numeric: tabular-nums;
+}
+
+.gear-pick {
+  gap: 0.6rem;
+}
+
+.slot-glyph {
+  width: 24px;
+  height: 24px;
+}
+
+.slot-empty {
+  opacity: 0.35;
+}
+
+.gear-worn {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.gear-worn .chips {
   font-size: 0.8rem;
-  color: var(--rust);
+  color: var(--tallow-dim);
+}
+
+.gear-pick[draggable='true'] {
+  cursor: grab;
+}
+
+.gear-off {
+  opacity: 0;
+}
+
+.gear-slot:hover .gear-off,
+.gear-off:focus-visible {
+  opacity: 1;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.2rem 0.8rem;
+  align-content: start;
+}
+
+.stat-line {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.7;
+}
+
+.stat-line.flagged {
+  outline-offset: 0;
+}
+
+.stat-line em {
+  font-style: normal;
+  font-size: 0.85rem;
+}
+
+.skills h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.embers {
+  display: inline-flex;
+  gap: 1px;
+  animation: ember 1.6s steps(4) infinite alternate;
+}
+
+@keyframes ember {
+  to { filter: drop-shadow(0 0 3px var(--flame)); }
+}
+
+.skills .respec {
+  margin: 0 0 0 auto;
+  padding: 2px 4px;
+  background: none;
+  border: none;
+  box-shadow: none;
+  opacity: 0.75;
+}
+
+.skills .respec:hover:not(:disabled) {
+  opacity: 1;
+  background: none;
+  box-shadow: none;
+  transform: rotate(-12deg);
+}
+
+.skills .respec:disabled {
+  opacity: 0.25;
+}
+
+/* The next pip glows when a point can go there; click it to spend. */
+.pip.next {
+  padding: 0;
+  min-width: 0;
+  border: none;
+  background: var(--oil-deep);
+  box-shadow: 0 0 0 var(--art) var(--flame), 0 0 calc(var(--art) * 3) var(--flame-glow);
+  animation: pip-glow 1.2s steps(3) infinite alternate;
+  cursor: pointer;
+}
+
+.pip.next:hover:not(:disabled) {
+  background: var(--flame-core);
+}
+
+@keyframes pip-glow {
+  to { background: var(--flame); }
+}
+
+.skill-order h3 .glyph {
+  width: 20px;
+  height: 20px;
+}
+
+/* Skill order as rune stones, the basic attack the last stone, fixed. */
+.rune-stones {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.rune-stones li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1px 8px 1px 2px;
+  background: var(--char-raised);
+  box-shadow: inset calc(var(--art) * -1) calc(var(--art) * -1) 0 #000, inset var(--art) var(--art) 0 #3a3028;
+}
+
+.rune-index {
+  display: grid;
+  place-items: center;
+  width: 1.3rem;
+  font-family: var(--font-plate);
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--brass-bright);
+}
+
+.rune-stones .rune-last {
+  justify-content: center;
+  padding: 3px;
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* The strongbox: its lid is the control, and the head carries pictures, not words. */
+.strongbox {
+  padding-top: calc(var(--art) * 27);
+}
+
+.lid {
+  position: absolute;
+  top: calc(var(--art) * 7);
+  left: calc(var(--art) * 7);
+  right: calc(var(--art) * 7);
+  height: calc(var(--art) * 17);
+  padding: 0;
+  background: none;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+}
+
+.lid:hover:not(:disabled),
+.lid:focus-visible {
+  background: linear-gradient(transparent 60%, color-mix(in srgb, var(--flame) 14%, transparent));
+  box-shadow: inset 0 calc(var(--art) * -1) 0 var(--flame);
+}
+
+.strongbox-head {
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0;
+  gap: 0.4rem;
+}
+
+.strongbox.open .strongbox-head {
+  margin-top: 0;
+}
+
+.strongbox-for {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.for-bust {
+  width: calc(var(--art) * 12);
+  height: calc(var(--art) * 12);
+}
+
+.strongbox-filters {
+  flex: 1;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.toggles {
+  display: inline-flex;
+  gap: 1px;
+}
+
+.toggles button,
+.sort-toggle,
+.slot-tabs button {
+  display: inline-grid;
+  place-items: center;
+  padding: 2px 3px;
+}
+
+.toggles button[aria-pressed='true'],
+.slot-tabs button[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--flame) 18%, var(--soot));
+  border-color: var(--flame);
+  box-shadow: 0 0 0 1px var(--flame-glow);
+}
+
+.slot-tabs button .glyph {
+  width: 22px;
+  height: 22px;
+}
+
+.box-count {
+  font-size: 0.8rem;
+  color: var(--tallow-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.box-row {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: none;
+  row-gap: 0.1rem;
+}
+
+.box-row .box-name {
+  grid-area: auto;
+}
+
+.box-row[draggable='true'],
+.tag[draggable='true'] {
+  cursor: grab;
+}
+
+.box-row .chips {
+  font-size: 0.8rem;
+  gap: 0.1rem 0.35rem;
+}
+
+.chit-facts {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.chit-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.item-chit > .chips {
+  margin: 0.2rem 0;
+  color: var(--paper-ink);
+}
+
+.on-each {
+  display: flex;
+  gap: 6px;
+}
+
+.on-each li {
+  display: block;
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: none;
+}
+
+.on-each-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 100%;
+  padding: 4px 2px;
+  color: var(--paper-ink);
+  background: rgb(42 26 20 / 8%);
+  border: 1px solid rgb(42 26 20 / 25%);
+  box-shadow: none;
+}
+
+.on-each-pick:hover:not(:disabled) {
+  color: var(--paper-ink);
+  background: rgb(244 178 74 / 30%);
+  border-color: #8a5a10;
+  box-shadow: none;
+}
+
+.on-each-pick:disabled {
+  opacity: 0.6;
+}
+
+.on-each-pick .chips {
+  justify-content: center;
+  font-size: 0.78rem;
+  gap: 0 0.3rem;
+}
+
+.chit-bust {
+  width: calc(var(--art) * 16);
+  height: calc(var(--art) * 16);
+}
+
+.empty-box {
+  padding: 0.5rem;
+}
+
+/* Tags: the base name, its stats as glyphs, and a mark per Hero. */
+.tag {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: none;
+  align-content: start;
+}
+
+.tag::before {
+  top: calc(var(--art) * 3);
+}
+
+.tag-count {
+  position: static;
+  justify-self: start;
+}
+
+.tag .chips {
+  font-size: 0.75rem;
+  gap: 0 0.3rem;
+  color: var(--tallow-dim);
+}
+
+.tag .glyph {
+  width: 13px;
+  height: 13px;
+}
+
+.tag-name {
+  grid-area: auto;
+  -webkit-line-clamp: 1;
+}
+
+.tag:has(.tag-count) {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.tag:has(.tag-count) > :not(.tag-name, .tag-count) {
+  grid-column: 1 / -1;
+}
+
+.tag-marks {
+  grid-area: auto;
+  padding-left: 0;
+}
+
+/* The spine. */
+.spine-bust-wrap {
+  position: relative;
+  flex: none;
+}
+
+.spine-bust-wrap .level-medallion {
+  right: calc(var(--art) * -2);
+  bottom: calc(var(--art) * -2);
+}
+
+.spine-who {
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.spine-worn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.spine-worn .slot-glyph {
+  width: 16px;
+  height: 16px;
+}
+
+.spine-compare {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px 4px 2px;
+  text-align: left;
+  background: none;
+  border: none;
+  border-top: 1px dotted rgb(224 211 178 / 20%);
+  box-shadow: none;
+}
+
+.spine-compare:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--flame) 10%, transparent);
+  box-shadow: none;
+}
+
+.spine-compare .chips {
+  font-size: 0.8rem;
+  gap: 0 0.35rem;
+}
+
+.equip-glyph {
+  width: 20px;
+  height: 20px;
 }

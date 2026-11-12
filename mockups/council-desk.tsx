@@ -1,4 +1,6 @@
-/* The Council desk: the Away Report, Planning, and the Stash as one screen. A mockup on the real sim. */
+/* The Council desk: the Away Report, Planning, and the Stash as one screen. A mockup on the real sim.
+   Pictures carry the desk: glyphs stand in for stat and Pick names, the scene's own objects are its controls,
+   and the words wait on chits and tooltips for whoever hovers. */
 import '@fontsource/grenze-gotisch/600.css';
 import '@fontsource/grenze-gotisch/800.css';
 import '@fontsource/cinzel/700.css';
@@ -11,14 +13,16 @@ import '@fontsource/cedarville-cursive/400.css';
 import '../src/ui/style.css';
 import './ui-art.css';
 import './council-desk.css';
-import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState, type DragEvent, type KeyboardEvent, type ReactNode } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import {
+  AFFIXES,
   applyAction,
   beginCatchUp,
   continueCatchUp,
   createGame,
+  floorAt,
   LAMPS,
   SLOTS,
   viewGame,
@@ -33,14 +37,14 @@ import {
   type SkillView,
   type Slot,
 } from '../src/sim';
-import { describeAbsence } from '../src/ui/describeAwayReport';
+import { describeDuration } from '../src/ui/describeAwayReport';
 import { describeFindings, type Finding, type FindingKind } from '../src/ui/describeFindings';
 import { lockText, REFUSAL_TEXT, seconds, skillFacts, skillValues } from '../src/ui/describeHero';
-import { changedStats, formatChange, itemStatsText, SLOT_TEXT, STAT_TEXT, statChange } from '../src/ui/describeItem';
+import { changedStats, formatChange, SLOT_TEXT, STAT_TEXT, statChange } from '../src/ui/describeItem';
 import { describeTag, TAG_TEXT } from '../src/ui/describePicks';
 import { floorLabel } from '../src/ui/floorLabel';
-import { PixelIcon, type IconName } from '../src/ui/PixelIcon';
 import { groupItems, queryStash, type StashSort } from '../src/ui/stashQuery';
+import { Glyph, RARITY_COLOUR, STAT_GLYPH, TAG_GLYPH, type GlyphName } from './desk-glyphs';
 import { artPx, nextFrame, paint } from './painters';
 import './desk-painters';
 
@@ -54,7 +58,9 @@ const REPORT: AwayReport = report;
 
 /* ---------- Painted elements. ---------- */
 
-function Painted({ kind, tag = 'div', className = '', data = {}, children, ...rest }: { kind: string; tag?: 'div' | 'section' | 'button' | 'aside' | 'article'; className?: string; data?: Record<string, string | number | boolean>; children?: ReactNode } & Record<string, unknown>) {
+type PaintedTag = 'div' | 'span' | 'section' | 'button' | 'aside' | 'article' | 'li';
+
+function Painted({ kind, tag = 'div', className = '', data = {}, children, ...rest }: { kind: string; tag?: PaintedTag; className?: string; data?: Record<string, string | number | boolean>; children?: ReactNode } & Record<string, unknown>) {
   const ref = useRef<HTMLElement>(null);
   const key = JSON.stringify(data);
   useLayoutEffect(() => {
@@ -82,7 +88,7 @@ function Painted({ kind, tag = 'div', className = '', data = {}, children, ...re
 
 /* ---------- Helpers. ---------- */
 
-const FINDING_ICONS: Readonly<Record<FindingKind, IconName>> = { setbacks: 'skull', picks: 'cog', loot: 'chest', points: 'flame' };
+const FINDING_GLYPHS: Readonly<Record<FindingKind, GlyphName>> = { setbacks: 'guardian', picks: 'stacking', loot: 'gem', points: 'star' };
 const CLASS_TEXT: Readonly<Record<string, string>> = { 'sin-eater': 'Sin-Eater', warrener: 'Warrener', lamplighter: 'Lamplighter' };
 const STAT_ROWS: readonly { stat: ItemStat; label: string; value: (hero: HeroView) => string }[] = [
   { stat: 'maxHealth', label: 'Health', value: (hero) => `${Math.round(hero.stats.maxHealth)}` },
@@ -92,33 +98,190 @@ const STAT_ROWS: readonly { stat: ItemStat; label: string; value: (hero: HeroVie
   { stat: 'poisonResistance', label: 'Poison resistance', value: (hero) => `${Math.round(hero.stats.poisonResistance)}%` },
   { stat: 'speed', label: 'Acts every', value: (hero) => seconds(hero.stats.actionInterval) },
 ];
+const STATS = Object.keys(STAT_TEXT) as ItemStat[];
+const RARITIES: readonly Rarity[] = ['common', 'magic', 'rare'];
+const SORTS: readonly { sort: StashSort; glyph: GlyphName; label: string }[] = [
+  { sort: 'rarity', glyph: 'gem', label: 'Sorted by rarity' },
+  { sort: 'newest', glyph: 'newest', label: 'Sorted newest first' },
+  { sort: 'levelRequirement', glyph: 'level', label: 'Sorted by level needed' },
+];
 const number = (value: number) => Math.round(value).toLocaleString('en-GB');
+const compact = (value: number) => (value >= 10_000 ? `${Math.round(value / 1000)}k` : number(value));
+const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+const ITEM_TYPE = 'application/x-desk-item';
+const WORN_TYPE = 'application/x-desk-worn';
 
-/* ---------- The ledger: the Away Report, its Findings as slips, the Wall, and the standing orders. ---------- */
+/** The item's base, without the Affix names that its stat glyphs already show: "Bone Sling". */
+function baseName(item: ItemView): string {
+  const prefix = item.affixes.map((id) => AFFIXES.find((affix) => affix.id === id)?.name ?? '').join(' ');
+  return prefix && item.name.startsWith(`${prefix} `) ? item.name.slice(prefix.length + 1) : item.name;
+}
 
-function StandingOrders({ priority, flagged, dispatch }: { priority: readonly PickTag[]; flagged: boolean; dispatch: (action: PlayerAction) => void }) {
-  const move = (index: number, by: number) => {
-    const order = [...priority];
-    const [tag] = order.splice(index, 1);
-    if (!tag) return;
-    order.splice(index + by, 0, tag);
-    dispatch({ type: 'setPickPriority', priority: order });
+/** An item's stats as glyphs with their figures. */
+function StatChips({ item }: { item: ItemView }) {
+  const stats = STATS.filter((stat) => item.stats[stat] !== 0);
+  return (
+    <span className="chips">
+      {stats.map((stat) => (
+        <span key={stat} className="chip" title={`${formatChange(stat, item.stats[stat])} ${STAT_TEXT[stat]}`}>
+          <Glyph name={STAT_GLYPH[stat]} />
+          {formatChange(stat, item.stats[stat]).replace('+', '')}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/** What equipping an item would change on a Hero, as glyphs: gains in verdigris, losses in rust. */
+function ChangeChips({ item, hero, limit = 6 }: { item: ItemView; hero: HeroView; limit?: number }) {
+  const keys = changedStats(item, [hero]).slice(0, limit);
+  if (keys.length === 0) return <span className="chips chip-none" title="No change">·</span>;
+  return (
+    <span className="chips">
+      {keys.map((key) => {
+        const change = statChange(item, hero, key);
+        return (
+          <span key={key} className={change > 0 ? 'chip gain' : 'chip loss'} title={`${formatChange(key, change)} ${STAT_TEXT[key]}`}>
+            <Glyph name={STAT_GLYPH[key]} />
+            {formatChange(key, change)}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+/** A list the player reorders by dragging, or with the arrow keys on a focused entry. */
+function Reorder<T extends string>({ items, label, describe, render, onMove, className, after }: { items: readonly T[]; label: (item: T) => string; describe?: (item: T) => string; render: (item: T, index: number) => ReactNode; onMove: (order: T[]) => void; className?: string; after?: ReactNode }) {
+  const [dragging, setDragging] = useState<number | null>(null);
+  const [over, setOver] = useState<number | null>(null);
+  const refocus = useRef<T | null>(null);
+  const list = useRef<HTMLOListElement>(null);
+  useEffect(() => {
+    if (refocus.current === null) return;
+    list.current?.querySelector<HTMLElement>(`[data-key="${refocus.current}"]`)?.focus();
+    refocus.current = null;
+  });
+  const move = (from: number, to: number) => {
+    if (to < 0 || to >= items.length || from === to) return;
+    const order = [...items];
+    const [item] = order.splice(from, 1);
+    order.splice(to, 0, item!);
+    refocus.current = item!;
+    onMove(order);
+  };
+  const onKey = (index: number) => (event: KeyboardEvent) => {
+    if (event.key === 'ArrowUp') move(index, index - 1);
+    else if (event.key === 'ArrowDown') move(index, index + 1);
+    else return;
+    event.preventDefault();
   };
   return (
-    <section className={flagged ? 'orders flagged' : 'orders'} aria-label="Standing orders">
-      <h3>Standing orders <span className="hint">· Picks</span></h3>
-      <p className="hint">Twice a Run the Party is offered 3 Picks and keeps the one ranked highest here.</p>
-      <ol>
-        {priority.map((tag, index) => (
-          <li key={tag} title={describeTag(tag).join('\n')}>
-            <span className="order-rank">{index + 1}</span>
+    <ol ref={list} className={`reorder ${className ?? ''}`}>
+      {items.map((item, index) => (
+        <li
+          key={item}
+          data-key={item}
+          tabIndex={0}
+          draggable
+          aria-label={`${index + 1}. ${label(item)}. Arrow keys to move.`}
+          title={describe?.(item)}
+          className={`${dragging === index ? 'dragging' : ''}${over === index && dragging !== index ? ' drop-here' : ''}`}
+          onKeyDown={onKey(index)}
+          onDragStart={(event) => {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', item);
+            setDragging(index);
+          }}
+          onDragEnd={() => {
+            setDragging(null);
+            setOver(null);
+          }}
+          onDragOver={(event) => {
+            if (dragging === null) return;
+            event.preventDefault();
+            setOver(index);
+          }}
+          onDrop={(event) => {
+            event.preventDefault();
+            if (dragging !== null) move(dragging, index);
+            setDragging(null);
+            setOver(null);
+          }}
+        >
+          {render(item, index)}
+        </li>
+      ))}
+      {after}
+    </ol>
+  );
+}
+
+/** Drop an item from the strongbox here to equip it on this Hero. */
+function equipDrop(hero: HeroView, onEquip: (itemId: number, hero: HeroView) => void) {
+  return {
+    onDragOver: (event: DragEvent) => {
+      if (!event.dataTransfer.types.includes(ITEM_TYPE)) return;
+      event.preventDefault();
+      (event.currentTarget as HTMLElement).classList.add('drop-target');
+    },
+    onDragLeave: (event: DragEvent) => (event.currentTarget as HTMLElement).classList.remove('drop-target'),
+    onDrop: (event: DragEvent) => {
+      (event.currentTarget as HTMLElement).classList.remove('drop-target');
+      const id = Number(event.dataTransfer.getData(ITEM_TYPE));
+      if (!id) return;
+      event.preventDefault();
+      onEquip(id, hero);
+    },
+  };
+}
+
+function Bust({ hero, className = '' }: { hero: HeroView; className?: string }) {
+  return <Painted kind="portrait" className={`bust ${className}`} data={{ frame: 'bust', hero: hero.id, oil: (hero.oil / hero.stats.maxOil).toFixed(2) }} />;
+}
+
+/* ---------- The ledger: the Away Report as a tally, its Findings as slips, and the standing orders. ---------- */
+
+function StandingOrders({ priority, flagged, dispatch }: { priority: readonly PickTag[]; flagged: boolean; dispatch: (action: PlayerAction) => void }) {
+  return (
+    <section className={flagged ? 'orders flagged' : 'orders'} aria-label="Standing orders: the Party keeps the highest-ranked Pick of the 3 offered">
+      <Reorder
+        items={priority}
+        className="order-slips"
+        label={(tag) => TAG_TEXT[tag]}
+        describe={(tag) => `${TAG_TEXT[tag]}\n${describeTag(tag).join('\n')}`}
+        onMove={(order) => dispatch({ type: 'setPickPriority', priority: order })}
+        render={(tag, index) => (
+          <>
+            <Painted kind="medallion" tag="span" className="order-rank">{index + 1}</Painted>
+            <Glyph name={TAG_GLYPH[tag]} className="order-glyph" />
             <span className="order-tag">{TAG_TEXT[tag]}</span>
-            <button type="button" aria-label={`Move ${TAG_TEXT[tag]} up`} disabled={index === 0} onClick={() => move(index, -1)}>↑</button>
-            <button type="button" aria-label={`Move ${TAG_TEXT[tag]} down`} disabled={index === priority.length - 1} onClick={() => move(index, 1)}>↓</button>
-          </li>
-        ))}
-      </ol>
+          </>
+        )}
+      />
     </section>
+  );
+}
+
+function Tally({ glyph, label, children, wide }: { glyph: GlyphName; label: string; children: ReactNode; wide?: boolean }) {
+  return (
+    <p className={wide ? 'tally wide' : 'tally'} title={label}>
+      <Glyph name={glyph} label={label} />
+      <span>{children}</span>
+    </p>
+  );
+}
+
+function Gems({ common, magic, rare }: { common: number; magic: number; rare: number }) {
+  return (
+    <span className="gems">
+      {([['common', common], ['magic', magic], ['rare', rare]] as const).map(([rarity, count]) => (
+        <span key={rarity} className="gem-count" title={`${count} ${rarity}`}>
+          <Glyph name="gem" colour={RARITY_COLOUR[rarity]} />
+          {count}
+        </span>
+      ))}
+    </span>
   );
 }
 
@@ -133,71 +296,91 @@ interface LedgerProps {
 
 function Ledger({ findings, focus, onFocus, priority, lampsLit, dispatch }: LedgerProps) {
   const { loot } = REPORT;
+  const [ringing, setRinging] = useState(false);
+  const deepest = REPORT.deepestFloor > 0 ? floorAt(REPORT.deepestFloor) : null;
   return (
     <Painted kind="ledger" tag="section" className="ledger" aria-label="Away Report">
       <div className="ledger-page">
-      <h2>Away Report</h2>
-      <p className="absence">{describeAbsence(REPORT)}</p>
-      <div className="ledger-lines">
-        <p className="ledger-line"><span>Floors cleared</span><span>{REPORT.floorsCleared}</span></p>
-        <p className="ledger-line"><span>Deepest Floor</span><span>{REPORT.deepestFloor > 0 ? floorLabel(REPORT.deepestFloor) : 'none'}</span></p>
-        <p className="ledger-line"><span>Damage dealt</span><span>{number(REPORT.damageDealt)}</span></p>
-        <p className="ledger-line"><span>Healed</span><span>{number(REPORT.healed)}</span></p>
-        <p className="ledger-line"><span>Guardian kills</span><span>{REPORT.guardianKills}</span></p>
-        <p className="ledger-line"><span>Found</span><span><span className="rarity-common">{loot.common}</span> · <span className="rarity-magic">{loot.magic}</span> · <span className="rarity-rare">{loot.rare}</span></span></p>
-        <p className="ledger-line"><span>Lamps relit</span><span>{lampsLit} of {LAMPS.length}</span></p>
-      </div>
-      {REPORT.lampRelit && <p className="stamp stamp-lit">The Lamp is relit</p>}
-      <h3 className="slips-head">Notes for the Party</h3>
-      <ul className="slips">
-        {findings.map((finding, index) => (
-          <li key={finding.kind}>
-            <Painted
-              kind="slip"
-              tag="button"
-              className={focus === finding.kind ? 'slip active' : 'slip'}
-              data={{ seed: index + 3, active: focus === finding.kind }}
-              aria-pressed={focus === finding.kind}
-              onClick={() => onFocus(focus === finding.kind ? null : finding.kind)}
-            >
-              <PixelIcon name={FINDING_ICONS[finding.kind]} className="slip-icon" />
-              <span className="slip-text">
-                <strong>{finding.title}</strong>
-                {(focus === finding.kind ? finding.details : finding.details.slice(0, 1)).map((line) => (
-                  <span key={line} className="slip-detail">{line}</span>
-                ))}
-              </span>
-            </Painted>
-          </li>
-        ))}
-        {findings.length === 0 && <li className="hint">Nothing to act on.</li>}
-      </ul>
-      <StandingOrders priority={priority} flagged={focus === 'picks'} dispatch={dispatch} />
+        <div className="ledger-head">
+          <Painted kind="seal" className="seal" title={REPORT.capped ? `Only ${describeDuration(REPORT.appliedMs)} of it counted` : undefined}>
+            <span>{describeDuration(REPORT.elapsedMs)}</span>
+          </Painted>
+          <h2 className="sr-only">Away Report</h2>
+          {REPORT.lampRelit && <p className="stamp stamp-lit">Relit</p>}
+        </div>
+        <div className="tallies">
+          <Tally glyph="stairs" label="Floors cleared">{REPORT.floorsCleared}</Tally>
+          <Tally glyph="deep" label={`Deepest Floor: ${deepest ? floorLabel(REPORT.deepestFloor) : 'none'}`}>{deepest ? <>{deepest.act}<small>·</small>{deepest.floor}</> : '—'}</Tally>
+          <Tally glyph="damage" label={`Damage dealt: ${number(REPORT.damageDealt)}`}>{compact(REPORT.damageDealt)}</Tally>
+          <Tally glyph="healed" label="Healed">{compact(REPORT.healed)}</Tally>
+          <Tally glyph="guardian" label="Guardian kills">{REPORT.guardianKills}</Tally>
+          <Tally glyph="gem" label="Found" wide><Gems {...loot} /></Tally>
+        </div>
+        <p className="lamp-row" role="img" aria-label={`Lamps relit: ${lampsLit} of ${LAMPS.length}`} title={`Lamps relit: ${lampsLit} of ${LAMPS.length}`}>
+          {LAMPS.map((lamp, index) => <Glyph key={index} name={index < lampsLit ? 'lampLit' : 'lampDark'} />)}
+        </p>
+        <ul className="slips" aria-label="Notes for the Party">
+          {findings.map((finding, index) => {
+            const active = focus === finding.kind;
+            return (
+              <li key={finding.kind}>
+                <Painted
+                  kind="slip"
+                  tag="button"
+                  className={active ? 'slip active' : 'slip'}
+                  data={{ seed: index + 3, active }}
+                  aria-pressed={active}
+                  title={[finding.title, ...finding.details].join('\n')}
+                  onClick={() => onFocus(active ? null : finding.kind)}
+                >
+                  <Glyph name={FINDING_GLYPHS[finding.kind]} className="slip-icon" colour={RARITY_COLOUR.rare} />
+                  <span className="slip-text">
+                    {finding.kind === 'loot' ? <Gems {...loot} /> : <strong>{finding.title}</strong>}
+                    {active && finding.kind !== 'loot' && finding.details.map((line) => <span key={line} className="slip-detail">{line}</span>)}
+                  </span>
+                </Painted>
+              </li>
+            );
+          })}
+        </ul>
+        <StandingOrders priority={priority} flagged={focus === 'picks'} dispatch={dispatch} />
       </div>
       <div className="send-dock">
-        <button type="button" className="lit-button send-back" onClick={() => alert('Mockup: the Party would set out again.')}>
-          Send the Party back
-        </button>
+        <Painted
+          kind="bell"
+          tag="button"
+          className={ringing ? 'bell ringing' : 'bell'}
+          aria-label="Send the Party back"
+          title="Send the Party back"
+          onClick={() => {
+            setRinging(true);
+            setTimeout(() => setRinging(false), 700);
+          }}
+          onAnimationEnd={() => setRinging(false)}
+        />
+        <span className="send-plate" aria-hidden="true">Send</span>
       </div>
     </Painted>
   );
 }
 
-/* ---------- The dossier: one Hero in full, with index tabs for the others. ---------- */
+/* ---------- The dossier: one Hero in full, with busts for the others. ---------- */
 
 function SkillRow({ hero, skill, flagged, dispatch }: { hero: HeroView; skill: SkillView; flagged: boolean; dispatch: (action: PlayerAction) => void }) {
   const locked = lockText(skill);
+  const canSpend = skill.refusal === null;
   return (
-    <li className={`skill-row${skill.rank > 0 ? '' : ' unlearned'}${flagged && skill.refusal === null ? ' flagged' : ''}`} tabIndex={0}>
+    <li className={`skill-row${skill.rank > 0 ? '' : ' unlearned'}${flagged && canSpend ? ' flagged' : ''}`} tabIndex={0}>
       <span className="skill-name">{skill.name}</span>
       <span className="skill-pips" aria-label={`Rank ${skill.rank} of ${skill.maxRank}`}>
-        {Array.from({ length: skill.maxRank }, (_, index) => (
-          <span key={index} className={index < skill.rank ? 'pip lit' : 'pip'} />
-        ))}
+        {Array.from({ length: skill.maxRank }, (_, index) =>
+          index === skill.rank && canSpend ? (
+            <button key={index} type="button" className="pip next" aria-label={`Spend a point on ${skill.name}`} title="Spend a point" onClick={() => dispatch({ type: 'spendSkillPoint', heroId: hero.id, skillId: skill.id })} />
+          ) : (
+            <span key={index} className={index < skill.rank ? 'pip lit' : 'pip'} />
+          ),
+        )}
       </span>
-      <button type="button" aria-label={`Spend a point on ${skill.name}`} disabled={skill.refusal !== null} onClick={() => dispatch({ type: 'spendSkillPoint', heroId: hero.id, skillId: skill.id })}>
-        +
-      </button>
       <Painted kind="slip" className="skill-chit" data={{ seed: skill.step + 20 }}>
         <strong>{skill.name}</strong>
         <span className="chit-facts">{skillFacts(skill)}</span>
@@ -221,107 +404,138 @@ interface DossierProps {
   readonly selected: ItemView | null;
   readonly flaggedStat: ItemStat | null;
   readonly flagSkills: boolean;
+  readonly onEquip: (itemId: number, hero: HeroView) => void;
   readonly dispatch: (action: PlayerAction) => void;
 }
 
-function Dossier({ heroes, heroIndex, onHero, slot, onSlot, selected, flaggedStat, flagSkills, dispatch }: DossierProps) {
+function HeroTabs({ heroes, heroIndex, onHero, onEquip }: Pick<DossierProps, 'heroes' | 'heroIndex' | 'onHero' | 'onEquip'>) {
+  return (
+    <nav className="dossier-tabs" role="tablist" aria-label="Heroes">
+      {heroes.map((other, index) => (
+        <button
+          key={other.id}
+          type="button"
+          role="tab"
+          aria-selected={index === heroIndex}
+          aria-label={`${other.name}${other.unspentPoints > 0 ? `, ${other.unspentPoints} skill points to spend` : ''}`}
+          title={other.name}
+          className="dossier-tab"
+          onClick={() => onHero(index)}
+          {...equipDrop(other, onEquip)}
+        >
+          <Bust hero={other} className="tab-bust" />
+          {other.unspentPoints > 0 && <span className="tab-points">{other.unspentPoints}</span>}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
+function Dossier({ heroes, heroIndex, onHero, slot, onSlot, selected, flaggedStat, flagSkills, onEquip, dispatch }: DossierProps) {
   const hero = heroes[heroIndex] ?? heroes[0]!;
   const nameOf = (id: string) => hero.skills.find((skill) => skill.id === id)?.name ?? id;
-  const moveOrder = (index: number, by: number) => {
-    const order = [...hero.order];
-    const [skill] = order.splice(index, 1);
-    if (!skill) return;
-    order.splice(index + by, 0, skill);
-    dispatch({ type: 'setSkillOrder', heroId: hero.id, order });
-  };
   const comparing = selected && selected.slot === slot ? selected : null;
+  const className = CLASS_TEXT[hero.id] ?? hero.id;
   return (
     <section className="dossier" aria-label="The Party">
-      <nav className="dossier-tabs" role="tablist" aria-label="Heroes">
-        {heroes.map((other, index) => (
-          <button key={other.id} type="button" role="tab" aria-selected={index === heroIndex} className="dossier-tab" onClick={() => onHero(index)}>
-            {other.name}
-            {other.unspentPoints > 0 && <span className="tab-points" title={`${other.unspentPoints} skill points to spend`}>{other.unspentPoints}</span>}
-          </button>
-        ))}
-      </nav>
+      <HeroTabs heroes={heroes} heroIndex={heroIndex} onHero={onHero} onEquip={onEquip} />
       <Painted kind="folder" className="folder">
         <div className="folder-page">
-        <div className="dossier-top">
-          <Painted kind="portrait" className="portrait" data={{ hero: hero.id, oil: (hero.oil / hero.stats.maxOil).toFixed(2) }} />
-          <div className="dossier-id">
-            <Painted kind="nameplate" className="nameplate"><span className="label">{CLASS_TEXT[hero.id] ?? hero.id}</span></Painted>
-            <p className="dossier-name">{hero.name} <span className="hint">· level {hero.level}</span></p>
-            <div className="gauge-row"><span>XP</span><Painted kind="gauge" className="gauge-art" data={{ kind: 'oil', fill: (hero.xp / hero.xpToNext).toFixed(3) }} /><small>{hero.xp} / {hero.xpToNext}</small></div>
-            <div className="gauge-row"><span>Health</span><Painted kind="gauge" className="gauge-art" data={{ kind: 'health', fill: (hero.health / hero.stats.maxHealth).toFixed(3) }} /><small>{Math.round(hero.health)}</small></div>
-            <div className="gauge-row"><span>Oil</span><Painted kind="gauge" className="gauge-art" data={{ kind: 'oil', fill: (hero.oil / hero.stats.maxOil).toFixed(3) }} /><small>{Math.floor(hero.oil)}</small></div>
+          <div className="dossier-top">
+            <div className="portrait-wrap" {...equipDrop(hero, onEquip)}>
+              <Painted kind="portrait" className="portrait" data={{ hero: hero.id, oil: (hero.oil / hero.stats.maxOil).toFixed(2) }} />
+              <Painted kind="medallion" tag="span" className="level-medallion" title={`Level ${hero.level}`} aria-label={`Level ${hero.level}`}>{hero.level}</Painted>
+            </div>
+            <div className="dossier-id">
+              <Painted kind="nameplate" className="nameplate"><span className="label">{hero.name}</span></Painted>
+              {className !== hero.name && <p className="dossier-class">{className}</p>}
+              <div className="gauge-row" title={`Experience: ${hero.xp} of ${hero.xpToNext}`}><Glyph name="star" label="Experience" /><Painted kind="gauge" className="gauge-art" data={{ kind: 'oil', fill: (hero.xp / hero.xpToNext).toFixed(3) }} /><small>{Math.round((hero.xp / hero.xpToNext) * 100)}%</small></div>
+              <div className="gauge-row" title={`Health: ${Math.round(hero.health)} of ${Math.round(hero.stats.maxHealth)}`}><Glyph name="maxHealth" label="Health" /><Painted kind="gauge" className="gauge-art" data={{ kind: 'health', fill: (hero.health / hero.stats.maxHealth).toFixed(3) }} /><small>{Math.round(hero.health)}</small></div>
+              <div className="gauge-row" title={`Oil: ${Math.floor(hero.oil)} of ${hero.stats.maxOil}`}><Glyph name="flame" label="Oil" /><Painted kind="gauge" className="gauge-art" data={{ kind: 'oil', fill: (hero.oil / hero.stats.maxOil).toFixed(3) }} /><small>{Math.floor(hero.oil)}</small></div>
+            </div>
           </div>
-        </div>
 
-        <div className="dossier-middle">
-          <ul className="gear" aria-label={`${hero.name}'s gear`}>
-            {SLOTS.map((gearSlot) => {
-              const worn = hero.equipment[gearSlot];
-              return (
-                <li key={gearSlot} className={gearSlot === slot ? 'gear-slot active' : 'gear-slot'}>
-                  <button type="button" className="gear-pick" onClick={() => onSlot(gearSlot)} aria-pressed={gearSlot === slot}>
-                    <PixelIcon name={gearSlot} className={`slot-icon slot-icon-${worn?.rarity ?? 'empty'}`} />
-                    <span>
-                      <span className="hint gear-slot-name">{SLOT_TEXT[gearSlot]}</span>
-                      {worn ? <span className={`rarity-${worn.rarity}`}>{worn.name}</span> : <span className="hint">Empty</span>}
-                    </span>
-                  </button>
-                  {worn && (
-                    <button type="button" className="gear-off" title="Unequip" aria-label={`Unequip ${worn.name}`} onClick={() => dispatch({ type: 'unequipItem', heroId: hero.id, slot: gearSlot })}>
-                      ×
+          <div className="dossier-middle">
+            <ul className="gear" aria-label={`${hero.name}'s gear`}>
+              {SLOTS.map((gearSlot) => {
+                const worn = hero.equipment[gearSlot];
+                return (
+                  <li key={gearSlot} className={gearSlot === slot ? 'gear-slot active' : 'gear-slot'} {...equipDrop(hero, onEquip)}>
+                    <button
+                      type="button"
+                      className="gear-pick"
+                      onClick={() => onSlot(gearSlot)}
+                      aria-pressed={gearSlot === slot}
+                      aria-label={`${SLOT_TEXT[gearSlot]}: ${worn ? worn.name : 'empty'}`}
+                      title={worn ? worn.name : `${SLOT_TEXT[gearSlot]}: empty`}
+                      draggable={Boolean(worn)}
+                      onDragStart={(event) => event.dataTransfer.setData(WORN_TYPE, gearSlot)}
+                    >
+                      <Glyph name={gearSlot} className={`slot-glyph slot-${worn?.rarity ?? 'empty'}`} />
+                      {worn ? (
+                        <span className="gear-worn">
+                          <span className={`rarity-${worn.rarity}`}>{baseName(worn)}</span>
+                          <StatChips item={worn} />
+                        </span>
+                      ) : (
+                        <span className="hint">—</span>
+                      )}
                     </button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-          <div className="stats">
-            {STAT_ROWS.map(({ stat, label, value }) => {
-              const change = comparing ? statChange(comparing, hero, stat) : 0;
-              return (
-                <p key={stat} className={`ledger-line${flaggedStat === stat ? ' flagged' : ''}`}>
-                  <span>{label}</span>
-                  <span>
-                    {value(hero)}
-                    {change !== 0 && <em className={stat === 'speed' ? (change > 0 ? 'stat-gain' : 'stat-loss') : change > 0 ? 'stat-gain' : 'stat-loss'}> {formatChange(stat, change)}</em>}
-                  </span>
-                </p>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="dossier-skills">
-          <div className={flagSkills ? 'skills flagged' : 'skills'}>
-            <h3>{hero.skills[0]?.branch} <span className="hint">· {hero.unspentPoints} to spend</span></h3>
-            <ul>
-              {hero.skills.map((skill) => (
-                <SkillRow key={skill.id} hero={hero} skill={skill} flagged={flagSkills} dispatch={dispatch} />
-              ))}
+                    {worn && (
+                      <button type="button" className="gear-off" title="Take off" aria-label={`Take off ${worn.name}`} onClick={() => dispatch({ type: 'unequipItem', heroId: hero.id, slot: gearSlot })}>
+                        <Glyph name="lift" />
+                      </button>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
+            <div className="stats">
+              {STAT_ROWS.map(({ stat, label, value }) => {
+                const change = comparing ? statChange(comparing, hero, stat) : 0;
+                return (
+                  <p key={stat} className={`stat-line${flaggedStat === stat ? ' flagged' : ''}`} title={label}>
+                    <Glyph name={STAT_GLYPH[stat]} label={label} />
+                    <span className="stat-value">{value(hero)}</span>
+                    {change !== 0 && <em className={change > 0 ? 'stat-gain' : 'stat-loss'}>{formatChange(stat, change)}</em>}
+                  </p>
+                );
+              })}
+            </div>
           </div>
-          <div className="skill-order">
-            <h3>In Battle</h3>
-            <ol>
-              {hero.order.map((id, index) => (
-                <li key={id}>
-                  <span>{nameOf(id)}</span>
-                  <button type="button" aria-label={`Move ${nameOf(id)} earlier`} disabled={index === 0} onClick={() => moveOrder(index, -1)}>↑</button>
-                  <button type="button" aria-label={`Move ${nameOf(id)} later`} disabled={index === hero.order.length - 1} onClick={() => moveOrder(index, 1)}>↓</button>
-                </li>
-              ))}
-              <li className="hint">then the basic attack</li>
-            </ol>
-            <button type="button" className="respec" disabled={hero.pointsSpent === 0} onClick={() => dispatch({ type: 'respec', heroId: hero.id })}>
-              Respec, free
-            </button>
+
+          <div className="dossier-skills">
+            <div className={flagSkills ? 'skills flagged' : 'skills'}>
+              <h3>
+                {hero.skills[0]?.branch}
+                {hero.unspentPoints > 0 && <span className="embers" title={`${hero.unspentPoints} skill points to spend`}>{Array.from({ length: Math.min(hero.unspentPoints, 8) }, (_, index) => <Glyph key={index} name="flame" />)}</span>}
+                <button type="button" className="respec" disabled={hero.pointsSpent === 0} aria-label="Respec, free" title="Snuff out every skill and spend again. Free." onClick={() => dispatch({ type: 'respec', heroId: hero.id })}>
+                  <Glyph name="snuffer" />
+                </button>
+              </h3>
+              <ul>
+                {hero.skills.map((skill) => (
+                  <SkillRow key={skill.id} hero={hero} skill={skill} flagged={flagSkills} dispatch={dispatch} />
+                ))}
+              </ul>
+            </div>
+            <div className="skill-order" aria-label="Skill order in Battle">
+              <h3><Glyph name="battle" label="In Battle" /></h3>
+              <Reorder
+                items={hero.order}
+                className="rune-stones"
+                label={nameOf}
+                onMove={(order) => dispatch({ type: 'setSkillOrder', heroId: hero.id, order })}
+                render={(id, index) => (
+                  <>
+                    <span className="rune-index">{index + 1}</span>
+                    <span>{nameOf(id)}</span>
+                  </>
+                )}
+                after={<li className="rune-last" title="Then the basic attack" aria-label="Then the basic attack"><Glyph name={hero.equipment.weapon ? 'weapon' : 'power'} /></li>}
+              />
+            </div>
           </div>
-        </div>
         </div>
       </Painted>
     </section>
@@ -342,38 +556,36 @@ function markFor(item: ItemView, hero: HeroView): Mark {
   return 'mixed';
 }
 
-function Changes({ item, hero, limit = 3 }: { item: ItemView; hero: HeroView; limit?: number }) {
-  const keys = changedStats(item, [hero]).slice(0, limit);
-  if (keys.length === 0) return <>No change</>;
-  return (
-    <>
-      {keys.map((key) => {
-        const change = statChange(item, hero, key);
-        return <span key={key} className={change > 0 ? 'ink-gain' : 'ink-loss'}>{formatChange(key, change)} {STAT_TEXT[key]} </span>;
-      })}
-    </>
-  );
-}
-
-function ItemChit({ item, heroes, onEquip }: { item: ItemView; heroes: readonly HeroView[] | null; onEquip: (item: ItemView, hero: HeroView) => void }) {
+function ItemChit({ item, heroes, onEquip }: { item: ItemView; heroes: readonly HeroView[] | null; onEquip: (itemId: number, hero: HeroView) => void }) {
   return (
     <Painted kind="slip" className="item-chit" data={{ seed: 77 }}>
       <strong className={`chit-name rarity-${item.rarity}-ink`}>{item.name}</strong>
-      <span className="chit-facts">{SLOT_TEXT[item.slot]}{item.reach ? `, ${item.reach}` : ''} · needs level {item.levelRequirement}</span>
-      <span>{itemStatsText(item.stats)}</span>
+      <span className="chit-facts">
+        <Glyph name={item.slot} />
+        {item.reach && <span>{capital(item.reach)}</span>}
+        <span className="chit-level" title={`Needs level ${item.levelRequirement}`}><Glyph name="level" />{item.levelRequirement}</span>
+      </span>
+      <StatChips item={item} />
       {heroes && (
-        <ul className="on-each">
-          {heroes.map((other) => (
-            <li key={other.id}>
-              <span className="on-each-name">{other.name}</span>
-              <span className="on-each-changes"><Changes item={item} hero={other} /></span>
-              {other.level < item.levelRequirement ? (
-                <span className="chit-lock">Level {item.levelRequirement}</span>
-              ) : (
-                <button type="button" onClick={() => onEquip(item, other)}>Equip</button>
-              )}
-            </li>
-          ))}
+        <ul className="on-each" aria-label="Equip on">
+          {heroes.map((other) => {
+            const locked = other.level < item.levelRequirement;
+            return (
+              <li key={other.id}>
+                <button
+                  type="button"
+                  className="on-each-pick"
+                  disabled={locked}
+                  aria-label={locked ? `${other.name} needs level ${item.levelRequirement}` : `Equip on ${other.name}`}
+                  title={locked ? `${other.name}: needs level ${item.levelRequirement}` : `Equip on ${other.name}`}
+                  onClick={() => onEquip(item.id, other)}
+                >
+                  <Bust hero={other} className="chit-bust" />
+                  {locked ? <span className="chip loss"><Glyph name="lock" />{item.levelRequirement}</span> : <ChangeChips item={item} hero={other} limit={3} />}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </Painted>
@@ -396,52 +608,83 @@ interface StrongboxProps {
   readonly onSelect: (key: string) => void;
   readonly lidOpen: boolean;
   readonly onLid: () => void;
-  readonly onEquip: (item: ItemView, hero: HeroView) => void;
+  readonly onEquip: (itemId: number, hero: HeroView) => void;
+  readonly onUnequip: (slot: Slot) => void;
   readonly refusal: string;
 }
 
-function Strongbox({ stash, heroes, hero, slot, onSlot, rarity, onRarity, stat, onStat, sort, onSort, selectedKey, onSelect, lidOpen, onLid, onEquip, refusal }: StrongboxProps) {
+function Filters({ rarity, onRarity, stat, onStat, sort, onSort }: Pick<StrongboxProps, 'rarity' | 'onRarity' | 'stat' | 'onStat' | 'sort' | 'onSort'>) {
+  const sortIndex = SORTS.findIndex((entry) => entry.sort === sort);
+  const current = SORTS[sortIndex] ?? SORTS[0]!;
+  return (
+    <div className="strongbox-filters">
+      <span className="toggles" role="group" aria-label="Rarity">
+        {RARITIES.map((each) => (
+          <button key={each} type="button" aria-pressed={rarity === each} aria-label={capital(each)} title={`Only ${each}`} onClick={() => onRarity(rarity === each ? 'all' : each)}>
+            <Glyph name="gem" colour={RARITY_COLOUR[each]} />
+          </button>
+        ))}
+      </span>
+      <span className="toggles" role="group" aria-label="Has stat">
+        {STATS.map((each) => (
+          <button key={each} type="button" aria-pressed={stat === each} aria-label={capital(STAT_TEXT[each])} title={`Only with ${STAT_TEXT[each]}`} onClick={() => onStat(stat === each ? 'all' : each)}>
+            <Glyph name={STAT_GLYPH[each]} />
+          </button>
+        ))}
+      </span>
+      <button type="button" className="sort-toggle" aria-label={`${current.label}. Change the order`} title={current.label} onClick={() => onSort(SORTS[(sortIndex + 1) % SORTS.length]!.sort)}>
+        <Glyph name={current.glyph} colour={RARITY_COLOUR.rare} />
+      </button>
+    </div>
+  );
+}
+
+function Strongbox(props: StrongboxProps) {
+  const { stash, heroes, hero, slot, onSlot, rarity, stat, sort, selectedKey, onSelect, lidOpen, onLid, onEquip, onUnequip, refusal } = props;
   const groups = useMemo(() => groupItems(queryStash(stash, { sort, slot, rarity, stat })), [stash, sort, slot, rarity, stat]);
   const selected = groups.find((group) => group.key === selectedKey) ?? groups[0] ?? null;
-  const empty = <p className="hint">Nothing for this Slot{rarity !== 'all' || stat !== 'all' ? ' with these filters' : ''}.</p>;
+  const empty = <p className="hint empty-box">Nothing here.</p>;
+  const dragItem = (item: ItemView) => ({
+    draggable: true,
+    onDragStart: (event: DragEvent) => {
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData(ITEM_TYPE, String(item.id));
+    },
+  });
   return (
-    <Painted kind="strongbox" tag="section" className={lidOpen ? 'strongbox open' : 'strongbox'} data={{ open: lidOpen }} aria-label="Stash">
+    <Painted
+      kind="strongbox"
+      tag="section"
+      className={lidOpen ? 'strongbox open' : 'strongbox'}
+      data={{ open: lidOpen }}
+      aria-label="Stash"
+      onDragOver={(event: DragEvent) => {
+        if (event.dataTransfer.types.includes(WORN_TYPE)) event.preventDefault();
+      }}
+      onDrop={(event: DragEvent) => {
+        const worn = event.dataTransfer.getData(WORN_TYPE) as Slot;
+        if (worn) onUnequip(worn);
+      }}
+    >
+      <button type="button" className="lid" aria-expanded={lidOpen} aria-label={lidOpen ? 'Lower the lid' : 'Lift the lid'} title={lidOpen ? 'Lower the lid' : 'Lift the lid'} onClick={onLid} />
+      <h2 className="sr-only">Strongbox</h2>
       <div className="strongbox-head">
-        <h2>Strongbox</h2>
-        <span className="hint">{stash.length} items</span>
-        <button type="button" className="lid-handle" aria-expanded={lidOpen} onClick={onLid}>
-          {lidOpen ? 'Lower the lid' : 'Lift the lid'}
-        </button>
-      </div>
-      {lidOpen ? (
-        <nav className="slot-tabs" aria-label="Slot">
-          {SLOTS.map((each) => (
-            <button key={each} type="button" aria-pressed={each === slot} onClick={() => onSlot(each)}>
-              <PixelIcon name={each} /> {SLOT_TEXT[each]}
-            </button>
-          ))}
-        </nav>
-      ) : (
-        <p className="strongbox-for">{SLOT_TEXT[slot]} items, compared on <strong>{hero.name}</strong></p>
-      )}
-      <div className="strongbox-filters">
-        <select aria-label="Rarity" value={rarity} onChange={(event) => onRarity(event.target.value as Rarity | 'all')}>
-          <option value="all">Any rarity</option>
-          <option value="common">Common</option>
-          <option value="magic">Magic</option>
-          <option value="rare">Rare</option>
-        </select>
-        <select aria-label="Has stat" value={stat} onChange={(event) => onStat(event.target.value as ItemStat | 'all')}>
-          <option value="all">Any stat</option>
-          {(Object.keys(STAT_TEXT) as ItemStat[]).map((key) => (
-            <option key={key} value={key}>{STAT_TEXT[key]}</option>
-          ))}
-        </select>
-        <select aria-label="Sort" value={sort} onChange={(event) => onSort(event.target.value as StashSort)}>
-          <option value="rarity">By rarity</option>
-          <option value="newest">Newest</option>
-          <option value="levelRequirement">By level</option>
-        </select>
+        {lidOpen ? (
+          <nav className="slot-tabs" aria-label="Slot">
+            {SLOTS.map((each) => (
+              <button key={each} type="button" aria-pressed={each === slot} aria-label={SLOT_TEXT[each]} title={SLOT_TEXT[each]} onClick={() => onSlot(each)}>
+                <Glyph name={each} />
+              </button>
+            ))}
+          </nav>
+        ) : (
+          <span className="strongbox-for" title={`${SLOT_TEXT[slot]} items, compared on ${hero.name}`}>
+            <Bust hero={hero} className="for-bust" />
+            <Glyph name={slot} label={SLOT_TEXT[slot]} />
+          </span>
+        )}
+        <Filters {...props} />
+        <span className="box-count" title={`${stash.length} items in the Stash`}>{stash.length}</span>
       </div>
       {refusal && <p className="stamp stamp-refused" role="alert">{refusal}</p>}
       {lidOpen ? (
@@ -449,10 +692,10 @@ function Strongbox({ stash, heroes, hero, slot, onSlot, rarity, onRarity, stat, 
           <ul className="tag-grid">
             {groups.map((group, index) => (
               <li key={group.key} style={{ '--i': Math.min(index, 24) } as React.CSSProperties}>
-                <button type="button" className={`tag tag-${group.item.rarity}${group.key === selected?.key ? ' active' : ''}`} onClick={() => onSelect(group.key)}>
-                  <PixelIcon name={group.item.slot} className={`slot-icon slot-icon-${group.item.rarity}`} />
-                  <span className={`tag-name rarity-${group.item.rarity}`}>{group.item.name}</span>
+                <button type="button" className={`tag tag-${group.item.rarity}${group.key === selected?.key ? ' active' : ''}`} title={group.item.name} onClick={() => onSelect(group.key)} {...dragItem(group.item)}>
+                  <span className={`tag-name rarity-${group.item.rarity}`}>{baseName(group.item)}</span>
                   {group.count > 1 && <span className="tag-count">×{group.count}</span>}
+                  <StatChips item={group.item} />
                   <span className="tag-marks">
                     {heroes.map((each) => {
                       const mark = markFor(group.item, each);
@@ -469,23 +712,14 @@ function Strongbox({ stash, heroes, hero, slot, onSlot, rarity, onRarity, stat, 
       ) : (
         <>
           <ul className="strongbox-rows">
-            {groups.map((group) => {
-              const changes = changedStats(group.item, [hero]).slice(0, 2);
-              return (
-                <li key={group.key}>
-                  <button type="button" className={group.key === selected?.key ? 'box-row active' : 'box-row'} onClick={() => onSelect(group.key)}>
-                    <PixelIcon name={group.item.slot} className={`slot-icon slot-icon-${group.item.rarity}`} />
-                    <span className={`box-name rarity-${group.item.rarity}`}>{group.item.name}{group.count > 1 && <span className="hint"> ×{group.count}</span>}</span>
-                    <span className="box-change">
-                      {changes.map((key) => {
-                        const change = statChange(group.item, hero, key);
-                        return <span key={key} className={change > 0 ? 'stat-gain' : 'stat-loss'}>{formatChange(key, change)} {STAT_TEXT[key]}</span>;
-                      })}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
+            {groups.map((group) => (
+              <li key={group.key}>
+                <button type="button" className={group.key === selected?.key ? 'box-row active' : 'box-row'} title={group.item.name} onClick={() => onSelect(group.key)} {...dragItem(group.item)}>
+                  <span className={`box-name rarity-${group.item.rarity}`}>{baseName(group.item)}{group.count > 1 && <span className="hint"> ×{group.count}</span>}</span>
+                  <ChangeChips item={group.item} hero={hero} limit={3} />
+                </button>
+              </li>
+            ))}
             {groups.length === 0 && <li>{empty}</li>}
           </ul>
           {selected && <ItemChit item={selected.item} heroes={heroes} onEquip={onEquip} />}
@@ -503,7 +737,7 @@ interface SpineProps {
   readonly onHero: (index: number) => void;
   readonly slot: Slot;
   readonly selected: ItemView | null;
-  readonly onEquip: (item: ItemView, hero: HeroView) => void;
+  readonly onEquip: (itemId: number, hero: HeroView) => void;
 }
 
 function Spine({ heroes, heroIndex, onHero, slot, selected, onEquip }: SpineProps) {
@@ -511,28 +745,34 @@ function Spine({ heroes, heroIndex, onHero, slot, selected, onEquip }: SpineProp
     <section className="spine" aria-label="The Party">
       {heroes.map((each, index) => {
         const worn = each.equipment[slot];
+        const locked = selected ? each.level < selected.levelRequirement : false;
         return (
-          <Painted key={each.id} kind="folder" className={index === heroIndex ? 'spine-card active' : 'spine-card'}>
+          <Painted key={each.id} kind="folder" className={index === heroIndex ? 'spine-card active' : 'spine-card'} {...equipDrop(each, onEquip)}>
             <button type="button" className="spine-pick" aria-pressed={index === heroIndex} onClick={() => onHero(index)}>
-              <Painted kind="portrait" className="spine-portrait" data={{ frame: 'bust', hero: each.id, oil: (each.oil / each.stats.maxOil).toFixed(2) }} />
+              <span className="spine-bust-wrap">
+                <Bust hero={each} className="spine-portrait" />
+                <Painted kind="medallion" tag="span" className="level-medallion small" aria-label={`Level ${each.level}`}>{each.level}</Painted>
+              </span>
               <span className="spine-who">
                 <strong>{each.name}</strong>
-                <span className="hint">Level {each.level}</span>
+                <span className="spine-worn" title={worn ? worn.name : 'Empty'}>
+                  <Glyph name={slot} className={`slot-glyph slot-${worn?.rarity ?? 'empty'}`} />
+                  {worn ? <span className={`rarity-${worn.rarity}`}>{baseName(worn)}</span> : <span className="hint">—</span>}
+                </span>
               </span>
             </button>
-            <p className="spine-worn">
-              <span className="hint">{SLOT_TEXT[slot]}: </span>
-              {worn ? <span className={`rarity-${worn.rarity}`}>{worn.name}</span> : <span className="hint">empty</span>}
-            </p>
             {selected && selected.slot === slot && (
-              <div className="spine-compare">
-                <span className="spine-changes"><Changes item={selected} hero={each} limit={4} /></span>
-                {each.level < selected.levelRequirement ? (
-                  <span className="spine-lock">Needs level {selected.levelRequirement}</span>
-                ) : (
-                  <button type="button" onClick={() => onEquip(selected, each)}>Equip</button>
-                )}
-              </div>
+              <button
+                type="button"
+                className="spine-compare"
+                disabled={locked}
+                aria-label={locked ? `${each.name} needs level ${selected.levelRequirement}` : `Equip on ${each.name}`}
+                title={locked ? `Needs level ${selected.levelRequirement}` : `Equip on ${each.name}`}
+                onClick={() => onEquip(selected.id, each)}
+              >
+                {locked ? <span className="chip loss"><Glyph name="lock" />{selected.levelRequirement}</span> : <ChangeChips item={selected} hero={each} limit={4} />}
+                {!locked && <Glyph name="equip" className="equip-glyph" />}
+              </button>
             )}
           </Painted>
         );
@@ -596,10 +836,9 @@ function Desk() {
     const transition = start.call(document, () => flushSync(swap)) as { finished: Promise<void> };
     void transition.finished.finally(() => delete document.documentElement.dataset.lid);
   };
-  const equip = (item: ItemView, target: HeroView) => {
-    const result = dispatch({ type: 'equipItem', heroId: target.id, itemId: item.id });
-    setRefusal(result.ok ? '' : (REFUSAL_TEXT as Record<string, string>)[result.reason ?? ''] ?? 'Refused.');
-  };
+  const report = (result: { ok: boolean; reason?: string }) => setRefusal(result.ok ? '' : (REFUSAL_TEXT as Record<string, string>)[result.reason ?? ''] ?? 'Refused.');
+  const equip = (itemId: number, target: HeroView) => report(dispatch({ type: 'equipItem', heroId: target.id, itemId }));
+  const unequip = (from: Slot) => report(dispatch({ type: 'unequipItem', heroId: hero.id, slot: from }));
   const selected = (groups.find((group) => group.key === selectedKey) ?? groups[0])?.item ?? null;
 
   return (
@@ -618,17 +857,18 @@ function Desk() {
         {lidOpen ? (
           <Spine heroes={view.heroes} heroIndex={heroIndex} onHero={setHeroIndex} slot={slot} selected={selected} onEquip={equip} />
         ) : (
-        <Dossier
-          heroes={view.heroes}
-          heroIndex={heroIndex}
-          onHero={setHeroIndex}
-          slot={slot}
-          onSlot={setSlot}
-          selected={selected}
-          flaggedStat={focus === 'setbacks' ? (findings.find((entry) => entry.kind === 'setbacks')?.stat ?? null) : null}
-          flagSkills={focus === 'points'}
-          dispatch={dispatch}
-        />
+          <Dossier
+            heroes={view.heroes}
+            heroIndex={heroIndex}
+            onHero={setHeroIndex}
+            slot={slot}
+            onSlot={setSlot}
+            selected={selected}
+            flaggedStat={focus === 'setbacks' ? (findings.find((entry) => entry.kind === 'setbacks')?.stat ?? null) : null}
+            flagSkills={focus === 'points'}
+            onEquip={equip}
+            dispatch={dispatch}
+          />
         )}
         <Strongbox
           stash={stash}
@@ -647,6 +887,7 @@ function Desk() {
           lidOpen={lidOpen}
           onLid={toggleLid}
           onEquip={equip}
+          onUnequip={unequip}
           refusal={refusal}
         />
       </Painted>

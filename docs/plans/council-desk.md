@@ -10,6 +10,8 @@ Build [the Council desk](ui-style.md#the-council-desk) into the game, in place o
 - **Notes point rather than open.** A Finding filters the strongbox and lights the stat, Hero, or skills that answer it. Nothing replaces the report.
 - **The lid** is a view transition between pictures of the desk, so canvases don't repaint mid-swing. Reduced motion, or no support, swaps instantly.
 - **Marks state, never judge:** each tag marks, per Hero, only gains, only losses, both, or no change.
+- **Pictures over words:** stats and Pick tags are glyphs with figures, items show their base name with stat glyphs, and the report is a tally of glyphs. The full words wait on chits and tooltips, and every glyph keeps them for screen readers.
+- **The scene is the controls:** a hand bell sends the Party, the lid lifts itself, the next skill pip glows to take a point, a snuffer respecs, orders and skill order are dragged (or moved with the arrow keys), and items are equipped by clicking a Hero's bust or dragging onto one.
 - **Type roles:** the plate face on brass, the print face on paper, and figures always in the UI face. [The palette](../design.md#palette) has the table.
 
 ## Work, in order
