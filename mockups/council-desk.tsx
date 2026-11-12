@@ -297,10 +297,26 @@ interface LedgerProps {
 
 function Ledger({ findings, focus, onFocus, priority, lampsLit, dispatch }: LedgerProps) {
   const { loot } = REPORT;
-  const [pouring, setPouring] = useState(false);
+  const [phase, setPhase] = useState(0);
+  /** Opening the valve sends the Party: the wheel turns, oil runs through the glass, and the lantern takes. */
+  const send = () => {
+    if (phase > 0) return;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let step = reduced ? 7 : 0;
+    const timer = setInterval(() => {
+      step += 1;
+      setPhase(step);
+      if (step < 8) return;
+      clearInterval(timer);
+      setTimeout(() => setPhase(0), 1100);
+    }, 110);
+  };
   const deepest = REPORT.deepestFloor > 0 ? floorAt(REPORT.deepestFloor) : null;
   return (
-    <Painted kind="ledger" tag="section" className="ledger" aria-label="Away Report">
+    <Painted kind="ledger" tag="section" className="ledger" data={{ lit: phase > 0 }} aria-label="Away Report">
+      <button type="button" className={phase > 0 ? 'lantern-works open' : 'lantern-works'} aria-label="Open the valve: light the lantern and send the Party back" title="Open the valve: light the lantern and send the Party back" onClick={send}>
+        <Painted kind="lanternWorks" tag="span" className="works-art" data={{ phase, density: 2 }} />
+      </button>
       <div className="ledger-page">
         <div className="ledger-head">
           <Painted kind="seal" className="seal" title={REPORT.capped ? `Only ${describeDuration(REPORT.appliedMs)} of it counted` : undefined}>
@@ -308,19 +324,6 @@ function Ledger({ findings, focus, onFocus, priority, lampsLit, dispatch }: Ledg
           </Painted>
           <h2 className="sr-only">Away Report</h2>
           {REPORT.lampRelit && <p className="stamp stamp-lit">Relit</p>}
-          <button
-            type="button"
-            className={pouring ? 'send-lamp pouring' : 'send-lamp'}
-            aria-label="Fill the lamp and send the Party back"
-            title="Fill the lamp and send the Party back"
-            onClick={() => {
-              setPouring(true);
-              setTimeout(() => setPouring(false), 1400);
-            }}
-          >
-            <Painted kind="oilLamp" tag="span" className="oil-lamp" data={{ lit: pouring, density: 2 }} />
-            <Painted kind="oilCan" tag="span" className="oil-can" data={{ density: 2 }} />
-          </button>
         </div>
         <div className="tallies">
           <Tally glyph="stairs" label="Floors cleared">{REPORT.floorsCleared}</Tally>

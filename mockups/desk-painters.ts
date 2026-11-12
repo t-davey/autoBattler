@@ -25,20 +25,28 @@ function paintDesk(a: Art): void {
 }
 
 /** The report: a tablet of grey ashlar set in a riveted iron frame. A brass supply pipe climbs its left side and runs
- *  under the lintel to the Party's lamp, weeping oil at its joints. The lamp's light warms the stone near it and its
- *  smoke soots the top. */
+ *  under the lintel through the Party's lantern, weeping oil at its joints. The lantern's light warms the stone near
+ *  it, more when it's lit, and its smoke soots the top. */
 const STONE = ['#18181c', '#222227', '#2b2b31', '#34343b', '#3f3f47', '#4d4d56'];
 const LAMPLIT = ['#1f1914', '#2a2119', '#352a1f', '#413326', '#4e3d2d', '#5e4a36'];
 
-function paintLedger(a: Art): void {
+function paintLedger(a: Art, el: HTMLElement): void {
   const { w, h } = a;
   const frame = 5;
   const course = 9;
   const block = 22;
   const pipeX = 11;
-  const pipeY = frame + 3;
-  const lampX = w - 37;
-  const lampY = pipeY + 25;
+  // The pipe's centre runs 15.5 art pixels down; the lantern works' CSS lines up on it.
+  const pipeY = frame + 8;
+  // The light comes from the lantern works hung on the pipe, wherever the page has put it.
+  const works = el.querySelector<HTMLElement>('.lantern-works');
+  const box = el.getBoundingClientRect();
+  const at = works?.getBoundingClientRect();
+  const fine = at ? at.width / WORKS.width : 2;
+  const art = box.width / w;
+  const lampX = at ? Math.round((at.left - box.left + WORKS.flameX * fine) / art) : w - 30;
+  const lampY = at ? Math.round((at.top - box.top + (WORKS.flameY - 4) * fine) / art) : pipeY + 14;
+  const burning = el.dataset.lit === 'true';
 
   // The stone, block by block: each its own tone, bevelled light from the top left, pitted.
   for (let y = 0; y < h; y++)
@@ -59,7 +67,7 @@ function paintLedger(a: Art): void {
       if (dither(x, y, soot)) i -= 1;
       i = Math.max(0, Math.min(5, i));
       // Lamplight falls warm on the stone near the lamp, dithered off into the grey.
-      const warm = Math.max(0, 1 - Math.hypot(x - lampX, (y - lampY) * 1.15) / 52);
+      const warm = Math.max(0, 1 - Math.hypot(x - lampX, (y - lampY) * 1.15) / (burning ? 70 : 46));
       const lit = dither(x, y, warm * 0.95);
       let c = lit ? LAMPLIT[Math.min(5, i + (warm > 0.55 ? 1 : 0))]! : STONE[i]!;
       if (jx === 0 || jy === 0) c = lit ? '#140f0b' : '#101013';
@@ -80,7 +88,7 @@ function paintLedger(a: Art): void {
   // k runs 0..4 across the pipe: outline, highlight, body, shadow, outline.
   const shade = (k: number) => (k === 0 || k === 4 ? K : BRASS[k === 1 ? 5 : k === 2 ? 4 : 2]!);
   for (let y = pipeY; y < h - frame; y++) for (let k = 0; k < 5; k++) a.px(pipeX + k, y, shade(k));
-  for (let x = pipeX; x <= lampX; x++) for (let k = 0; k < 5; k++) a.px(x, pipeY + k, shade(k));
+  for (let x = pipeX; x < w - frame; x++) for (let k = 0; k < 5; k++) a.px(x, pipeY + k, shade(k));
   // The elbow, a brass casting with a rivet.
   for (let y = pipeY - 1; y < pipeY + 6; y++)
     for (let x = pipeX - 1; x < pipeX + 6; x++) {
@@ -92,7 +100,7 @@ function paintLedger(a: Art): void {
   for (const jy of joints)
     for (let y = jy - 1; y <= jy + 1; y++)
       for (let x = pipeX - 1; x <= pipeX + 4; x++) a.px(x, y, x === pipeX - 1 || x === pipeX + 4 || y !== jy ? K : BRASS[4]!);
-  for (let x = pipeX + 40; x < lampX - 6; x += 46)
+  for (let x = pipeX + 40; x < w - frame - 6; x += 46)
     for (let x2 = x - 1; x2 <= x + 1; x2++)
       for (let y = pipeY - 1; y <= pipeY + 4; y++) a.px(x2, y, y === pipeY - 1 || y === pipeY + 4 || x2 !== x ? K : BRASS[4]!);
   // A valve wheel low on the pipe, and the feed dropping down to the lamp.
@@ -103,7 +111,6 @@ function paintLedger(a: Art): void {
       if (r > 4.4) continue;
       a.px(pipeX + 2 + dx, vy + dy, r > 3.6 ? K : r > 2.4 ? (dx + dy < 0 ? BRASS[5]! : BRASS[3]!) : dx === 0 || dy === 0 ? BRASS[4]! : r < 1 ? K : IRON[1]!);
     }
-  for (let y = pipeY + 4; y < pipeY + 8; y++) for (let k = 0; k < 3; k++) a.px(lampX - 1 + k, y, k === 0 || k === 2 ? K : BRASS[4]!);
 
   // The iron frame: a bevelled strap, riveted, with brass corner caps.
   for (let y = 0; y < h; y++)
@@ -288,48 +295,147 @@ function paintPortrait(a: Art, el: HTMLElement): void {
     }
 }
 
-/** The Party's lamp, painted at twice the art density: a hurricane chimney over a glass oil font on a brass foot.
- *  Lit, the flame stands tall and throws a halo; unlit, it gutters low. */
-function paintOilLamp(a: Art, el: HTMLElement): void {
-  const { w, h } = a;
-  const lit = el.dataset.lit === 'true';
-  const cx = (w - 1) / 2;
-  const top = 3;
-  const collar = Math.round(h * 0.5);
-  const fontTop = collar + 4;
-  const stem = h - 9;
-  const flameBase = collar - 1;
-  const flameTall = lit ? Math.round(h * 0.3) : Math.round(h * 0.11);
-  a.halo(Math.round(cx), flameBase - Math.round(flameTall / 2), lit ? Math.round(w * 0.9) : Math.round(w * 0.3));
+/** The lantern works, in line on the report's supply pipe and painted at twice the art density: a valve wheel, a
+ *  sight-glass, a pressure gauge, and the Party's lantern hung from a brass junction. `data-phase` runs 0 (shut) to
+ *  8 (open): the wheel turns, oil runs through the glass, the needle climbs, and the flame stands up. */
+const WORKS = { width: 84, height: 60, pipe: 16, flameX: 69, flameY: 40 } as const;
 
-  // The chimney: a hurricane glass, narrow at the neck, swelling round the flame, sooted at the lip.
-  const chimneyHalf = (y: number) => {
-    const t = (y - top) / (collar - top);
-    if (t < 0.18) return 3.5;
-    return 3.5 + Math.sin(((t - 0.18) / 0.82) * Math.PI) * (w / 2 - 10) + (t > 0.9 ? 2 : 0);
+function paintLanternWorks(a: Art, el: HTMLElement): void {
+  const phase = Math.max(0, Math.min(8, Number(el.dataset.phase ?? 0)));
+  const open = phase / 8;
+  const { w } = a;
+  const py = WORKS.pipe;
+  const lx = WORKS.flameX;
+  const IR = ['#14151a', '#1e2027', '#2a2d35', '#3c404a', '#5a606c'];
+  const brassRow = [K, BRASS[5]!, BRASS[4]!, BRASS[4]!, BRASS[3]!, BRASS[3]!, BRASS[2]!, K];
+
+  const flameTall = Math.round(5 + 8 * Math.min(1, phase / 4));
+  const flameBase = 45;
+  a.halo(lx, flameBase - Math.round(flameTall / 2), Math.round(8 + 14 * open));
+
+  // The pipe, straight through, with a coupling at each end where it meets the painted pipe behind.
+  for (let x = 0; x < w; x++) for (let k = 0; k < 8; k++) a.px(x, py - 4 + k, brassRow[k]!);
+  const coupling = (x0: number, x1: number) => {
+    for (let y = py - 6; y <= py + 5; y++)
+      for (let x = x0; x <= x1; x++) {
+        const edge = x === x0 || x === x1 || y === py - 6 || y === py + 5;
+        a.px(x, y, edge ? K : y < py - 2 ? BRASS[5]! : y < py + 2 ? BRASS[4]! : BRASS[2]!);
+      }
   };
-  for (let y = top; y < collar; y++) {
-    const half = chimneyHalf(y);
-    for (let x = 0; x < w; x++) {
-      const d = x - cx;
-      if (Math.abs(d) > half + 0.5) continue;
-      const edge = Math.abs(d) > half - 0.5 || y === top;
-      let c = 'rgb(170 190 205 / 0.16)';
-      if (d < -half + 2.5 && d > -half + 0.5 && y > top + 6) c = 'rgb(235 244 250 / 0.55)';
-      if (d > half - 2.5 && d < half - 0.5 && y > top + 10) c = 'rgb(200 215 225 / 0.28)';
-      if (y < top + 5 && dither(x, y, 1 - (y - top) / 5)) c = 'rgb(34 28 24 / 0.85)';
-      a.px(x, y, edge ? (d < 0 ? 'rgb(120 130 140)' : K) : c);
+  coupling(0, 3);
+  coupling(w - 4, w - 1);
+
+  // The valve: a stem collar on the pipe and a spoked brass wheel that turns as it opens.
+  const vx = 10;
+  for (let y = py - 3; y <= py + 3; y++) for (let x = vx - 3; x <= vx + 3; x++) a.px(x, y, Math.abs(x - vx) === 3 || Math.abs(y - py) === 3 ? K : IR[3]!);
+  for (let dy = -7; dy <= 7; dy++)
+    for (let dx = -7; dx <= 7; dx++) {
+      const r = Math.hypot(dx, dy);
+      if (r > 7.2 || r < 5.4) continue;
+      a.px(vx + dx, py + dy, r > 6.6 || r < 5.9 ? K : dx + dy < 0 ? BRASS[5]! : BRASS[3]!);
     }
+  for (let s = 0; s < 4; s++) {
+    const angle = (s * Math.PI) / 2 + (phase * Math.PI) / 8;
+    for (let r = 1.5; r < 6; r += 0.5) a.px(Math.round(vx + Math.cos(angle) * r), Math.round(py + Math.sin(angle) * r), BRASS[4]!);
+  }
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) a.px(vx + dx, py + dy, dx === 0 && dy === 0 ? BRASS[5]! : K);
+
+  // The sight-glass: a glass length of pipe between brass collars. Shut, the oil lies still; open, it runs.
+  const g0 = 20;
+  const g1 = 41;
+  for (const cx of [g0, g1])
+    for (let y = py - 5; y <= py + 4; y++)
+      for (let x = cx - 1; x <= cx + 1; x++) a.px(x, y, x === cx - 1 || x === cx + 1 || y === py - 5 || y === py + 4 ? K : BRASS[4]!);
+  for (let x = g0 + 2; x <= g1 - 2; x++)
+    for (let y = py - 3; y <= py + 2; y++) {
+      let c = 'rgb(150 170 185 / 0.35)';
+      const full = open > 0 ? py - 3 : py;
+      if (y >= full) c = dither(x, y, 0.5) ? FLAME.oil : FLAME.oilMid;
+      if (y === full && open === 0) c = FLAME.core;
+      if (y === py - 3 && open === 0) c = 'rgb(230 240 248 / 0.6)';
+      if (open > 0 && (x - g0 - phase * 3 + (y & 1) * 5) % 7 === 0 && y < py + 2) c = FLAME.core;
+      a.px(x, y, c);
+    }
+  for (const y of [py - 4, py + 3]) for (let x = g0 + 2; x <= g1 - 2; x++) a.px(x, y, K);
+
+  // The gauge: a brass-ringed dial on a stem, its needle climbing towards the red.
+  const gx = 50;
+  const gy = 6;
+  for (let y = gy + 5; y < py - 4; y++) for (let x = gx - 1; x <= gx + 1; x++) a.px(x, y, x === gx ? IR[4]! : K);
+  for (let dy = -6; dy <= 6; dy++)
+    for (let dx = -6; dx <= 6; dx++) {
+      const r = Math.hypot(dx, dy);
+      if (r > 6.2) continue;
+      let c = r > 5.6 ? K : r > 4.4 ? (dx + dy < 0 ? BRASS[5]! : BRASS[3]!) : '#e6dcc0';
+      if (r <= 4.4 && r > 3.4) {
+        const deg = ((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360;
+        if (deg > 195 && deg < 345 && Math.round(deg) % 35 < 9) c = deg > 315 ? '#b03e32' : K;
+      }
+      a.px(gx + dx, gy + dy, c);
+    }
+  const needle = ((200 + 135 * open) * Math.PI) / 180;
+  for (let r = 0; r <= 3.6; r += 0.4) a.px(Math.round(gx + Math.cos(needle) * r), Math.round(gy + Math.sin(needle) * r), '#9a2a20');
+  a.px(gx, gy, K);
+
+  // The lantern's vent chimney, slotted, with a spire and two pinnacles.
+  for (let y = 3; y < py - 6; y++)
+    for (let x = lx - 3; x <= lx + 3; x++) {
+      const edge = x === lx - 3 || x === lx + 3;
+      a.px(x, y, edge ? K : y % 2 === 0 && x > lx - 2 && x < lx + 2 ? K : x < lx ? IR[4]! : IR[2]!);
+    }
+  for (let x = lx - 5; x <= lx + 5; x++) a.px(x, 3, x === lx - 5 || x === lx + 5 ? K : BRASS[4]!);
+  for (let x = lx - 5; x <= lx + 5; x++) a.px(x, 2, K);
+  a.px(lx, 1, BRASS[5]!);
+  a.px(lx, 0, BRASS[4]!);
+  a.px(lx - 1, 1, K);
+  a.px(lx + 1, 1, K);
+  for (const px of [lx - 9, lx + 9]) {
+    a.px(px, py - 9, BRASS[5]!);
+    a.px(px, py - 8, BRASS[4]!);
+    a.px(px, py - 7, BRASS[3]!);
   }
 
-  // The flame: a teardrop, blue at the wick, white at its heart, orange at the tip.
+  // The junction: a riveted brass box the pipe runs through, the lantern hung beneath it.
+  const j0 = lx - 9;
+  const j1 = lx + 9;
+  for (let y = py - 6; y <= py + 6; y++)
+    for (let x = j0; x <= j1; x++) {
+      const edge = x === j0 || x === j1 || y === py - 6 || y === py + 6;
+      const t = (x - j0) / (j1 - j0);
+      a.px(x, y, edge ? K : y === py - 5 ? BRASS[5]! : BRASS[t < 0.3 ? 5 : t < 0.7 ? 4 : 2]!);
+    }
+  for (const [rx, ry] of [[j0 + 2, py - 4], [j1 - 3, py - 4], [j0 + 2, py + 3], [j1 - 3, py + 3]] as const) rivet(a, rx, ry);
+  // A pointed arch embossed on its face.
+  for (let y = py - 3; y <= py + 4; y++) {
+    const half = y < py ? (y - (py - 3)) * 0.7 : 2.1;
+    a.px(Math.round(lx - half - 0.5), y, BRASS[1]!);
+    a.px(Math.round(lx + half + 0.5), y, BRASS[5]!);
+  }
+
+  // The housing: three lancet panes in an iron cage, glass warmed by the flame.
+  const h0 = py + 7;
+  const h1 = 50;
+  const panes = [[lx - 8, lx - 4], [lx - 2, lx + 2], [lx + 4, lx + 8]] as const;
+  for (let y = h0; y <= h1; y++)
+    for (let x = lx - 9; x <= lx + 9; x++) {
+      const pane = panes.find(([p0, p1]) => x >= p0 && x <= p1);
+      const arch = pane ? Math.abs(x - (pane[0] + pane[1]) / 2) - (y - h0) * 0.9 : 0;
+      if (!pane || arch > 0) {
+        const outer = x === lx - 9 || x === lx + 9;
+        a.px(x, y, outer ? K : x < lx ? IR[3]! : IR[2]!);
+        continue;
+      }
+      const glow = Math.max(0, 1 - Math.hypot(x - lx, (y - flameBase + flameTall / 2) * 0.8) / (6 + 10 * open));
+      a.px(x, y, dither(x, y, glow) ? 'rgb(255 196 110 / 0.55)' : 'rgb(150 170 185 / 0.22)');
+    }
+  // The flame, behind the cage's middle bars.
   for (let i = 0; i < flameTall; i++) {
     const y = flameBase - i;
     const t = i / Math.max(1, flameTall - 1);
     const shape = t < 0.25 ? 0.55 + 1.8 * t : Math.pow(1 - (t - 0.25) / 0.75, 0.8);
-    const half = (lit ? 3.4 : 1.6) * shape;
-    for (let x = 0; x < w; x++) {
-      const d = Math.abs(x - cx);
+    const half = (1.6 + 1.6 * open) * shape;
+    for (let x = lx - 4; x <= lx + 4; x++) {
+      const d = Math.abs(x - lx);
       if (d > half + 0.5) continue;
       let c = FLAME.flame;
       if (d < half * 0.5 && t < 0.6) c = FLAME.core;
@@ -338,199 +444,20 @@ function paintOilLamp(a: Art, el: HTMLElement): void {
       a.px(x, y, c);
     }
   }
-  // The wick.
-  a.px(Math.floor(cx), flameBase + 1, K);
-  a.px(Math.ceil(cx), flameBase + 1, K);
+  for (const x of [lx - 3, lx + 3]) for (let y = h0 + 4; y <= h1; y++) a.px(x, y, K);
+  for (let x = lx - 9; x <= lx + 9; x++) a.px(x, h0 + 9, K);
 
-  // The burner: a crenellated brass gallery, with the wick's winding knob on the right.
-  const gallery = Math.round(w / 2 - 5);
-  for (let y = collar; y < fontTop; y++)
-    for (let x = Math.round(cx - gallery); x <= Math.round(cx + gallery); x++) {
-      if (y === collar && x & 1) continue;
-      const edge = y === fontTop - 1 || x === Math.round(cx - gallery) || x === Math.round(cx + gallery);
-      a.px(x, y, edge ? K : BRASS[x < cx - 2 ? 5 : x < cx + 3 ? 4 : 2]!);
-    }
-  const kx = Math.round(cx + gallery + 2);
-  const ky = collar + 2;
-  for (let y = -2; y <= 2; y++) for (let x = -1; x <= 2; x++) a.px(kx + x, ky + y, Math.abs(y) === 2 || x === 2 ? K : x === -1 ? BRASS[2]! : BRASS[4]!);
-
-  // The font: a round glass belly, oil in its lower half, a meniscus and two highlights.
-  const rx = w / 2 - 1.5;
-  const ry = (stem - fontTop) / 2;
-  const fy = fontTop + ry;
-  const oilLine = fy - ry * 0.15;
-  for (let y = fontTop; y < stem; y++)
-    for (let x = 0; x < w; x++) {
-      const d = Math.hypot((x - cx) / rx, (y - fy) / ry);
-      if (d > 1) continue;
-      let c: string;
-      if (d > 0.9) c = d > 0.95 || x > cx ? K : 'rgb(120 130 140)';
-      else if (y > oilLine) {
-        const deep = (y - oilLine) / (fy + ry - oilLine);
-        c = dither(x, y, 1 - deep) ? FLAME.oil : deep > 0.6 ? FLAME.oilDeep : FLAME.oilMid;
-        if (y === Math.ceil(oilLine)) c = FLAME.core;
-      } else c = 'rgb(170 190 205 / 0.18)';
-      if (d <= 0.9 && d > 0.62 && x < cx && y < fy - ry * 0.2 && (x + y) % 3 === 0) c = 'rgb(240 246 250 / 0.7)';
-      if (d <= 0.9 && x > cx + rx * 0.45 && x < cx + rx * 0.6 && y > fy && y < fy + ry * 0.5) c = 'rgb(255 226 160 / 0.6)';
-      a.px(x, y, c);
-    }
-
-  // The foot: a short stem, then a stepped brass base.
-  for (let y = stem; y < h; y++) {
-    const step = y - stem;
-    const half = step < 3 ? 2.5 : Math.min(w / 2 - 1, 4 + (step - 3) * 3);
-    for (let x = 0; x < w; x++) {
-      const d = x - cx;
-      if (Math.abs(d) > half + 0.5) continue;
-      const edge = Math.abs(d) > half - 0.5 || y === h - 1 || (step === 3 && Math.abs(d) > 2.5);
-      const t = (d + half) / (2 * half);
-      a.px(x, y, edge ? K : BRASS[t < 0.25 ? 5 : t < 0.55 ? 4 : t < 0.8 ? 3 : 2]!);
+  // The font: a brass bowl of oil, then a hanging finial.
+  for (let y = h1 + 1; y <= h1 + 5; y++) {
+    const half = 9 - (y - h1 - 1) * 1.4;
+    for (let x = Math.round(lx - half); x <= Math.round(lx + half); x++) {
+      const edge = x === Math.round(lx - half) || x === Math.round(lx + half) || y === h1 + 5;
+      a.px(x, y, edge ? K : y === h1 + 1 ? BRASS[5]! : x < lx ? BRASS[4]! : BRASS[2]!);
     }
   }
-}
-
-/** A steampunk-gothic oiler, painted at twice the art density: a blackened iron vessel on a brass foot, a lancet
- *  sight-glass showing the oil, a thumb pump crowned with a spire, a pointed-arch handle, and a curving brass spout
- *  with a valve wheel at its root. */
-function paintOilCan(a: Art): void {
-  const { w, h } = a;
-  const cx = Math.round(w * 0.58);
-  const y0 = Math.round(h * 0.38);
-  const y1 = h - 4;
-  const halfAt = (y: number) => 6 + ((y - y0) / (y1 - y0)) * 3;
-  const IRONISH = ['#14151a', '#1e2027', '#2a2d35', '#3c404a', '#5a606c'];
-
-  // The spout, behind the vessel: a brass curve from the shoulder up to a flared tip.
-  const sx = cx - halfAt(y0 + 3);
-  const sy = y0 + 3;
-  const ex = 3;
-  const ey = 4;
-  const qx = 4;
-  const qy = y0 + 2;
-  const points: { x: number; y: number; r: number }[] = [];
-  for (let t = 0; t <= 1; t += 0.02) {
-    const x = (1 - t) * (1 - t) * sx + 2 * (1 - t) * t * qx + t * t * ex;
-    const y = (1 - t) * (1 - t) * sy + 2 * (1 - t) * t * qy + t * t * ey;
-    points.push({ x, y, r: t < 0.5 ? 1.6 : 1.1 });
-  }
-  for (const { x, y, r } of points)
-    for (let dy = -3; dy <= 3; dy++)
-      for (let dx = -3; dx <= 3; dx++) if (Math.hypot(dx, dy) <= r + 1) a.px(Math.round(x + dx), Math.round(y + dy), K);
-  for (const { x, y, r } of points)
-    for (let dy = -2; dy <= 2; dy++)
-      for (let dx = -2; dx <= 2; dx++) if (Math.hypot(dx, dy) <= r) a.px(Math.round(x + dx), Math.round(y + dy), dy < 0 ? BRASS[5]! : dy === 0 ? BRASS[4]! : BRASS[2]!);
-  // The flared tip.
-  for (let dx = -2; dx <= 2; dx++) {
-    a.px(ex + dx, ey - 3, K);
-    a.px(ex + dx, ey - 2, Math.abs(dx) === 2 ? K : BRASS[5]!);
-  }
-
-  // The handle: a pointed gothic arch on the far side, iron, with a brass finial at its peak.
-  const hTop = y0 + 1;
-  const hBottom = y1 - 5;
-  for (let y = hTop; y <= hBottom; y++) {
-    const t = (y - hTop) / (hBottom - hTop);
-    const reach = 6.5 * (1 - Math.pow(Math.abs(2 * t - 0.7) / 1.3, 1.4));
-    const x = Math.round(cx + halfAt(y) + Math.max(1, reach));
-    a.px(x - 1, y, K);
-    a.px(x, y, IRONISH[4]!);
-    a.px(x + 1, y, IRONISH[2]!);
-    a.px(x + 2, y, K);
-  }
-  const peakY = Math.round(hTop + (hBottom - hTop) * 0.35);
-  const peakX = Math.round(cx + halfAt(peakY) + 6.5) + 1;
-  for (let i = 0; i < 3; i++) {
-    a.px(peakX + 2 + i, peakY - i, i === 2 ? BRASS[5]! : BRASS[3]!);
-    a.px(peakX + 2 + i, peakY - i + 1, K);
-  }
-
-  // The vessel: blackened iron, lit from the left, brass-banded and riveted.
-  for (let y = y0; y <= y1; y++) {
-    const half = halfAt(y);
-    for (let x = 0; x < w; x++) {
-      const d = x - cx;
-      if (Math.abs(d) > half + 0.5) continue;
-      const edge = Math.abs(d) > half - 0.5 || y === y0;
-      const t = (d + half) / (2 * half);
-      let c = IRONISH[t < 0.12 ? 2 : t < 0.32 ? 4 : t < 0.55 ? 3 : t < 0.8 ? 2 : 1]!;
-      const band = y === y0 + 1 || y === y0 + 2 || y === y1 - 1;
-      if (band) c = BRASS[t < 0.3 ? 5 : t < 0.65 ? 4 : 2]!;
-      if (y === y0 + 1 && Math.round(d) % 3 === 0) c = BRASS[5]!;
-      if (!band && noise(x, y, 97) < 0.03) c = '#5a3220';
-      a.px(x, y, edge ? K : c);
-    }
-  }
-
-  // The lancet window: a pointed-arch sight-glass in a brass frame, oil standing in its lower half.
-  const archTop = y0 + 4;
-  const archBottom = y1 - 3;
-  const archHalf = 2.5;
-  const level = archTop + Math.round((archBottom - archTop) * 0.45);
-  for (let y = archTop - 1; y <= archBottom + 1; y++) {
-    const rise = y - archTop;
-    const half = rise < 3 ? rise * 0.85 : archHalf;
-    for (let x = cx - 5; x <= cx + 5; x++) {
-      const d = Math.abs(x - cx);
-      if (y <= archBottom && d <= half) {
-        let c = y > level ? (dither(x, y, 0.5) ? FLAME.oil : FLAME.oilMid) : '#20262c';
-        if (y === level + 1) c = FLAME.core;
-        if (y < level && x === cx - 1 && rise > 2) c = 'rgb(220 235 245 / 0.55)';
-        a.px(x, y, c);
-      } else if (d <= half + 1.2 || (y === archBottom + 1 && d <= archHalf + 1)) a.px(x, y, x < cx ? BRASS[5]! : BRASS[3]!);
-    }
-  }
-  // Gauge ticks beside the glass.
-  for (let y = archTop + 3; y <= archBottom; y += 2) a.px(cx + 5, y, BRASS[4]!);
-
-  // The shoulder: a brass dome, and the thumb pump rising from it, crowned with a gothic spire.
-  for (let y = y0 - 3; y < y0; y++) {
-    const half = 3 + (y - (y0 - 3)) * 1.2;
-    for (let x = Math.round(cx - half); x <= Math.round(cx + half); x++) {
-      const edge = x === Math.round(cx - half) || x === Math.round(cx + half) || y === y0 - 3;
-      a.px(x, y, edge ? K : x < cx ? BRASS[5]! : BRASS[3]!);
-    }
-  }
-  for (let y = 5; y < y0 - 3; y++) {
-    a.px(cx - 1, y, K);
-    a.px(cx, y, IRONISH[4]!);
-    a.px(cx + 1, y, K);
-  }
-  // The pump's cross-handle, and the spire on it.
-  for (let x = cx - 4; x <= cx + 4; x++) {
-    a.px(x, 4, K);
-    a.px(x, 5, Math.abs(x - cx) === 4 ? K : x < cx ? BRASS[5]! : BRASS[3]!);
-    a.px(x, 6, K);
-  }
-  for (let i = 1; i <= 3; i++) {
-    a.px(cx, 4 - i, i === 3 ? BRASS[5]! : BRASS[4]!);
-    a.px(cx - 1, 4 - i, K);
-    a.px(cx + 1, 4 - i, K);
-  }
-  a.px(cx, 0, K);
-
-  // A valve wheel where the spout leaves the vessel: a brass ring of spokes round a dark hub.
-  const vx = Math.round(sx) - 1;
-  const vy = sy - 1;
-  for (let dy = -3; dy <= 3; dy++)
-    for (let dx = -3; dx <= 3; dx++) {
-      const r = Math.hypot(dx, dy);
-      if (r > 3.4) continue;
-      let c: string | null = null;
-      if (r > 2.6) c = K;
-      else if (r > 1.6) c = dx + dy < 0 ? BRASS[5]! : BRASS[3]!;
-      else if (dx === 0 || dy === 0) c = BRASS[4]!;
-      else c = IRONISH[0]!;
-      if (r <= 0.5) c = K;
-      a.px(vx + dx, vy + dy, c);
-    }
-
-  // The foot: a flared brass plinth.
-  for (let y = y1 + 1; y < h; y++) {
-    const half = halfAt(y1) + (y - y1);
-    for (let x = Math.round(cx - half); x <= Math.round(cx + half); x++) {
-      const edge = x === Math.round(cx - half) || x === Math.round(cx + half) || y === h - 1;
-      a.px(x, y, edge ? K : x < cx - half / 3 ? BRASS[5]! : x < cx + half / 3 ? BRASS[4]! : BRASS[2]!);
-    }
+  for (let y = h1 + 6; y < WORKS.height; y++) {
+    const half = y === h1 + 7 ? 1.5 : y > h1 + 7 ? 0 : 1;
+    for (let x = Math.round(lx - half - 1); x <= Math.round(lx + half + 1); x++) a.px(x, y, Math.abs(x - lx) > half ? K : x < lx ? BRASS[5]! : BRASS[3]!);
   }
 }
 
@@ -571,8 +498,7 @@ function paintMedallion(a: Art): void {
 }
 
 Object.assign(PAINTERS, {
-  oilLamp: paintOilLamp,
-  oilCan: paintOilCan,
+  lanternWorks: paintLanternWorks,
   seal: paintSeal,
   medallion: paintMedallion,
   desk: paintDesk,

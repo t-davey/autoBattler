@@ -11,9 +11,9 @@ Build [the Council desk](ui-style.md#the-council-desk) into the game, in place o
 - **The lid** is a view transition between pictures of the desk, so canvases don't repaint mid-swing. Reduced motion, or no support, swaps instantly.
 - **Marks state, never judge:** each tag marks, per Hero, only gains, only losses, both, or no change.
 - **Pictures over words:** stats and Pick tags are glyphs with figures, items show their base name with stat glyphs, and the report is a tally of glyphs. The full words wait on chits and tooltips, and every glyph keeps them for screen readers.
-- **The scene is the controls:** filling the lamp from its oil can, beside the wax seal, sends the Party; Hero tabs are class glyphs (funeral bread, trap, wick pole); the lid lifts itself, the next skill pip glows to take a point, a snuffer respecs, orders and skill order are dragged (or moved with the arrow keys), and items are equipped by clicking a Hero's bust or dragging onto one.
-- **The report is a stone tablet:** grey ashlar in a riveted iron frame, a brass supply pipe climbing it to feed the Party's lamp, the lamp's light and soot on the stone. The Oil's pipes are part of Town before anyone asks where they lead.
-- **Fine art at whole screen pixels:** the lamp, the oiler, and the class glyphs paint at twice the art density, always 2 screen pixels each, so they stay crisp at either art pixel.
+- **The scene is the controls:** opening the valve on the supply pipe sends the Party: the wheel turns, oil runs through a sight-glass, a gauge climbs, and the in-line lantern takes; Hero tabs are class glyphs (funeral bread, trap, wick pole); the lid lifts itself, the next skill pip glows to take a point, a snuffer respecs, orders and skill order are dragged (or moved with the arrow keys), and items are equipped by clicking a Hero's bust or dragging onto one.
+- **The report is a stone tablet:** grey ashlar in a riveted iron frame, a brass supply pipe climbing it and running through the Party's in-line lantern, its light and soot on the stone. The Oil's pipes are part of Town before anyone asks where they lead.
+- **Fine art at whole screen pixels:** the lantern works and the class glyphs paint at twice the art density, always 2 screen pixels each, so they stay crisp at either art pixel.
 - **Type roles:** the plate face on brass, the print face on paper, and figures always in the UI face. [The palette](../design.md#palette) has the table.
 
 ## Work, in order
