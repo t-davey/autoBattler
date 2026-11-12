@@ -307,6 +307,7 @@ function Ledger({ findings, focus, onFocus, priority, lampsLit, dispatch }: Ledg
             <span>{describeDuration(REPORT.elapsedMs)}</span>
           </Painted>
           <h2 className="sr-only">Away Report</h2>
+          {REPORT.lampRelit && <p className="stamp stamp-lit">Relit</p>}
           <button
             type="button"
             className={pouring ? 'send-lamp pouring' : 'send-lamp'}
@@ -320,7 +321,6 @@ function Ledger({ findings, focus, onFocus, priority, lampsLit, dispatch }: Ledg
             <Painted kind="oilLamp" tag="span" className="oil-lamp" data={{ lit: pouring, density: 2 }} />
             <Painted kind="oilCan" tag="span" className="oil-can" data={{ density: 2 }} />
           </button>
-          {REPORT.lampRelit && <p className="stamp stamp-lit">Relit</p>}
         </div>
         <div className="tallies">
           <Tally glyph="stairs" label="Floors cleared">{REPORT.floorsCleared}</Tally>

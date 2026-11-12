@@ -296,62 +296,147 @@ function paintOilLamp(a: Art, el: HTMLElement): void {
   }
 }
 
-/** A tin of lamp oil, painted at twice the art density: a riveted can, brass-banded, its long spout raised. */
+/** A steampunk-gothic oiler, painted at twice the art density: a blackened iron vessel on a brass foot, a lancet
+ *  sight-glass showing the oil, a thumb pump crowned with a spire, a pointed-arch handle, and a curving brass spout
+ *  with a valve wheel at its root. */
 function paintOilCan(a: Art): void {
   const { w, h } = a;
-  const x0 = 9;
-  const x1 = w - 8;
-  const y0 = Math.round(h * 0.36);
-  const y1 = h - 1;
-  const mid = (x0 + x1) / 2;
-  // The spout, tapering from the can's shoulder up towards the lamp.
-  const sx = x0 + 1;
-  const sy = y0 + 5;
-  const tipX = 1;
-  const tipY = 2;
-  const steps = Math.max(sx - tipX, sy - tipY);
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    const x = Math.round(sx + (tipX - sx) * t);
-    const y = Math.round(sy + (tipY - sy) * t);
-    const thick = t < 0.5 ? 2 : 1;
-    for (let k = -thick - 1; k <= thick + 1; k++) {
-      const edge = Math.abs(k) === thick + 1;
-      a.px(x, y + k, edge ? K : k < 0 ? IRON[5]! : IRON[3]!);
-    }
+  const cx = Math.round(w * 0.58);
+  const y0 = Math.round(h * 0.38);
+  const y1 = h - 4;
+  const halfAt = (y: number) => 6 + ((y - y0) / (y1 - y0)) * 3;
+  const IRONISH = ['#14151a', '#1e2027', '#2a2d35', '#3c404a', '#5a606c'];
+
+  // The spout, behind the vessel: a brass curve from the shoulder up to a flared tip.
+  const sx = cx - halfAt(y0 + 3);
+  const sy = y0 + 3;
+  const ex = 3;
+  const ey = 4;
+  const qx = 4;
+  const qy = y0 + 2;
+  const points: { x: number; y: number; r: number }[] = [];
+  for (let t = 0; t <= 1; t += 0.02) {
+    const x = (1 - t) * (1 - t) * sx + 2 * (1 - t) * t * qx + t * t * ex;
+    const y = (1 - t) * (1 - t) * sy + 2 * (1 - t) * t * qy + t * t * ey;
+    points.push({ x, y, r: t < 0.5 ? 1.6 : 1.1 });
   }
-  // The can: a cylinder, lit from the left.
-  for (let y = y0; y <= y1; y++)
-    for (let x = x0; x <= x1; x++) {
-      const corner = y < y0 + 2 && (x < x0 + 2 - (y - y0) || x > x1 - 2 + (y - y0));
-      if (corner) continue;
-      const edge = x === x0 || x === x1 || y === y0 || y === y1 || (y === y0 + 1 && (x === x0 + 1 || x === x1 - 1));
-      const t = (x - x0) / (x1 - x0);
-      let c = IRON[t < 0.15 ? 3 : t < 0.35 ? 5 : t < 0.6 ? 4 : t < 0.85 ? 3 : 2]!;
-      const band = y === y0 + 4 || y === y0 + 5 || y === y1 - 4 || y === y1 - 3;
-      if (band) c = BRASS[t < 0.35 ? 5 : t < 0.7 ? 4 : 2]!;
-      if ((y === y0 + 4 || y === y1 - 4) && (x - x0) % 5 === 2) c = BRASS[5]!;
-      if (!band && noise(x, y, 91) < 0.04) c = '#6a3a22';
-      if (!band && noise(x >> 1, y >> 1, 93) < 0.05 && t > 0.6) c = '#4a2a1a';
+  for (const { x, y, r } of points)
+    for (let dy = -3; dy <= 3; dy++)
+      for (let dx = -3; dx <= 3; dx++) if (Math.hypot(dx, dy) <= r + 1) a.px(Math.round(x + dx), Math.round(y + dy), K);
+  for (const { x, y, r } of points)
+    for (let dy = -2; dy <= 2; dy++)
+      for (let dx = -2; dx <= 2; dx++) if (Math.hypot(dx, dy) <= r) a.px(Math.round(x + dx), Math.round(y + dy), dy < 0 ? BRASS[5]! : dy === 0 ? BRASS[4]! : BRASS[2]!);
+  // The flared tip.
+  for (let dx = -2; dx <= 2; dx++) {
+    a.px(ex + dx, ey - 3, K);
+    a.px(ex + dx, ey - 2, Math.abs(dx) === 2 ? K : BRASS[5]!);
+  }
+
+  // The handle: a pointed gothic arch on the far side, iron, with a brass finial at its peak.
+  const hTop = y0 + 1;
+  const hBottom = y1 - 5;
+  for (let y = hTop; y <= hBottom; y++) {
+    const t = (y - hTop) / (hBottom - hTop);
+    const reach = 6.5 * (1 - Math.pow(Math.abs(2 * t - 0.7) / 1.3, 1.4));
+    const x = Math.round(cx + halfAt(y) + Math.max(1, reach));
+    a.px(x - 1, y, K);
+    a.px(x, y, IRONISH[4]!);
+    a.px(x + 1, y, IRONISH[2]!);
+    a.px(x + 2, y, K);
+  }
+  const peakY = Math.round(hTop + (hBottom - hTop) * 0.35);
+  const peakX = Math.round(cx + halfAt(peakY) + 6.5) + 1;
+  for (let i = 0; i < 3; i++) {
+    a.px(peakX + 2 + i, peakY - i, i === 2 ? BRASS[5]! : BRASS[3]!);
+    a.px(peakX + 2 + i, peakY - i + 1, K);
+  }
+
+  // The vessel: blackened iron, lit from the left, brass-banded and riveted.
+  for (let y = y0; y <= y1; y++) {
+    const half = halfAt(y);
+    for (let x = 0; x < w; x++) {
+      const d = x - cx;
+      if (Math.abs(d) > half + 0.5) continue;
+      const edge = Math.abs(d) > half - 0.5 || y === y0;
+      const t = (d + half) / (2 * half);
+      let c = IRONISH[t < 0.12 ? 2 : t < 0.32 ? 4 : t < 0.55 ? 3 : t < 0.8 ? 2 : 1]!;
+      const band = y === y0 + 1 || y === y0 + 2 || y === y1 - 1;
+      if (band) c = BRASS[t < 0.3 ? 5 : t < 0.65 ? 4 : 2]!;
+      if (y === y0 + 1 && Math.round(d) % 3 === 0) c = BRASS[5]!;
+      if (!band && noise(x, y, 97) < 0.03) c = '#5a3220';
       a.px(x, y, edge ? K : c);
     }
-  // A drip of oil down the front.
-  for (let y = y0 + 6; y < y0 + 11; y++) a.px(Math.round(mid) - 3, y, y < y0 + 10 ? FLAME.oilMid : FLAME.oil);
-  // The filler cap, knurled.
-  const cap0 = Math.round(mid) + 1;
-  for (let y = y0 - 4; y < y0; y++)
-    for (let x = cap0; x < cap0 + 6; x++) {
-      const edge = y === y0 - 4 || x === cap0 || x === cap0 + 5;
-      a.px(x, y, edge ? K : y === y0 - 3 && x % 2 ? BRASS[5]! : x < cap0 + 3 ? BRASS[4]! : BRASS[2]!);
+  }
+
+  // The lancet window: a pointed-arch sight-glass in a brass frame, oil standing in its lower half.
+  const archTop = y0 + 4;
+  const archBottom = y1 - 3;
+  const archHalf = 2.5;
+  const level = archTop + Math.round((archBottom - archTop) * 0.45);
+  for (let y = archTop - 1; y <= archBottom + 1; y++) {
+    const rise = y - archTop;
+    const half = rise < 3 ? rise * 0.85 : archHalf;
+    for (let x = cx - 5; x <= cx + 5; x++) {
+      const d = Math.abs(x - cx);
+      if (y <= archBottom && d <= half) {
+        let c = y > level ? (dither(x, y, 0.5) ? FLAME.oil : FLAME.oilMid) : '#20262c';
+        if (y === level + 1) c = FLAME.core;
+        if (y < level && x === cx - 1 && rise > 2) c = 'rgb(220 235 245 / 0.55)';
+        a.px(x, y, c);
+      } else if (d <= half + 1.2 || (y === archBottom + 1 && d <= archHalf + 1)) a.px(x, y, x < cx ? BRASS[5]! : BRASS[3]!);
     }
-  // The handle: a loop on the far side.
-  for (let y = y0 + 1; y <= y0 + 12; y++) {
-    const out = y === y0 + 1 || y === y0 + 12 ? 4 : 6;
-    for (let x = x1 + 1; x <= x1 + out; x++) {
-      const inner = x < x1 + out - 2 && y > y0 + 2 && y < y0 + 11;
-      if (inner) continue;
-      const edge = x === x1 + out || y === y0 + 1 || y === y0 + 12 || x === x1 + out - 2 || y === y0 + 3 || y === y0 + 10;
-      a.px(x, y, edge ? K : IRON[3]!);
+  }
+  // Gauge ticks beside the glass.
+  for (let y = archTop + 3; y <= archBottom; y += 2) a.px(cx + 5, y, BRASS[4]!);
+
+  // The shoulder: a brass dome, and the thumb pump rising from it, crowned with a gothic spire.
+  for (let y = y0 - 3; y < y0; y++) {
+    const half = 3 + (y - (y0 - 3)) * 1.2;
+    for (let x = Math.round(cx - half); x <= Math.round(cx + half); x++) {
+      const edge = x === Math.round(cx - half) || x === Math.round(cx + half) || y === y0 - 3;
+      a.px(x, y, edge ? K : x < cx ? BRASS[5]! : BRASS[3]!);
+    }
+  }
+  for (let y = 5; y < y0 - 3; y++) {
+    a.px(cx - 1, y, K);
+    a.px(cx, y, IRONISH[4]!);
+    a.px(cx + 1, y, K);
+  }
+  // The pump's cross-handle, and the spire on it.
+  for (let x = cx - 4; x <= cx + 4; x++) {
+    a.px(x, 4, K);
+    a.px(x, 5, Math.abs(x - cx) === 4 ? K : x < cx ? BRASS[5]! : BRASS[3]!);
+    a.px(x, 6, K);
+  }
+  for (let i = 1; i <= 3; i++) {
+    a.px(cx, 4 - i, i === 3 ? BRASS[5]! : BRASS[4]!);
+    a.px(cx - 1, 4 - i, K);
+    a.px(cx + 1, 4 - i, K);
+  }
+  a.px(cx, 0, K);
+
+  // A valve wheel where the spout leaves the vessel: a brass ring of spokes round a dark hub.
+  const vx = Math.round(sx) - 1;
+  const vy = sy - 1;
+  for (let dy = -3; dy <= 3; dy++)
+    for (let dx = -3; dx <= 3; dx++) {
+      const r = Math.hypot(dx, dy);
+      if (r > 3.4) continue;
+      let c: string | null = null;
+      if (r > 2.6) c = K;
+      else if (r > 1.6) c = dx + dy < 0 ? BRASS[5]! : BRASS[3]!;
+      else if (dx === 0 || dy === 0) c = BRASS[4]!;
+      else c = IRONISH[0]!;
+      if (r <= 0.5) c = K;
+      a.px(vx + dx, vy + dy, c);
+    }
+
+  // The foot: a flared brass plinth.
+  for (let y = y1 + 1; y < h; y++) {
+    const half = halfAt(y1) + (y - y1);
+    for (let x = Math.round(cx - half); x <= Math.round(cx + half); x++) {
+      const edge = x === Math.round(cx - half) || x === Math.round(cx + half) || y === h - 1;
+      a.px(x, y, edge ? K : x < cx - half / 3 ? BRASS[5]! : x < cx + half / 3 ? BRASS[4]! : BRASS[2]!);
     }
   }
 }
