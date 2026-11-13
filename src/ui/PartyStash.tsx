@@ -52,7 +52,7 @@ function HeroGear({ hero, active, activeSlot, onPick, onUnequip }: HeroGearProps
   const { maxHealth, power, armour, critChance, poisonResistance } = hero.stats;
   return (
     <section className={active ? 'hero-gear hero-gear-active' : 'hero-gear'} aria-label={`Gear of ${hero.name}`}>
-      <h3>{hero.name}: level {hero.level}</h3>
+      <h3>{hero.name}, {hero.className}: level {hero.level}</h3>
       <p className="hint">Health {maxHealth} · Power {power} · Armour {armour} · Crit {critChance}% · Poison resistance {poisonResistance}%</p>
       <ul>
         {SLOTS.map((slot) => {

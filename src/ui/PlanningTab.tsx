@@ -93,7 +93,7 @@ function HeroCard({ hero, dispatch }: { hero: HeroView; dispatch: Dispatch }) {
       <NameEditor hero={hero} dispatch={dispatch} onRefused={setRefusal} />
       {refusal && <p role="alert" className="refusal">{refusal}</p>}
       <p className="hero-level">
-        Level {hero.level} · {hero.xp} / {hero.xpToNext} XP · Oil {Math.floor(hero.oil)} / {hero.stats.maxOil}
+        {hero.className} · Level {hero.level} · {hero.xp} / {hero.xpToNext} XP · Oil {Math.floor(hero.oil)} / {hero.stats.maxOil}
       </p>
       <p className="hint">{statSheet(hero.stats)}</p>
       <ul className="planning-gear" aria-label={`${hero.name}'s gear`}>

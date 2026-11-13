@@ -2,7 +2,7 @@ import type { DamageType } from './battle';
 import { CLASS_IDS } from './content/party';
 import type { HeroId } from './content/skills';
 import { bankElapsed, CATCH_UP_CAP_MS, heroesOf, stateOf, stepTick, usableElapsed, type Game } from './game';
-import { unspentPoints } from './heroes';
+import { isHeroIdOf, unspentPoints } from './heroes';
 import type { ItemView } from './items';
 import { viewPick, type PickView } from './picks';
 import { frontierWall, type EventSink, type GameEvent } from './run';
@@ -156,7 +156,7 @@ export interface CatchUp {
   readonly tally: Tally;
 }
 
-const isHero = (id: string): boolean => (CLASS_IDS as readonly string[]).includes(id);
+const isHero = (id: string): boolean => CLASS_IDS.some((classId) => isHeroIdOf(id, classId));
 
 /** A Battle already under way when catch-up began shows only the damage since then. */
 function mainDamage(battleDamage: Tally['battleDamage']): Pick<AwaySetback, 'mainDamageType' | 'mainDamageShare'> {

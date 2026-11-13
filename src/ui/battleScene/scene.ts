@@ -530,7 +530,11 @@ export function createScene({ random = Math.random, shakes = true }: SceneOption
     return roomLookOf(map, floor, index);
   };
 
-  const fanOf = (unit: SceneUnit): number => (unit.id === 'sin-eater' ? -14 : unit.id === 'lamplighter' ? 14 : 0);
+  /** Spreads the walking Party across the path, first Hero furthest left. */
+  const fanOf = (unit: SceneUnit): number => {
+    const party = [...units.values()].filter((other) => other.team === 'party');
+    return (party.indexOf(unit) - (party.length - 1) / 2) * 14;
+  };
 
   const enterRoom = (next: RoomLook): void => {
     look = next;
@@ -579,6 +583,7 @@ export function createScene({ random = Math.random, shakes = true }: SceneOption
       ? view.battle.party
       : view.heroes.map((hero) => ({
           id: hero.id,
+          classId: hero.classId,
           placeholder: false,
           name: hero.name,
           row: hero.row,

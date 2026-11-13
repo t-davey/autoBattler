@@ -3,7 +3,7 @@ import type { Slot } from './content/items';
 import { FLOORS_PER_LAMP } from './content/world';
 import { GRID_HEIGHT, GRID_WIDTH, lampIndexOf, type Depth, type RoomKind } from './floors';
 import { CLASSES, xpToNextLevel } from './content/party';
-import { MAX_SKILL_RANK, rankValue, SKILL_IDS, SKILLS, type HeroId, type SkillId, type SkillKind, type SkillReach } from './content/skills';
+import { MAX_SKILL_RANK, rankValue, SKILL_IDS, SKILLS, type ClassId, type HeroId, type SkillId, type SkillKind, type SkillReach } from './content/skills';
 import { heroesOf, stateOf, type Game } from './game';
 import { heroReach, heroStats, skillRank, unspentPoints, type HeroState, type HeroStats } from './heroes';
 import { viewItem, type ItemView } from './items';
@@ -15,6 +15,8 @@ import { frontierIndex, runStretch, SETBACKS_TO_FALL_BACK } from './wall';
 
 export interface UnitView {
   readonly id: string;
+  /** A Hero's Class. Null for an enemy. */
+  readonly classId: ClassId | null;
   readonly name: string;
   readonly row: Row;
   readonly reach: Reach;
@@ -71,6 +73,8 @@ export interface SkillView {
 
 export interface HeroView {
   readonly id: HeroId;
+  readonly classId: ClassId;
+  readonly className: string;
   readonly name: string;
   /** Where the Hero stands when a Battle starts. */
   readonly row: Row;
@@ -135,11 +139,12 @@ export interface GameView {
   readonly stashRevision: number;
 }
 
-function viewTeam(battle: BattleState, team: TeamId): readonly UnitView[] {
+function viewTeam(battle: BattleState, team: TeamId, heroes: readonly HeroState[]): readonly UnitView[] {
   return battle.units
     .filter((unit) => unit.team === team)
     .map((unit) => ({
       id: unit.spec.id,
+      classId: heroes.find((hero) => hero.id === unit.spec.id)?.classId ?? null,
       name: unit.spec.name,
       placeholder: unit.spec.placeholder === true,
       row: unit.row,
@@ -183,7 +188,7 @@ function viewSkill(hero: HeroState, id: SkillId): SkillView {
       current: rank > 0 ? rankValue(id, rank, index) : null,
       next: rank < maxRank ? rankValue(id, rank + 1, index) : null,
     })),
-    refusal: spendRefusal(hero.id, hero.ranks, unspentPoints(hero), id),
+    refusal: spendRefusal(hero.classId, hero.ranks, unspentPoints(hero), id),
     blockedByWeapon: weaponBlocksSkill(heroReach(hero), skill.reach),
     free,
   };
@@ -201,8 +206,10 @@ function viewEquipped(hero: HeroState, slot: Slot): ItemView | null {
 function viewHero(hero: HeroState): HeroView {
   return {
     id: hero.id,
+    classId: hero.classId,
+    className: CLASSES[hero.classId].className,
     name: hero.name,
-    row: CLASSES[hero.id].row,
+    row: CLASSES[hero.classId].row,
     reach: heroReach(hero),
     level: hero.level,
     xp: Math.floor(hero.xp),
@@ -212,7 +219,7 @@ function viewHero(hero: HeroState): HeroView {
     oil: hero.oil,
     pointsSpent: spentPoints(hero.ranks),
     unspentPoints: unspentPoints(hero),
-    skills: SKILL_IDS.filter((id) => SKILLS[id].heroId === hero.id).map((id) => viewSkill(hero, id)),
+    skills: SKILL_IDS.filter((id) => SKILLS[id].classId === hero.classId).map((id) => viewSkill(hero, id)),
     order: [...hero.order],
     equipment: {
       weapon: viewEquipped(hero, 'weapon'),
@@ -254,7 +261,7 @@ export function viewGame(game: Game): GameView {
       setbacksToFallBack: SETBACKS_TO_FALL_BACK,
       fallenBack: frontier.fallenBack,
     },
-    battle: battle && { party: viewTeam(battle, PARTY_TEAM), enemies: viewTeam(battle, ENEMY_TEAM) },
+    battle: battle && { party: viewTeam(battle, PARTY_TEAM, heroesOf(game)), enemies: viewTeam(battle, ENEMY_TEAM, heroesOf(game)) },
     heroes: heroesOf(game).map(viewHero),
     picks: run.picks.map(viewPick),
     pickPriority: stateOf(game).pickPriority,

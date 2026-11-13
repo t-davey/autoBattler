@@ -59,6 +59,7 @@ function PartyCard({ unit }: { unit: UnitView }) {
 function heroAsUnit(hero: HeroView): UnitView {
   return {
     id: hero.id,
+    classId: hero.classId,
     name: hero.name,
     row: hero.row,
     reach: hero.reach,

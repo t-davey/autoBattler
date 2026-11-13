@@ -155,8 +155,9 @@ function takePick(world: RunWorld, moment: PickMoment, sink: EventSink): void {
   sink({ type: 'pickTaken', moment, offers: offers.map(viewPick), taken: viewPick(taken) });
 }
 
+/** Only the best Warm Hands in the Party counts. */
 function recoveryShare(heroes: readonly HeroState[]): number {
-  const rank = heroes.find((hero) => hero.id === 'lamplighter')?.ranks['warm-hands'] ?? 0;
+  const rank = Math.max(0, ...heroes.map((hero) => hero.ranks['warm-hands'] ?? 0));
   return RECOVERY_SHARE * (rank > 0 ? 1 + rankValue('warm-hands', rank) / 100 : 1);
 }
 

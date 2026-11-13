@@ -297,7 +297,7 @@ const FIGURES_BY_ID: Readonly<Record<string, Figure>> = { 'sin-eater': 'sinEater
 const FIGURES_BY_NAME: Readonly<Record<string, Figure>> = { 'Sodden Thrall': 'thrall', 'Tallow Wight': 'wight', 'Bone Chanter': 'chanter', 'Mire Bloat': 'bloat', Sporeling: 'sporeling' };
 
 /** Art isn't a game rule, so a Unit's figure is decided here rather than in the sim. */
-export const figureOf = (unit: { readonly id: string; readonly name: string; readonly placeholder?: boolean }): Figure => {
+export const figureOf = (unit: { readonly id: string; readonly name: string; readonly placeholder?: boolean; readonly classId?: string | null }): Figure => {
   if (unit.placeholder) return unit.id === 'guardian' ? 'placeholderGuardian' : 'placeholder';
-  return FIGURES_BY_ID[unit.id] ?? FIGURES_BY_NAME[unit.name] ?? 'thrall';
+  return FIGURES_BY_ID[unit.classId ?? unit.id] ?? FIGURES_BY_NAME[unit.name] ?? 'thrall';
 };

@@ -33,10 +33,10 @@ describe('createGame', () => {
   it('puts the Party in its fixed Rows', () => {
     const { phase, battle } = viewGame(started(1));
     expect(phase).toBe('battle');
-    expect(battle?.party.map(({ name, row }) => [name, row])).toEqual([
-      ['Sin-Eater', 'front'],
-      ['Warrener', 'front'],
-      ['Lamplighter', 'back'],
+    expect(battle?.party.map(({ classId, row }) => [classId, row])).toEqual([
+      ['sin-eater', 'front'],
+      ['warrener', 'front'],
+      ['lamplighter', 'back'],
     ]);
   });
 

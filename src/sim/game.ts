@@ -1,13 +1,14 @@
 import type { UnitSpec } from './battle';
 import { equipItem, renameHero, respec, setSkillOrder, spendSkillPoint, unequipItem, type BuildRefusal, type Stash } from './build';
 import type { Slot } from './content/items';
-import { CLASSES } from './content/party';
-import type { HeroId, SkillId } from './content/skills';
-import { createParty, heroUnitSpec, type HeroState } from './heroes';
+import { CLASS_IDS, CLASSES, DEFAULT_PARTY, PARTY_SIZE } from './content/party';
+import type { ClassId, HeroId, SkillId } from './content/skills';
+import { GIVEN_NAMES, SURNAMES } from './content/names';
+import { createHero, heroUnitSpec, partyIds, type HeroState } from './heroes';
 import { starterItem, type ItemId, type ItemSpec, type ItemState } from './items';
 import { DEFAULT_PICK_PRIORITY, type PickTag } from './content/picks';
 import { isPickPriority } from './picks';
-import { createRng } from './rng';
+import { createRng, nextInt, type Rng } from './rng';
 import { createRun, frontierWall, sendParty, stepRun, type EventSink, type RunWorld, type StartAt } from './run';
 import type { SkillRanks } from './skills';
 import { LAMPS } from './content/world';
@@ -19,6 +20,8 @@ export const CATCH_UP_CAP_MS = 43_200_000;
 
 export interface GameSetup {
   readonly seed: number;
+  /** The player's 3 Classes, duplicates allowed. Defaults to Sin-Eater, Warrener, and Lamplighter. */
+  readonly party?: readonly ClassId[];
   /** Starts part-way through, for tests and the balance script. */
   readonly scenario?: {
     readonly heroLevel?: number;
@@ -34,8 +37,6 @@ export interface GameSetup {
     readonly equipped?: Readonly<Partial<Record<HeroId, readonly ItemSpec[]>>>;
     /** Items already in the Stash. */
     readonly stash?: readonly ItemSpec[];
-    /** 3 different Classes in place of the preset Party, until the player picks one. */
-    readonly party?: readonly HeroId[];
   };
 }
 
@@ -72,20 +73,41 @@ function createWalls(lit: number, setbacks: number | undefined): WallState[] {
 }
 
 export function createGame(setup: GameSetup): Game {
-  const { heroLevel, skillRanks, startAt, lampLit, setbacks, battleTicks, equipped, stash, party } = setup.scenario ?? {};
+  const { heroLevel, skillRanks, startAt, lampLit, setbacks, battleTicks, equipped, stash } = setup.scenario ?? {};
+  const classes = setup.party ?? DEFAULT_PARTY;
+  // Its own stream, so names never shift the rolls that follow.
+  const names = heroNames(createRng(setup.seed ^ 0x3c6ef372), classes.length);
   let nextItemId = 1;
   const withId = (spec: ItemSpec): ItemState => ({ ...spec, id: nextItemId++ });
-  const heroes = createParty((id) => ({
-    level: heroLevel,
-    ranks: skillRanks?.[id],
-    gear: [starterItem(CLASSES[id].starterWeapon), ...(equipped?.[id] ?? [])].map(withId),
-  }), party);
+  const heroes = partyIds(classes).map((id, index) => {
+    const classId = classes[index]!;
+    return createHero(id, classId, {
+      name: names[index],
+      level: heroLevel,
+      ranks: skillRanks?.[id],
+      gear: [starterItem(CLASSES[classId].starterWeapon), ...(equipped?.[id] ?? [])].map(withId),
+    });
+  });
   const stashed = (stash ?? []).map(withId);
   const rng = createRng(setup.seed);
   // A fixed offset keeps the Pick stream apart from the main one.
   const pickRng = createRng(setup.seed ^ 0x5bd1e995);
   return gameOf({ rng, pickRng, pickPriority: [...DEFAULT_PICK_PRIORITY], tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), walls: createWalls(lampLit ? 1 : 0, setbacks), battleTicks: battleTicks ?? null, heroes, stash: stashed, nextItemId, stashRevision: 0 });
 }
+
+/** Different names for each Hero, from the provisional pool. */
+function heroNames(rng: Rng, count: number): string[] {
+  const names: string[] = [];
+  while (names.length < count) {
+    const name = `${GIVEN_NAMES[nextInt(rng, GIVEN_NAMES.length)]} ${SURNAMES[nextInt(rng, SURNAMES.length)]}`;
+    if (!names.includes(name)) names.push(name);
+  }
+  return names;
+}
+
+/** Whether a setup's Party is 3 known Classes. */
+export const isPartyChoice = (classes: readonly unknown[]): classes is readonly ClassId[] =>
+  classes.length === PARTY_SIZE && classes.every((classId) => CLASS_IDS.includes(classId as ClassId));
 
 export const heroesOf = (game: Game): readonly HeroState[] => stateOf(game).heroes;
 

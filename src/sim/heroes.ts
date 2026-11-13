@@ -1,14 +1,15 @@
 import { isNumber, isRecord, isString } from './guards';
 import type { Reach, UnitSpec } from './battle';
 import { ITEM_BASES, type Slot } from './content/items';
-import { actionIntervalFor, CLASS_IDS, CLASSES, HERO_IDS, LEVEL_CAP, xpToNextLevel } from './content/party';
-import { FREE_SKILL_RANK, SKILLS, type HeroId, type SkillId } from './content/skills';
+import { actionIntervalFor, CLASS_IDS, CLASSES, LEVEL_CAP, xpToNextLevel } from './content/party';
+import { FREE_SKILL_RANK, SKILLS, type ClassId, type HeroId, type SkillId } from './content/skills';
 import { gearStats, isEquipped, slotOf, type ItemState } from './items';
 import { defaultOrder, isFreeSkill, isLegalOrder, isRanks, spentPoints, type SkillRanks } from './skills';
 
 /** A Hero between Battles, as plain JSON-safe data. */
 export interface HeroState {
   readonly id: HeroId;
+  readonly classId: ClassId;
   name: string;
   level: number;
   /** XP towards the next level. */
@@ -23,22 +24,36 @@ export interface HeroState {
 }
 
 export interface HeroSetup {
+  readonly name?: string | undefined;
   readonly level?: number | undefined;
   readonly ranks?: SkillRanks | undefined;
   /** In order: a later item takes the Slot of an earlier one. */
   readonly gear?: readonly ItemState[] | undefined;
 }
 
-export function createHero(id: HeroId, setup: HeroSetup = {}): HeroState {
+export function createHero(id: HeroId, classId: ClassId, setup: HeroSetup = {}): HeroState {
   const ranks = { ...setup.ranks };
-  const hero: HeroState = { id, name: CLASSES[id].className, level: setup.level ?? 1, xp: 0, health: 0, oil: CLASSES[id].maxOil, ranks, order: defaultOrder(id, ranks), equipped: {} };
+  const { className, maxOil } = CLASSES[classId];
+  const hero: HeroState = { id, classId, name: setup.name ?? className, level: setup.level ?? 1, xp: 0, health: 0, oil: maxOil, ranks, order: defaultOrder(classId, ranks), equipped: {} };
   for (const item of setup.gear ?? []) hero.equipped[slotOf(item)] = item;
   hero.health = heroStats(hero).maxHealth;
   return hero;
 }
 
-export const createParty = (setupFor: (id: HeroId) => HeroSetup = () => ({}), ids: readonly HeroId[] = HERO_IDS): HeroState[] =>
-  ids.map((id) => createHero(id, setupFor(id)));
+/** Each Hero's id: its Class id, numbered from 1 when the Party holds that Class more than once. */
+export function partyIds(classes: readonly ClassId[]): HeroId[] {
+  const seen = new Map<ClassId, number>();
+  return classes.map((classId) => {
+    const count = classes.filter((other) => other === classId).length;
+    const nth = (seen.get(classId) ?? 0) + 1;
+    seen.set(classId, nth);
+    return count === 1 ? classId : (`${classId}-${nth}` as HeroId);
+  });
+}
+
+/** Whether a Hero id belongs to a Class: the Class id itself, or it with a number. */
+export const isHeroIdOf = (id: unknown, classId: ClassId): boolean =>
+  typeof id === 'string' && (id === classId || new RegExp(`^${classId}-[1-9][0-9]*$`).test(id));
 
 /** Each level past the first grants a point. */
 /** A skill's rank for this Hero: fixed for the free Class skill, 0 if unlearned. */
@@ -59,7 +74,7 @@ export interface HeroStats {
 }
 
 export function heroStats(hero: HeroState): HeroStats {
-  const stats = CLASSES[hero.id];
+  const stats = CLASSES[hero.classId];
   const gear = gearStats(Object.values(hero.equipped));
   const levels = hero.level - 1;
   return {
@@ -88,7 +103,7 @@ export function clampToMaximums(hero: HeroState): void {
 
 /** The Hero as a Unit, as the next Battle would field them. Actives come first, in order. */
 export function heroUnitSpec(hero: HeroState): UnitSpec {
-  const { row } = CLASSES[hero.id];
+  const { row } = CLASSES[hero.classId];
   const { maxHealth, power, armour, actionInterval, critChance, maxOil, poisonResistance } = heroStats(hero);
   const passives = (Object.keys(hero.ranks) as SkillId[]).filter((id) => SKILLS[id].kind === 'passive');
   return {
@@ -127,7 +142,9 @@ export function gainXp(hero: HeroState, xp: number): number[] {
 
 /** Whether saved data is a Hero this module could have made. */
 export function isHeroState(value: unknown): boolean {
-  if (!isRecord(value) || !CLASS_IDS.includes(value['id'] as HeroId)) return false;
+  if (!isRecord(value) || !CLASS_IDS.includes(value['classId'] as ClassId)) return false;
+  const classId = value['classId'] as ClassId;
+  if (!isHeroIdOf(value['id'], classId)) return false;
   const { ranks, order, level } = value;
   return (
     isString(value['name']) &&
@@ -140,7 +157,7 @@ export function isHeroState(value: unknown): boolean {
     isNumber(value['oil']) &&
     isRanks(ranks) &&
     Array.isArray(order) &&
-    isLegalOrder(value['id'] as HeroId, ranks, order) &&
+    isLegalOrder(classId, ranks, order) &&
     isEquipped(value['equipped'])
   );
 }

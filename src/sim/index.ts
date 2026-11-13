@@ -21,7 +21,7 @@ export { AFFIXES, RARITIES, SLOTS } from './content/items';
 export type { AffixDefinition, AffixId, BaseId, ItemStat, ItemStats, Rarity, Slot } from './content/items';
 export { rollItem } from './items';
 export type { ItemId, ItemSpec, ItemView, RolledAffix } from './items';
-export type { HeroId, SkillId, SkillKind, SkillReach } from './content/skills';
+export type { ClassId, HeroId, SkillId, SkillKind, SkillReach } from './content/skills';
 export { MAX_ORDERED_SKILLS } from './skills';
 export type { SpendRefusal } from './skills';
 export {
@@ -29,6 +29,7 @@ export {
   applyAction,
   CATCH_UP_CAP_MS,
   createGame,
+  isPartyChoice,
   partyUnitSpecs,
   TICK_MS,
 } from './game';

@@ -49,8 +49,8 @@ describe('the Hexer in a Game', () => {
   const hexerIn = (game: ReturnType<typeof createGame>): HeroView => viewGame(game).heroes.find((hero) => hero.id === 'hexer')!;
 
   it('starts with Chill Word and the Rot and Malediction Branches', () => {
-    const view = hexerIn(createGame({ seed: 1, scenario: { party } }));
-    expect(view).toMatchObject({ name: 'Hexer', row: 'back', order: ['chill-word'] });
+    const view = hexerIn(createGame({ seed: 1, party }));
+    expect(view).toMatchObject({ className: 'Hexer', row: 'back', order: ['chill-word'] });
     expect(view.skills.map((skill) => [skill.branch, skill.id])).toEqual([
       ['Class skill', 'chill-word'],
       ['Rot', 'sow-rot'],
@@ -63,7 +63,7 @@ describe('the Hexer in a Game', () => {
   });
 
   it('opens deeper steps only with points spent in that Branch', () => {
-    const game = createGame({ seed: 1, scenario: { party, heroLevel: 7, skillRanks: { hexer: { 'sow-rot': 3 } } } });
+    const game = createGame({ seed: 1, party, scenario: { heroLevel: 7, skillRanks: { hexer: { 'sow-rot': 3 } } } });
     const spend = (skillId: SkillId) => applyAction(game, { type: 'spendSkillPoint', heroId: 'hexer', skillId });
     expect(spend('spoiled-blood')).toEqual({ ok: false, reason: 'stepLocked' });
     expect(spend('ripening')).toEqual({ ok: true });
@@ -71,7 +71,7 @@ describe('the Hexer in a Game', () => {
   });
 
   it('saves and loads', () => {
-    const game = createGame({ seed: 1, scenario: { party } });
+    const game = createGame({ seed: 1, party });
     expect(viewGame(deserializeGame(serializeGame(game))!).heroes.map((hero) => hero.id)).toEqual(party);
   });
 });

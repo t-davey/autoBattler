@@ -1145,3 +1145,42 @@ select {
 .compare-hero-active .compare-hero-name {
   color: var(--flame);
 }
+
+.new-game {
+  max-width: 64rem;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.new-game-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.new-game-slots fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  border: 1px solid var(--iron, #4c4e54);
+}
+
+.class-choice {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0 0.5rem;
+  padding: 0.35rem;
+  cursor: pointer;
+}
+
+.class-choice .hint {
+  grid-column: 2;
+}
+
+.class-choice-chosen {
+  outline: 1px solid var(--flame, #f4b24a);
+}

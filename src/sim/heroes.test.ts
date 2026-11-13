@@ -54,7 +54,7 @@ const STRONG: GameSetup['scenario'] = { heroLevel: 40 };
 describe('levels', () => {
   it('a new Hero is level 1 with no points, and only its free Class skill in its order', () => {
     expect(heroIn(createGame({ seed: 1 }), 'warrener')).toMatchObject({
-      name: 'Warrener',
+      className: 'Warrener',
       level: 1,
       xp: 0,
       xpToNext: 60,
@@ -416,17 +416,7 @@ describe('saves', () => {
   });
 });
 
-describe('saves from before free Class skills', () => {
-  it('load from version 5 with each free Class skill added to the end of its Hero\'s order', () => {
-    const game = atLevel(3, { skillRanks: { warrener: { 'bleeders-cut': 2 } } });
-    const saved = JSON.parse(serializeGame(game)) as { version: number; game: { heroes: { order: string[] }[] } };
-    saved.version = 5;
-    for (const savedHero of saved.game.heroes) savedHero.order = savedHero.order.filter((id) => !['consume-sin', 'tainted-shaft', 'votive-spark'].includes(id));
-    const loaded = deserializeGame(JSON.stringify(saved))!;
-    expect(heroIn(loaded, 'warrener').order).toEqual(['bleeders-cut', 'tainted-shaft']);
-    expect(heroIn(loaded, 'sin-eater').order).toEqual(['consume-sin']);
-  });
-
+describe('saves and free Class skills', () => {
   it('keep a free Class skill the player left out in a current save', () => {
     const game = atLevel(3);
     applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order: [] });
