@@ -271,6 +271,8 @@ Deeper skills need 3 points spent in that Branch per step rather than 5, so a He
 
 Each Class also gets one Class-specific unique that visibly changes a skill, so 4 in total. The skills are drafted in [First playable skills](first-playable-skills.md) for the human to review, and numbers get tuned through play.
 
+On 2026-11-13 the human chose that Act 1's placeholders stay first, the player picks the Party, Town holds the whole [Economy](#economy), and loot grows to 6 Slots with uniques. [The first playable plan](plans/first-playable.md) holds the order of work.
+
 ## Proof-of-concept demo
 
 A smaller build comes before the first playable, to test one thing: is it satisfying to come back to loot, make a build decision, and see that decision beat a Wall? It has a preset Party of Sin-Eater, Warrener, and Lamplighter, one Branch each, and Floors 1–5 of the Undercroft ending in one Guardian and one Lamp. It began with Floors 1–3.
