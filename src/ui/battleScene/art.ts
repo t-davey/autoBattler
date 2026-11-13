@@ -13,6 +13,8 @@ const ramps = {
   fungus: [[28, 18, 26], [54, 30, 42], [86, 46, 54], [122, 66, 66], [158, 94, 78], [196, 132, 98]],
   wax: [[44, 38, 28], [78, 68, 46], [116, 102, 70], [152, 136, 96], [186, 170, 124], [222, 206, 158]],
   brass: [[34, 24, 12], [62, 44, 20], [96, 70, 30], [136, 102, 44], [176, 138, 62], [214, 180, 96]],
+  // Grey-blue mud from the flooded crypts, for the Drowned.
+  silt: [[16, 20, 24], [30, 36, 42], [48, 56, 62], [70, 80, 86], [96, 106, 110], [128, 138, 138]],
   // Deliberately off the palette, so stand-in content can't pass for finished art.
   placeholder: [[60, 0, 60], [100, 0, 100], [150, 0, 150], [200, 0, 200], [240, 40, 240], [255, 120, 255]],
 } as const satisfies Readonly<Record<string, readonly Rgb[]>>;
@@ -193,6 +195,95 @@ const FIGURES = {
     ellipse(-8, -7, 2, 2, 'fungus', 1), ellipse(8, -27, 3, 2, 'fungus', 1), ellipse(-11, -31, 2.5, 1.5, 'green', 1),
     dot(9, -29, 'bone', 2), dot(-9, -8, 'bone', 2), dot(-1, -15, 'green', 1), dot(4, -39, 'green', 1),
   ],
+  // The Ossuary.
+  brute: [
+    line(-5, -12, -7, -0.5, 3, 'bone'), line(4, -12, 6, -0.5, 3, 'bone'),
+    polygon([[-9, -13], [8, -13], [10, -28], [-2, -33], [-11, -26]], 'hood'),
+    box(-6, -27, 7, -25, 'bone', 1), box(-6, -23, 7, -21, 'bone', 1), box(-6, -19, 7, -17, 'bone', 1),
+    line(-9, -28, -12, -14, 3, 'bone'), ellipse(-12, -13, 2.5, 2.5, 'bone', 1),
+    box(-8, -16, -6, -12, 'rot'), box(5, -15, 7, -11, 'rot'),
+    ellipse(6, -34, 4.5, 4, 'bone', 1), box(3, -31, 10, -29, 'bone'), dot(8, -35, 'eye'), dot(4, -30, 'hood'), dot(7, -30, 'hood'),
+    box(-4, -36, 2, -33, 'bone'), dot(-3, -37, 'bone', 2), dot(0, -38, 'bone', 2),
+  ],
+  flinger: [
+    line(-2, -8, -3, -0.5, 1.5, 'bone'), line(2, -8, 3, -0.5, 1.5, 'bone'),
+    polygon([[-4, -9], [4, -9], [3, -19], [-3, -19]], 'hood'), box(-1, -18, 1, -9, 'bone'),
+    box(-3, -16, 3, -15, 'bone', 1), box(-3, -13, 3, -12, 'bone', 1),
+    line(2, -17, 7, -24, 1.5, 'bone'), line(7, -24, 9, -31, 1, 'leather'), ellipse(9.5, -32, 1.6, 1.6, 'bone', 2),
+    line(-2, -17, -5, -11, 1.5, 'bone'), ellipse(-5, -10, 2, 1.5, 'leather'), dot(-5, -10, 'bone', 2),
+    ellipse(0.5, -22.5, 3, 3, 'bone', 1), dot(1.5, -23, 'eye'), dot(0, -20.5, 'hood'), dot(2, -20.5, 'hood'),
+  ],
+  // The Drowned.
+  mourner: [
+    polygon([[-7, 0], [6, 0], [4, -20], [-4, -20]], 'silt'), box(-7, -1, 6, 0, 'silt', 1),
+    line(-5, -6, -6, -1, 1, 'silt', 2), line(1, -8, 0, -1, 1, 'silt', 2), line(4, -5, 5, -1, 1, 'silt', 2),
+    polygon([[-5, -19], [5, -19], [4, -29], [0, -33], [-4, -29]], 'silt', 1), ellipse(1.5, -24, 2.2, 2.8, 'bone'), dot(2, -25, 'eye'),
+    line(3, -17, 7, -11, 2, 'silt'), ellipse(7, -10, 1.6, 1.6, 'bone', 1),
+    dot(-3, -14, 'green', 1), dot(2, -9, 'green', 1), dot(-1, -26, 'green', 1),
+  ],
+  lurker: [
+    ellipse(0, -5, 9, 5, 'silt'), ellipse(-1, -4, 6, 3, 'silt', 1),
+    line(5, -7, 10, -2, 2, 'bone'), line(-5, -6, -10, -1, 2, 'bone'), dot(10, -2, 'bone', 2), dot(-10, -1, 'bone', 2),
+    ellipse(4, -10, 4, 3.5, 'bone', 1), dot(6, -11, 'eye'), dot(3, -11, 'eye'), box(3, -8, 7, -7, 'hood'),
+    line(-3, -9, -4, -13, 1, 'green', 1), line(0, -9, 0, -14, 1, 'green'), dot(-2, -3, 'green', 1),
+  ],
+  bellman: [
+    polygon([[-6, 0], [5, 0], [3, -21], [-3, -21]], 'silt'), box(-6, -1, 5, 0, 'silt', 1),
+    box(-1, -19, 1, -2, 'hood'), line(-4, -5, 4, -7, 1, 'silt', 2),
+    box(7, -40, 8, 0, 'leather'), box(5, -41, 11, -40, 'iron', 1),
+    polygon([[6, -39], [10, -39], [11, -32], [5, -32]], 'brass'), box(4, -32, 12, -31, 'brass', 1), dot(8, -30, 'iron', 2),
+    line(2, -17, 7, -21, 2, 'silt'), dot(7, -22, 'bone', 1),
+    polygon([[-4, -20], [4, -20], [3, -30], [-3, -30]], 'silt', 1), ellipse(1, -25, 2.5, 3, 'bone', 1), dot(2, -26, 'eye'), dot(1, -23, 'hood'),
+    dot(-2, -12, 'green', 1), dot(1, -6, 'green', 1),
+  ],
+  // The Deep Growth.
+  husk: [
+    box(-6, -6, -2, 0, 'rot'), box(2, -6, 6, 0, 'rot'),
+    ellipse(0, -13, 9, 8, 'rot'),
+    polygon([[-13, -12], [12, -12], [10, -22], [0, -27], [-11, -22]], 'fungus'), box(-13, -13, 12, -11, 'fungus', 1),
+    line(-8, -23, -10, -13, 1, 'fungus', 2), line(0, -26, 0, -13, 1, 'fungus', 2), line(7, -23, 9, -13, 1, 'fungus', 2),
+    dot(-5, -20, 'bone', 2), dot(4, -22, 'bone', 2), dot(9, -16, 'bone', 2),
+    dot(6, -8, 'eye'), box(2, -5, 7, -4, 'fungus'),
+  ],
+  weaver: [
+    polygon([[-6, 0], [6, 0], [3, -30], [-3, -30]], 'hood'), box(-6, -1, 6, 0, 'hood', 1),
+    line(-5, -2, -2, -28, 1, 'fungus', 1), line(5, -2, 2, -28, 1, 'fungus', 1), line(0, -1, 0, -29, 1, 'fungus'),
+    line(2, -24, 9, -18, 1, 'bone'), line(9, -18, 12, -10, 1, 'fungus', 1), line(9, -18, 13, -15, 1, 'fungus', 1),
+    line(-2, -24, -8, -16, 1, 'bone'), line(-8, -16, -11, -9, 1, 'fungus', 1),
+    ellipse(0, -33, 4, 3.5, 'fungus', 1), ellipse(-3, -36, 3, 2, 'fungus'), ellipse(3, -37, 2.5, 1.8, 'fungus', 2),
+    dot(1, -32, 'eye'), dot(-1, -32, 'eye'),
+  ],
+  // The Undercroft's later Guardians: brass and iron among the mould.
+  sexton: [
+    box(-10, -14, -4, 0, 'iron'), box(4, -14, 10, 0, 'iron'), box(-12, -2, -3, 0, 'brass', 1), box(3, -2, 12, 0, 'brass', 1),
+    polygon([[-14, -14], [12, -14], [13, -38], [-13, -38]], 'iron'), box(-14, -16, 12, -14, 'brass', 1),
+    box(-9, -34, 7, -20, 'iron', 1), box(-6, -31, 4, -23, 'glow'), box(-3, -31, -2, -23, 'iron'), box(1, -31, 2, -23, 'iron'),
+    box(12, -36, 17, -28, 'brass'), line(15, -28, 15, -18, 3, 'iron', 1), box(12, -18, 19, -12, 'iron'), box(12, -13, 19, -12, 'brass', 2),
+    line(-14, -34, -17, -18, 3, 'iron'), ellipse(-17, -17, 2.5, 2.5, 'brass'),
+    ellipse(-1, -42, 6, 4.5, 'iron', 1), box(-5, -43, 4, -42, 'eye'), box(-8, -46, -6, -38, 'brass'), box(4, -46, 6, -38, 'brass'),
+    box(8, -50, 10, -38, 'iron'), dot(9, -51, 'glow'),
+    ellipse(-9, -8, 2, 2, 'fungus', 1), ellipse(10, -24, 2.5, 1.5, 'green', 1), dot(-11, -30, 'bone', 2),
+  ],
+  knell: [
+    box(-9, -10, -4, 0, 'iron'), box(4, -10, 9, 0, 'iron'), box(-11, -2, -3, 0, 'brass', 1), box(3, -2, 11, 0, 'brass', 1),
+    polygon([[-16, -10], [16, -10], [11, -40], [0, -46], [-11, -40]], 'brass'), box(-17, -11, 17, -9, 'brass', 1),
+    line(-10, -38, -14, -12, 1, 'brass', 2), line(10, -38, 14, -12, 1, 'brass', 2),
+    ellipse(0, -14, 3, 3, 'iron', 1), line(0, -17, 0, -30, 1.5, 'iron'),
+    box(-5, -36, 5, -26, 'iron'), ellipse(0, -31, 3.5, 3.5, 'glow'),
+    box(-2, -52, 2, -46, 'iron'), box(-6, -53, 6, -52, 'iron', 1), dot(-5, -54, 'glow'), dot(5, -54, 'glow'),
+    line(14, -30, 20, -22, 2, 'iron'), box(18, -22, 22, -16, 'iron', 1),
+    ellipse(-9, -20, 3, 2, 'green', 1), ellipse(7, -40, 2.5, 1.5, 'silt', 1), dot(-12, -14, 'silt', 2), dot(11, -16, 'green', 1),
+  ],
+  reliquary: [
+    line(-10, -14, -14, -0.5, 3, 'iron'), line(10, -14, 14, -0.5, 3, 'iron'), line(-3, -14, -4, -0.5, 3, 'iron'), line(3, -14, 4, -0.5, 3, 'iron'),
+    box(-16, -2, -11, 0, 'brass', 1), box(11, -2, 16, 0, 'brass', 1),
+    box(-14, -40, 14, -13, 'brass'), box(-15, -16, 15, -13, 'iron', 1), box(-15, -41, 15, -38, 'iron', 1),
+    box(-10, -35, 10, -18, 'iron'), box(-7, -32, 7, -21, 'glow'), box(-1, -34, 1, -19, 'brass', 1), box(-9, -28, 9, -26, 'brass', 1),
+    polygon([[-10, -41], [10, -41], [0, -50]], 'brass', 1), box(-1, -55, 1, -48, 'iron'), box(-3, -53, 3, -52, 'iron'),
+    line(14, -36, 20, -26, 3, 'iron'), box(18, -27, 23, -21, 'iron', 1),
+    ellipse(-11, -24, 4, 6, 'fungus'), ellipse(-8, -40, 5, 2.5, 'fungus', 1), ellipse(12, -16, 4, 2, 'fungus', 1), ellipse(6, -44, 3, 2, 'rot', 1),
+    dot(-12, -27, 'bone', 2), dot(-9, -21, 'bone', 2), dot(-6, -41, 'bone', 2), dot(13, -17, 'bone', 2),
+  ],
   // Flat blocks for placeholder content: a Pack enemy and a Guardian.
   placeholder: [box(-6, -20, 6, 0, 'placeholder', 1), box(-6, -20, 6, -18, 'placeholder', 3), dot(-3, -15, 'eye'), dot(2, -15, 'eye')],
   placeholderGuardian: [box(-13, -44, 13, 0, 'placeholder', 1), box(-13, -44, 13, -41, 'placeholder', 3), box(-6, -36, -3, -34, 'eye'), box(3, -36, 6, -34, 'eye')],
@@ -217,6 +308,12 @@ export const WEAPONS: Readonly<Partial<Record<Figure, Weapon>>> = {
   wight: { x: 5, y: -20, length: 10, ramp: 'wax', head: 'claw' },
   bloat: { x: 9, y: -12, length: 8, ramp: 'rot', head: 'claw' },
   guardian: { x: 15, y: -34, length: 20, ramp: 'iron', head: 'mace' },
+  brute: { x: -12, y: -14, length: 10, ramp: 'bone', head: 'mace' },
+  mourner: { x: 7, y: -11, length: 8, ramp: 'bone', head: 'claw' },
+  lurker: { x: 10, y: -3, length: 6, ramp: 'bone', head: 'claw' },
+  husk: { x: 10, y: -12, length: 7, ramp: 'rot', head: 'claw' },
+  sexton: { x: 15, y: -15, length: 12, ramp: 'iron', head: 'mace' },
+  reliquary: { x: 20, y: -24, length: 14, ramp: 'iron', head: 'mace' },
 };
 
 /** Where each Hero's lantern hangs, in art pixels facing right. */
@@ -244,7 +341,7 @@ const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]] as 
 /** How rough each material's surface is. Metal stays smooth, so its banding reads as polish. */
 const GRAIN: Readonly<Record<Material, number>> = {
   iron: 0.25, brass: 0.2, red: 0.55, hood: 0.5, leather: 0.6, green: 0.6, robe: 0.45, skin: 0.3,
-  bone: 0.45, rot: 0.8, fungus: 0.7, wax: 0.35, placeholder: 0, glow: 0, eye: 0,
+  bone: 0.45, rot: 0.8, fungus: 0.7, wax: 0.35, silt: 0.75, placeholder: 0, glow: 0, eye: 0,
 };
 
 const grain = (x: number, y: number): number => {
@@ -294,10 +391,27 @@ const figureNames = Object.keys(FIGURES) as Figure[];
 export const SPRITES = Object.fromEntries(figureNames.map((figure) => [figure, bake(FIGURES[figure])])) as unknown as Readonly<Record<Figure, readonly SpritePixel[]>>;
 
 const FIGURES_BY_ID: Readonly<Record<string, Figure>> = { 'sin-eater': 'sinEater', warrener: 'warrener', hexer: 'hexer', lamplighter: 'lamplighter', guardian: 'guardian' };
-const FIGURES_BY_NAME: Readonly<Record<string, Figure>> = { 'Sodden Thrall': 'thrall', 'Tallow Wight': 'wight', 'Bone Chanter': 'chanter', 'Mire Bloat': 'bloat', Sporeling: 'sporeling' };
+const FIGURES_BY_NAME: Readonly<Record<string, Figure>> = {
+  'Sodden Thrall': 'thrall',
+  'Tallow Wight': 'wight',
+  'Bone Chanter': 'chanter',
+  'Mire Bloat': 'bloat',
+  Sporeling: 'sporeling',
+  'Charnel Brute': 'brute',
+  'Knucklebone Flinger': 'flinger',
+  'Drowned Mourner': 'mourner',
+  'Silt Lurker': 'lurker',
+  'Drowned Bellman': 'bellman',
+  'Shellcap Husk': 'husk',
+  'Shroud Weaver': 'weaver',
+  'The Iron Sexton': 'sexton',
+  'The Knell Engine': 'knell',
+  'The Reliquary Engine': 'reliquary',
+};
 
 /** Art isn't a game rule, so a Unit's figure is decided here rather than in the sim. */
 export const figureOf = (unit: { readonly id: string; readonly name: string; readonly placeholder?: boolean; readonly classId?: string | null }): Figure => {
   if (unit.placeholder) return unit.id === 'guardian' ? 'placeholderGuardian' : 'placeholder';
-  return FIGURES_BY_ID[unit.classId ?? unit.id] ?? FIGURES_BY_NAME[unit.name] ?? 'thrall';
+  // By name before id, since every Guardian shares the id "guardian".
+  return (unit.classId ? FIGURES_BY_ID[unit.classId] : undefined) ?? FIGURES_BY_NAME[unit.name] ?? FIGURES_BY_ID[unit.id] ?? 'thrall';
 };

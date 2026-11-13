@@ -34,6 +34,8 @@ export const DAMAGE_TYPES = ['physical', 'fire', 'cold', 'poison', 'holy'] as co
 export type DamageType = (typeof DAMAGE_TYPES)[number];
 /** Which reachable Row a Unit picks from: the front Row while it lives, or either. */
 export type Targeting = 'frontFirst' | 'any';
+export type ActionTarget = 'oneFront' | 'oneBack' | 'every';
+const ACTION_TARGETS: readonly ActionTarget[] = ['oneFront', 'oneBack', 'every'];
 export type DamageEffect = 'bleed' | 'poison' | 'burn';
 /** Effects that weaken how a Unit fights rather than dealing damage. */
 export type WeakeningEffect = 'slow' | 'curse';
@@ -48,8 +50,8 @@ export interface UnitAction {
   readonly name: string;
   /** Ticks between uses. */
   readonly interval: number;
-  /** One Unit in the enemy front Row, or every enemy. */
-  readonly target: 'oneFront' | 'every';
+  /** One Unit in the enemy front Row, one in the back Row (the front when it's empty), or every enemy. */
+  readonly target: ActionTarget;
   /** Direct damage. 0 lands no hit. */
   readonly damage: number;
   readonly damageType: DamageType;
@@ -626,6 +628,14 @@ function chooseTarget(battle: BattleState, attacker: UnitState): UnitState | und
   return pick(battle, barring.length > 0 ? barring : reachableEnemies(battle, attacker));
 }
 
+/** A back-Row enemy, or the usual target when that Row is empty. Bar the Way still draws it. */
+function chooseBackTarget(battle: BattleState, attacker: UnitState): UnitState | undefined {
+  const enemies = livingOn(battle, otherTeam(attacker.team));
+  const back = enemies.filter((enemy) => enemy.row === 'back');
+  if (back.length === 0 || enemies.some((enemy) => battle.tick < enemy.barUntil)) return chooseTarget(battle, attacker);
+  return pick(battle, back);
+}
+
 /** More damage from this Unit if the target is Bleeding, from Open Veins. */
 const openVeinsFactor = (unit: UnitState, target: UnitState): number =>
   target.bleed ? 1 + passiveValue(unit, 'open-veins') : 1;
@@ -867,7 +877,7 @@ function firstAvailableSkill(battle: BattleState, unit: UnitState): LearnedSkill
 
 function useAction(battle: BattleState, unit: UnitState, action: UnitAction, events: BattleEvent[]): void {
   events.push({ type: 'action', tick: battle.tick, unitId: unit.spec.id, unitName: unit.spec.name, actionName: action.name });
-  const single = action.target === 'oneFront' ? chooseTarget(battle, unit) : undefined;
+  const single = action.target === 'oneFront' ? chooseTarget(battle, unit) : action.target === 'oneBack' ? chooseBackTarget(battle, unit) : undefined;
   const targets = action.target === 'every' ? livingOn(battle, otherTeam(unit.team)) : single ? [single] : [];
   for (const target of targets) {
     if (action.damage > 0) {
@@ -982,7 +992,7 @@ const isUnitAction = (value: unknown): boolean =>
   isRecord(value) &&
   isString(value['name']) &&
   isNumber(value['interval']) &&
-  (value['target'] === 'oneFront' || value['target'] === 'every') &&
+  (ACTION_TARGETS as readonly unknown[]).includes(value['target']) &&
   isNumber(value['damage']) &&
   isDamageType(value['damageType']) &&
   isOptionalNumber(value['poisonStack']) &&

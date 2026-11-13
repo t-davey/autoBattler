@@ -1,6 +1,6 @@
 # First playable: the Undercroft
 
-A draft of the Undercroft's (Act 2) Packs for Floors 6–20 and Guardians for Lamps 2–4, for the human to review. Step 6 of [the first playable plan](plans/first-playable.md) builds it once confirmed. Every name and number is a starting value, and step 10 tunes them.
+The Undercroft's (Act 2) Packs for Floors 6–20 and Guardians for Lamps 2–4. The human chose to build it as drafted on 2026-11-13, so the questions below were answered with the draft's own choices, and step 6 of [the first playable plan](plans/first-playable.md) built it. Every name and number is a starting value, and step 10 tunes them. The Guardians' names are working names, still [open in the bible](lore/bible.md#open-questions).
 
 ## The shape
 
@@ -54,7 +54,7 @@ The fungal growth grown thick, shelled, and feeding.
 | Enemy | Row | Reach, targeting | Health | Power | Every | Damage | Armour | Resistances | Notes |
 |---|---|---|---|---|---|---|---|---|---|
 | **Shellcap Husk** | Front | Melee, front first | 200 | 2 | 35 Ticks | Poison | 40 | Physical 20, poison 30 | Fungal Poison stack on each hit, as the Mire Bloat. Hard to cut, easy to rot |
-| **Shroud Weaver** | Back | Ranged, any | 90 | | | | 0 | Poison 30 | Two actions: **Spore Lash**, every 30 Ticks, 3 poison to one front-Row Hero plus a 0.5 Poison stack; **Shroud**, every 90 Ticks, a 20% Curse on every Hero |
+| **Shroud Weaver** | Back | Ranged, front first | 90 | | | | 0 | Poison 30 | Two actions: **Spore Lash**, every 30 Ticks, 3 poison to one front-Row Hero plus a 0.5 Poison stack; **Shroud**, every 90 Ticks, a 20% Curse on every Hero |
 
 ### Today's Families gain resistances
 
@@ -113,6 +113,9 @@ Armour 80 and physical resistance cut a plain physical hit by more than half. Bl
 - **Tests:** each Family's Floors, each Guardian's phases, Undertow's target, and a Pack enemy using actions.
 
 ## Questions for the human
+
+Answered on 2026-11-13: build as drafted.
+
 
 1. **The 4 Walls' leanings:** poison, physical, back Row, armour. Or should Wall 3 lean fire instead, an Oil-burning automaton that hints at the Ember Works? That needs a fire resistance Affix, which today's gear lacks.
 2. **The new rules:** the one-back-Row-Hero target, and Pack enemies with timed actions.

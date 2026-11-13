@@ -191,7 +191,7 @@ function enterRoom(world: RunWorld, sink: EventSink): void {
   }
   run.phase = 'battle';
   if (kind === 'guardian') takePick(world, 'guardian', sink);
-  const enemies = kind === 'guardian' ? [guardianFor(LAMPS[lampIndexOf(floor)]!)] : rollPack(world.rng, floorAt(floor).act, depthTuning(floor).enemyScale);
+  const enemies = kind === 'guardian' ? [guardianFor(LAMPS[lampIndexOf(floor)]!)] : rollPack(world.rng, floorAt(floor).act, floorAt(floor).floor, depthTuning(floor).enemyScale);
   // Units take their stats and skills here, so a build change reaches the next Battle.
   const context = { floorsCleared: floor - (run.startFloor ?? floor), guardian: kind === 'guardian' };
   const teams = { [PARTY_TEAM]: world.heroes.map((hero) => applyPicks(heroUnitSpec(hero), run.picks, context)), [ENEMY_TEAM]: enemies };

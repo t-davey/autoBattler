@@ -22,10 +22,16 @@ describe('The world map', () => {
     expect(floor && floorAt(floor)).toMatchObject({ act: 1, floor: 1 });
   });
 
-  it('places the Mouldering Warden at the Undercroft’s first Lamp and placeholders everywhere else', () => {
+  it('places the Undercroft’s 4 Guardians at its Lamps and placeholders everywhere else', () => {
     const built = LAMPS.filter((lamp) => !lamp.placeholder);
-    expect(built).toEqual([{ act: 2, lamp: 1, depth: 25, guardianName: 'The Mouldering Warden', tunedDepth: 5, placeholder: false }]);
-    expect(LAMPS.filter((lamp) => lamp.placeholder)).toHaveLength(11);
+    expect(built.map(({ act, lamp, depth, guardianName }) => [act, lamp, depth, guardianName])).toEqual([
+      [2, 1, 25, 'The Mouldering Warden'],
+      [2, 2, 30, 'The Iron Sexton'],
+      [2, 3, 35, 'The Knell Engine'],
+      [2, 4, 40, 'The Reliquary Engine'],
+    ]);
+    expect(built.every((lamp) => lamp.tunedDepth === 5)).toBe(true);
+    expect(LAMPS.filter((lamp) => lamp.placeholder)).toHaveLength(8);
     expect(LAMPS[0]?.guardianName).toBe('Placeholder Guardian (Act 1, Lamp 1)');
   });
 });
@@ -59,9 +65,9 @@ describe('Placeholders', () => {
     expect(chestLinesAt(21).some((line) => line.includes('placeholder'))).toBe(false);
   });
 
-  it('list what is still to design: 2 Acts and 11 Guardians', () => {
+  it('list what is still to design: 2 Acts and 8 Guardians', () => {
     expect(ACTS.filter((act) => act.placeholder).map((act) => act.name)).toEqual(['The Wilderness', 'The Ember Works']);
-    expect(LAMPS.filter((lamp) => lamp.placeholder)).toHaveLength(11);
+    expect(LAMPS.filter((lamp) => lamp.placeholder)).toHaveLength(8);
   });
 });
 

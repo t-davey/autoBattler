@@ -35,9 +35,12 @@ export interface LampDefinition {
 /** The Warden was tuned for the demo's Floor 5, before the Undercroft moved to Act 2. Placeholders copy its kit. */
 export const WARDEN_TUNED_DEPTH = 5;
 
-/** Real Guardians, by "act-lamp". Every other Lamp gets a placeholder. */
+/** Real Guardians, by "act-lamp". Every other Lamp gets a placeholder. The Undercroft's later 3 are written at the Warden's strength. */
 const BUILT_GUARDIANS: Readonly<Record<string, { readonly name: string; readonly tunedDepth: number }>> = {
   '2-1': { name: 'The Mouldering Warden', tunedDepth: WARDEN_TUNED_DEPTH },
+  '2-2': { name: 'The Iron Sexton', tunedDepth: WARDEN_TUNED_DEPTH },
+  '2-3': { name: 'The Knell Engine', tunedDepth: WARDEN_TUNED_DEPTH },
+  '2-4': { name: 'The Reliquary Engine', tunedDepth: WARDEN_TUNED_DEPTH },
 };
 
 export const depthOf = (act: ActNumber, floor: number): number => (act - 1) * FLOORS_PER_ACT + floor;

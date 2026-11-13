@@ -31,8 +31,14 @@ const DAMAGE_COLOURS: Readonly<Record<DamageType, Rgb>> = {
 const SPARKS: readonly Rgb[] = [[255, 226, 160], [255, 170, 80], [240, 240, 220]];
 const BLOOD: readonly Rgb[] = [[190, 40, 40], [130, 24, 30], [230, 80, 70]];
 const SPORES: readonly Rgb[] = [[130, 164, 72], [92, 124, 58], [170, 204, 90]];
-const BONE_BITS: readonly Rgb[] = [[214, 206, 176], [138, 144, 98], [98, 92, 74]];
 const DUST: readonly Rgb[] = [[120, 112, 100], [88, 82, 74], [160, 150, 130]];
+const TOLL: readonly Rgb[] = [[150, 200, 240], [96, 130, 160], [214, 180, 96]];
+const SHROUD: readonly Rgb[] = [[122, 66, 66], [64, 56, 60], [158, 94, 78]];
+/** Guardian and Pack actions drawn as a heavy melee blow, as a shot, or else as a cast in these colours. */
+const SLAM_ACTIONS: ReadonlySet<string> = new Set(['Grave Slam', 'Grave Maul', 'Piston Fist', 'Hammerfall', 'Grind', 'Reliquary Crush']);
+const SHOT_ACTIONS: ReadonlySet<string> = new Set(['Undertow', 'Spore Lash']);
+const CAST_COLOURS: Readonly<Record<string, readonly Rgb[]>> = { Knell: TOLL, Toll: TOLL, Sweep: DUST, Shroud: SHROUD };
+const BONE_BITS: readonly Rgb[] = [[214, 206, 176], [138, 144, 98], [98, 92, 74]];
 const MOTES: readonly Rgb[] = [[255, 226, 150], [255, 186, 90]];
 
 interface Pose {
@@ -472,11 +478,21 @@ export function createScene({ random = Math.random, shakes = true }: SceneOption
         case 'action': {
           const unit = units.get(event.unitId);
           if (!unit) break;
-          if (event.actionName === 'Grave Slam') styles.set(event.unitId, SLAM);
-          else startMove(castMove(unit, 0.8, 0.3, 0, () => {
-            rings.push({ x: unit.x, y: unit.y, bornAt: now, duration: 0.5, radius: 170, colour: SPORES[2]! });
-            burst(unit.x, unit.y - 40, 24, SPORES, 120, -30, 0.9);
-          }));
+          styles.delete(event.unitId);
+          shooters.delete(event.unitId);
+          if (SLAM_ACTIONS.has(event.actionName)) styles.set(event.unitId, SLAM);
+          else if (SHOT_ACTIONS.has(event.actionName)) shooters.add(event.unitId);
+          else {
+            // Hits on this Tick land as the cast goes off.
+            const colours = CAST_COLOURS[event.actionName] ?? SPORES;
+            startMove({
+              ...castMove(unit, 0.8, 0.3, 0, () => {
+                rings.push({ x: unit.x, y: unit.y, bornAt: now, duration: 0.5, radius: 170, colour: colours[2]! });
+                burst(unit.x, unit.y - 40, 24, colours, 120, -30, 0.9);
+              }),
+              tick: event.tick,
+            });
+          }
           break;
         }
         case 'attack':

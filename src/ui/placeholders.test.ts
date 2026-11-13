@@ -9,6 +9,14 @@ describe('placeholders in the UI', () => {
     expect(figureOf({ id: 'guardian', name: 'The Mouldering Warden', placeholder: false })).toBe('guardian');
   });
 
+  it('draws each Undercroft Guardian and enemy as its own figure', () => {
+    const names = ['The Iron Sexton', 'The Knell Engine', 'The Reliquary Engine', 'Charnel Brute', 'Knucklebone Flinger', 'Drowned Mourner', 'Silt Lurker', 'Drowned Bellman', 'Shellcap Husk', 'Shroud Weaver'];
+    const figures = names.map((name) => figureOf({ id: 'guardian', name }));
+    expect(new Set(figures).size).toBe(names.length);
+    expect(figures).not.toContain('guardian');
+    expect(figures).not.toContain('thrall');
+  });
+
   it('marks a placeholder Act’s introduction on its first Floor only', () => {
     expect(describeEvent({ type: 'floorEntered', floor: 1 })).toBe('Act 1, Floor 1: The Wilderness. [placeholder: this Act’s introduction]');
     expect(describeEvent({ type: 'floorEntered', floor: 2 })).toBe('Act 1, Floor 2: The Wilderness.');
