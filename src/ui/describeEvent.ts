@@ -67,6 +67,8 @@ export function describeEvent(event: GameEvent): string {
       return `${event.targetName} is warded for ${Math.round(event.amount)}.`;
     case 'death':
       return `${event.unitName} falls.`;
+    case 'moved':
+      return event.row === 'back' ? `${event.unitName} falls back.` : `${event.unitName} steps up to the front.`;
     case 'phaseChanged':
       return `${event.unitName} enters its second Phase.`;
     case 'action':

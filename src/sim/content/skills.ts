@@ -9,12 +9,28 @@ export type ActiveSkillId =
   | 'sow-rot'
   | 'bloom'
   | 'wasting-curse'
+  | 'penitent-blow'
+  | 'red-tithe'
+  | 'fall-back'
+  | 'flare'
   | 'bar-the-way'
   | 'bleeders-cut'
   | 'the-long-cut'
   | 'mend-by-lamplight'
   | 'lantern-ward';
-export type PassiveSkillId = 'iron-penance' | 'shared-burden' | 'open-veins' | 'warm-hands' | 'ripening' | 'spoiled-blood' | 'leech-hex';
+export type PassiveSkillId =
+  | 'iron-penance'
+  | 'shared-burden'
+  | 'open-veins'
+  | 'warm-hands'
+  | 'ripening'
+  | 'spoiled-blood'
+  | 'leech-hex'
+  | 'mortified-flesh'
+  | 'light-step'
+  | 'bind-the-wound'
+  | 'kindling'
+  | 'white-heat';
 export type SkillId = ActiveSkillId | PassiveSkillId;
 export type SkillKind = 'active' | 'passive';
 export type SkillReach = 'self' | 'melee' | 'ranged' | 'spell' | 'anyHero' | 'everyHero';
@@ -39,6 +55,8 @@ export interface SkillDefinition {
   readonly row: Row | 'either';
   readonly reach: SkillReach | null;
   readonly oil: number;
+  /** A percentage of max health paid to use it, by Sin-Eater skills that cost health instead of Oil. */
+  readonly healthCost?: number;
   /** Ticks. 0 means none. */
   readonly cooldown: number;
   readonly summary: string;
@@ -66,6 +84,15 @@ export const BAR_THE_WAY_BELOW = 0.8;
 export const SOW_ROT_REFRESH_BELOW = 40;
 /** Stacks an enemy needs before Bloom spreads them. */
 export const BLOOM_FROM = 3;
+/** Health shares Penitent Blow and Red Tithe need to fire. */
+export const PENITENT_BLOW_ABOVE = 0.4;
+export const RED_TITHE_ABOVE = 0.3;
+/** Red Tithe heals for this share of the damage it deals, and needs this many enemies in the front Row. */
+export const RED_TITHE_HEAL = 0.25;
+export const RED_TITHE_FROM = 2;
+/** Fall Back moves a front-Row Hero back below this health share, and forward again above the second. */
+export const FALL_BACK_BELOW = 0.5;
+export const STEP_UP_ABOVE = 0.8;
 export const MEND_BELOW = 0.7;
 
 const passive = { kind: 'passive', reach: null, oil: 0, cooldown: 0 } as const;
@@ -189,6 +216,63 @@ export const SKILLS: Readonly<Record<SkillId, SkillDefinition>> = {
     ...passive, row: 'either',
     summary: 'Heals this Hero for part of the damage it deals to Cursed enemies, Poison included.',
     values: [{ label: 'Heal, of damage dealt', rank1: 10, rank5: 30 }],
+  },
+  'penitent-blow': {
+    id: 'penitent-blow', name: 'Penitent Blow', heroId: 'sin-eater', branch: 'Flagellation', step: 1,
+    kind: 'active', row: 'front', reach: 'melee', oil: 0, healthCost: 4, cooldown: 60,
+    summary: 'Physical damage to one enemy, paid for in health. Fires when health is above 40%.',
+    values: [{ label: 'Hit, of power', rank1: 140, rank5: 200 }],
+  },
+  'mortified-flesh': {
+    id: 'mortified-flesh', name: 'Mortified Flesh', heroId: 'sin-eater', branch: 'Flagellation', step: 2,
+    ...passive, row: 'front',
+    summary: 'More power for each 10% of health missing.',
+    values: [{ label: 'Power per 10% missing', rank1: 2, rank5: 6 }],
+  },
+  'red-tithe': {
+    id: 'red-tithe', name: 'Red Tithe', heroId: 'sin-eater', branch: 'Flagellation', step: 3,
+    kind: 'active', row: 'front', reach: 'melee', oil: 0, healthCost: 10, cooldown: 200,
+    summary: 'Physical damage to the whole enemy front Row, paid for in health, healing for 25% of the damage dealt. Fires when health is above 30% and 2 or more enemies stand in the front Row.',
+    values: [{ label: 'Hit, of power', rank1: 120, rank5: 180 }],
+  },
+  'fall-back': {
+    id: 'fall-back', name: 'Fall Back', heroId: 'warrener', branch: 'Fieldcraft', step: 1,
+    kind: 'active', row: 'either', reach: 'self', oil: 15, cooldown: 250,
+    summary: 'Moves to the other Row, heals, and dodges the next attack. Fires below 50% health in the front Row with another Hero there, or above 80% health after falling back.',
+    values: [{ label: 'Heal, of max health', rank1: 10, rank5: 20 }],
+  },
+  'light-step': {
+    id: 'light-step', name: 'Light Step', heroId: 'warrener', branch: 'Fieldcraft', step: 2,
+    ...passive, row: 'either',
+    summary: 'A chance to dodge each attack.',
+    values: [{ label: 'Dodge chance', rank1: 5, rank5: 15 }],
+  },
+  'bind-the-wound': {
+    id: 'bind-the-wound', name: 'Bind the Wound', heroId: 'warrener', branch: 'Fieldcraft', step: 3,
+    ...passive, row: 'either',
+    summary: 'Each dodge heals this Hero.',
+    values: [{ label: 'Heal, of max health', rank1: 3, rank5: 7 }],
+  },
+  flare: {
+    id: 'flare', name: 'Flare', heroId: 'lamplighter', branch: 'Flame', step: 1,
+    kind: 'active', row: 'back', reach: 'spell', oil: 18, cooldown: 60,
+    summary: 'Fire damage to an enemy in either Row. Fires when an enemy lives.',
+    values: [{ label: 'Hit, of power', rank1: 150, rank5: 230 }],
+  },
+  kindling: {
+    id: 'kindling', name: 'Kindling', heroId: 'lamplighter', branch: 'Flame', step: 2,
+    ...passive, row: 'back',
+    summary: "This Hero's fire hits add a Burn over 40 Ticks.",
+    values: [{ label: 'Burn, of the hit', rank1: 20, rank5: 40 }],
+  },
+  'white-heat': {
+    id: 'white-heat', name: 'White Heat', heroId: 'lamplighter', branch: 'Flame', step: 3,
+    ...passive, row: 'back',
+    summary: "More critical chance on this Hero's fire hits, and its fire critical hits splash to the rest of the target's Row.",
+    values: [
+      { label: 'Critical chance on fire hits', rank1: 5, rank5: 15 },
+      { label: 'Splash, of the hit', rank1: 30, rank5: 70 },
+    ],
   },
 };
 

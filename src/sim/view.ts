@@ -53,6 +53,8 @@ export interface SkillView {
   readonly row: Row | 'either';
   readonly reach: SkillReach | null;
   readonly oil: number;
+  /** A percentage of max health paid instead of Oil, or null. */
+  readonly healthCost: number | null;
   readonly cooldown: number;
   readonly summary: string;
   readonly rank: number;
@@ -169,6 +171,7 @@ function viewSkill(hero: HeroState, id: SkillId): SkillView {
     row: skill.row,
     reach: skill.reach,
     oil: skill.oil,
+    healthCost: skill.healthCost ?? null,
     cooldown: skill.cooldown,
     summary: skill.summary,
     rank,

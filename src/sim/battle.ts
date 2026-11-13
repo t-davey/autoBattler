@@ -13,6 +13,12 @@ import {
   POISON_INTERVAL,
   POISON_STACK_LIMIT,
   BLOOM_FROM,
+  FALL_BACK_BELOW,
+  PENITENT_BLOW_ABOVE,
+  RED_TITHE_ABOVE,
+  RED_TITHE_FROM,
+  RED_TITHE_HEAL,
+  STEP_UP_ABOVE,
   SOW_ROT_REFRESH_BELOW,
   rankValue,
   SKILLS,
@@ -178,6 +184,7 @@ export type BattleEvent =
       readonly targetName: string;
       readonly amount: number;
     }
+  | { readonly type: 'moved'; readonly tick: number; readonly unitId: string; readonly unitName: string; readonly row: Row }
   | { readonly type: 'phaseChanged'; readonly tick: number; readonly unitId: string; readonly unitName: string }
   | { readonly type: 'death'; readonly tick: number; readonly unitId: string; readonly unitName: string };
 
@@ -243,6 +250,10 @@ interface UnitState {
   curse?: CurseState | null;
   /** Poison stacks this Unit can hold, raised by Ripening. Missing means the usual limit. */
   poisonLimit?: number;
+  /** Set by Fall Back while the Unit stands back from its usual Row. */
+  fellBack?: boolean;
+  /** Fall Back's promise: the next attack on this Unit misses. */
+  dodgeNext?: boolean;
   /** Bar the Way holds until this Tick, and its armour bonus as a percentage. */
   barUntil: number;
   barArmour: number;
@@ -402,6 +413,8 @@ interface Strike {
   readonly crit: boolean;
   readonly ignoresArmour: boolean;
   readonly hasMinimum: boolean;
+  /** White Heat's splash, which doesn't splash or Burn in turn. */
+  readonly splash?: boolean;
 }
 
 const isActive = (battle: BattleState, effect: TimedShare | null | undefined): effect is TimedShare =>
@@ -412,19 +425,24 @@ const curseFactor = (battle: BattleState, unit: UnitState): number => (isActive(
 
 /** Rolls only for a Unit that can dodge, so other Battles draw the same numbers as before. */
 function rollDodge(battle: BattleState, target: UnitState): boolean {
-  const chance = target.spec.dodgeChance ?? 0;
+  if (target.dodgeNext) {
+    target.dodgeNext = false;
+    return true;
+  }
+  const chance = (target.spec.dodgeChance ?? 0) + passiveValue(target, 'light-step') * 100;
   return chance > 0 && nextFloat(battle.rng) * 100 < chance;
 }
 
-/** Returns false if the target dodged. */
-function landStrike(battle: BattleState, strike: Strike, events: BattleEvent[]): boolean {
+/** Returns what the target took, a Ward's share included, or null if it dodged. */
+function landStrike(battle: BattleState, strike: Strike, events: BattleEvent[]): number | null {
   const { attacker, target, damageType, crit, ignoresArmour, hasMinimum } = strike;
   if (rollDodge(battle, target)) {
     events.push({ type: 'dodge', tick: battle.tick, attackerId: attacker.spec.id, attackerName: attacker.spec.name, targetId: target.spec.id, targetName: target.spec.name });
-    return false;
+    healUnit(battle, target, maxHealthOf(target) * passiveValue(target, 'bind-the-wound'), events);
+    return null;
   }
   const raw = strike.raw * curseFactor(battle, attacker);
-  const land = (receiver: UnitState, share: number, redirectedFromName: string | null, minimum: number): void => {
+  const land = (receiver: UnitState, share: number, redirectedFromName: string | null, minimum: number): number => {
     const reduced = Math.max(minimum, reducedDamage(battle, receiver, raw * share * amplifyOf(battle, receiver), damageType, ignoresArmour));
     const { damage, absorbed } = loseHealth(battle, receiver, reduced);
     const leeched = (): void => leech(battle, attacker, receiver, damage, events);
@@ -442,18 +460,39 @@ function landStrike(battle: BattleState, strike: Strike, events: BattleEvent[]):
       redirectedFromName,
     });
     leeched();
+    return damage + absorbed;
   };
 
   const burden = burdenFor(battle, target);
-  land(target, 1 - (burden?.share ?? 0), null, hasMinimum ? MIN_HIT_DAMAGE : 0);
-  // Poison on hit comes from the attacker, so its stacks count towards Leech Hex too.
+  const dealt = land(target, 1 - (burden?.share ?? 0), null, hasMinimum ? MIN_HIT_DAMAGE : 0);
   if (burden) land(burden.holder, burden.share, target.spec.name, 0);
 
+  // Poison on hit comes from the attacker, so its stacks count towards Leech Hex too.
   const poison = attacker.spec.poisonOnHit;
   if (poison !== undefined && isAlive(target)) addPoisonStack(battle, target, poison * curseFactor(battle, attacker), events, attacker);
+  if (damageType === 'fire' && !strike.splash) fireAfterHit(battle, strike, dealt, events);
   settleDeath(battle, target, events);
   if (burden) settleDeath(battle, burden.holder, events);
-  return true;
+  return dealt;
+}
+
+/** A passive's value at an index as a fraction, or 0 if the Unit hasn't learned it. */
+function passiveValueAt(unit: UnitState, id: SkillId, index: number): number {
+  const rank = rankIn(unit, id);
+  return rank > 0 ? rankFraction(unit, id, rank, index) : 0;
+}
+
+/** Kindling's Burn, and White Heat's splash on a critical hit, after a fire hit lands. */
+function fireAfterHit(battle: BattleState, strike: Strike, dealt: number, events: BattleEvent[]): void {
+  const { attacker, target } = strike;
+  const kindling = passiveValue(attacker, 'kindling');
+  if (kindling > 0 && isAlive(target)) addBurn(battle, target, dealt * kindling, events);
+  const splash = strike.crit ? passiveValueAt(attacker, 'white-heat', 1) : 0;
+  if (splash <= 0) return;
+  for (const other of livingOn(battle, target.team)) {
+    if (other === target || other.row !== target.row) continue;
+    landStrike(battle, { ...strike, target: other, raw: dealt * splash, crit: false, ignoresArmour: true, hasMinimum: false, splash: true }, events);
+  }
 }
 
 /** Extra Poison stacks this Unit lets the enemies it poisons hold, from Ripening. */
@@ -591,20 +630,30 @@ function chooseTarget(battle: BattleState, attacker: UnitState): UnitState | und
 const openVeinsFactor = (unit: UnitState, target: UnitState): number =>
   target.bleed ? 1 + passiveValue(unit, 'open-veins') : 1;
 
-const rollCrit = (battle: BattleState, unit: UnitState): boolean =>
-  nextFloat(battle.rng) * 100 < unit.spec.critChance;
+/** White Heat adds critical chance to fire hits. */
+const rollCrit = (battle: BattleState, unit: UnitState, damageType: DamageType = 'physical'): boolean => {
+  const bonus = damageType === 'fire' ? passiveValue(unit, 'white-heat') * 100 : 0;
+  return nextFloat(battle.rng) * 100 < unit.spec.critChance + bonus;
+};
+
+/** Power, with Mortified Flesh's bonus for each whole 10% of health missing. */
+function powerOf(unit: UnitState): number {
+  const perStep = passiveValue(unit, 'mortified-flesh');
+  if (perStep <= 0) return unit.spec.power;
+  return unit.spec.power * (1 + perStep * Math.floor((1 - healthShare(unit)) * 10));
+}
 
 function basicAttack(battle: BattleState, unit: UnitState, events: BattleEvent[]): void {
   const target = chooseTarget(battle, unit);
   if (!target) return;
-  const crit = rollCrit(battle, unit);
-  const raw = unit.spec.power * openVeinsFactor(unit, target) * (crit ? CRIT_MULTIPLIER : 1);
+  const crit = rollCrit(battle, unit, unit.spec.damageType);
+  const raw = powerOf(unit) * openVeinsFactor(unit, target) * (crit ? CRIT_MULTIPLIER : 1);
   landStrike(battle, { attacker: unit, target, raw, damageType: unit.spec.damageType, crit, ignoresArmour: false, hasMinimum: true }, events);
 }
 
 /** A skill's strength against the Unit's power, from where it stands. */
 const skillAmount = (unit: UnitState, id: SkillId, rank: number, index = 0): number =>
-  unit.spec.power * rankFraction(unit, id, rank, index);
+  powerOf(unit) * rankFraction(unit, id, rank, index);
 
 const notBleeding = (battle: BattleState, unit: UnitState): UnitState[] =>
   reachableEnemies(battle, unit).filter((enemy) => !enemy.bleed);
@@ -619,7 +668,12 @@ interface ActiveRule {
 
 /** A hit of a skill's first value against power, with a chance to crit. Returns false if dodged. */
 function skillHit(battle: BattleState, unit: UnitState, id: SkillId, rank: number, target: UnitState, damageType: DamageType, events: BattleEvent[]): boolean {
-  const crit = rollCrit(battle, unit);
+  return skillStrike(battle, unit, id, rank, target, damageType, events) !== null;
+}
+
+/** As skillHit, returning what the target took, or null if it dodged. */
+function skillStrike(battle: BattleState, unit: UnitState, id: SkillId, rank: number, target: UnitState, damageType: DamageType, events: BattleEvent[]): number | null {
+  const crit = rollCrit(battle, unit, damageType);
   const raw = skillAmount(unit, id, rank) * (crit ? CRIT_MULTIPLIER : 1);
   return landStrike(battle, { attacker: unit, target, raw, damageType, crit, ignoresArmour: false, hasMinimum: true }, events);
 }
@@ -700,6 +754,42 @@ const ACTIVE_RULES: Readonly<Record<ActiveSkillId, ActiveRule>> = {
       if (target) addWeakening(battle, target, 'curse', rankFraction(unit, 'wasting-curse', rank) * 100, events, passiveValue(unit, 'spoiled-blood'));
     },
   },
+  'penitent-blow': {
+    isUseful: (battle, unit) => healthShare(unit) > PENITENT_BLOW_ABOVE && enemiesInReach(battle, unit, 'melee').length > 0,
+    use(battle, unit, rank, events) {
+      const target = pick(battle, enemiesInReach(battle, unit, 'melee'));
+      if (target) skillHit(battle, unit, 'penitent-blow', rank, target, 'physical', events);
+    },
+  },
+  'red-tithe': {
+    isUseful: (battle, unit) => healthShare(unit) > RED_TITHE_ABOVE && enemiesInReach(battle, unit, 'melee').length >= RED_TITHE_FROM,
+    use(battle, unit, rank, events) {
+      let dealt = 0;
+      for (const target of enemiesInReach(battle, unit, 'melee')) dealt += skillStrike(battle, unit, 'red-tithe', rank, target, 'physical', events) ?? 0;
+      healUnit(battle, unit, dealt * RED_TITHE_HEAL, events);
+    },
+  },
+  'fall-back': {
+    isUseful(battle, unit) {
+      if (unit.row === 'back') return unit.fellBack === true && healthShare(unit) > STEP_UP_ABOVE;
+      const holdsFront = livingOn(battle, unit.team).some((ally) => ally !== unit && ally.row === 'front');
+      return holdsFront && healthShare(unit) < FALL_BACK_BELOW;
+    },
+    use(battle, unit, rank, events) {
+      unit.row = unit.row === 'front' ? 'back' : 'front';
+      unit.fellBack = unit.row === 'back';
+      unit.dodgeNext = true;
+      events.push({ type: 'moved', tick: battle.tick, unitId: unit.spec.id, unitName: unit.spec.name, row: unit.row });
+      healUnit(battle, unit, maxHealthOf(unit) * rankFraction(unit, 'fall-back', rank), events);
+    },
+  },
+  flare: {
+    isUseful: (battle, unit) => enemiesInReach(battle, unit, 'spell').length > 0,
+    use(battle, unit, rank, events) {
+      const target = pick(battle, enemiesInReach(battle, unit, 'spell'));
+      if (target) skillHit(battle, unit, 'flare', rank, target, 'fire', events);
+    },
+  },
   'votive-spark': {
     isUseful: (battle, unit) => enemiesInReach(battle, unit, 'spell').length > 0,
     use(battle, unit, rank, events) {
@@ -768,6 +858,7 @@ function firstAvailableSkill(battle: BattleState, unit: UnitState): LearnedSkill
   return unit.spec.skills?.find(({ id }) => {
     const skill = SKILLS[id];
     if (skill.kind !== 'active' || unit.oil < skill.oil) return false;
+    if (skill.healthCost !== undefined && unit.health <= (maxHealthOf(unit) * skill.healthCost) / 100) return false;
     if ((unit.skillReadyAt[id] ?? 0) > battle.tick) return false;
     if (skill.reach === 'melee' && unit.spec.reach !== 'melee') return false;
     return ACTIVE_RULES[id as ActiveSkillId].isUseful(battle, unit);
@@ -825,6 +916,7 @@ function act(battle: BattleState, unit: UnitState, events: BattleEvent[]): void 
   }
   const skill = SKILLS[learned.id];
   unit.oil -= skill.oil;
+  if (skill.healthCost !== undefined) unit.health -= (maxHealthOf(unit) * skill.healthCost) / 100;
   if (skill.cooldown > 0) unit.skillReadyAt[skill.id] = battle.tick + skill.cooldown;
   events.push({ type: 'skill', tick: battle.tick, unitId: unit.spec.id, unitName: unit.spec.name, skillId: skill.id, skillName: skill.name });
   ACTIVE_RULES[learned.id as ActiveSkillId].use(battle, unit, learned.rank, events);
@@ -963,6 +1055,8 @@ const isUnitState = (value: unknown): boolean =>
   isOptional(value['slow'], isTimedShare) &&
   isOptional(value['curse'], isTimedShare) &&
   isOptionalNumber(value['poisonLimit']) &&
+  (value['fellBack'] === undefined || typeof value['fellBack'] === 'boolean') &&
+  (value['dodgeNext'] === undefined || typeof value['dodgeNext'] === 'boolean') &&
   isNumber(value['barUntil']) &&
   isNumber(value['barArmour']);
 

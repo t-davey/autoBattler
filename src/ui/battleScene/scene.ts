@@ -226,7 +226,7 @@ const CLAW: Swing = { windup: 0.3, dash: 0.13, hold: 0.07, recover: 0.34, raised
 const SLAM: Swing = { windup: 0.4, dash: 0.1, hold: 0.14, recover: 0.36, raised: -2.4, struck: 1.2, lean: 14, gap: 44, stop: 0.09, shake: 2 };
 const CUTTING_SKILLS: ReadonlySet<SkillId> = new Set<SkillId>(['bleeders-cut', 'the-long-cut']);
 /** Skills that fly to their target whatever weapon the Hero holds. */
-const SHOT_SKILLS: ReadonlySet<SkillId> = new Set<SkillId>(['tainted-shaft', 'votive-spark', 'chill-word']);
+const SHOT_SKILLS: ReadonlySet<SkillId> = new Set<SkillId>(['tainted-shaft', 'votive-spark', 'chill-word', 'flare']);
 /** Skills cast without a hit, drawn as a short cast. */
 const CAST_SKILLS: ReadonlySet<SkillId> = new Set<SkillId>(['sow-rot', 'bloom', 'wasting-curse']);
 

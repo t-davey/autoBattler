@@ -40,6 +40,7 @@ export function skillFacts(skill: SkillView): string {
   const facts = [skill.kind === 'active' ? 'Active' : 'Passive', ROW_TEXT[skill.row]];
   if (skill.reach) facts.push(REACH_TEXT[skill.reach]);
   if (skill.oil > 0) facts.push(`${skill.oil} Oil`);
+  if (skill.healthCost !== null) facts.push(`${skill.healthCost}% max health`);
   if (skill.cooldown > 0) facts.push(`${seconds(skill.cooldown)} cooldown`);
   return facts.join(' · ');
 }
