@@ -1,8 +1,10 @@
-# The Council desk: plan
+# The Council desk: plan (shelved)
 
 Build [the Council desk](ui-style.md#the-council-desk) into the game, in place of the Away Report, Planning, and Stash tabs. [The mockup](../../mockups/council-desk.html) runs on a real game and settles the look. This plan holds the order of work, and [the UI style plan](ui-style.md) holds the style.
 
-**Status: decided, not built.** The human chose the desk, the lid, Hero marks on tags, and busts on 2026-11-11, and approved the lid's swing after trying it.
+**Status: shelved, not going ahead.** On 2026-11-13 the human chose to keep the Away Report, Planning, and Stash tabs as they are. [The mockup](../../mockups/council-desk.html) stays as a design reference for its art and lessons. Nothing in this plan is to be built unless the human revives it.
+
+Earlier, on 2026-11-11, the human had chosen the desk, the lid, Hero marks on tags, and busts.
 
 ## What carries over from the mockup
 
