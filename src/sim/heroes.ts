@@ -1,7 +1,7 @@
 import { isNumber, isRecord, isString } from './guards';
 import type { Reach, UnitSpec } from './battle';
 import { ITEM_BASES, type Slot } from './content/items';
-import { actionIntervalFor, CLASSES, HERO_IDS, LEVEL_CAP, xpToNextLevel } from './content/party';
+import { actionIntervalFor, CLASS_IDS, CLASSES, HERO_IDS, LEVEL_CAP, xpToNextLevel } from './content/party';
 import { FREE_SKILL_RANK, SKILLS, type HeroId, type SkillId } from './content/skills';
 import { gearStats, isEquipped, slotOf, type ItemState } from './items';
 import { defaultOrder, isFreeSkill, isLegalOrder, isRanks, spentPoints, type SkillRanks } from './skills';
@@ -37,8 +37,8 @@ export function createHero(id: HeroId, setup: HeroSetup = {}): HeroState {
   return hero;
 }
 
-export const createParty = (setupFor: (id: HeroId) => HeroSetup = () => ({})): HeroState[] =>
-  HERO_IDS.map((id) => createHero(id, setupFor(id)));
+export const createParty = (setupFor: (id: HeroId) => HeroSetup = () => ({}), ids: readonly HeroId[] = HERO_IDS): HeroState[] =>
+  ids.map((id) => createHero(id, setupFor(id)));
 
 /** Each level past the first grants a point. */
 /** A skill's rank for this Hero: fixed for the free Class skill, 0 if unlearned. */
@@ -127,7 +127,7 @@ export function gainXp(hero: HeroState, xp: number): number[] {
 
 /** Whether saved data is a Hero this module could have made. */
 export function isHeroState(value: unknown): boolean {
-  if (!isRecord(value) || !HERO_IDS.includes(value['id'] as HeroId)) return false;
+  if (!isRecord(value) || !CLASS_IDS.includes(value['id'] as HeroId)) return false;
   const { ranks, order, level } = value;
   return (
     isString(value['name']) &&

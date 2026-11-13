@@ -12,6 +12,8 @@ import {
   POISON_DURATION,
   POISON_INTERVAL,
   POISON_STACK_LIMIT,
+  BLOOM_FROM,
+  SOW_ROT_REFRESH_BELOW,
   rankValue,
   SKILLS,
   type ActiveSkillId,
@@ -196,12 +198,19 @@ export interface PoisonStack {
   readonly damage: number;
   nextTickAt: number;
   expiresAt: number;
+  /** The Unit that added it, for Leech Hex. */
+  readonly sourceId?: string;
 }
 
 /** A share of something the Unit loses until a Tick. */
 export interface TimedShare {
   readonly share: number;
   readonly expiresAt: number;
+}
+
+export interface CurseState extends TimedShare {
+  /** More damage the Cursed Unit takes from every source, from its caster's Spoiled Blood. */
+  readonly amplify?: number;
 }
 
 export interface WardState {
@@ -231,7 +240,9 @@ interface UnitState {
   /** Speed lost. */
   slow?: TimedShare | null;
   /** Damage this Unit deals is cut by the share. One Curse at a time. */
-  curse?: TimedShare | null;
+  curse?: CurseState | null;
+  /** Poison stacks this Unit can hold, raised by Ripening. Missing means the usual limit. */
+  poisonLimit?: number;
   /** Bar the Way holds until this Tick, and its armour bonus as a percentage. */
   barUntil: number;
   barArmour: number;
@@ -414,8 +425,9 @@ function landStrike(battle: BattleState, strike: Strike, events: BattleEvent[]):
   }
   const raw = strike.raw * curseFactor(battle, attacker);
   const land = (receiver: UnitState, share: number, redirectedFromName: string | null, minimum: number): void => {
-    const reduced = Math.max(minimum, reducedDamage(battle, receiver, raw * share, damageType, ignoresArmour));
+    const reduced = Math.max(minimum, reducedDamage(battle, receiver, raw * share * amplifyOf(battle, receiver), damageType, ignoresArmour));
     const { damage, absorbed } = loseHealth(battle, receiver, reduced);
+    const leeched = (): void => leech(battle, attacker, receiver, damage, events);
     events.push({
       type: 'attack',
       tick: battle.tick,
@@ -429,26 +441,55 @@ function landStrike(battle: BattleState, strike: Strike, events: BattleEvent[]):
       crit,
       redirectedFromName,
     });
+    leeched();
   };
 
   const burden = burdenFor(battle, target);
   land(target, 1 - (burden?.share ?? 0), null, hasMinimum ? MIN_HIT_DAMAGE : 0);
+  // Poison on hit comes from the attacker, so its stacks count towards Leech Hex too.
   if (burden) land(burden.holder, burden.share, target.spec.name, 0);
 
   const poison = attacker.spec.poisonOnHit;
-  if (poison !== undefined && isAlive(target)) addPoisonStack(battle, target, poison * curseFactor(battle, attacker), events);
+  if (poison !== undefined && isAlive(target)) addPoisonStack(battle, target, poison * curseFactor(battle, attacker), events, attacker);
   settleDeath(battle, target, events);
   if (burden) settleDeath(battle, burden.holder, events);
   return true;
 }
 
-function addPoisonStack(battle: BattleState, target: UnitState, damage: number, events: BattleEvent[]): void {
+/** Extra Poison stacks this Unit lets the enemies it poisons hold, from Ripening. */
+const ripeningOf = (unit: UnitState): number => {
+  const rank = rankIn(unit, 'ripening');
+  return rank > 0 ? Math.round(rankValue('ripening', rank) * rowFactor(unit, 'ripening')) : 0;
+};
+
+/** The stacks a target can hold once this source poisons it. */
+const poisonLimitFor = (target: UnitState, source: UnitState | null): number =>
+  Math.max(target.poisonLimit ?? POISON_STACK_LIMIT, POISON_STACK_LIMIT + (source ? ripeningOf(source) : 0));
+
+/** Adds Poison stacks up to the target's limit, refreshing every stack it holds. One event for the lot. */
+function addPoisonStacks(battle: BattleState, target: UnitState, damages: readonly number[], events: BattleEvent[], source: UnitState | null): void {
   const expiresAt = battle.tick + POISON_DURATION;
+  const limit = poisonLimitFor(target, source);
+  if (limit > POISON_STACK_LIMIT) target.poisonLimit = limit;
   for (const stack of target.poison) stack.expiresAt = expiresAt;
-  if (target.poison.length < POISON_STACK_LIMIT) {
-    target.poison.push({ damage, nextTickAt: battle.tick + POISON_INTERVAL, expiresAt });
+  for (const damage of damages) {
+    if (target.poison.length >= limit) break;
+    target.poison.push({ damage, nextTickAt: battle.tick + POISON_INTERVAL, expiresAt, ...(source ? { sourceId: source.spec.id } : {}) });
   }
   events.push({ type: 'effect', tick: battle.tick, effect: 'poison', targetId: target.spec.id, targetName: target.spec.name });
+}
+
+const addPoisonStack = (battle: BattleState, target: UnitState, damage: number, events: BattleEvent[], source: UnitState | null): void =>
+  addPoisonStacks(battle, target, [damage], events, source);
+
+/** How much more damage a Unit takes while Cursed, from its caster's Spoiled Blood. */
+const amplifyOf = (battle: BattleState, unit: UnitState): number => (isActive(battle, unit.curse) ? 1 + (unit.curse.amplify ?? 0) : 1);
+
+/** Leech Hex: the source heals for part of the damage it deals to a Cursed Unit. */
+function leech(battle: BattleState, source: UnitState | null, target: UnitState, dealt: number, events: BattleEvent[]): void {
+  if (!source || !isAlive(source) || dealt <= 0 || !isActive(battle, target.curse)) return;
+  const share = passiveValue(source, 'leech-hex');
+  if (share > 0) healUnit(battle, source, dealt * share, events);
 }
 
 /** Sets a Burn, replacing any the target holds. */
@@ -458,18 +499,19 @@ function addBurn(battle: BattleState, target: UnitState, total: number, events: 
 }
 
 /** Sets a Slow or Curse, replacing any of that kind the target holds. */
-function addWeakening(battle: BattleState, target: UnitState, effect: WeakeningEffect, percent: number, events: BattleEvent[]): void {
+function addWeakening(battle: BattleState, target: UnitState, effect: WeakeningEffect, percent: number, events: BattleEvent[], amplify = 0): void {
   const timed = { share: percent / 100, expiresAt: battle.tick + (effect === 'slow' ? SLOW_DURATION : CURSE_DURATION) };
   if (effect === 'slow') target.slow = timed;
-  else target.curse = timed;
+  else target.curse = amplify > 0 ? { ...timed, amplify } : timed;
   events.push({ type: 'effect', tick: battle.tick, effect, targetId: target.spec.id, targetName: target.spec.name });
 }
 
 /** Damage over time has no minimum, and only Poison can be shared. */
-function tickDamage(battle: BattleState, target: UnitState, effect: DamageEffect, raw: number, damageType: DamageType, events: BattleEvent[]): void {
+function tickDamage(battle: BattleState, target: UnitState, effect: DamageEffect, raw: number, damageType: DamageType, events: BattleEvent[], source: UnitState | null = null): void {
   const land = (receiver: UnitState, share: number, redirectedFromName: string | null): void => {
-    const reduced = reducedDamage(battle, receiver, raw * share, damageType, true);
+    const reduced = reducedDamage(battle, receiver, raw * share * amplifyOf(battle, receiver), damageType, true);
     const { damage, absorbed } = loseHealth(battle, receiver, reduced);
+    const leeched = (): void => leech(battle, source, receiver, damage, events);
     events.push({
       type: 'effectDamage',
       tick: battle.tick,
@@ -481,6 +523,7 @@ function tickDamage(battle: BattleState, target: UnitState, effect: DamageEffect
       damageType,
       redirectedFromName,
     });
+    leeched();
   };
   const burden = effect === 'poison' ? burdenFor(battle, target) : null;
   land(target, 1 - (burden?.share ?? 0), null);
@@ -515,7 +558,8 @@ function runEffects(battle: BattleState, unit: UnitState, events: BattleEvent[])
     if (!isAlive(unit)) return;
     if (battle.tick < stack.nextTickAt) continue;
     stack.nextTickAt += POISON_INTERVAL;
-    tickDamage(battle, unit, 'poison', stack.damage, 'poison', events);
+    const source = stack.sourceId === undefined ? null : (battle.units.find((other) => other.spec.id === stack.sourceId) ?? null);
+    tickDamage(battle, unit, 'poison', stack.damage, 'poison', events, source);
   }
   if (unit.poison.some((stack) => battle.tick >= stack.expiresAt)) {
     unit.poison = unit.poison.filter((stack) => battle.tick < stack.expiresAt);
@@ -587,6 +631,24 @@ function healUnit(battle: BattleState, target: UnitState, amount: number, events
   events.push({ type: 'heal', tick: battle.tick, targetId: target.spec.id, targetName: target.spec.name, amount: healed });
 }
 
+/** Enemies Sow Rot would add to: below their stack limit, or with Poison about to run out. */
+const rotTargets = (battle: BattleState, unit: UnitState): UnitState[] =>
+  enemiesInReach(battle, unit, 'spell').filter((enemy) => {
+    if (enemy.poison.length < poisonLimitFor(enemy, unit)) return true;
+    return enemy.poison.some((stack) => stack.expiresAt - battle.tick < SOW_ROT_REFRESH_BELOW);
+  });
+
+/** The most-poisoned enemy, if it holds enough stacks for Bloom and another enemy lives. */
+function bloomSource(battle: BattleState, unit: UnitState): UnitState | undefined {
+  const enemies = enemiesInReach(battle, unit, 'spell');
+  if (enemies.length < 2) return undefined;
+  const most = enemies.reduce((best, enemy) => (enemy.poison.length > best.poison.length ? enemy : best));
+  return most.poison.length >= BLOOM_FROM ? most : undefined;
+}
+
+const uncursed = (battle: BattleState, unit: UnitState): UnitState[] =>
+  enemiesInReach(battle, unit, 'spell').filter((enemy) => !isActive(battle, enemy.curse));
+
 const ACTIVE_RULES: Readonly<Record<ActiveSkillId, ActiveRule>> = {
   'consume-sin': {
     isUseful: (battle, unit) => enemiesInReach(battle, unit, 'melee').length > 0,
@@ -601,7 +663,41 @@ const ACTIVE_RULES: Readonly<Record<ActiveSkillId, ActiveRule>> = {
     use(battle, unit, rank, events) {
       const target = pick(battle, enemiesInReach(battle, unit, 'ranged'));
       if (!target || !skillHit(battle, unit, 'tainted-shaft', rank, target, 'poison', events) || !isAlive(target)) return;
-      addPoisonStack(battle, target, skillAmount(unit, 'tainted-shaft', rank, 1) * curseFactor(battle, unit), events);
+      addPoisonStack(battle, target, skillAmount(unit, 'tainted-shaft', rank, 1) * curseFactor(battle, unit), events, unit);
+    },
+  },
+  'chill-word': {
+    isUseful: (battle, unit) => enemiesInReach(battle, unit, 'spell').length > 0,
+    use(battle, unit, rank, events) {
+      const target = pick(battle, enemiesInReach(battle, unit, 'spell'));
+      if (!target || !skillHit(battle, unit, 'chill-word', rank, target, 'cold', events) || !isAlive(target)) return;
+      addWeakening(battle, target, 'slow', rankFraction(unit, 'chill-word', rank, 1) * 100, events);
+    },
+  },
+  'sow-rot': {
+    isUseful: (battle, unit) => rotTargets(battle, unit).length > 0,
+    use(battle, unit, rank, events) {
+      const target = pick(battle, rotTargets(battle, unit));
+      if (target) addPoisonStack(battle, target, skillAmount(unit, 'sow-rot', rank) * curseFactor(battle, unit), events, unit);
+    },
+  },
+  bloom: {
+    isUseful: (battle, unit) => bloomSource(battle, unit) !== undefined,
+    use(battle, unit, rank, events) {
+      const source = bloomSource(battle, unit);
+      if (!source) return;
+      const count = Math.ceil(source.poison.length * rankFraction(unit, 'bloom', rank));
+      const damages = source.poison.slice(0, count).map((stack) => stack.damage);
+      for (const other of enemiesInReach(battle, unit, 'spell')) {
+        if (other !== source) addPoisonStacks(battle, other, damages, events, unit);
+      }
+    },
+  },
+  'wasting-curse': {
+    isUseful: (battle, unit) => uncursed(battle, unit).length > 0,
+    use(battle, unit, rank, events) {
+      const target = uncursed(battle, unit).reduce<UnitState | undefined>((strongest, enemy) => (!strongest || enemy.spec.power > strongest.spec.power ? enemy : strongest), undefined);
+      if (target) addWeakening(battle, target, 'curse', rankFraction(unit, 'wasting-curse', rank) * 100, events, passiveValue(unit, 'spoiled-blood'));
     },
   },
   'votive-spark': {
@@ -688,7 +784,7 @@ function useAction(battle: BattleState, unit: UnitState, action: UnitAction, eve
     }
     if (!isAlive(target)) continue;
     const weakened = curseFactor(battle, unit);
-    if (action.poisonStack !== undefined) addPoisonStack(battle, target, action.poisonStack * weakened, events);
+    if (action.poisonStack !== undefined) addPoisonStack(battle, target, action.poisonStack * weakened, events, unit);
     if (action.burn !== undefined) addBurn(battle, target, action.burn * weakened, events);
     if (action.slow !== undefined) addWeakening(battle, target, 'slow', action.slow, events);
     if (action.curse !== undefined) addWeakening(battle, target, 'curse', action.curse, events);
@@ -828,9 +924,10 @@ const isUnitSpec = (value: unknown): boolean =>
 const isBleed = (value: unknown): boolean =>
   isRecord(value) && isNumber(value['perTick']) && isNumber(value['ticksLeft']) && isNumber(value['nextTickAt']);
 const isPoisonStack = (value: unknown): boolean =>
-  isRecord(value) && isNumber(value['damage']) && isNumber(value['nextTickAt']) && isNumber(value['expiresAt']);
+  isRecord(value) && isNumber(value['damage']) && isNumber(value['nextTickAt']) && isNumber(value['expiresAt']) &&
+  (value['sourceId'] === undefined || typeof value['sourceId'] === 'string');
 const isTimedShare = (value: unknown): boolean =>
-  isRecord(value) && isNumber(value['share']) && isNumber(value['expiresAt']);
+  isRecord(value) && isNumber(value['share']) && isNumber(value['expiresAt']) && isOptionalNumber(value['amplify']);
 /** Absent in saves from before the effect existed. */
 const isOptional = (value: unknown, guard: (value: unknown) => boolean): boolean => value === undefined || value === null || guard(value);
 const isWard = (value: unknown): boolean =>
@@ -865,6 +962,7 @@ const isUnitState = (value: unknown): boolean =>
   isOptional(value['burn'], isBleed) &&
   isOptional(value['slow'], isTimedShare) &&
   isOptional(value['curse'], isTimedShare) &&
+  isOptionalNumber(value['poisonLimit']) &&
   isNumber(value['barUntil']) &&
   isNumber(value['barArmour']);
 

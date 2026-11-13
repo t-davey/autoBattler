@@ -124,6 +124,17 @@ const FIGURES = {
     ellipse(0.5, -24, 3, 3.5, 'skin'), dot(2, -25, 'hood'),
     box(-4, -27, 5, -26, 'hood', 1), box(-2.5, -33, 3.5, -27, 'hood'), box(-2.5, -29, 3.5, -28, 'red', 1),
   ],
+  hexer: [
+    polygon([[-7, 0], [6, 0], [4, -18], [-4, -18]], 'rot'), box(-7, -1, 6, 0, 'rot', 1),
+    line(-5, -4, 5, -6, 1, 'hood', 1), line(-1, -17, -2, -1, 1, 'rot', 1),
+    polygon([[-6, -12], [6, -12], [5, -22], [-5, -22]], 'hood'), line(-5, -13, 0, -21, 1, 'hood', 1), line(5, -13, 0, -21, 1, 'hood', 1),
+    line(3, -18, 8, -14, 2, 'hood'), dot(8, -15, 'skin', 1),
+    line(8, -15, 9, -8, 1, 'leather'), ellipse(9, -6, 2.5, 3, 'green'), dot(8, -5, 'fungus', 1), dot(10, -7, 'green', 2),
+    line(-3, -12, -4, -8, 1, 'leather'), ellipse(-4, -7, 1.6, 2, 'bone', 1), dot(-4, -7, 'eye'),
+    ellipse(0.5, -24.5, 3, 3.5, 'skin'), dot(2, -25, 'hood'), line(-1, -22, 3, -22, 1, 'skin'),
+    polygon([[-4, -21], [4, -21], [4, -27], [1, -31], [-3, -30], [-5, -25]], 'hood', 1), box(-4, -23, -2, -19, 'bone'),
+    line(-4, -11, -6, -9, 1, 'iron', 1), box(-8, -9, -4, -4, 'iron'), box(-7, -8, -5, -5, 'glow'),
+  ],
   thrall: [
     line(-2.5, -9, -3, -0.5, 2, 'bone'), line(2, -9, 3, -0.5, 2, 'bone'),
     polygon([[-5, -12], [5, -12], [5, -7], [3, -5], [2, -7], [0, -4], [-2, -7], [-4, -5], [-5, -7]], 'hood'),
@@ -212,6 +223,7 @@ export const WEAPONS: Readonly<Partial<Record<Figure, Weapon>>> = {
 export const LANTERNS: Readonly<Partial<Record<Figure, { readonly x: number; readonly y: number; readonly reach: number }>>> = {
   sinEater: { x: 7, y: -7, reach: 1 },
   warrener: { x: -5, y: -6.5, reach: 1 },
+  hexer: { x: -6, y: -6.5, reach: 1 },
   lamplighter: { x: 11, y: -34.5, reach: 1.35 },
 };
 
@@ -281,7 +293,7 @@ function bake(parts: readonly Part[]): readonly SpritePixel[] {
 const figureNames = Object.keys(FIGURES) as Figure[];
 export const SPRITES = Object.fromEntries(figureNames.map((figure) => [figure, bake(FIGURES[figure])])) as unknown as Readonly<Record<Figure, readonly SpritePixel[]>>;
 
-const FIGURES_BY_ID: Readonly<Record<string, Figure>> = { 'sin-eater': 'sinEater', warrener: 'warrener', lamplighter: 'lamplighter', guardian: 'guardian' };
+const FIGURES_BY_ID: Readonly<Record<string, Figure>> = { 'sin-eater': 'sinEater', warrener: 'warrener', hexer: 'hexer', lamplighter: 'lamplighter', guardian: 'guardian' };
 const FIGURES_BY_NAME: Readonly<Record<string, Figure>> = { 'Sodden Thrall': 'thrall', 'Tallow Wight': 'wight', 'Bone Chanter': 'chanter', 'Mire Bloat': 'bloat', Sporeling: 'sporeling' };
 
 /** Art isn't a game rule, so a Unit's figure is decided here rather than in the sim. */

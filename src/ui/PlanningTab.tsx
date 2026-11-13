@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { MAX_ORDERED_SKILLS, SLOTS, type HeroView, type PickTag, type SkillId } from '../sim';
+import { MAX_ORDERED_SKILLS, SLOTS, type HeroView, type PickTag, type SkillId, type SkillView } from '../sim';
 import { PickRule } from './PickRule';
 import { lockText, REFUSAL_TEXT, skillFacts, skillValues } from './describeHero';
 import { SLOT_TEXT, statSheet } from './describeItem';
@@ -75,6 +75,15 @@ function SkillOrder({ hero, dispatch, nameOf }: { hero: HeroView; dispatch: Disp
   );
 }
 
+/** The free Class skill first, then each Branch in the order its skills come. */
+function branchesOf(skills: readonly SkillView[]): [string, SkillView[]][] {
+  const branches = new Map<string, SkillView[]>();
+  for (const skill of [...skills].sort((a, b) => Number(b.free) - Number(a.free))) {
+    branches.set(skill.branch, [...(branches.get(skill.branch) ?? []), skill]);
+  }
+  return [...branches];
+}
+
 function HeroCard({ hero, dispatch }: { hero: HeroView; dispatch: Dispatch }) {
   const [refusal, setRefusal] = useState('');
   const nameOf = (id: SkillId) => hero.skills.find((skill) => skill.id === id)?.name ?? id;
@@ -98,35 +107,40 @@ function HeroCard({ hero, dispatch }: { hero: HeroView; dispatch: Dispatch }) {
         })}
       </ul>
 
-      <h3>{hero.skills.find((skill) => !skill.free)?.branch}: {hero.unspentPoints} unspent</h3>
-      <ul className="skills">
-        {[...hero.skills].sort((a, b) => Number(b.free) - Number(a.free)).map((skill) => {
-          const locked = lockText(skill);
-          return (
-            <li key={skill.id} className={skill.rank > 0 ? 'skill' : 'skill skill-unlearned'}>
-              <div className="skill-head">
-                <strong>{skill.name}</strong>
-                <span>{skill.free ? 'Class skill, free' : `Rank ${skill.rank} / ${skill.maxRank}`}</span>
-                {!skill.free && <button
-                  type="button"
-                  aria-label={`Spend a point on ${skill.name}`}
-                  disabled={skill.refusal !== null}
-                  onClick={() => dispatch({ type: 'spendSkillPoint', heroId: hero.id, skillId: skill.id })}
-                >
-                  +
-                </button>}
-              </div>
-              <p className="hint">{skillFacts(skill)}</p>
-              <p>{skill.summary}</p>
-              {skillValues(skill).map((line) => (
-                <p key={line} className="hint">{line}</p>
-              ))}
-              {locked && <p className="hint">{locked}</p>}
-              {skill.blockedByWeapon && <p className="hint skill-blocked">Needs a melee weapon: unavailable while holding a ranged one.</p>}
-            </li>
-          );
-        })}
-      </ul>
+      <p className="hint">{hero.unspentPoints} unspent</p>
+      {branchesOf(hero.skills).map(([branch, skills]) => (
+        <section key={branch} aria-label={branch}>
+          <h3>{branch}</h3>
+          <ul className="skills">
+            {skills.map((skill) => {
+              const locked = lockText(skill);
+              return (
+                <li key={skill.id} className={skill.rank > 0 ? 'skill' : 'skill skill-unlearned'}>
+                  <div className="skill-head">
+                    <strong>{skill.name}</strong>
+                    <span>{skill.free ? 'Class skill, free' : `Rank ${skill.rank} / ${skill.maxRank}`}</span>
+                    {!skill.free && <button
+                      type="button"
+                      aria-label={`Spend a point on ${skill.name}`}
+                      disabled={skill.refusal !== null}
+                      onClick={() => dispatch({ type: 'spendSkillPoint', heroId: hero.id, skillId: skill.id })}
+                    >
+                      +
+                    </button>}
+                  </div>
+                  <p className="hint">{skillFacts(skill)}</p>
+                  <p>{skill.summary}</p>
+                  {skillValues(skill).map((line) => (
+                    <p key={line} className="hint">{line}</p>
+                  ))}
+                  {locked && <p className="hint">{locked}</p>}
+                  {skill.blockedByWeapon && <p className="hint skill-blocked">Needs a melee weapon: unavailable while holding a ranged one.</p>}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ))}
 
       <h3>Skill order: {hero.order.length} of {MAX_ORDERED_SKILLS}</h3>
       <SkillOrder hero={hero} dispatch={dispatch} nameOf={nameOf} />

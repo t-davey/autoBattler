@@ -46,11 +46,12 @@ export function skillFacts(skill: SkillView): string {
 
 const percent = (value: number): string => `${value}%`;
 
-/** One line per scaling value, such as "Bonus armour: 20% → 30%". */
+/** One line per scaling value, such as "Bonus armour: 20% → 30%" or "Extra stacks: +1 → +2". */
 export function skillValues(skill: SkillView): readonly string[] {
-  return skill.values.map(({ label, current, next }) => {
-    if (current === null) return `${label}: ${next === null ? '' : `${percent(next)} at rank 1`}`;
-    return `${label}: ${percent(current)}${next === null ? '' : ` → ${percent(next)}`}`;
+  return skill.values.map(({ label, current, next, count }) => {
+    const show = (value: number): string => (count ? `+${value}` : percent(value));
+    if (current === null) return `${label}: ${next === null ? '' : `${show(next)} at rank 1`}`;
+    return `${label}: ${show(current)}${next === null ? '' : ` → ${show(next)}`}`;
   });
 }
 

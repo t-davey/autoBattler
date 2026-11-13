@@ -1,16 +1,20 @@
 import type { Row } from '../battle';
 
-export type HeroId = 'sin-eater' | 'warrener' | 'lamplighter';
+export type HeroId = 'sin-eater' | 'warrener' | 'hexer' | 'lamplighter';
 export type ActiveSkillId =
   | 'consume-sin'
   | 'tainted-shaft'
   | 'votive-spark'
+  | 'chill-word'
+  | 'sow-rot'
+  | 'bloom'
+  | 'wasting-curse'
   | 'bar-the-way'
   | 'bleeders-cut'
   | 'the-long-cut'
   | 'mend-by-lamplight'
   | 'lantern-ward';
-export type PassiveSkillId = 'iron-penance' | 'shared-burden' | 'open-veins' | 'warm-hands';
+export type PassiveSkillId = 'iron-penance' | 'shared-burden' | 'open-veins' | 'warm-hands' | 'ripening' | 'spoiled-blood' | 'leech-hex';
 export type SkillId = ActiveSkillId | PassiveSkillId;
 export type SkillKind = 'active' | 'passive';
 export type SkillReach = 'self' | 'melee' | 'ranged' | 'spell' | 'anyHero' | 'everyHero';
@@ -20,6 +24,8 @@ export interface SkillValue {
   readonly label: string;
   readonly rank1: number;
   readonly rank5: number;
+  /** A plain count, such as extra Poison stacks, rather than a percentage. */
+  readonly count?: true;
 }
 
 export interface SkillDefinition {
@@ -56,6 +62,10 @@ export const POISON_DURATION = 100;
 export const POISON_STACK_LIMIT = 5;
 /** Usefulness conditions, as fractions of health. */
 export const BAR_THE_WAY_BELOW = 0.8;
+/** Ticks of Poison left under which Sow Rot tops it up. */
+export const SOW_ROT_REFRESH_BELOW = 40;
+/** Stacks an enemy needs before Bloom spreads them. */
+export const BLOOM_FROM = 3;
 export const MEND_BELOW = 0.7;
 
 const passive = { kind: 'passive', reach: null, oil: 0, cooldown: 0 } as const;
@@ -74,6 +84,12 @@ export const SKILLS: Readonly<Record<SkillId, SkillDefinition>> = {
     row: 'back', reach: 'ranged', oil: 7,
     summary: 'Poison damage to an enemy in either Row, plus a Poison stack. Fires when an enemy lives.',
     values: [fixed('Hit, of power', 40), fixed('Poison each time, of power', 8)],
+  },
+  'chill-word': {
+    id: 'chill-word', name: 'Chill Word', heroId: 'hexer', ...free,
+    row: 'back', reach: 'spell', oil: 8,
+    summary: 'Cold damage to an enemy in either Row, and a Slow for 40 Ticks. Fires when an enemy lives.',
+    values: [fixed('Hit, of power', 100), fixed('Slow', 15)],
   },
   'votive-spark': {
     id: 'votive-spark', name: 'Votive Spark', heroId: 'lamplighter', ...free,
@@ -137,6 +153,42 @@ export const SKILLS: Readonly<Record<SkillId, SkillDefinition>> = {
     kind: 'active', row: 'back', reach: 'everyHero', oil: 20, cooldown: 250,
     summary: 'Wards every Hero for 80 Ticks. Fires when no Hero holds a Ward.',
     values: [{ label: 'Ward, of power', rank1: 60, rank5: 120 }],
+  },
+  'sow-rot': {
+    id: 'sow-rot', name: 'Sow Rot', heroId: 'hexer', branch: 'Rot', step: 1,
+    kind: 'active', row: 'back', reach: 'spell', oil: 8, cooldown: 0,
+    summary: 'Adds a Poison stack to an enemy in either Row. Fires when an enemy is below its stack limit, or its Poison has under 40 Ticks left.',
+    values: [{ label: 'Poison each time, of power', rank1: 15, rank5: 25 }],
+  },
+  ripening: {
+    id: 'ripening', name: 'Ripening', heroId: 'hexer', branch: 'Rot', step: 2,
+    ...passive, row: 'either',
+    summary: 'Raises the Poison stack limit on enemies this Hero poisons.',
+    values: [{ label: 'Extra stacks', rank1: 1, rank5: 5, count: true }],
+  },
+  bloom: {
+    id: 'bloom', name: 'Bloom', heroId: 'hexer', branch: 'Rot', step: 3,
+    kind: 'active', row: 'back', reach: 'spell', oil: 20, cooldown: 180,
+    summary: "Copies part of the most-poisoned enemy's Poison stacks to every other enemy, rounded up. Fires when an enemy has 3 or more stacks and another enemy lives.",
+    values: [{ label: 'Stacks copied', rank1: 50, rank5: 90 }],
+  },
+  'wasting-curse': {
+    id: 'wasting-curse', name: 'Wasting Curse', heroId: 'hexer', branch: 'Malediction', step: 1,
+    kind: 'active', row: 'back', reach: 'spell', oil: 12, cooldown: 80,
+    summary: 'Curses the uncursed enemy with the most power for 80 Ticks, so it deals less damage. Fires when an enemy has no Curse.',
+    values: [{ label: 'Less damage', rank1: 10, rank5: 22 }],
+  },
+  'spoiled-blood': {
+    id: 'spoiled-blood', name: 'Spoiled Blood', heroId: 'hexer', branch: 'Malediction', step: 2,
+    ...passive, row: 'either',
+    summary: 'Enemies this Hero has Cursed take more damage from every source.',
+    values: [{ label: 'More damage taken', rank1: 6, rank5: 18 }],
+  },
+  'leech-hex': {
+    id: 'leech-hex', name: 'Leech Hex', heroId: 'hexer', branch: 'Malediction', step: 3,
+    ...passive, row: 'either',
+    summary: 'Heals this Hero for part of the damage it deals to Cursed enemies, Poison included.',
+    values: [{ label: 'Heal, of damage dealt', rank1: 10, rank5: 30 }],
   },
 };
 

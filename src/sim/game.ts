@@ -34,6 +34,8 @@ export interface GameSetup {
     readonly equipped?: Readonly<Partial<Record<HeroId, readonly ItemSpec[]>>>;
     /** Items already in the Stash. */
     readonly stash?: readonly ItemSpec[];
+    /** 3 different Classes in place of the preset Party, until the player picks one. */
+    readonly party?: readonly HeroId[];
   };
 }
 
@@ -70,14 +72,14 @@ function createWalls(lit: number, setbacks: number | undefined): WallState[] {
 }
 
 export function createGame(setup: GameSetup): Game {
-  const { heroLevel, skillRanks, startAt, lampLit, setbacks, battleTicks, equipped, stash } = setup.scenario ?? {};
+  const { heroLevel, skillRanks, startAt, lampLit, setbacks, battleTicks, equipped, stash, party } = setup.scenario ?? {};
   let nextItemId = 1;
   const withId = (spec: ItemSpec): ItemState => ({ ...spec, id: nextItemId++ });
   const heroes = createParty((id) => ({
     level: heroLevel,
     ranks: skillRanks?.[id],
     gear: [starterItem(CLASSES[id].starterWeapon), ...(equipped?.[id] ?? [])].map(withId),
-  }));
+  }), party);
   const stashed = (stash ?? []).map(withId);
   const rng = createRng(setup.seed);
   // A fixed offset keeps the Pick stream apart from the main one.

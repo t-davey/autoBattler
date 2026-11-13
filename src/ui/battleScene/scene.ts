@@ -226,7 +226,9 @@ const CLAW: Swing = { windup: 0.3, dash: 0.13, hold: 0.07, recover: 0.34, raised
 const SLAM: Swing = { windup: 0.4, dash: 0.1, hold: 0.14, recover: 0.36, raised: -2.4, struck: 1.2, lean: 14, gap: 44, stop: 0.09, shake: 2 };
 const CUTTING_SKILLS: ReadonlySet<SkillId> = new Set<SkillId>(['bleeders-cut', 'the-long-cut']);
 /** Skills that fly to their target whatever weapon the Hero holds. */
-const SHOT_SKILLS: ReadonlySet<SkillId> = new Set<SkillId>(['tainted-shaft', 'votive-spark']);
+const SHOT_SKILLS: ReadonlySet<SkillId> = new Set<SkillId>(['tainted-shaft', 'votive-spark', 'chill-word']);
+/** Skills cast without a hit, drawn as a short cast. */
+const CAST_SKILLS: ReadonlySet<SkillId> = new Set<SkillId>(['sow-rot', 'bloom', 'wasting-curse']);
 
 export function createScene({ random = Math.random, shakes = true }: SceneOptions = {}): Scene {
   let now = 0;
@@ -464,6 +466,7 @@ export function createScene({ random = Math.random, shakes = true }: SceneOption
           else if (event.skillId === 'mend-by-lamplight') startMove(castMove(unit, 0.85, 0.22, 1, () => {}));
           else if (CUTTING_SKILLS.has(event.skillId)) styles.set(event.unitId, CUT);
           else if (SHOT_SKILLS.has(event.skillId)) shooters.add(event.unitId);
+          else if (CAST_SKILLS.has(event.skillId)) startMove(castMove(unit, 0.8, 0.25, 0, () => {}));
           break;
         }
         case 'action': {

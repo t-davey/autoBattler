@@ -16,6 +16,7 @@ export type {
 } from './battle';
 export { beginCatchUp, continueCatchUp, mergeAwayReports } from './catchup';
 export type { AwayLevelGain, AwayPickRecord, AwayReport, AwaySetback, CatchUp, GuardianAttempts } from './catchup';
+export { CLASS_IDS } from './content/party';
 export { AFFIXES, RARITIES, SLOTS } from './content/items';
 export type { AffixDefinition, AffixId, BaseId, ItemStat, ItemStats, Rarity, Slot } from './content/items';
 export { rollItem } from './items';

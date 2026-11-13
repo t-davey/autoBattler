@@ -1,5 +1,5 @@
 // The save format. Each state type's validator lives beside it; this checks how they fit together.
-import { HERO_IDS } from './content/party';
+import { CLASS_IDS, PARTY_SIZE } from './content/party';
 import { LAMPS } from './content/world';
 import { gameOf, stateOf, type Game, type GameState } from './game';
 import { isNumber, isRecord } from './guards';
@@ -22,7 +22,7 @@ export const SAVE_VERSION = 6;
 function migrateFrom5(game: unknown): void {
   if (!isRecord(game) || !Array.isArray(game['heroes'])) return;
   for (const hero of game['heroes'] as unknown[]) {
-    if (!isRecord(hero) || !HERO_IDS.includes(hero['id'] as HeroId) || !Array.isArray(hero['order'])) continue;
+    if (!isRecord(hero) || !CLASS_IDS.includes(hero['id'] as HeroId) || !Array.isArray(hero['order'])) continue;
     const free = freeSkillOf(hero['id'] as HeroId);
     if (!hero['order'].includes(free) && hero['order'].length < MAX_ORDERED_SKILLS) hero['order'].push(free);
   }
@@ -62,7 +62,8 @@ const isGameState = (value: unknown): boolean =>
   (value['battleTicks'] === null || isNumber(value['battleTicks'])) &&
   (value['run'].phase === 'battle') === (value['battle'] !== null) &&
   Array.isArray(value['heroes']) &&
-  value['heroes'].length === HERO_IDS.length &&
+  value['heroes'].length === PARTY_SIZE &&
+  new Set(value['heroes'].map((hero: unknown) => (isRecord(hero) ? hero['id'] : null))).size === PARTY_SIZE &&
   value['heroes'].every(isHeroState) &&
   hasSoundItems(value) &&
   (value['battle'] === null || isBattleState(value['battle']));

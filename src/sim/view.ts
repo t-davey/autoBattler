@@ -40,6 +40,8 @@ export interface SkillValueView {
   /** Percentages. Current is null until the skill is learned, next is null at the top rank. */
   readonly current: number | null;
   readonly next: number | null;
+  /** A plain count rather than a percentage. */
+  readonly count: boolean;
 }
 
 export interface SkillView {
@@ -172,8 +174,9 @@ function viewSkill(hero: HeroState, id: SkillId): SkillView {
     rank,
     maxRank,
     pointsToOpen: pointsToOpen(id),
-    values: skill.values.map(({ label }, index) => ({
+    values: skill.values.map(({ label, count }, index) => ({
       label,
+      count: count === true,
       current: rank > 0 ? rankValue(id, rank, index) : null,
       next: rank < maxRank ? rankValue(id, rank + 1, index) : null,
     })),

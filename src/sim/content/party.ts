@@ -19,11 +19,17 @@ export interface ClassStats {
   readonly maxOil: number;
 }
 
+/** Every Class, in the order the UI lists them. */
+export const CLASS_IDS: readonly HeroId[] = ['sin-eater', 'warrener', 'hexer', 'lamplighter'];
+/** The preset Party, until the player picks one. */
 export const HERO_IDS: readonly HeroId[] = ['sin-eater', 'warrener', 'lamplighter'];
+export const PARTY_SIZE = 3;
 
 export const CLASSES: Readonly<Record<HeroId, ClassStats>> = {
   'sin-eater': { className: 'Sin-Eater', row: 'front', health: 160, healthPerLevel: 16, power: 10, powerPerLevel: 1, starterWeapon: 'iron-cudgel', armour: 20, armourPerLevel: 3, speed: 95, critChance: 3, maxOil: 100 },
   warrener: { className: 'Warrener', row: 'front', health: 110, healthPerLevel: 10, power: 14, powerPerLevel: 2, starterWeapon: 'flensing-knife', armour: 8, armourPerLevel: 1, speed: 110, critChance: 8, maxOil: 100 },
+  // Starting values for review: a fragile back-Row caster.
+  hexer: { className: 'Hexer', row: 'back', health: 90, healthPerLevel: 9, power: 12, powerPerLevel: 2, starterWeapon: 'bone-sling', armour: 4, armourPerLevel: 1, speed: 100, critChance: 5, maxOil: 100 },
   lamplighter: { className: 'Lamplighter', row: 'back', health: 95, healthPerLevel: 9, power: 11, powerPerLevel: 1, starterWeapon: 'bone-sling', armour: 5, armourPerLevel: 1, speed: 100, critChance: 5, maxOil: 100 },
 };
 

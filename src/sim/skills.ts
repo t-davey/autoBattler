@@ -14,14 +14,18 @@ export const spentPoints = (ranks: SkillRanks): number =>
 
 export const pointsToOpen = (id: SkillId): number => (SKILLS[id].step - 1) * POINTS_PER_STEP;
 
-/** Why this point can't be spent, or null if it can. A Hero has one Branch in the demo. */
+/** Points spent in one Branch, which open its deeper steps. */
+export const spentIn = (ranks: SkillRanks, branch: string): number =>
+  Object.entries(ranks).reduce((total, [id, rank]) => (SKILLS[id as SkillId].branch === branch ? total + (rank ?? 0) : total), 0);
+
+/** Why this point can't be spent, or null if it can. */
 export function spendRefusal(heroId: HeroId, ranks: SkillRanks, unspent: number, id: unknown): SpendRefusal | null {
   if (!isSkillId(id)) return 'unknownSkill';
   if (SKILLS[id].heroId !== heroId) return 'otherClass';
   if (isFreeSkill(id)) return 'freeSkill';
   if (unspent <= 0) return 'noPoints';
   if ((ranks[id] ?? 0) >= MAX_SKILL_RANK) return 'maxRank';
-  if (spentPoints(ranks) < pointsToOpen(id)) return 'stepLocked';
+  if (spentIn(ranks, SKILLS[id].branch) < pointsToOpen(id)) return 'stepLocked';
   return null;
 }
 

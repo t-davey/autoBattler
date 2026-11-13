@@ -1,5 +1,5 @@
 import type { DamageType } from './battle';
-import { HERO_IDS } from './content/party';
+import { CLASS_IDS } from './content/party';
 import type { HeroId } from './content/skills';
 import { bankElapsed, CATCH_UP_CAP_MS, heroesOf, stateOf, stepTick, usableElapsed, type Game } from './game';
 import { unspentPoints } from './heroes';
@@ -156,7 +156,7 @@ export interface CatchUp {
   readonly tally: Tally;
 }
 
-const isHero = (id: string): boolean => (HERO_IDS as readonly string[]).includes(id);
+const isHero = (id: string): boolean => (CLASS_IDS as readonly string[]).includes(id);
 
 /** A Battle already under way when catch-up began shows only the damage since then. */
 function mainDamage(battleDamage: Tally['battleDamage']): Pick<AwaySetback, 'mainDamageType' | 'mainDamageShare'> {
