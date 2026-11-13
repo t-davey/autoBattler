@@ -2,9 +2,9 @@ import { isNumber, isRecord, isString } from './guards';
 import type { Reach, UnitSpec } from './battle';
 import { ITEM_BASES, type Slot } from './content/items';
 import { actionIntervalFor, CLASSES, HERO_IDS, LEVEL_CAP, xpToNextLevel } from './content/party';
-import { SKILLS, type HeroId, type SkillId } from './content/skills';
+import { FREE_SKILL_RANK, SKILLS, type HeroId, type SkillId } from './content/skills';
 import { gearStats, isEquipped, slotOf, type ItemState } from './items';
-import { isLegalOrder, isRanks, orderFor, spentPoints, type SkillRanks } from './skills';
+import { isFreeSkill, isPartialOrder, isRanks, orderFor, spentPoints, type SkillRanks } from './skills';
 
 /** A Hero between Battles, as plain JSON-safe data. */
 export interface HeroState {
@@ -31,7 +31,7 @@ export interface HeroSetup {
 
 export function createHero(id: HeroId, setup: HeroSetup = {}): HeroState {
   const ranks = { ...setup.ranks };
-  const hero: HeroState = { id, name: CLASSES[id].className, level: setup.level ?? 1, xp: 0, health: 0, oil: CLASSES[id].maxOil, ranks, order: orderFor(ranks), equipped: {} };
+  const hero: HeroState = { id, name: CLASSES[id].className, level: setup.level ?? 1, xp: 0, health: 0, oil: CLASSES[id].maxOil, ranks, order: orderFor(id, ranks), equipped: {} };
   for (const item of setup.gear ?? []) hero.equipped[slotOf(item)] = item;
   hero.health = heroStats(hero).maxHealth;
   return hero;
@@ -41,6 +41,9 @@ export const createParty = (setupFor: (id: HeroId) => HeroSetup = () => ({})): H
   HERO_IDS.map((id) => createHero(id, setupFor(id)));
 
 /** Each level past the first grants a point. */
+/** A skill's rank for this Hero: fixed for the free Class skill, 0 if unlearned. */
+export const skillRank = (hero: HeroState, id: SkillId): number => (isFreeSkill(id) ? FREE_SKILL_RANK : (hero.ranks[id] ?? 0));
+
 export const unspentPoints = (hero: HeroState): number =>
   Math.max(0, hero.level - 1 - spentPoints(hero.ranks));
 
@@ -104,7 +107,7 @@ export function heroUnitSpec(hero: HeroState): UnitSpec {
     critChance,
     oil: Math.min(hero.oil, maxOil),
     maxOil,
-    skills: [...hero.order, ...passives].map((id) => ({ id, rank: hero.ranks[id] ?? 0 })),
+    skills: [...hero.order, ...passives].map((id) => ({ id, rank: skillRank(hero, id) })),
   };
 }
 
@@ -137,8 +140,8 @@ export function isHeroState(value: unknown): boolean {
     isNumber(value['oil']) &&
     isRanks(ranks) &&
     Array.isArray(order) &&
-    isLegalOrder(ranks, order) &&
-    new Set(order).size === order.length &&
+    // Saves from before free Class skills lack them; loading completes the order.
+    isPartialOrder(value['id'] as HeroId, ranks, order) &&
     isEquipped(value['equipped'])
   );
 }

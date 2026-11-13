@@ -225,6 +225,8 @@ const CUT: Swing = { windup: 0.09, dash: 0.06, hold: 0.06, recover: 0.2, raised:
 const CLAW: Swing = { windup: 0.3, dash: 0.13, hold: 0.07, recover: 0.34, raised: -1.9, struck: 1, lean: 9, gap: 30, stop: 0.05, shake: 0 };
 const SLAM: Swing = { windup: 0.4, dash: 0.1, hold: 0.14, recover: 0.36, raised: -2.4, struck: 1.2, lean: 14, gap: 44, stop: 0.09, shake: 2 };
 const CUTTING_SKILLS: ReadonlySet<SkillId> = new Set<SkillId>(['bleeders-cut', 'the-long-cut']);
+/** Skills that fly to their target whatever weapon the Hero holds. */
+const SHOT_SKILLS: ReadonlySet<SkillId> = new Set<SkillId>(['tainted-shaft', 'votive-spark']);
 
 export function createScene({ random = Math.random, shakes = true }: SceneOptions = {}): Scene {
   let now = 0;
@@ -402,7 +404,7 @@ export function createScene({ random = Math.random, shakes = true }: SceneOption
     moves.push(move);
   };
 
-  const playAttack = (event: Extract<GameEvent, { type: 'attack' }>, style: Swing | null): void => {
+  const playAttack = (event: Extract<GameEvent, { type: 'attack' }>, style: Swing | null, shot: boolean): void => {
     const attacker = units.get(event.attackerId);
     const target = units.get(event.targetId);
     if (!attacker || !target) return;
@@ -419,9 +421,10 @@ export function createScene({ random = Math.random, shakes = true }: SceneOption
       };
       return;
     }
-    if (attacker.reach === 'ranged') {
+    if (attacker.reach === 'ranged' || shot) {
       const lobbed = event.damageType === 'poison';
-      startMove(shotMove(attacker, target, event.tick, lobbed ? SPORES[2]! : [214, 206, 176], lobbed ? 44 : 10, () => land(null)));
+      const colour = lobbed ? SPORES[2]! : event.damageType === 'physical' ? ([214, 206, 176] as Rgb) : DAMAGE_COLOURS[event.damageType];
+      startMove(shotMove(attacker, target, event.tick, colour, lobbed ? 44 : 10, () => land(null)));
       return;
     }
     const swing = style ?? (attacker.team === 'party' ? STRIKE : CLAW);
@@ -450,6 +453,7 @@ export function createScene({ random = Math.random, shakes = true }: SceneOption
 
   const playEvents = (events: readonly GameEvent[]): void => {
     const styles = new Map<string, Swing>();
+    const shooters = new Set<string>();
     for (const event of events) {
       switch (event.type) {
         case 'skill': {
@@ -459,6 +463,7 @@ export function createScene({ random = Math.random, shakes = true }: SceneOption
           else if (event.skillId === 'lantern-ward') castWard(unit);
           else if (event.skillId === 'mend-by-lamplight') startMove(castMove(unit, 0.85, 0.22, 1, () => {}));
           else if (CUTTING_SKILLS.has(event.skillId)) styles.set(event.unitId, CUT);
+          else if (SHOT_SKILLS.has(event.skillId)) shooters.add(event.unitId);
           break;
         }
         case 'action': {
@@ -472,7 +477,7 @@ export function createScene({ random = Math.random, shakes = true }: SceneOption
           break;
         }
         case 'attack':
-          playAttack(event, styles.get(event.attackerId) ?? null);
+          playAttack(event, styles.get(event.attackerId) ?? null, shooters.has(event.attackerId));
           break;
         case 'effectDamage': {
           const unit = units.get(event.targetId);

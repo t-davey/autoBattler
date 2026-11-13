@@ -73,23 +73,23 @@ function HeroCard({ hero, dispatch }: { hero: HeroView; dispatch: Dispatch }) {
         })}
       </ul>
 
-      <h3>{hero.skills[0]?.branch}: {hero.unspentPoints} unspent</h3>
+      <h3>{hero.skills.find((skill) => !skill.free)?.branch}: {hero.unspentPoints} unspent</h3>
       <ul className="skills">
-        {hero.skills.map((skill) => {
+        {[...hero.skills].sort((a, b) => Number(b.free) - Number(a.free)).map((skill) => {
           const locked = lockText(skill);
           return (
             <li key={skill.id} className={skill.rank > 0 ? 'skill' : 'skill skill-unlearned'}>
               <div className="skill-head">
                 <strong>{skill.name}</strong>
-                <span>Rank {skill.rank} / {skill.maxRank}</span>
-                <button
+                <span>{skill.free ? 'Class skill, free' : `Rank ${skill.rank} / ${skill.maxRank}`}</span>
+                {!skill.free && <button
                   type="button"
                   aria-label={`Spend a point on ${skill.name}`}
                   disabled={skill.refusal !== null}
                   onClick={() => dispatch({ type: 'spendSkillPoint', heroId: hero.id, skillId: skill.id })}
                 >
                   +
-                </button>
+                </button>}
               </div>
               <p className="hint">{skillFacts(skill)}</p>
               <p>{skill.summary}</p>

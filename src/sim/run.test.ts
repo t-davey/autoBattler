@@ -250,12 +250,13 @@ describe('carrying over', () => {
     const saved = JSON.parse(serializeGame(played)) as {
       game: {
         heroes: { xp: number }[];
-        battle: { units: { team: string; health: number; ticksToAction: number }[] };
+        battle: { units: { team: string; health: number; oil: number; ticksToAction: number }[] };
       };
     };
     for (const candidate of saved.game.heroes) candidate.xp = 59;
     for (const unit of saved.game.battle.units) {
-      if (unit.team === 'a') unit.health = 50;
+      // No Oil, so no skill heals.
+      if (unit.team === 'a') Object.assign(unit, { health: 50, oil: 0 });
       else Object.assign(unit, { health: 0.01, ticksToAction: 100_000 });
     }
     const levelling = deserializeGame(JSON.stringify(saved))!;
@@ -294,7 +295,8 @@ describe('Enemy scale', () => {
         stepUntil(played, 'battleEnded', seen);
         xpOf[floor] = hero(viewGame(played), 'warrener').xp - xpBefore;
         for (const event of seen) {
-          if (event.type === 'effectDamage' && event.effect === 'poison') stackOf[floor] = event.damage;
+          // Only Poison on the Heroes: Tainted Shaft poisons enemies too.
+          if (event.type === 'effectDamage' && event.effect === 'poison' && ['sin-eater', 'warrener', 'lamplighter'].includes(event.targetId)) stackOf[floor] = event.damage;
         }
       }
     }

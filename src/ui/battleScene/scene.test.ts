@@ -110,7 +110,7 @@ describe('the Battle scene', () => {
     scene.play({ events, ticks: 1 }, view);
     scene.sync(view);
     expect(unitIn(scene.frame(), death.unitId).dissolve).toBe(0);
-    settle(scene, 0.5);
+    settle(scene, 1);
     expect(unitIn(scene.frame(), death.unitId).dissolve).toBeGreaterThan(0);
     settle(scene, 2);
     expect(scene.frame().units.some((unit) => unit.id === death.unitId)).toBe(false);

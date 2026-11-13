@@ -6,6 +6,7 @@ import { isNumber, isRecord } from './guards';
 import { isBattleState } from './battle';
 import { isHeroState, type HeroState } from './heroes';
 import { isItem, type ItemState } from './items';
+import { orderFor } from './skills';
 import { isPickPriority } from './picks';
 import { isRng } from './rng';
 import { isRunState } from './run';
@@ -61,5 +62,7 @@ export function deserializeGame(text: string): Game | null {
     return null;
   }
   if (!isRecord(parsed) || parsed['version'] !== SAVE_VERSION || !isGameState(parsed['game'])) return null;
-  return gameOf(parsed['game'] as GameState);
+  const state = parsed['game'] as GameState;
+  for (const hero of state.heroes) hero.order = orderFor(hero.id, hero.ranks, hero.order);
+  return gameOf(state);
 }

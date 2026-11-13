@@ -4,6 +4,8 @@ import type { DispatchRefusal } from './store';
 const REACH_TEXT: Readonly<Record<SkillReach, string>> = {
   self: 'Self',
   melee: 'Melee',
+  ranged: 'Ranged',
+  spell: 'Spell',
   anyHero: 'Any Hero',
   everyHero: 'Every Hero',
 };
@@ -17,6 +19,7 @@ export const REFUSAL_TEXT: Readonly<Record<DispatchRefusal, string>> = {
   unknownHero: 'No such Hero.',
   unknownSkill: 'No such skill.',
   otherClass: 'Another Class holds this skill.',
+  freeSkill: 'A free Class skill has a fixed strength.',
   noPoints: 'No skill points left.',
   stepLocked: 'Spend more points in this Branch first.',
   maxRank: 'This skill is at its top rank.',

@@ -39,19 +39,19 @@ export function spendSkillPoint(hero: HeroState, skillId: SkillId): BuildRefusal
   const reason = spendRefusal(hero.id, hero.ranks, unspentPoints(hero), skillId);
   if (reason) return reason;
   hero.ranks[skillId] = (hero.ranks[skillId] ?? 0) + 1;
-  hero.order = orderFor(hero.ranks, hero.order);
+  hero.order = orderFor(hero.id, hero.ranks, hero.order);
   return null;
 }
 
 export function setSkillOrder(hero: HeroState, order: readonly SkillId[]): BuildRefusal | null {
-  if (!isLegalOrder(hero.ranks, order)) return 'badOrder';
+  if (!isLegalOrder(hero.id, hero.ranks, order)) return 'badOrder';
   hero.order = [...order];
   return null;
 }
 
 export function respec(hero: HeroState): void {
   hero.ranks = {};
-  hero.order = orderFor(hero.ranks, hero.order);
+  hero.order = orderFor(hero.id, hero.ranks, hero.order);
 }
 
 /** Moves the item from the Stash to the Hero, and whatever it replaces back. */

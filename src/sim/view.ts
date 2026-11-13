@@ -5,7 +5,7 @@ import { GRID_HEIGHT, GRID_WIDTH, lampIndexOf, type Depth, type RoomKind } from 
 import { CLASSES, xpToNextLevel } from './content/party';
 import { MAX_SKILL_RANK, rankValue, SKILL_IDS, SKILLS, type HeroId, type SkillId, type SkillKind, type SkillReach } from './content/skills';
 import { heroesOf, stateOf, type Game } from './game';
-import { heroReach, heroStats, unspentPoints, type HeroState, type HeroStats } from './heroes';
+import { heroReach, heroStats, skillRank, unspentPoints, type HeroState, type HeroStats } from './heroes';
 import { viewItem, type ItemView } from './items';
 import { ENEMY_TEAM, PARTY_TEAM, type Phase, type RunState } from './run';
 import { pointsToOpen, spendRefusal, spentPoints, type SpendRefusal } from './skills';
@@ -61,6 +61,8 @@ export interface SkillView {
   readonly refusal: SpendRefusal | null;
   /** A melee skill can't fire while the Hero holds a ranged weapon. */
   readonly blockedByWeapon: boolean;
+  /** The free Class skill: always learned, at a fixed strength. */
+  readonly free: boolean;
 }
 
 export interface HeroView {
@@ -153,7 +155,9 @@ const weaponBlocksSkill = (weaponReach: Reach, skillReach: SkillReach | null): b
 
 function viewSkill(hero: HeroState, id: SkillId): SkillView {
   const skill = SKILLS[id];
-  const rank = hero.ranks[id] ?? 0;
+  const rank = skillRank(hero, id);
+  const free = skill.free === true;
+  const maxRank = free ? rank : MAX_SKILL_RANK;
   return {
     id,
     name: skill.name,
@@ -166,15 +170,16 @@ function viewSkill(hero: HeroState, id: SkillId): SkillView {
     cooldown: skill.cooldown,
     summary: skill.summary,
     rank,
-    maxRank: MAX_SKILL_RANK,
+    maxRank,
     pointsToOpen: pointsToOpen(id),
     values: skill.values.map(({ label }, index) => ({
       label,
       current: rank > 0 ? rankValue(id, rank, index) : null,
-      next: rank < MAX_SKILL_RANK ? rankValue(id, rank + 1, index) : null,
+      next: rank < maxRank ? rankValue(id, rank + 1, index) : null,
     })),
     refusal: spendRefusal(hero.id, hero.ranks, unspentPoints(hero), id),
     blockedByWeapon: weaponBlocksSkill(heroReach(hero), skill.reach),
+    free,
   };
 }
 

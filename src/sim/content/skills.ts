@@ -1,11 +1,19 @@
 import type { Row } from '../battle';
 
 export type HeroId = 'sin-eater' | 'warrener' | 'lamplighter';
-export type ActiveSkillId = 'bar-the-way' | 'bleeders-cut' | 'the-long-cut' | 'mend-by-lamplight' | 'lantern-ward';
+export type ActiveSkillId =
+  | 'consume-sin'
+  | 'tainted-shaft'
+  | 'votive-spark'
+  | 'bar-the-way'
+  | 'bleeders-cut'
+  | 'the-long-cut'
+  | 'mend-by-lamplight'
+  | 'lantern-ward';
 export type PassiveSkillId = 'iron-penance' | 'shared-burden' | 'open-veins' | 'warm-hands';
 export type SkillId = ActiveSkillId | PassiveSkillId;
 export type SkillKind = 'active' | 'passive';
-export type SkillReach = 'self' | 'melee' | 'anyHero' | 'everyHero';
+export type SkillReach = 'self' | 'melee' | 'ranged' | 'spell' | 'anyHero' | 'everyHero';
 
 /** One number a skill scales by rank, running evenly from rank 1 to the top rank. */
 export interface SkillValue {
@@ -29,9 +37,13 @@ export interface SkillDefinition {
   readonly cooldown: number;
   readonly summary: string;
   readonly values: readonly SkillValue[];
+  /** A free Class skill: learned from the start at a fixed strength, costing no points. */
+  readonly free?: true;
 }
 
 export const MAX_SKILL_RANK = 5;
+/** A free Class skill's rank, which never changes. Its values are the same at every rank. */
+export const FREE_SKILL_RANK = 1;
 export const POINTS_PER_STEP = 3;
 export const OUT_OF_ROW_FACTOR = 0.6;
 /** Ticks. */
@@ -47,8 +59,28 @@ export const BAR_THE_WAY_BELOW = 0.8;
 export const MEND_BELOW = 0.7;
 
 const passive = { kind: 'passive', reach: null, oil: 0, cooldown: 0 } as const;
+const free = { branch: 'Class skill', step: 1, kind: 'active', cooldown: 0, free: true } as const;
+const fixed = (label: string, value: number): SkillValue => ({ label, rank1: value, rank5: value });
 
 export const SKILLS: Readonly<Record<SkillId, SkillDefinition>> = {
+  'consume-sin': {
+    id: 'consume-sin', name: 'Consume Sin', heroId: 'sin-eater', ...free,
+    row: 'front', reach: 'melee', oil: 8,
+    summary: 'Holy damage to one enemy, healing this Hero. Fires when a reachable enemy lives.',
+    values: [fixed('Hit, of power', 110), fixed('Heal, of max health', 3)],
+  },
+  'tainted-shaft': {
+    id: 'tainted-shaft', name: 'Tainted Shaft', heroId: 'warrener', ...free,
+    row: 'back', reach: 'ranged', oil: 7,
+    summary: 'Poison damage to an enemy in either Row, plus a Poison stack. Fires when an enemy lives.',
+    values: [fixed('Hit, of power', 40), fixed('Poison each time, of power', 8)],
+  },
+  'votive-spark': {
+    id: 'votive-spark', name: 'Votive Spark', heroId: 'lamplighter', ...free,
+    row: 'back', reach: 'spell', oil: 6,
+    summary: 'Holy damage to an enemy in either Row. Fires when an enemy lives.',
+    values: [fixed('Hit, of power', 110)],
+  },
   'bar-the-way': {
     id: 'bar-the-way', name: 'Bar the Way', heroId: 'sin-eater', branch: 'Bulwark', step: 1,
     kind: 'active', row: 'front', reach: 'self', oil: 15, cooldown: 200,

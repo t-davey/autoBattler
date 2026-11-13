@@ -52,14 +52,14 @@ const stepUntil = (game: Game, wanted: (event: GameEvent) => boolean, limit = 20
 const STRONG: GameSetup['scenario'] = { heroLevel: 40 };
 
 describe('levels', () => {
-  it('a new Hero is level 1 with no points, skills, or order', () => {
+  it('a new Hero is level 1 with no points, and only its free Class skill in its order', () => {
     expect(heroIn(createGame({ seed: 1 }), 'warrener')).toMatchObject({
       name: 'Warrener',
       level: 1,
       xp: 0,
       xpToNext: 60,
       unspentPoints: 0,
-      order: [],
+      order: ['tainted-shaft'],
       oil: 100,
     });
   });
@@ -164,14 +164,14 @@ describe('spending points', () => {
   it('learning an active skill adds it to the end of the order', () => {
     const game = atLevel(8);
     spend(game, 'warrener', 'bleeders-cut');
-    expect(heroIn(game, 'warrener').order).toEqual(['bleeders-cut']);
+    expect(heroIn(game, 'warrener').order).toEqual(['bleeders-cut', 'tainted-shaft']);
     spend(game, 'warrener', 'bleeders-cut');
     spend(game, 'warrener', 'bleeders-cut');
     spend(game, 'warrener', 'open-veins');
     spend(game, 'warrener', 'open-veins');
     spend(game, 'warrener', 'open-veins');
     spend(game, 'warrener', 'the-long-cut');
-    expect(heroIn(game, 'warrener').order).toEqual(['bleeders-cut', 'the-long-cut']);
+    expect(heroIn(game, 'warrener').order).toEqual(['bleeders-cut', 'the-long-cut', 'tainted-shaft']);
   });
 });
 
@@ -181,7 +181,7 @@ describe('skill order and respec', () => {
 
   it('setSkillOrder changes the order', () => {
     const game = builtWarrener();
-    const order = ['the-long-cut', 'bleeders-cut'] as const;
+    const order = ['tainted-shaft', 'the-long-cut', 'bleeders-cut'] as const;
     expect(applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order })).toEqual({ ok: true });
     expect(heroIn(game, 'warrener').order).toEqual(order);
   });
@@ -194,28 +194,44 @@ describe('skill order and respec', () => {
     expect(tryOrder(['bleeders-cut', 'bleeders-cut'])).toEqual(refused);
     expect(tryOrder(['bleeders-cut', 'open-veins'])).toEqual(refused);
     expect(tryOrder(['bleeders-cut', 'the-long-cut', 'open-veins'])).toEqual(refused);
-    expect(heroIn(game, 'warrener').order).toEqual(['bleeders-cut', 'the-long-cut']);
+    expect(tryOrder(['bleeders-cut', 'the-long-cut'])).toEqual(refused);
+    expect(heroIn(game, 'warrener').order).toEqual(['bleeders-cut', 'the-long-cut', 'tainted-shaft']);
   });
 
-  it('respec refunds every point and clears unlearned skills from the order', () => {
+  it('respec refunds every point and leaves only the free Class skill in the order', () => {
     const game = builtWarrener();
     expect(applyAction(game, { type: 'respec', heroId: 'warrener' })).toEqual({ ok: true });
-    expect(heroIn(game, 'warrener')).toMatchObject({ unspentPoints: 6, order: [] });
+    expect(heroIn(game, 'warrener')).toMatchObject({ unspentPoints: 6, order: ['tainted-shaft'] });
     expect(rankOf(game, 'warrener', 'bleeders-cut')).toBe(0);
   });
 
   it('a chosen order keeps its place when another active skill is learned', () => {
     const game = atLevel(9, { skillRanks: { warrener: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
-    applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order: ['the-long-cut', 'bleeders-cut'] });
+    applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order: ['the-long-cut', 'tainted-shaft', 'bleeders-cut'] });
     spend(game, 'warrener', 'the-long-cut');
-    expect(heroIn(game, 'warrener').order).toEqual(['the-long-cut', 'bleeders-cut']);
+    expect(heroIn(game, 'warrener').order).toEqual(['the-long-cut', 'tainted-shaft', 'bleeders-cut']);
+  });
+
+  it('a newly learned skill goes just ahead of the free Class skill, which always has a target', () => {
+    const game = atLevel(9, { skillRanks: { warrener: { 'bleeders-cut': 3, 'open-veins': 3 } } });
+    applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order: ['tainted-shaft', 'bleeders-cut'] });
+    spend(game, 'warrener', 'the-long-cut');
+    expect(heroIn(game, 'warrener').order).toEqual(['the-long-cut', 'tainted-shaft', 'bleeders-cut']);
+  });
+
+  it('the free Class skill takes no points and has a fixed strength', () => {
+    const game = atLevel(3);
+    expect(spend(game, 'warrener', 'tainted-shaft')).toEqual({ ok: false, reason: 'freeSkill' });
+    const shaft = heroIn(game, 'warrener').skills.find((skill) => skill.id === 'tainted-shaft')!;
+    expect(shaft).toMatchObject({ free: true, rank: 1, maxRank: 1 });
+    expect(heroIn(game, 'warrener').unspentPoints).toBe(2);
   });
 
   it('after a respec, skills come back into the order as they are relearned', () => {
     const game = builtWarrener();
     applyAction(game, { type: 'respec', heroId: 'warrener' });
     spend(game, 'warrener', 'bleeders-cut');
-    expect(heroIn(game, 'warrener').order).toEqual(['bleeders-cut']);
+    expect(heroIn(game, 'warrener').order).toEqual(['bleeders-cut', 'tainted-shaft']);
   });
 });
 
@@ -248,11 +264,11 @@ describe('between Battles', () => {
     let usedInCurrent = false;
     while (viewGame(game).phase === 'battle') {
       advance(game, TICK_MS, (event) => {
-        if (event.type === 'skill') usedInCurrent = true;
+        if (event.type === 'skill' && event.skillId === 'bleeders-cut') usedInCurrent = true;
       });
     }
     expect(usedInCurrent).toBe(false);
-    const nextUse = stepUntil(game, (event) => event.type === 'skill');
+    const nextUse = stepUntil(game, (event) => event.type === 'skill' && event.skillId === 'bleeders-cut');
     expect(nextUse).toMatchObject({ skillId: 'bleeders-cut' });
   });
 
@@ -266,7 +282,7 @@ describe('between Battles', () => {
       });
       return used;
     };
-    expect(skillsWith(['the-long-cut', 'bleeders-cut'])).not.toEqual(skillsWith(['bleeders-cut', 'the-long-cut']));
+    expect(skillsWith(['the-long-cut', 'bleeders-cut', 'tainted-shaft'])).not.toEqual(skillsWith(['bleeders-cut', 'the-long-cut', 'tainted-shaft']));
   });
 
   it('Oil carries out of a Battle, with 30 more on leaving the Room, up to the maximum', () => {
@@ -276,10 +292,15 @@ describe('between Battles', () => {
     saved.game.battle.units[1].oil = 10;
     const game = deserializeGame(JSON.stringify(saved))!;
     const startedAt = viewGame(game).tick;
-    while (viewGame(game).phase === 'battle') advance(game, TICK_MS);
-    // A Hero with no skills spends nothing.
+    let spent = 0;
+    while (viewGame(game).phase === 'battle') {
+      advance(game, TICK_MS, (event) => {
+        if (event.type === 'skill' && event.unitId === 'warrener') spent += 7;
+      });
+    }
+    // Tainted Shaft, the free Class skill, costs 7 Oil.
     const battleTicks = viewGame(game).tick - startedAt;
-    const expected = 10 + Math.floor(battleTicks / 5) + 30;
+    const expected = 10 + Math.floor(battleTicks / 5) - spent + 30;
     expect(expected).toBeLessThan(100);
     expect(heroIn(game, 'warrener').oil).toBe(expected);
 
@@ -313,12 +334,13 @@ describe('between Battles', () => {
 
   it('partyUnitSpecs reflects a Hero\'s level, ranks, and skill order', () => {
     const game = atLevel(7, { skillRanks: { warrener: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
-    applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order: ['the-long-cut', 'bleeders-cut'] });
+    applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order: ['the-long-cut', 'bleeders-cut', 'tainted-shaft'] });
     const spec = specOf(game, 'warrener');
     expect(spec.power).toBe(29);
     expect(spec.skills).toEqual([
       { id: 'the-long-cut', rank: 1 },
       { id: 'bleeders-cut', rank: 2 },
+      { id: 'tainted-shaft', rank: 1 },
       { id: 'open-veins', rank: 2 },
     ]);
   });
@@ -372,5 +394,22 @@ describe('saves', () => {
     const save = JSON.parse(serializeGame(inFight()));
     corrupt(save);
     expect(deserializeGame(JSON.stringify(save))).toBeNull();
+  });
+});
+
+describe('saves from before free Class skills', () => {
+  it('load with each free Class skill added to the end of its Hero\'s order', () => {
+    const game = atLevel(3, { skillRanks: { warrener: { 'bleeders-cut': 2 } } });
+    const saved = JSON.parse(serializeGame(game)) as { game: { heroes: { id: string; order: string[] }[] } };
+    for (const savedHero of saved.game.heroes) savedHero.order = savedHero.order.filter((id) => !['consume-sin', 'tainted-shaft', 'votive-spark'].includes(id));
+    const loaded = deserializeGame(JSON.stringify(saved))!;
+    expect(heroIn(loaded, 'warrener').order).toEqual(['bleeders-cut', 'tainted-shaft']);
+    expect(heroIn(loaded, 'sin-eater').order).toEqual(['consume-sin']);
+  });
+
+  it('refuse a free Class skill bought with points', () => {
+    const saved = JSON.parse(serializeGame(atLevel(3))) as { game: { heroes: { ranks: Record<string, number> }[] } };
+    saved.game.heroes[1]!.ranks['tainted-shaft'] = 1;
+    expect(deserializeGame(JSON.stringify(saved))).toBeNull();
   });
 });

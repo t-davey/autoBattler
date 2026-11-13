@@ -27,8 +27,8 @@ export type DamageType = (typeof DAMAGE_TYPES)[number];
 /** Which reachable Row a Unit picks from: the front Row while it lives, or either. */
 export type Targeting = 'frontFirst' | 'any';
 export type DamageEffect = 'bleed' | 'poison' | 'burn';
-/** Effects that change how a Unit fights rather than dealing damage. */
-export type StatusEffect = 'slow' | 'curse';
+/** Effects that weaken how a Unit fights rather than dealing damage. */
+export type WeakeningEffect = 'slow' | 'curse';
 
 export interface LearnedSkill {
   readonly id: SkillId;
@@ -165,7 +165,7 @@ export type BattleEvent =
   | {
       readonly type: 'effect';
       readonly tick: number;
-      readonly effect: DamageEffect | StatusEffect;
+      readonly effect: DamageEffect | WeakeningEffect;
       readonly targetId: string;
       readonly targetName: string;
     }
@@ -405,11 +405,12 @@ function rollDodge(battle: BattleState, target: UnitState): boolean {
   return chance > 0 && nextFloat(battle.rng) * 100 < chance;
 }
 
-function landStrike(battle: BattleState, strike: Strike, events: BattleEvent[]): void {
+/** Returns false if the target dodged. */
+function landStrike(battle: BattleState, strike: Strike, events: BattleEvent[]): boolean {
   const { attacker, target, damageType, crit, ignoresArmour, hasMinimum } = strike;
   if (rollDodge(battle, target)) {
     events.push({ type: 'dodge', tick: battle.tick, attackerId: attacker.spec.id, attackerName: attacker.spec.name, targetId: target.spec.id, targetName: target.spec.name });
-    return;
+    return false;
   }
   const raw = strike.raw * curseFactor(battle, attacker);
   const land = (receiver: UnitState, share: number, redirectedFromName: string | null, minimum: number): void => {
@@ -438,6 +439,7 @@ function landStrike(battle: BattleState, strike: Strike, events: BattleEvent[]):
   if (poison !== undefined && isAlive(target)) addPoisonStack(battle, target, poison * curseFactor(battle, attacker), events);
   settleDeath(battle, target, events);
   if (burden) settleDeath(battle, burden.holder, events);
+  return true;
 }
 
 function addPoisonStack(battle: BattleState, target: UnitState, damage: number, events: BattleEvent[]): void {
@@ -456,7 +458,7 @@ function addBurn(battle: BattleState, target: UnitState, total: number, events: 
 }
 
 /** Sets a Slow or Curse, replacing any of that kind the target holds. */
-function addStatus(battle: BattleState, target: UnitState, effect: StatusEffect, percent: number, events: BattleEvent[]): void {
+function addWeakening(battle: BattleState, target: UnitState, effect: WeakeningEffect, percent: number, events: BattleEvent[]): void {
   const timed = { share: percent / 100, expiresAt: battle.tick + (effect === 'slow' ? SLOW_DURATION : CURSE_DURATION) };
   if (effect === 'slow') target.slow = timed;
   else target.curse = timed;
@@ -526,6 +528,12 @@ function reachableEnemies(battle: BattleState, unit: UnitState): UnitState[] {
   return anyRow ? enemies : enemies.filter((enemy) => enemy.row === 'front');
 }
 
+/** Enemies a skill of this reach can target: melee reaches only the front Row while it stands. */
+function enemiesInReach(battle: BattleState, unit: UnitState, reach: 'melee' | 'ranged' | 'spell'): UnitState[] {
+  const enemies = livingOn(battle, otherTeam(unit.team));
+  return reach === 'melee' ? enemies.filter((enemy) => enemy.row === 'front') : enemies;
+}
+
 function pick<T>(battle: BattleState, options: readonly T[]): T | undefined {
   return options[nextInt(battle.rng, options.length)];
 }
@@ -565,7 +573,44 @@ interface ActiveRule {
   use(battle: BattleState, unit: UnitState, rank: number, events: BattleEvent[]): void;
 }
 
+/** A hit of a skill's first value against power, with a chance to crit. Returns false if dodged. */
+function skillHit(battle: BattleState, unit: UnitState, id: SkillId, rank: number, target: UnitState, damageType: DamageType, events: BattleEvent[]): boolean {
+  const crit = rollCrit(battle, unit);
+  const raw = skillAmount(unit, id, rank) * (crit ? CRIT_MULTIPLIER : 1);
+  return landStrike(battle, { attacker: unit, target, raw, damageType, crit, ignoresArmour: false, hasMinimum: true }, events);
+}
+
+function healUnit(battle: BattleState, target: UnitState, amount: number, events: BattleEvent[]): void {
+  const healed = Math.min(amount, maxHealthOf(target) - target.health);
+  if (healed <= 0) return;
+  target.health += healed;
+  events.push({ type: 'heal', tick: battle.tick, targetId: target.spec.id, targetName: target.spec.name, amount: healed });
+}
+
 const ACTIVE_RULES: Readonly<Record<ActiveSkillId, ActiveRule>> = {
+  'consume-sin': {
+    isUseful: (battle, unit) => enemiesInReach(battle, unit, 'melee').length > 0,
+    use(battle, unit, rank, events) {
+      const target = pick(battle, enemiesInReach(battle, unit, 'melee'));
+      if (!target || !skillHit(battle, unit, 'consume-sin', rank, target, 'holy', events)) return;
+      healUnit(battle, unit, maxHealthOf(unit) * rankFraction(unit, 'consume-sin', rank, 1), events);
+    },
+  },
+  'tainted-shaft': {
+    isUseful: (battle, unit) => enemiesInReach(battle, unit, 'ranged').length > 0,
+    use(battle, unit, rank, events) {
+      const target = pick(battle, enemiesInReach(battle, unit, 'ranged'));
+      if (!target || !skillHit(battle, unit, 'tainted-shaft', rank, target, 'poison', events) || !isAlive(target)) return;
+      addPoisonStack(battle, target, skillAmount(unit, 'tainted-shaft', rank, 1) * curseFactor(battle, unit), events);
+    },
+  },
+  'votive-spark': {
+    isUseful: (battle, unit) => enemiesInReach(battle, unit, 'spell').length > 0,
+    use(battle, unit, rank, events) {
+      const target = pick(battle, enemiesInReach(battle, unit, 'spell'));
+      if (target) skillHit(battle, unit, 'votive-spark', rank, target, 'holy', events);
+    },
+  },
   'bar-the-way': {
     isUseful: (battle, unit) =>
       livingOn(battle, unit.team).some((ally) => ally !== unit && healthShare(ally) < BAR_THE_WAY_BELOW),
@@ -645,8 +690,8 @@ function useAction(battle: BattleState, unit: UnitState, action: UnitAction, eve
     const weakened = curseFactor(battle, unit);
     if (action.poisonStack !== undefined) addPoisonStack(battle, target, action.poisonStack * weakened, events);
     if (action.burn !== undefined) addBurn(battle, target, action.burn * weakened, events);
-    if (action.slow !== undefined) addStatus(battle, target, 'slow', action.slow, events);
-    if (action.curse !== undefined) addStatus(battle, target, 'curse', action.curse, events);
+    if (action.slow !== undefined) addWeakening(battle, target, 'slow', action.slow, events);
+    if (action.curse !== undefined) addWeakening(battle, target, 'curse', action.curse, events);
   }
 }
 

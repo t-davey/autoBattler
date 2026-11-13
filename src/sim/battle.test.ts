@@ -410,3 +410,45 @@ describe('damage types and effects', () => {
     expect(simulateBattle(withZero).log).toEqual(simulateBattle(setup(7)).log);
   });
 });
+
+describe('free Class skills', () => {
+  const hero = (skill: 'consume-sin' | 'tainted-shaft' | 'votive-spark', overrides: Partial<UnitSpec> = {}): UnitSpec =>
+    unit('hero', { power: 100, maxOil: 100, actionInterval: 10, skills: [{ id: skill, rank: 1 }], ...overrides });
+  const enemies = (): UnitSpec[] => [
+    unit('front', { health: 10_000, actionInterval: NEVER_ACTS, armour: 100 }),
+    unit('back', { health: 10_000, actionInterval: NEVER_ACTS, row: 'back', armour: 100 }),
+  ];
+  const firstSkillTurn = (spec: UnitSpec): BattleEvent[] =>
+    simulateBattle({ seed: 1, maxTicks: 10, teams: { a: [spec], b: enemies() } }).log.filter((event) => event.tick === 10);
+
+  it('Consume Sin hits the front Row for 110% of power as holy damage and heals 3% of max health', () => {
+    const events = firstSkillTurn(hero('consume-sin', { health: 50, maxHealth: 1000 }));
+    expect(events).toContainEqual(expect.objectContaining({ type: 'skill', skillId: 'consume-sin' }));
+    expect(events).toContainEqual(expect.objectContaining({ type: 'attack', targetId: 'front', damage: expect.closeTo(110), damageType: 'holy' }));
+    expect(events).toContainEqual(expect.objectContaining({ type: 'heal', targetId: 'hero', amount: 30 }));
+  });
+
+  it('Tainted Shaft reaches either Row with poison and a Poison stack, at 60% from the front Row', () => {
+    const fromBack = (seed: number) =>
+      simulateBattle({ seed, maxTicks: 60, teams: { a: [hero('tainted-shaft', { row: 'back' }), unit('ally', { actionInterval: NEVER_ACTS })], b: enemies() } }).log;
+    const targets = new Set([1, 2, 3, 4, 5, 6].flatMap((seed) => fromBack(seed).flatMap((event) => (event.type === 'attack' ? [event.targetId] : []))));
+    expect(targets).toEqual(new Set(['front', 'back']));
+    const events = fromBack(1).filter((event) => event.tick === 10);
+    expect(events).toContainEqual(expect.objectContaining({ type: 'attack', damage: expect.closeTo(40), damageType: 'poison' }));
+    expect(events).toContainEqual(expect.objectContaining({ type: 'effect', effect: 'poison' }));
+    expect(firstSkillTurn(hero('tainted-shaft'))).toContainEqual(expect.objectContaining({ type: 'attack', damage: expect.closeTo(24), damageType: 'poison' }));
+  });
+
+  it('Votive Spark hits either Row for 110% of power as holy damage', () => {
+    // An ally holds the front Row, so the Hero stays in the back.
+    const events = simulateBattle({ seed: 1, maxTicks: 10, teams: { a: [hero('votive-spark', { row: 'back' }), unit('ally', { actionInterval: NEVER_ACTS })], b: enemies() } }).log;
+    expect(events).toContainEqual(expect.objectContaining({ type: 'skill', skillId: 'votive-spark' }));
+    expect(events).toContainEqual(expect.objectContaining({ type: 'attack', damage: expect.closeTo(110), damageType: 'holy' }));
+  });
+
+  it('a Hero out of Oil falls back on the basic attack', () => {
+    const events = firstSkillTurn(hero('votive-spark', { oil: 0 }));
+    expect(events.some((event) => event.type === 'skill')).toBe(false);
+    expect(events).toContainEqual(expect.objectContaining({ type: 'attack', damageType: 'physical' }));
+  });
+});

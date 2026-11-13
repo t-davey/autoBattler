@@ -108,6 +108,10 @@ _Avoid_: XP penalty, level penalty
 What a Hero earns each level and spends to raise a skill.
 _Avoid_: Talent point, ability point
 
+**Free Class skill**:
+The active skill each Hero has from the start at a fixed strength, costing no skill points.
+_Avoid_: Starter skill, innate
+
 **Skill rank**:
 How far a skill has been raised, from 1 to 5.
 _Avoid_: Skill level, tier
@@ -133,7 +137,7 @@ Refunding all of a Hero's skill points to spend them again.
 _Avoid_: Reset, rebuild
 
 **Effect**:
-A timed condition on a Unit: Bleed, Poison, or Ward.
+A timed condition on a Unit: Bleed, Poison, Burn, Slow, Curse, or Ward.
 _Avoid_: Status, buff, debuff
 
 **Bleed**:
@@ -143,6 +147,22 @@ _Avoid_: Wound, dot
 **Poison**:
 Stacking poison damage over time, up to 5 stacks on a Unit.
 _Avoid_: Venom, dot
+
+**Burn**:
+Fire damage over time. A new Burn replaces the old one.
+_Avoid_: Ignite, dot
+
+**Slow**:
+Lost speed, so a Unit acts less often until it wears off.
+_Avoid_: Chill, haste debuff
+
+**Curse**:
+A Hexer's Effect that weakens an enemy, such as cutting the damage it deals. An enemy holds one at a time.
+_Avoid_: Hex, debuff
+
+**Dodge**:
+A chance for an attack to miss a Unit entirely. Damage over time can't be dodged.
+_Avoid_: Evasion, miss chance
 
 **Ward**:
 A temporary layer that absorbs damage of any type before health.
