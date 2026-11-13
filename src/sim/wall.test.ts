@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createWall, isWallState, recordGrowth, recordGuardianKill, recordSetback, SETBACKS_TO_FALL_BACK, turnsBackBeforeGuardian, type WallEvent } from './index';
+import { createGame, createWall, deserializeGame, recordGrowth, serializeGame, recordGuardianKill, recordSetback, SETBACKS_TO_FALL_BACK, turnsBackBeforeGuardian, type WallEvent } from './index';
 
 function collector(): { events: WallEvent['type'][]; sink: (event: WallEvent) => void } {
   const events: WallEvent['type'][] = [];
@@ -44,11 +44,13 @@ describe('the Wall', () => {
     expect(wall).toEqual(createWall({ lampLit: true }));
   });
 
-  it('accepts only saved Walls whose fallback matches their count', () => {
-    expect(isWallState(createWall({ setbacks: SETBACKS_TO_FALL_BACK }))).toBe(true);
-    expect(isWallState({ lampLit: false, setbacks: SETBACKS_TO_FALL_BACK, fallenBack: false })).toBe(false);
-    expect(isWallState({ lampLit: false, setbacks: 1, fallenBack: true })).toBe(false);
-    expect(isWallState({ lampLit: false, setbacks: SETBACKS_TO_FALL_BACK + 1, fallenBack: true })).toBe(false);
-    expect(isWallState(null)).toBe(false);
+  it('a save loads only if every Wall has fallen back exactly at its Setback limit', () => {
+    const saved = JSON.parse(serializeGame(createGame({ seed: 1, scenario: { setbacks: SETBACKS_TO_FALL_BACK } }))) as { game: { walls: unknown[] } };
+    const withFirstWall = (wall: unknown): string => JSON.stringify({ ...saved, game: { ...saved.game, walls: [wall, ...saved.game.walls.slice(1)] } });
+    expect(deserializeGame(withFirstWall(saved.game.walls[0]))).not.toBeNull();
+    expect(deserializeGame(withFirstWall({ lampLit: false, setbacks: SETBACKS_TO_FALL_BACK, fallenBack: false }))).toBeNull();
+    expect(deserializeGame(withFirstWall({ lampLit: false, setbacks: 1, fallenBack: true }))).toBeNull();
+    expect(deserializeGame(withFirstWall({ lampLit: false, setbacks: SETBACKS_TO_FALL_BACK + 1, fallenBack: true }))).toBeNull();
+    expect(deserializeGame(withFirstWall(null))).toBeNull();
   });
 });

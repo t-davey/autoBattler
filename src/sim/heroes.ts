@@ -1,9 +1,10 @@
+import { isNumber, isRecord, isString } from './guards';
 import type { Reach, UnitSpec } from './battle';
 import { ITEM_BASES, type Slot } from './content/items';
 import { actionIntervalFor, CLASSES, HERO_IDS, LEVEL_CAP, xpToNextLevel } from './content/party';
 import { SKILLS, type HeroId, type SkillId } from './content/skills';
-import { gearStats, slotOf, type ItemState } from './items';
-import { orderFor, spentPoints, type SkillRanks } from './skills';
+import { gearStats, isEquipped, slotOf, type ItemState } from './items';
+import { isLegalOrder, isRanks, orderFor, spentPoints, type SkillRanks } from './skills';
 
 /** A Hero between Battles, as plain JSON-safe data. */
 export interface HeroState {
@@ -119,4 +120,25 @@ export function gainXp(hero: HeroState, xp: number): number[] {
   }
   if (hero.level >= LEVEL_CAP) hero.xp = 0;
   return gained;
+}
+
+/** Whether saved data is a Hero this module could have made. */
+export function isHeroState(value: unknown): boolean {
+  if (!isRecord(value) || !HERO_IDS.includes(value['id'] as HeroId)) return false;
+  const { ranks, order, level } = value;
+  return (
+    isString(value['name']) &&
+    isNumber(level) &&
+    Number.isInteger(level) &&
+    level >= 1 &&
+    isNumber(value['xp']) &&
+    isNumber(value['health']) &&
+    value['health'] > 0 &&
+    isNumber(value['oil']) &&
+    isRanks(ranks) &&
+    Array.isArray(order) &&
+    isLegalOrder(ranks, order) &&
+    new Set(order).size === order.length &&
+    isEquipped(value['equipped'])
+  );
 }

@@ -1,3 +1,4 @@
+import { isNumber, isRecord } from './guards';
 import { isSkillId, MAX_SKILL_RANK, POINTS_PER_STEP, SKILL_IDS, SKILLS, type HeroId, type SkillId } from './content/skills';
 
 export type SkillRanks = Readonly<Partial<Record<SkillId, number>>>;
@@ -38,3 +39,11 @@ export function orderFor(ranks: SkillRanks, order: readonly SkillId[] = []): Ski
   const learned = learnedActives(ranks);
   return [...order.filter((id) => learned.includes(id)), ...learned.filter((id) => !order.includes(id))];
 }
+
+// Save validation.
+
+export const isRank = (value: unknown): value is number =>
+  isNumber(value) && Number.isInteger(value) && value >= 1 && value <= MAX_SKILL_RANK;
+
+export const isRanks = (value: unknown): value is SkillRanks =>
+  isRecord(value) && Object.entries(value).every(([id, rank]) => isSkillId(id) && isRank(rank));

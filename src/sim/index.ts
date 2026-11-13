@@ -27,12 +27,10 @@ export {
   applyAction,
   CATCH_UP_CAP_MS,
   createGame,
-  deserializeGame,
   partyUnitSpecs,
-  SAVE_VERSION,
-  serializeGame,
   TICK_MS,
 } from './game';
+export { deserializeGame, SAVE_VERSION, serializeGame } from './save';
 export { depthTuning } from './depth';
 export type { DepthTuning, RarityOdds } from './depth';
 export { ACTS, depthOf, floorAt, FLOORS_PER_ACT, FLOORS_PER_LAMP, LAMPS, MAX_DEPTH } from './content/world';
@@ -42,7 +40,7 @@ export type { ActionRefusal, ActionResult, Game, GameSetup, PlayerAction } from 
 export type { HeroStats } from './heroes';
 export type { BattleOutcome, EventSink, GameEvent, Phase, StartAt, TownReason } from './run';
 export { itemBlocksLearnedSkill, viewGame, viewStash } from './view';
-export { createWall, frontierIndex, isWallState, runStretch, recordGrowth, recordGuardianKill, recordSetback, SETBACKS_TO_FALL_BACK, turnsBackBeforeGuardian } from './wall';
+export { createWall, frontierIndex, runStretch, recordGrowth, recordGuardianKill, recordSetback, SETBACKS_TO_FALL_BACK, turnsBackBeforeGuardian } from './wall';
 export type { WallEvent, WallSink, WallState } from './wall';
 export type { BattleView, FloorMapView, GameView, HeroView, RoomView, SkillValueView, SkillView, UnitView, WallView } from './view';
 export { DEFAULT_PICK_PRIORITY, OFFERS_PER_PICK, PICK_IDS, PICK_TAGS, PICKS, picksFor } from './content/picks';

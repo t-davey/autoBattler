@@ -1,23 +1,21 @@
 import type { UnitSpec } from './battle';
 import { equipItem, renameHero, respec, setSkillOrder, spendSkillPoint, unequipItem, type BuildRefusal, type Stash } from './build';
-import { AFFIXES, ITEM_BASES, RARITIES, SLOTS, type Rarity, type Slot } from './content/items';
-import { CLASSES, HERO_IDS } from './content/party';
-import { isSkillId, MAX_SKILL_RANK, type HeroId, type SkillId } from './content/skills';
-import { isDepth, ROOM_KINDS } from './floors';
+import type { Slot } from './content/items';
+import { CLASSES } from './content/party';
+import type { HeroId, SkillId } from './content/skills';
 import { createParty, heroUnitSpec, type HeroState } from './heroes';
-import { slotOf, starterItem, type ItemId, type ItemSpec, type ItemState } from './items';
-import { DEFAULT_PICK_PRIORITY, PICKS, type PickTag } from './content/picks';
+import { starterItem, type ItemId, type ItemSpec, type ItemState } from './items';
+import { DEFAULT_PICK_PRIORITY, type PickTag } from './content/picks';
 import { isPickPriority } from './picks';
-import { createRng, type Rng } from './rng';
-import { createRun, frontierWall, sendParty, stepRun, type EventSink, type RunState, type RunWorld, type StartAt } from './run';
-import { isLegalOrder, type SkillRanks } from './skills';
+import { createRng } from './rng';
+import { createRun, frontierWall, sendParty, stepRun, type EventSink, type RunWorld, type StartAt } from './run';
+import type { SkillRanks } from './skills';
 import { LAMPS } from './content/world';
-import { createWall, isWallState, recordGrowth, type WallState } from './wall';
+import { createWall, recordGrowth, type WallState } from './wall';
 
 export const TICK_MS = 100;
 /** The longest absence that counts: 12 hours. */
 export const CATCH_UP_CAP_MS = 43_200_000;
-export const SAVE_VERSION = 5;
 
 export interface GameSetup {
   readonly seed: number;
@@ -56,14 +54,14 @@ export type ActionResult = { readonly ok: true } | { readonly ok: false; readonl
 export type Game = { readonly __brand: 'Game' };
 
 /** Everything that carries between Ticks, as plain JSON-safe data. */
-interface GameState extends RunWorld {
+export interface GameState extends RunWorld {
   tick: number;
   /** Elapsed time banked towards the next whole Tick. */
   bankMs: number;
 }
 
 export const stateOf = (game: Game): GameState => game as unknown as GameState;
-const gameOf = (state: GameState): Game => state as unknown as Game;
+export const gameOf = (state: GameState): Game => state as unknown as Game;
 const ignore: EventSink = () => {};
 
 /** One Wall per Lamp: the first `lit` relit, and the frontier with `setbacks` already counted. */
@@ -158,206 +156,4 @@ export function advance(game: Game, elapsedMs: number, sink: EventSink = ignore)
   const state = stateOf(game);
   const ticks = bankElapsed(state, elapsedMs);
   for (let i = 0; i < ticks; i++) stepTick(state, sink);
-}
-
-export function serializeGame(game: Game): string {
-  return JSON.stringify({ version: SAVE_VERSION, game: stateOf(game) });
-}
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-const isNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value);
-const isRng = (value: unknown): boolean => isRecord(value) && isNumber(value['state']);
-
-const isTeam = (value: unknown): boolean => value === 'a' || value === 'b';
-const isRow = (value: unknown): boolean => value === 'front' || value === 'back';
-const isString = (value: unknown): boolean => typeof value === 'string';
-
-const isOptionalNumber = (value: unknown): boolean => value === undefined || isNumber(value);
-const isRank = (value: unknown): value is number =>
-  isNumber(value) && Number.isInteger(value) && value >= 1 && value <= MAX_SKILL_RANK;
-const isLearnedSkill = (value: unknown): boolean =>
-  isRecord(value) && isSkillId(value['id']) && isRank(value['rank']);
-
-const isDamageType = (value: unknown): boolean => value === 'physical' || value === 'poison';
-const isUnitAction = (value: unknown): boolean =>
-  isRecord(value) &&
-  isString(value['name']) &&
-  isNumber(value['interval']) &&
-  (value['target'] === 'oneFront' || value['target'] === 'every') &&
-  isNumber(value['damage']) &&
-  isDamageType(value['damageType']) &&
-  isOptionalNumber(value['poisonStack']);
-
-const isUnitSpec = (value: unknown): boolean =>
-  isRecord(value) &&
-  isString(value['id']) &&
-  isString(value['name']) &&
-  isNumber(value['health']) &&
-  isOptionalNumber(value['maxHealth']) &&
-  isNumber(value['power']) &&
-  isNumber(value['actionInterval']) &&
-  isRow(value['row']) &&
-  (value['reach'] === 'melee' || value['reach'] === 'ranged') &&
-  (value['targeting'] === 'frontFirst' || value['targeting'] === 'any') &&
-  isDamageType(value['damageType']) &&
-  isNumber(value['armour']) &&
-  isRecord(value['resistances']) &&
-  Object.values(value['resistances']).every(isNumber) &&
-  isNumber(value['critChance']) &&
-  isOptionalNumber(value['oil']) &&
-  isOptionalNumber(value['maxOil']) &&
-  isOptionalNumber(value['poisonOnHit']) &&
-  (value['skills'] === undefined || (Array.isArray(value['skills']) && value['skills'].every(isLearnedSkill))) &&
-  (value['actions'] === undefined || (Array.isArray(value['actions']) && value['actions'].every(isUnitAction)));
-
-const isBleed = (value: unknown): boolean =>
-  isRecord(value) && isNumber(value['perTick']) && isNumber(value['ticksLeft']) && isNumber(value['nextTickAt']);
-const isPoisonStack = (value: unknown): boolean =>
-  isRecord(value) && isNumber(value['damage']) && isNumber(value['nextTickAt']) && isNumber(value['expiresAt']);
-const isWard = (value: unknown): boolean =>
-  isRecord(value) && isNumber(value['amount']) && isNumber(value['expiresAt']);
-const isSkillTicks = (value: unknown): boolean =>
-  isRecord(value) && Object.entries(value).every(([id, tick]) => isSkillId(id) && isNumber(tick));
-
-/** A clock for each of the Unit's actions, or an action would silently never come. */
-const hasActionClocks = (spec: Record<string, unknown>, clocks: unknown, inSecondPhase: unknown): boolean => {
-  const phase = spec['secondPhase'];
-  if (inSecondPhase !== undefined && typeof inSecondPhase !== 'boolean') return false;
-  // A second Phase needs one to be in.
-  if (inSecondPhase === true && !isRecord(phase)) return false;
-  const actions = inSecondPhase === true ? (phase as Record<string, unknown>)['actions'] : spec['actions'];
-  return Array.isArray(clocks) && clocks.every(isNumber) && clocks.length === (Array.isArray(actions) ? actions.length : 0);
-};
-
-const isUnitState = (value: unknown): boolean =>
-  isRecord(value) &&
-  isUnitSpec(value['spec']) &&
-  isTeam(value['team']) &&
-  isRow(value['row']) &&
-  isNumber(value['health']) &&
-  isNumber(value['ticksToAction']) &&
-  hasActionClocks(value['spec'] as Record<string, unknown>, value['ticksToEachAction'], value['inSecondPhase']) &&
-  isNumber(value['oil']) &&
-  isSkillTicks(value['skillReadyAt']) &&
-  (value['bleed'] === null || isBleed(value['bleed'])) &&
-  Array.isArray(value['poison']) &&
-  value['poison'].every(isPoisonStack) &&
-  (value['ward'] === null || isWard(value['ward'])) &&
-  isNumber(value['barUntil']) &&
-  isNumber(value['barArmour']);
-
-const isBattleState = (value: unknown): boolean =>
-  isRecord(value) &&
-  isRng(value['rng']) &&
-  Array.isArray(value['units']) &&
-  value['units'].every(isUnitState) &&
-  isNumber(value['maxTicks']) &&
-  isNumber(value['tick']) &&
-  typeof value['over'] === 'boolean' &&
-  (value['winner'] === null || isTeam(value['winner']));
-
-const isRanks = (value: unknown): value is SkillRanks =>
-  isRecord(value) && Object.entries(value).every(([id, rank]) => isSkillId(id) && isRank(rank));
-
-const isAffix = (value: unknown): boolean =>
-  isRecord(value) && AFFIXES.some((affix) => affix.id === value['id']) && isNumber(value['value']);
-
-function isItem(value: unknown): value is ItemState {
-  if (!isRecord(value) || !Object.hasOwn(ITEM_BASES, value['baseId'] as string)) return false;
-  const { id, rarity, affixes, levelRequirement } = value;
-  return (
-    isNumber(id) &&
-    Number.isInteger(id) &&
-    RARITIES.includes(rarity as Rarity) &&
-    Array.isArray(affixes) &&
-    affixes.every(isAffix) &&
-    isNumber(levelRequirement)
-  );
-}
-
-const isEquipped = (value: unknown): boolean =>
-  isRecord(value) &&
-  Object.entries(value).every(([slot, item]) => (SLOTS as readonly string[]).includes(slot) && isItem(item) && slotOf(item) === slot);
-
-function isHeroState(value: unknown): boolean {
-  if (!isRecord(value) || !HERO_IDS.includes(value['id'] as HeroId)) return false;
-  const { ranks, order, level } = value;
-  return (
-    isString(value['name']) &&
-    isNumber(level) &&
-    Number.isInteger(level) &&
-    level >= 1 &&
-    isNumber(value['xp']) &&
-    isNumber(value['health']) &&
-    value['health'] > 0 &&
-    isNumber(value['oil']) &&
-    isRanks(ranks) &&
-    Array.isArray(order) &&
-    isLegalOrder(ranks, order) &&
-    new Set(order).size === order.length &&
-    isEquipped(value['equipped'])
-  );
-}
-
-const isRoomKind = (value: unknown): boolean => (ROOM_KINDS as readonly unknown[]).includes(value);
-const isRoom = (value: unknown): boolean =>
-  isRecord(value) && isNumber(value['x']) && isNumber(value['y']) && isRoomKind(value['kind']);
-
-function isRunState(value: unknown): value is RunState {
-  if (!isRecord(value) || !isNumber(value['ticksLeft']) || !isNumber(value['room'])) return false;
-  const { phase, floor, layout, room, startFloor, picks } = value;
-  if (!Array.isArray(picks) || !picks.every((id) => typeof id === 'string' && id in PICKS)) return false;
-  if (phase === 'town') return floor === null && layout === null && startFloor === null && picks.length === 0;
-  if (!isDepth(startFloor)) return false;
-  if (phase !== 'travelling' && phase !== 'battle' && phase !== 'chest') return false;
-  if (!isDepth(floor) || !isRecord(layout) || !Array.isArray(layout['rooms']) || !layout['rooms'].every(isRoom)) return false;
-  return Number.isInteger(room) && (room as number) >= 0 && (room as number) < layout['rooms'].length;
-}
-
-/** Every item in the Game, or null if any is malformed. */
-function allItems(game: Record<string, unknown>): readonly ItemState[] | null {
-  const { heroes, stash } = game;
-  if (!Array.isArray(stash) || !stash.every(isItem)) return null;
-  const worn = (heroes as HeroState[]).flatMap((hero) => Object.values(hero.equipped));
-  return [...stash, ...worn];
-}
-
-/** Ids tell items apart and date them, so each is unique and already handed out. */
-function hasSoundItems(game: Record<string, unknown>): boolean {
-  const items = allItems(game);
-  if (!items || !isNumber(game['nextItemId']) || !isNumber(game['stashRevision'])) return false;
-  const nextItemId = game['nextItemId'];
-  return new Set(items.map((item) => item.id)).size === items.length && items.every((item) => item.id < nextItemId);
-}
-
-const isGameState = (value: unknown): boolean =>
-  isRecord(value) &&
-  isRng(value['rng']) &&
-  isRng(value['pickRng']) &&
-  isPickPriority(value['pickPriority']) &&
-  isNumber(value['tick']) &&
-  isNumber(value['bankMs']) &&
-  isRunState(value['run']) &&
-  Array.isArray(value['walls']) &&
-  value['walls'].length === LAMPS.length &&
-  value['walls'].every(isWallState) &&
-  (value['battleTicks'] === null || isNumber(value['battleTicks'])) &&
-  (value['run'].phase === 'battle') === (value['battle'] !== null) &&
-  Array.isArray(value['heroes']) &&
-  value['heroes'].length === HERO_IDS.length &&
-  value['heroes'].every(isHeroState) &&
-  hasSoundItems(value) &&
-  (value['battle'] === null || isBattleState(value['battle']));
-
-/** Returns null for bad data or another SAVE_VERSION. */
-export function deserializeGame(text: string): Game | null {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    return null;
-  }
-  if (!isRecord(parsed) || parsed['version'] !== SAVE_VERSION || !isGameState(parsed['game'])) return null;
-  return gameOf(parsed['game'] as GameState);
 }

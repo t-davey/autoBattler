@@ -1,3 +1,4 @@
+import { isNumber, isRecord } from './guards';
 import { createBattle, maxHealthOf, stepBattle, type BattleEvent, type BattleState, type TeamId } from './battle';
 import { CHEST_LINES_BY_ACT } from './content/chests';
 import { rollPack } from './content/enemies';
@@ -7,12 +8,12 @@ import type { Rarity } from './content/items';
 import { BATTLE_DROP_CHANCE, CHEST_DROP_CHANCE } from './content/items';
 import { rankValue, type HeroId } from './content/skills';
 import { depthTuning } from './depth';
-import { generateFloor, lampIndexOf, xpShare, type FloorLayout, type Depth, type RoomKind, type RoomLayout } from './floors';
+import { generateFloor, isDepth, lampIndexOf, ROOM_KINDS, xpShare, type FloorLayout, type Depth, type RoomKind, type RoomLayout } from './floors';
 import { clampToMaximums, gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
 import { putInStash } from './build';
 import { rollItemSpec, viewItem, type ItemState, type ItemView } from './items';
 import { nextFloat, nextInt, type Rng } from './rng';
-import type { PickId, PickMoment, PickTag } from './content/picks';
+import { PICKS, type PickId, type PickMoment, type PickTag } from './content/picks';
 import { applyPicks, rollPick, viewPick, type PickView } from './picks';
 import { floorAt, FLOORS_PER_LAMP, LAMPS } from './content/world';
 import { frontierIndex, recordGrowth, recordGuardianKill, recordBestAttempt, recordSetback, runStretch, turnsBackBeforeGuardian, type WallEvent, type WallState } from './wall';
@@ -302,4 +303,21 @@ export function stepRun(world: RunWorld, sink: EventSink): void {
       if (--run.ticksLeft <= 0) sendParty(world, sink);
       return;
   }
+}
+
+// Save validation.
+
+const isRoomKind = (value: unknown): boolean => (ROOM_KINDS as readonly unknown[]).includes(value);
+const isRoom = (value: unknown): boolean =>
+  isRecord(value) && isNumber(value['x']) && isNumber(value['y']) && isRoomKind(value['kind']);
+
+export function isRunState(value: unknown): value is RunState {
+  if (!isRecord(value) || !isNumber(value['ticksLeft']) || !isNumber(value['room'])) return false;
+  const { phase, floor, layout, room, startFloor, picks } = value;
+  if (!Array.isArray(picks) || !picks.every((id) => typeof id === 'string' && id in PICKS)) return false;
+  if (phase === 'town') return floor === null && layout === null && startFloor === null && picks.length === 0;
+  if (!isDepth(startFloor)) return false;
+  if (phase !== 'travelling' && phase !== 'battle' && phase !== 'chest') return false;
+  if (!isDepth(floor) || !isRecord(layout) || !Array.isArray(layout['rooms']) || !layout['rooms'].every(isRoom)) return false;
+  return Number.isInteger(room) && (room as number) >= 0 && (room as number) < layout['rooms'].length;
 }

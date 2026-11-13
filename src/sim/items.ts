@@ -1,7 +1,10 @@
+import { isNumber, isRecord } from './guards';
 import type { Reach } from './battle';
 import {
   AFFIX_COUNTS,
   AFFIXES,
+  RARITIES,
+  SLOTS,
   BASE_IDS,
   COMMON_BASE_IDS,
   ITEM_BASES,
@@ -121,3 +124,25 @@ export function viewItem(item: ItemState): ItemView {
     stats: itemStats(item),
   };
 }
+
+// Save validation.
+
+const isAffix = (value: unknown): boolean =>
+  isRecord(value) && AFFIXES.some((affix) => affix.id === value['id']) && isNumber(value['value']);
+
+export function isItem(value: unknown): value is ItemState {
+  if (!isRecord(value) || !Object.hasOwn(ITEM_BASES, value['baseId'] as string)) return false;
+  const { id, rarity, affixes, levelRequirement } = value;
+  return (
+    isNumber(id) &&
+    Number.isInteger(id) &&
+    RARITIES.includes(rarity as Rarity) &&
+    Array.isArray(affixes) &&
+    affixes.every(isAffix) &&
+    isNumber(levelRequirement)
+  );
+}
+
+export const isEquipped = (value: unknown): boolean =>
+  isRecord(value) &&
+  Object.entries(value).every(([slot, item]) => (SLOTS as readonly string[]).includes(slot) && isItem(item) && slotOf(item) === slot);

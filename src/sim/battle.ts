@@ -1,3 +1,6 @@
+import { isNumber, isOptionalNumber, isRecord, isString } from './guards';
+import { isRank } from './skills';
+import { isSkillId } from './content/skills';
 import {
   BAR_THE_WAY_BELOW,
   BAR_THE_WAY_DURATION,
@@ -14,7 +17,7 @@ import {
   type ActiveSkillId,
   type SkillId,
 } from './content/skills';
-import { createRng, nextFloat, nextInt, shuffled, type Rng } from './rng';
+import { createRng, isRng, nextFloat, nextInt, shuffled, type Rng } from './rng';
 
 export type TeamId = 'a' | 'b';
 export type Row = 'front' | 'back';
@@ -642,3 +645,89 @@ export function simulateBattle(setup: BattleSetup): BattleResult {
   while (!battle.over) log.push(...stepBattle(battle));
   return { winner: battle.winner, ticks: battle.tick, log };
 }
+
+// Save validation.
+
+const isTeam = (value: unknown): boolean => value === 'a' || value === 'b';
+const isRow = (value: unknown): boolean => value === 'front' || value === 'back';
+
+const isLearnedSkill = (value: unknown): boolean =>
+  isRecord(value) && isSkillId(value['id']) && isRank(value['rank']);
+
+const isDamageType = (value: unknown): boolean => value === 'physical' || value === 'poison';
+const isUnitAction = (value: unknown): boolean =>
+  isRecord(value) &&
+  isString(value['name']) &&
+  isNumber(value['interval']) &&
+  (value['target'] === 'oneFront' || value['target'] === 'every') &&
+  isNumber(value['damage']) &&
+  isDamageType(value['damageType']) &&
+  isOptionalNumber(value['poisonStack']);
+
+const isUnitSpec = (value: unknown): boolean =>
+  isRecord(value) &&
+  isString(value['id']) &&
+  isString(value['name']) &&
+  isNumber(value['health']) &&
+  isOptionalNumber(value['maxHealth']) &&
+  isNumber(value['power']) &&
+  isNumber(value['actionInterval']) &&
+  isRow(value['row']) &&
+  (value['reach'] === 'melee' || value['reach'] === 'ranged') &&
+  (value['targeting'] === 'frontFirst' || value['targeting'] === 'any') &&
+  isDamageType(value['damageType']) &&
+  isNumber(value['armour']) &&
+  isRecord(value['resistances']) &&
+  Object.values(value['resistances']).every(isNumber) &&
+  isNumber(value['critChance']) &&
+  isOptionalNumber(value['oil']) &&
+  isOptionalNumber(value['maxOil']) &&
+  isOptionalNumber(value['poisonOnHit']) &&
+  (value['skills'] === undefined || (Array.isArray(value['skills']) && value['skills'].every(isLearnedSkill))) &&
+  (value['actions'] === undefined || (Array.isArray(value['actions']) && value['actions'].every(isUnitAction)));
+
+const isBleed = (value: unknown): boolean =>
+  isRecord(value) && isNumber(value['perTick']) && isNumber(value['ticksLeft']) && isNumber(value['nextTickAt']);
+const isPoisonStack = (value: unknown): boolean =>
+  isRecord(value) && isNumber(value['damage']) && isNumber(value['nextTickAt']) && isNumber(value['expiresAt']);
+const isWard = (value: unknown): boolean =>
+  isRecord(value) && isNumber(value['amount']) && isNumber(value['expiresAt']);
+const isSkillTicks = (value: unknown): boolean =>
+  isRecord(value) && Object.entries(value).every(([id, tick]) => isSkillId(id) && isNumber(tick));
+
+/** A clock for each of the Unit's actions, or an action would silently never come. */
+const hasActionClocks = (spec: Record<string, unknown>, clocks: unknown, inSecondPhase: unknown): boolean => {
+  const phase = spec['secondPhase'];
+  if (inSecondPhase !== undefined && typeof inSecondPhase !== 'boolean') return false;
+  // A second Phase needs one to be in.
+  if (inSecondPhase === true && !isRecord(phase)) return false;
+  const actions = inSecondPhase === true ? (phase as Record<string, unknown>)['actions'] : spec['actions'];
+  return Array.isArray(clocks) && clocks.every(isNumber) && clocks.length === (Array.isArray(actions) ? actions.length : 0);
+};
+
+const isUnitState = (value: unknown): boolean =>
+  isRecord(value) &&
+  isUnitSpec(value['spec']) &&
+  isTeam(value['team']) &&
+  isRow(value['row']) &&
+  isNumber(value['health']) &&
+  isNumber(value['ticksToAction']) &&
+  hasActionClocks(value['spec'] as Record<string, unknown>, value['ticksToEachAction'], value['inSecondPhase']) &&
+  isNumber(value['oil']) &&
+  isSkillTicks(value['skillReadyAt']) &&
+  (value['bleed'] === null || isBleed(value['bleed'])) &&
+  Array.isArray(value['poison']) &&
+  value['poison'].every(isPoisonStack) &&
+  (value['ward'] === null || isWard(value['ward'])) &&
+  isNumber(value['barUntil']) &&
+  isNumber(value['barArmour']);
+
+export const isBattleState = (value: unknown): boolean =>
+  isRecord(value) &&
+  isRng(value['rng']) &&
+  Array.isArray(value['units']) &&
+  value['units'].every(isUnitState) &&
+  isNumber(value['maxTicks']) &&
+  isNumber(value['tick']) &&
+  typeof value['over'] === 'boolean' &&
+  (value['winner'] === null || isTeam(value['winner']));

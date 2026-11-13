@@ -1,3 +1,5 @@
+import { isNumber, isRecord } from './guards';
+
 /** Seeded pseudo-random source (mulberry32). Plain data, so it saves with the state it drives. */
 export interface Rng {
   state: number;
@@ -29,3 +31,6 @@ export function shuffled<T>(rng: Rng, items: readonly T[]): T[] {
   }
   return result;
 }
+
+/** Saved data that is an Rng. */
+export const isRng = (value: unknown): boolean => isRecord(value) && isNumber(value['state']);
