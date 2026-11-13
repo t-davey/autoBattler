@@ -113,6 +113,7 @@ const GLYPHS = {
   lift: [['...kk...', '..kbbk..', '.kbbbbk.', 'kkkbbkkk', '..kbbk..', '..kbbk..', '..kkkk..', '........'], { b: BRASS.hi }],
   equip: [['..kkkk..', '..kbbk..', 'kkkbbkkk', '.kbbbbk.', '..kbbk..', '...kk...', 'kkkkkkkk', 'kiiiiiik'], { b: BRASS.hi, i: IRON.mid }],
   lock: [['..kkkk..', '.kk..kk.', '.k....k.', 'kkkkkkkk', 'kbbbbbbk', 'kbbkkbbk', 'kbbbbbbk', 'kkkkkkkk'], { b: BRASS.mid }],
+  sieve: [['........', 'kkkkkkkk', 'kBBbbbbk', 'kkkkkkkk', '.kikikk.', '..kikk..', '...kk...', '........'], { B: BRASS.hi, b: BRASS.mid, i: IRON.hi }],
   newest: [['...k....', '..kyk...', 'kkyyykk.', '.kyyyk..', '.kykyk..', 'kk...kk.', '........', '........'], { y: '#ffe2a0' }],
   level: [['.kkkkkk.', 'kbbbbbbk', 'kbkbbbbk', 'kbkbbbbk', 'kbkbbbbk', 'kbkkkbbk', 'kbbbbbbk', '.kkkkkk.'], { b: BRASS.mid }],
   weapon: [['......kk', '.....kHk', '....kHk.', '.k.kHk..', '..kHk...', '..kbk...', '.kbkk...', 'kk......'], { H: IRON.hi, b: BRASS.mid }],

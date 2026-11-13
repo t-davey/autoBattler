@@ -101,11 +101,6 @@ const STAT_ROWS: readonly { stat: ItemStat; label: string; value: (hero: HeroVie
 ];
 const STATS = Object.keys(STAT_TEXT) as ItemStat[];
 const RARITIES: readonly Rarity[] = ['common', 'magic', 'rare'];
-const SORTS: readonly { sort: StashSort; glyph: GlyphName; label: string }[] = [
-  { sort: 'rarity', glyph: 'gem', label: 'Sorted by rarity' },
-  { sort: 'newest', glyph: 'newest', label: 'Sorted newest first' },
-  { sort: 'levelRequirement', glyph: 'level', label: 'Sorted by level needed' },
-];
 const number = (value: number) => Math.round(value).toLocaleString('en-GB');
 const compact = (value: number) => (value >= 10_000 ? `${Math.round(value / 1000)}k` : number(value));
 const capital = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
@@ -604,8 +599,8 @@ interface StrongboxProps {
   readonly onRarity: (rarity: Rarity | 'all') => void;
   readonly stat: ItemStat | 'all';
   readonly onStat: (stat: ItemStat | 'all') => void;
-  readonly sort: StashSort;
-  readonly onSort: (sort: StashSort) => void;
+  readonly sort: DeskSort;
+  readonly onSort: (sort: DeskSort) => void;
   readonly selectedKey: string | null;
   readonly onSelect: (key: string) => void;
   readonly lidOpen: boolean;
@@ -615,35 +610,93 @@ interface StrongboxProps {
   readonly refusal: string;
 }
 
-function Filters({ rarity, onRarity, stat, onStat, sort, onSort }: Pick<StrongboxProps, 'rarity' | 'onRarity' | 'stat' | 'onStat' | 'sort' | 'onSort'>) {
-  const sortIndex = SORTS.findIndex((entry) => entry.sort === sort);
-  const current = SORTS[sortIndex] ?? SORTS[0]!;
+/** The Strongbox's order: the Stash's own, plus the mockup's "best for this Hero". */
+type DeskSort = StashSort | 'best';
+const DESK_SORTS: readonly DeskSort[] = ['best', 'rarity', 'newest', 'levelRequirement'];
+const sortText = (sort: DeskSort, hero: HeroView): string =>
+  ({ best: `Best for ${hero.name}`, rarity: 'Rarest first', newest: 'Newest first', levelRequirement: 'Highest level first' })[sort];
+
+/** How much better an item leaves this Hero: stats gained less stats lost. Mockup only, since weighing one stat
+ *  against another is a design call. */
+const gainScore = (item: ItemView, hero: HeroView): number => STATS.reduce((score, stat) => score + Math.sign(statChange(item, hero, stat)), 0);
+
+/** The Stash as the desk lists it, grouped, in the desk's order. */
+function deskStash(stash: readonly ItemView[], query: { sort: DeskSort; slot: Slot; rarity: Rarity | 'all'; stat: ItemStat | 'all' }, hero: HeroView) {
+  const items = queryStash(stash, { ...query, sort: query.sort === 'best' ? 'rarity' : query.sort });
+  return groupItems(query.sort === 'best' ? [...items].sort((a, b) => gainScore(b, hero) - gainScore(a, hero)) : items);
+}
+
+type FilterProps = Pick<StrongboxProps, 'rarity' | 'onRarity' | 'stat' | 'onStat'>;
+
+/** The order, in words. */
+function SortPicker({ sort, onSort, hero }: Pick<StrongboxProps, 'sort' | 'onSort' | 'hero'>) {
   return (
-    <div className="strongbox-filters">
-      <span className="toggles" role="group" aria-label="Rarity">
+    <label className="sort-picker">
+      <span className="sr-only">Order</span>
+      <select value={sort} onChange={(event) => onSort(event.target.value as DeskSort)}>
+        {DESK_SORTS.map((each) => (
+          <option key={each} value={each}>
+            {sortText(each, hero)}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+/** The filters in force, each a tag that lifts it off. The ledger's notes set them too, so they show whether or not the lid is up. */
+function ActiveFilters({ rarity, onRarity, stat, onStat }: FilterProps) {
+  if (rarity === 'all' && stat === 'all') return null;
+  return (
+    <div className="filter-tags" role="group" aria-label="Filters in force">
+      {rarity !== 'all' && (
+        <button type="button" className="filter-tag" title="Show every rarity" onClick={() => onRarity('all')}>
+          <Glyph name="gem" colour={RARITY_COLOUR[rarity]} />
+          Only {rarity}
+          <span className="filter-off" aria-hidden="true">×</span>
+        </button>
+      )}
+      {stat !== 'all' && (
+        <button type="button" className="filter-tag" title="Show items without it too" onClick={() => onStat('all')}>
+          <Glyph name={STAT_GLYPH[stat]} />
+          With {STAT_TEXT[stat]}
+          <span className="filter-off" aria-hidden="true">×</span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** The sieve tray: every filter, each a glyph with its word. */
+function SieveTray({ rarity, onRarity, stat, onStat }: FilterProps) {
+  return (
+    <div className="sieve-tray" id="sieve-tray">
+      <fieldset>
+        <legend>Rarity</legend>
         {RARITIES.map((each) => (
-          <button key={each} type="button" aria-pressed={rarity === each} aria-label={capital(each)} title={`Only ${each}`} onClick={() => onRarity(rarity === each ? 'all' : each)}>
+          <button key={each} type="button" aria-pressed={rarity === each} onClick={() => onRarity(rarity === each ? 'all' : each)}>
             <Glyph name="gem" colour={RARITY_COLOUR[each]} />
+            {capital(each)}
           </button>
         ))}
-      </span>
-      <span className="toggles" role="group" aria-label="Has stat">
+      </fieldset>
+      <fieldset>
+        <legend>Has</legend>
         {STATS.map((each) => (
-          <button key={each} type="button" aria-pressed={stat === each} aria-label={capital(STAT_TEXT[each])} title={`Only with ${STAT_TEXT[each]}`} onClick={() => onStat(stat === each ? 'all' : each)}>
+          <button key={each} type="button" aria-pressed={stat === each} onClick={() => onStat(stat === each ? 'all' : each)}>
             <Glyph name={STAT_GLYPH[each]} />
+            {capital(STAT_TEXT[each])}
           </button>
         ))}
-      </span>
-      <button type="button" className="sort-toggle" aria-label={`${current.label}. Change the order`} title={current.label} onClick={() => onSort(SORTS[(sortIndex + 1) % SORTS.length]!.sort)}>
-        <Glyph name={current.glyph} colour={RARITY_COLOUR.rare} />
-      </button>
+      </fieldset>
     </div>
   );
 }
 
 function Strongbox(props: StrongboxProps) {
   const { stash, heroes, hero, slot, onSlot, rarity, stat, sort, selectedKey, onSelect, lidOpen, onLid, onEquip, onUnequip, refusal } = props;
-  const groups = useMemo(() => groupItems(queryStash(stash, { sort, slot, rarity, stat })), [stash, sort, slot, rarity, stat]);
+  const groups = useMemo(() => deskStash(stash, { sort, slot, rarity, stat }, hero), [stash, sort, slot, rarity, stat, hero]);
+  const [sieveOpen, setSieveOpen] = useState(false);
   const selected = groups.find((group) => group.key === selectedKey) ?? groups[0] ?? null;
   const empty = <p className="hint empty-box">Nothing here.</p>;
   const dragItem = (item: ItemView) => ({
@@ -674,20 +727,36 @@ function Strongbox(props: StrongboxProps) {
         {lidOpen ? (
           <nav className="slot-tabs" aria-label="Slot">
             {SLOTS.map((each) => (
-              <button key={each} type="button" aria-pressed={each === slot} aria-label={SLOT_TEXT[each]} title={SLOT_TEXT[each]} onClick={() => onSlot(each)}>
+              <button key={each} type="button" aria-pressed={each === slot} onClick={() => onSlot(each)}>
                 <Glyph name={each} />
+                {SLOT_TEXT[each]}
               </button>
             ))}
           </nav>
         ) : (
-          <span className="strongbox-for" title={`${SLOT_TEXT[slot]} items, compared on ${hero.name}`}>
+          <span className="strongbox-for">
             <Bust hero={hero} className="for-bust" />
-            <Glyph name={slot} label={SLOT_TEXT[slot]} />
+            <span className="for-words">
+              <b>{hero.name}</b>
+              <span>
+                <Glyph name={slot} /> {SLOT_TEXT[slot]}
+              </span>
+            </span>
           </span>
         )}
-        <Filters {...props} />
-        <span className="box-count" title={`${stash.length} items in the Stash`}>{stash.length}</span>
+        <span className="box-count">{stash.length} items</span>
       </div>
+      <div className="strongbox-tools">
+        <SortPicker sort={sort} onSort={props.onSort} hero={hero} />
+        {lidOpen && (
+          <button type="button" className="sieve" aria-expanded={sieveOpen} aria-controls="sieve-tray" onClick={() => setSieveOpen((open) => !open)}>
+            <Glyph name="sieve" />
+            Sieve
+          </button>
+        )}
+      </div>
+      {lidOpen && sieveOpen && <SieveTray {...props} />}
+      <ActiveFilters {...props} />
       {refusal && <p className="stamp stamp-refused" role="alert">{refusal}</p>}
       {lidOpen ? (
         <div className="box-open">
@@ -796,7 +865,7 @@ function Desk() {
   const [rarity, setRarity] = useState<Rarity | 'all'>('all');
   const [stat, setStat] = useState<ItemStat | 'all'>('all');
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [sort, setSort] = useState<StashSort>('rarity');
+  const [sort, setSort] = useState<DeskSort>('best');
   const [lidOpen, setLidOpen] = useState(false);
   const [refusal, setRefusal] = useState('');
 
@@ -826,7 +895,7 @@ function Desk() {
   };
 
   const hero = view.heroes[heroIndex] ?? view.heroes[0]!;
-  const groups = groupItems(queryStash(stash, { sort, slot, rarity, stat }));
+  const groups = deskStash(stash, { sort, slot, rarity, stat }, hero);
   /** The lid swings as a view transition: the browser animates between pictures of the desk before and after,
    *  so the painted canvases never repaint mid-swing. Reduced motion, or a browser without it, just swaps. */
   const toggleLid = () => {
