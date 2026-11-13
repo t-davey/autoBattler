@@ -29,3 +29,12 @@ export function isLegalOrder(ranks: SkillRanks, order: readonly unknown[]): bool
   const learned = learnedActives(ranks);
   return order.length === learned.length && learned.every((id) => order.includes(id));
 }
+
+/**
+ * The skill order for these ranks: each learned active once, keeping the order's
+ * choices and adding newly learned skills at the end, in step order.
+ */
+export function orderFor(ranks: SkillRanks, order: readonly SkillId[] = []): SkillId[] {
+  const learned = learnedActives(ranks);
+  return [...order.filter((id) => learned.includes(id)), ...learned.filter((id) => !order.includes(id))];
+}

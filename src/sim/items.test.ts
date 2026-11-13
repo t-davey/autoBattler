@@ -424,5 +424,12 @@ describe('drops', () => {
     expect(found).toBeGreaterThan(start);
     applyAction(played, { type: 'equipItem', heroId: 'warrener', itemId: viewStash(played)[0]!.id });
     expect(revision()).toBeGreaterThan(found);
+    const equipped = revision();
+    applyAction(played, { type: 'unequipItem', heroId: 'warrener', slot: 'weapon' });
+    expect(revision()).toBeGreaterThan(equipped);
+    const unequipped = revision();
+    applyAction(played, { type: 'unequipItem', heroId: 'warrener', slot: 'trinket' });
+    applyAction(played, { type: 'equipItem', heroId: 'warrener', itemId: -1 });
+    expect(revision()).toBe(unequipped);
   });
 });

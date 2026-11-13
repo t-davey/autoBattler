@@ -1,15 +1,16 @@
 import type { UnitSpec } from './battle';
+import { equipItem, renameHero, respec, setSkillOrder, spendSkillPoint, unequipItem, type BuildRefusal, type Stash } from './build';
 import { AFFIXES, ITEM_BASES, RARITIES, SLOTS, type Rarity, type Slot } from './content/items';
-import { CLASSES, HERO_IDS, MAX_NAME_LENGTH } from './content/party';
-import { isSkillId, MAX_SKILL_RANK, SKILLS, type HeroId, type SkillId } from './content/skills';
+import { CLASSES, HERO_IDS } from './content/party';
+import { isSkillId, MAX_SKILL_RANK, type HeroId, type SkillId } from './content/skills';
 import { isDepth, ROOM_KINDS } from './floors';
-import { clampToMaximums, createParty, heroUnitSpec, unspentPoints, type HeroState } from './heroes';
+import { createParty, heroUnitSpec, type HeroState } from './heroes';
 import { slotOf, starterItem, type ItemId, type ItemSpec, type ItemState } from './items';
 import { DEFAULT_PICK_PRIORITY, PICKS, type PickTag } from './content/picks';
 import { isPickPriority } from './picks';
 import { createRng, type Rng } from './rng';
 import { createRun, frontierWall, sendParty, stepRun, type EventSink, type RunState, type RunWorld, type StartAt } from './run';
-import { isLegalOrder, spendRefusal, type SkillRanks, type SpendRefusal } from './skills';
+import { isLegalOrder, type SkillRanks } from './skills';
 import { LAMPS } from './content/world';
 import { createWall, isWallState, recordGrowth, type WallState } from './wall';
 
@@ -48,7 +49,7 @@ export type PlayerAction =
   | { readonly type: 'equipItem'; readonly heroId: HeroId; readonly itemId: ItemId }
   | { readonly type: 'unequipItem'; readonly heroId: HeroId; readonly slot: Slot };
 
-export type ActionRefusal = 'notInTown' | 'unknownHero' | 'emptyName' | 'nameTooLong' | 'badOrder' | 'unknownItem' | 'belowLevelRequirement' | 'emptySlot' | 'badPickPriority' | SpendRefusal;
+export type ActionRefusal = 'notInTown' | 'unknownHero' | 'badPickPriority' | BuildRefusal;
 export type ActionResult = { readonly ok: true } | { readonly ok: false; readonly reason: ActionRefusal };
 
 /** A running game. The UI never reads inside it: reads go through the view functions. */
@@ -110,56 +111,28 @@ export function applyAction(game: Game, action: PlayerAction, sink: EventSink = 
   }
   const hero = state.heroes.find((candidate) => candidate.id === action.heroId);
   if (!hero) return refused('unknownHero');
+  const outcome = buildAction(hero, state, action);
+  if (outcome) return refused(outcome);
+  // A stronger build may be the answer to the frontier Wall.
+  if (action.type === 'spendSkillPoint' || action.type === 'equipItem') recordGrowth(frontierWall(state.walls), sink);
+  return ACCEPTED;
+}
+
+function buildAction(hero: HeroState, stash: Stash, action: Exclude<PlayerAction, { readonly type: 'sendParty' | 'setPickPriority' }>): BuildRefusal | null {
   switch (action.type) {
-    case 'renameHero': {
-      const name = action.name.trim();
-      if (name.length === 0) return refused('emptyName');
-      if (name.length > MAX_NAME_LENGTH) return refused('nameTooLong');
-      hero.name = name;
-      return ACCEPTED;
-    }
-    case 'spendSkillPoint': {
-      const reason = spendRefusal(hero.id, hero.ranks, unspentPoints(hero), action.skillId);
-      if (reason) return refused(reason);
-      const { skillId } = action;
-      const rank = hero.ranks[skillId] ?? 0;
-      hero.ranks[skillId] = rank + 1;
-      if (rank === 0 && SKILLS[skillId].kind === 'active') hero.order.push(skillId);
-      recordGrowth(frontierWall(state.walls), sink);
-      return ACCEPTED;
-    }
+    case 'renameHero':
+      return renameHero(hero, action.name);
+    case 'spendSkillPoint':
+      return spendSkillPoint(hero, action.skillId);
     case 'setSkillOrder':
-      if (!isLegalOrder(hero.ranks, action.order)) return refused('badOrder');
-      hero.order = [...action.order];
-      return ACCEPTED;
+      return setSkillOrder(hero, action.order);
     case 'respec':
-      hero.ranks = {};
-      hero.order = [];
-      return ACCEPTED;
-    case 'equipItem': {
-      const index = state.stash.findIndex((item) => item.id === action.itemId);
-      const item = state.stash[index];
-      if (!item) return refused('unknownItem');
-      if (hero.level < item.levelRequirement) return refused('belowLevelRequirement');
-      const slot = slotOf(item);
-      const old = hero.equipped[slot];
-      state.stash.splice(index, 1);
-      if (old) state.stash.push(old);
-      hero.equipped[slot] = item;
-      state.stashRevision++;
-      clampToMaximums(hero);
-      recordGrowth(frontierWall(state.walls), sink);
-      return ACCEPTED;
-    }
-    case 'unequipItem': {
-      const old = hero.equipped[action.slot];
-      if (!old) return refused('emptySlot');
-      delete hero.equipped[action.slot];
-      state.stash.push(old);
-      state.stashRevision++;
-      clampToMaximums(hero);
-      return ACCEPTED;
-    }
+      respec(hero);
+      return null;
+    case 'equipItem':
+      return equipItem(hero, stash, action.itemId);
+    case 'unequipItem':
+      return unequipItem(hero, stash, action.slot);
   }
 }
 

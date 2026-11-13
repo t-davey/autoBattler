@@ -3,7 +3,7 @@ import { ITEM_BASES, type Slot } from './content/items';
 import { actionIntervalFor, CLASSES, HERO_IDS, LEVEL_CAP, xpToNextLevel } from './content/party';
 import { SKILLS, type HeroId, type SkillId } from './content/skills';
 import { gearStats, slotOf, type ItemState } from './items';
-import { learnedActives, spentPoints, type SkillRanks } from './skills';
+import { orderFor, spentPoints, type SkillRanks } from './skills';
 
 /** A Hero between Battles, as plain JSON-safe data. */
 export interface HeroState {
@@ -30,7 +30,7 @@ export interface HeroSetup {
 
 export function createHero(id: HeroId, setup: HeroSetup = {}): HeroState {
   const ranks = { ...setup.ranks };
-  const hero: HeroState = { id, name: CLASSES[id].className, level: setup.level ?? 1, xp: 0, health: 0, oil: CLASSES[id].maxOil, ranks, order: learnedActives(ranks), equipped: {} };
+  const hero: HeroState = { id, name: CLASSES[id].className, level: setup.level ?? 1, xp: 0, health: 0, oil: CLASSES[id].maxOil, ranks, order: orderFor(ranks), equipped: {} };
   for (const item of setup.gear ?? []) hero.equipped[slotOf(item)] = item;
   hero.health = heroStats(hero).maxHealth;
   return hero;

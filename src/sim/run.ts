@@ -9,6 +9,7 @@ import { rankValue, type HeroId } from './content/skills';
 import { depthTuning } from './depth';
 import { generateFloor, lampIndexOf, xpShare, type FloorLayout, type Depth, type RoomKind, type RoomLayout } from './floors';
 import { clampToMaximums, gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
+import { putInStash } from './build';
 import { rollItemSpec, viewItem, type ItemState, type ItemView } from './items';
 import { nextFloat, nextInt, type Rng } from './rng';
 import type { PickId, PickMoment, PickTag } from './content/picks';
@@ -200,8 +201,7 @@ function enterRoom(world: RunWorld, sink: EventSink): void {
 /** Rolls an item for the Party's Floor, straight into the Stash. */
 function dropItem(world: RunWorld, sink: EventSink, rarity?: Rarity): void {
   const item: ItemState = { ...rollItemSpec(world.rng, world.run.floor!, rarity), id: world.nextItemId++ };
-  world.stash.push(item);
-  world.stashRevision++;
+  putInStash(world, item);
   sink({ type: 'itemFound', item: viewItem(item) });
 }
 

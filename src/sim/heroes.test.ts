@@ -199,6 +199,20 @@ describe('skill order and respec', () => {
     expect(heroIn(game, 'warrener')).toMatchObject({ unspentPoints: 6, order: [] });
     expect(rankOf(game, 'warrener', 'bleeders-cut')).toBe(0);
   });
+
+  it('a chosen order keeps its place when another active skill is learned', () => {
+    const game = atLevel(9, { skillRanks: { warrener: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
+    applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order: ['the-long-cut', 'bleeders-cut'] });
+    spend(game, 'warrener', 'the-long-cut');
+    expect(heroIn(game, 'warrener').order).toEqual(['the-long-cut', 'bleeders-cut']);
+  });
+
+  it('after a respec, skills come back into the order as they are relearned', () => {
+    const game = builtWarrener();
+    applyAction(game, { type: 'respec', heroId: 'warrener' });
+    spend(game, 'warrener', 'bleeders-cut');
+    expect(heroIn(game, 'warrener').order).toEqual(['bleeders-cut']);
+  });
 });
 
 describe('renameHero', () => {
