@@ -3,6 +3,7 @@ import {
   applyAction,
   beginCatchUp,
   continueCatchUp,
+  mergeAwayReports,
   viewGame,
   viewStash,
   type ActionRefusal,
@@ -14,7 +15,7 @@ import {
   type PlayerAction,
   type Rarity,
 } from '../sim';
-import { describeDuration, mergeAwayReports } from './describeAwayReport';
+import { describeDuration } from './describeAwayReport';
 import { describeEvent } from './describeEvent';
 import { clearSave, writeSave, type SaveStore } from './save';
 

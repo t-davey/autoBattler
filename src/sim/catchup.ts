@@ -71,6 +71,60 @@ export interface AwayReport {
   readonly healed: number;
 }
 
+function mergeAttempts(earlier: AwayReport['guardianAttempts'], later: AwayReport['guardianAttempts']): AwayReport['guardianAttempts'] {
+  if (!earlier || !later) return earlier ?? later;
+  return {
+    attempts: earlier.attempts + later.attempts,
+    reachedSecondPhase: earlier.reachedSecondPhase + later.reachedSecondPhase,
+    bestHealthShare: Math.min(earlier.bestHealthShare, later.bestHealthShare),
+    previousBestHealthShare: earlier.previousBestHealthShare,
+  };
+}
+
+function mergePicks(earlier: readonly AwayPickRecord[], later: readonly AwayPickRecord[]): AwayPickRecord[] {
+  const merged = [...earlier];
+  for (const record of later) {
+    const index = merged.findIndex((entry) => entry.pick.id === record.pick.id);
+    const soFar = merged[index];
+    if (soFar) merged[index] = { pick: record.pick, fights: soFar.fights + record.fights, kills: soFar.kills + record.kills };
+    else merged.push(record);
+  }
+  return merged.sort((a, b) => b.kills - a.kills || b.fights - a.fights);
+}
+
+/** One report for two absences in a row, so an unread one isn't lost. */
+export function mergeAwayReports(earlier: AwayReport, later: AwayReport): AwayReport {
+  const levels = [...earlier.levels];
+  for (const gain of later.levels) {
+    const index = levels.findIndex((entry) => entry.heroId === gain.heroId);
+    if (index === -1) levels.push(gain);
+    else levels[index] = { ...gain, from: levels[index]!.from };
+  }
+  return {
+    elapsedMs: earlier.elapsedMs + later.elapsedMs,
+    appliedMs: earlier.appliedMs + later.appliedMs,
+    capped: earlier.capped || later.capped,
+    floorsCleared: earlier.floorsCleared + later.floorsCleared,
+    deepestFloor: Math.max(earlier.deepestFloor, later.deepestFloor),
+    setbacks: [...earlier.setbacks, ...later.setbacks],
+    guardianKills: earlier.guardianKills + later.guardianKills,
+    damageDealt: earlier.damageDealt + later.damageDealt,
+    healed: earlier.healed + later.healed,
+    guardianAttempts: mergeAttempts(earlier.guardianAttempts, later.guardianAttempts),
+    lampRelit: earlier.lampRelit || later.lampRelit,
+    fellBack: earlier.fellBack || later.fellBack,
+    guardianPicks: mergePicks(earlier.guardianPicks, later.guardianPicks),
+    levels,
+    loot: {
+      common: earlier.loot.common + later.loot.common,
+      magic: earlier.loot.magic + later.loot.magic,
+      rare: earlier.loot.rare + later.loot.rare,
+      notable: [...earlier.loot.notable, ...later.loot.notable],
+    },
+    unspentSkillPoints: later.unspentSkillPoints,
+  };
+}
+
 interface Tally {
   floorsCleared: number;
   deepestFloor: number;
