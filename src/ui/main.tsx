@@ -23,8 +23,8 @@ import './style.css';
 const root = document.querySelector<HTMLElement>('#app');
 if (!root) throw new Error('#app element missing from index.html');
 
-/** The Seed of every new game. `npm run balance -- demo-seed` finds Seeds that play the demo script. */
-const DEMO_SEED = 8;
+/** Each new Game rolls its own Seed, so Parties differ in names, Floors, and loot. A dev build's ?seed= replaces it. */
+const newSeed = (): number => crypto.getRandomValues(new Uint32Array(1))[0]!;
 
 const reactRoot = createRoot(root);
 const { saved, notice } = loadSave(localStorageSave);
@@ -47,11 +47,11 @@ function play(game: Game, advancedTo: number, seenItemId: number | undefined): v
 // A save wins over ?seed= and the rest, which take effect after "Start over".
 // Without one, the player picks a Party, unless a dev build names one with ?party=.
 const fresh = (party: readonly ClassId[]): GameSetup => {
-  const setup = { seed: DEMO_SEED, party };
+  const setup = { seed: newSeed(), party };
   return import.meta.env.DEV ? devSetup(window.location.search, setup) : setup;
 };
 if (saved) play(saved.game, saved.savedAt, saved.seenItemId);
-else if (import.meta.env.DEV && devSetup(window.location.search, { seed: DEMO_SEED }).party) play(createGame(fresh([])), Date.now(), undefined);
+else if (import.meta.env.DEV && devSetup(window.location.search, { seed: 0 }).party) play(createGame(fresh([])), Date.now(), undefined);
 else {
   reactRoot.render(
     <StrictMode>
