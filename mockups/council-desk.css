@@ -1806,3 +1806,49 @@ body {
   color: var(--tallow-dim);
   margin-left: 0.15rem;
 }
+
+/* ---------- Skill ranks: bigger pips, and the whole track is the button that spends a point. ---------- */
+
+.skill-pips {
+  align-items: center;
+  gap: calc(var(--art) * 1.5);
+  padding: 6px 8px;
+  border: 1px solid transparent;
+}
+
+.skill-pips .pip {
+  width: calc(var(--art) * 4);
+  height: calc(var(--art) * 4);
+}
+
+.skill-pips.spend {
+  display: flex;
+  min-width: 0;
+  background: none;
+  box-shadow: none;
+  border-color: color-mix(in srgb, var(--flame) 45%, transparent);
+}
+
+.skill-pips.spend:hover:not(:disabled),
+.skill-pips.spend:focus-visible {
+  border-color: var(--flame);
+  background: color-mix(in srgb, var(--flame) 12%, transparent);
+}
+
+.skill-pips.spend:hover .pip.next {
+  background: var(--flame-core);
+}
+
+.skill-pips.spend::after {
+  content: '+';
+  margin-left: calc(var(--art) * 1);
+  font-family: var(--font-title);
+  line-height: 1;
+  color: var(--flame);
+}
+
+.skill-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

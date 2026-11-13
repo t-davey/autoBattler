@@ -366,18 +366,19 @@ function Ledger({ findings, focus, onFocus, priority, lampsLit, dispatch }: Ledg
 function SkillRow({ hero, skill, flagged, dispatch }: { hero: HeroView; skill: SkillView; flagged: boolean; dispatch: (action: PlayerAction) => void }) {
   const locked = lockText(skill);
   const canSpend = skill.refusal === null;
+  const pips = Array.from({ length: skill.maxRank }, (_, index) => <span key={index} className={index < skill.rank ? 'pip lit' : index === skill.rank && canSpend ? 'pip next' : 'pip'} />);
   return (
     <li className={`skill-row${skill.rank > 0 ? '' : ' unlearned'}${flagged && canSpend ? ' flagged' : ''}`} tabIndex={0}>
       <span className="skill-name">{skill.name}</span>
-      <span className="skill-pips" aria-label={`Rank ${skill.rank} of ${skill.maxRank}`}>
-        {Array.from({ length: skill.maxRank }, (_, index) =>
-          index === skill.rank && canSpend ? (
-            <button key={index} type="button" className="pip next" aria-label={`Spend a point on ${skill.name}`} title="Spend a point" onClick={() => dispatch({ type: 'spendSkillPoint', heroId: hero.id, skillId: skill.id })} />
-          ) : (
-            <span key={index} className={index < skill.rank ? 'pip lit' : 'pip'} />
-          ),
-        )}
-      </span>
+      {canSpend ? (
+        <button type="button" className="skill-pips spend" aria-label={`Spend a point on ${skill.name}, rank ${skill.rank} of ${skill.maxRank}`} title="Spend a point" onClick={() => dispatch({ type: 'spendSkillPoint', heroId: hero.id, skillId: skill.id })}>
+          {pips}
+        </button>
+      ) : (
+        <span className="skill-pips" role="img" aria-label={`Rank ${skill.rank} of ${skill.maxRank}`}>
+          {pips}
+        </span>
+      )}
       <Painted kind="slip" className="skill-chit" data={{ seed: skill.step + 20 }}>
         <strong>{skill.name}</strong>
         <span className="chit-facts">{skillFacts(skill)}</span>
