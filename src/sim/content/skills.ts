@@ -32,7 +32,7 @@ export interface SkillDefinition {
 }
 
 export const MAX_SKILL_RANK = 5;
-export const POINTS_PER_STEP = 2;
+export const POINTS_PER_STEP = 3;
 export const OUT_OF_ROW_FACTOR = 0.6;
 /** Ticks. */
 export const BAR_THE_WAY_DURATION = 60;

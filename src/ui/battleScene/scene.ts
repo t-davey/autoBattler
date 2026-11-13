@@ -24,6 +24,9 @@ const HIT_FLASH: Rgb = [246, 232, 208];
 const DAMAGE_COLOURS: Readonly<Record<DamageType, Rgb>> = {
   physical: [238, 232, 214],
   poison: [170, 214, 96],
+  fire: [255, 150, 70],
+  cold: [150, 200, 240],
+  holy: [255, 236, 170],
 };
 const SPARKS: readonly Rgb[] = [[255, 226, 160], [255, 170, 80], [240, 240, 220]];
 const BLOOD: readonly Rgb[] = [[190, 40, 40], [130, 24, 30], [230, 80, 70]];
@@ -476,6 +479,11 @@ export function createScene({ random = Math.random, shakes = true }: SceneOption
           if (!unit) break;
           if (event.damage > 0) floatNumber(unit, String(Math.ceil(event.damage)), event.effect === 'bleed' ? BLEED_COLOUR : DAMAGE_COLOURS[event.damageType]);
           else if (event.absorbed > 0) floatNumber(unit, '0', WARD_COLOUR);
+          break;
+        }
+        case 'dodge': {
+          const unit = units.get(event.targetId);
+          if (unit) floatNumber(unit, 'dodge', HIT_FLASH);
           break;
         }
         case 'heal': {

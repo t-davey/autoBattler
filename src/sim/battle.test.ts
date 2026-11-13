@@ -5,6 +5,7 @@ import {
   stepBattle,
   type BattleEvent,
   type BattleSetup,
+  type UnitAction,
   type UnitSpec,
 } from './index';
 
@@ -350,5 +351,62 @@ describe('timed actions', () => {
     const events = eventsOver(26, { a: [dummy('a1')], b: [warden({ actions: [breath] })] });
     const tick = events.find((event) => event.type === 'effectDamage');
     expect(tick).toMatchObject({ tick: 26, damage: 3, damageType: 'poison' });
+  });
+});
+
+describe('damage types and effects', () => {
+  const caster = (action: Partial<UnitAction>, overrides: Partial<UnitSpec> = {}): UnitSpec =>
+    unit('caster', { health: 1000, actions: [{ name: 'Cast', interval: 10, target: 'oneFront', damage: 0, damageType: 'fire', ...action }], ...overrides });
+  const dummy = (overrides: Partial<UnitSpec> = {}): UnitSpec => unit('dummy', { health: 10_000, actionInterval: NEVER_ACTS, ...overrides });
+  const run = (ticks: number, a: readonly UnitSpec[], b: readonly UnitSpec[]): BattleEvent[] =>
+    simulateBattle({ seed: 3, maxTicks: ticks, teams: { a, b } }).log as BattleEvent[];
+
+  it.each(['fire', 'cold', 'holy'] as const)('%s hits ignore armour and are cut by their own resistance, up to 75%%', (type) => {
+    expect(firstHit({ power: 100, damageType: type }, { armour: 100 })).toBe(100);
+    expect(firstHit({ power: 100, damageType: type }, { resistances: { [type]: 40 } })).toBe(60);
+    expect(firstHit({ power: 100, damageType: type }, { resistances: { [type]: 90 } })).toBe(25);
+    expect(firstHit({ power: 100, damageType: type }, { resistances: { poison: 90 } })).toBe(100);
+  });
+
+  it('a Burn deals its fire damage over 4 ticks, cut by fire resistance, and reapplying replaces it', () => {
+    const log = run(95, [caster({ burn: 80, interval: 50 })], [dummy({ armour: 500, resistances: { fire: 50 } })]);
+    const burns = log.filter((event) => event.type === 'effectDamage' && event.effect === 'burn');
+    expect(burns).toHaveLength(4);
+    expect(burns.every((event) => event.type === 'effectDamage' && event.damageType === 'fire' && event.damage === 10)).toBe(true);
+    expect(log.filter((event) => event.type === 'effect' && event.effect === 'burn')).toHaveLength(1);
+
+    const reapplied = run(45, [caster({ burn: 80, interval: 20 })], [dummy()]);
+    // Applied at 20 and 40: the second replaces the first before it finishes.
+    const ticks = reapplied.filter((event) => event.type === 'effectDamage' && event.effect === 'burn').map((event) => event.tick);
+    expect(ticks).toEqual([30, 40]);
+  });
+
+  it('a Slow makes the target act less often until it wears off', () => {
+    const attacksIn = (slow: number | undefined, ticks: number) =>
+      attacksBy(run(ticks, [caster(slow === undefined ? { interval: 1 } : { slow, interval: 1 })], [unit('target', { health: 10_000, actionInterval: 10 })]), 'target').length;
+    expect(attacksIn(undefined, 100)).toBe(10);
+    expect(attacksIn(50, 100)).toBe(5);
+  });
+
+  it('a Curse cuts the damage its target deals, until it wears off', () => {
+    const hits = (curse: number | undefined, interval: number) =>
+      attacksBy(run(200, [caster(curse === undefined ? { interval } : { curse, interval })], [unit('target', { health: 10_000, power: 100, actionInterval: 30 })]), 'target').map((event) => event.damage);
+    expect(hits(undefined, 5)).toEqual([100, 100, 100, 100, 100, 100]);
+    expect(hits(25, 5)).toEqual([75, 75, 75, 75, 75, 75]);
+    // Cursed at Tick 100 for 80 Ticks.
+    expect(hits(25, 100)).toEqual([100, 100, 100, 75, 75, 100]);
+  });
+
+  it('a Dodge misses the whole hit and its on-hit Poison, but damage over time still lands', () => {
+    const log = run(60, [unit('striker', { power: 50, actionInterval: 10, poisonOnHit: 5 }), caster({ burn: 40, interval: 20 }, { row: 'back' })], [dummy({ dodgeChance: 100 })]);
+    expect(attacksBy(log, 'striker')).toHaveLength(0);
+    expect(log.filter((event) => event.type === 'dodge' && event.attackerId === 'striker')).toHaveLength(6);
+    expect(log.some((event) => event.type === 'effect' && event.effect === 'poison')).toBe(false);
+    expect(log.some((event) => event.type === 'effectDamage' && event.effect === 'burn' && event.damage > 0)).toBe(true);
+  });
+
+  it('a Unit that can never dodge draws the same Battle as before', () => {
+    const withZero = { ...setup(7), teams: { a: setup(7).teams.a, b: setup(7).teams.b.map((spec) => ({ ...spec, dodgeChance: 0 })) } };
+    expect(simulateBattle(withZero).log).toEqual(simulateBattle(setup(7)).log);
   });
 });

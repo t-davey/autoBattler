@@ -28,7 +28,7 @@ Rapid prototyping: each piece lands as a commit straight on `main` and leaves th
 
 | # | Work |
 |---|---|
-| 1 | **Damage types and effects.** Fire, cold, and holy damage, the 5 resistances, and Burn, Slow, Curse, and Dodge as Battle rules, with tests. 3 points per step. Nothing uses the new effects yet |
+| 1 | **Damage types and effects.** Fire, cold, and holy damage, the 5 resistances, and Burn, Slow, Curse, and Dodge as Battle rules, with tests. 3 points per step. Nothing uses the new effects yet: **done**. The effects follow [the skills draft's](../first-playable-skills.md#effects) rules. Enemy timed actions can Burn, Slow, and Curse, and any Unit can have a dodge chance, so tests and later Guardians reach them. A Burn lasts 4 seconds, a Slow 4, and a Curse 8, from the draft's first skills. Crits stay at 150% and resistances cap at 75%, as today. Every enemy has 0 fire, cold, and holy resistance until step 6. With 3 points per step, the `world` mode on 6 Seeds finishes the Tier in a median 30.5 hours, inside the target |
 | 2 | **Free Class skills.** Consume Sin, Tainted Shaft, and Votive Spark for today's 3 Classes, from the first level, using no points |
 | 3 | **The Hexer.** The Class with Chill Word, Rot, and Malediction, its stats, and its Battle-scene sprite. It stays out of the preset Party until step 5 |
 | 4 | **The second Branches.** Flagellation, Fieldcraft, and Flame. Fall Back moves a Unit between Rows mid-Battle. Bar the Way, Fall Back, Shared Burden, and Bloom are the first to simplify if this runs long |
@@ -43,7 +43,7 @@ Rapid prototyping: each piece lands as a commit straight on `main` and leaves th
 
 Each comes up at the step named, and gets confirmed before that step builds it.
 
-- **Step 1:** enemy resistances to the new types, and the crit multiplier, which [the skills draft](../first-playable-skills.md#not-in-this-draft) leaves unset.
+- **Step 1, built with defaults:** crits at 150%, a 75% resistance cap, and 0 enemy resistance to fire, cold, and holy. Confirm or change them, and confirm the [effect rules](../first-playable-skills.md#effects) so they can join CONTEXT.md.
 - **Step 5:** whether an existing save is wiped or migrated when Hero ids change. Wipes are expected until 1.0.
 - **Step 6:** the Undercroft's Packs and Guardians.
 - **Step 7:** the bases and uniques.

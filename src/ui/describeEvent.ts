@@ -10,11 +10,15 @@ const OUTCOME_LINES = {
 const EFFECT_LINES = {
   bleed: 'bleeds',
   poison: 'is poisoned',
+  burn: 'catches fire',
+  slow: 'is slowed',
+  curse: 'is Cursed',
 } as const;
 
 const TICK_VERBS = {
   bleed: 'bleeds',
   poison: 'sickens',
+  burn: 'burns',
 } as const;
 
 const ROOM_LINES = {
@@ -40,17 +44,19 @@ const amount = (damage: number, absorbed: number): string => {
 export function describeEvent(event: GameEvent): string {
   switch (event.type) {
     case 'attack': {
-      const poison = event.damageType === 'poison' ? ' poison' : '';
+      const kind = event.damageType === 'physical' ? '' : ` ${event.damageType}`;
       const crit = event.crit ? ' A critical hit!' : '';
       if (event.redirectedFromName) {
         return `${event.targetName} shoulders ${amount(event.damage, event.absorbed)} of the blow meant for ${event.redirectedFromName}.`;
       }
-      return `${event.attackerName} hits ${event.targetName} for ${amount(event.damage, event.absorbed)}${poison}.${crit}`;
+      return `${event.attackerName} hits ${event.targetName} for ${amount(event.damage, event.absorbed)}${kind}.${crit}`;
     }
     case 'effectDamage': {
       const shared = event.redirectedFromName ? `, sharing ${event.redirectedFromName}'s Poison` : '';
       return `${event.targetName} ${TICK_VERBS[event.effect]} for ${amount(event.damage, event.absorbed)}${shared}.`;
     }
+    case 'dodge':
+      return `${event.targetName} dodges ${event.attackerName}'s attack.`;
     case 'skill':
       return `${event.unitName} uses ${event.skillName}.`;
     case 'heal':

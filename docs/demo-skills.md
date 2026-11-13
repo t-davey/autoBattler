@@ -7,7 +7,7 @@ This file is the demo's source of truth for its skills. [Adaptations](#adaptatio
 ## Reading the tables
 
 - **Time:** 1 Tick is 100 ms, so 10 Ticks are 1 second.
-- **Step:** step 1 is open from the first point. Step 2 needs 2 points spent in the Branch, and step 3 needs 4.
+- **Step:** step 1 is open from the first point. Step 2 needs 2 points spent in the Branch, and step 3 needs 4. Since 2026-11-13 the game uses the first playable's 3 points per step.
 - **Row:** the Row the skill works from at full effect. From the wrong Row it has 60% of its numeric effects, with cost and cooldown unchanged.
 - **Fires when:** the built-in usefulness condition, on top of having the Oil and the cooldown ready.
 - **Heroes:** a Hero starts with no skills and earns 1 skill point per level. Each Hero acts on a fixed interval, using the first available skill in its order, or else the free basic attack: 100% of power as physical damage, with reach from the weapon.

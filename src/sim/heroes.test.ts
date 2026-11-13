@@ -127,13 +127,15 @@ describe('spending points', () => {
     expect(heroIn(game, 'warrener').unspentPoints).toBe(0);
   });
 
-  it('spending a point is refused below a step\'s requirement', () => {
-    const game = atLevel(7);
+  it('spending a point is refused below 3 points a step in the Branch', () => {
+    const game = atLevel(9);
     expect(spend(game, 'warrener', 'open-veins')).toEqual({ ok: false, reason: 'stepLocked' });
+    spend(game, 'warrener', 'bleeders-cut');
     spend(game, 'warrener', 'bleeders-cut');
     expect(spend(game, 'warrener', 'open-veins')).toEqual({ ok: false, reason: 'stepLocked' });
     spend(game, 'warrener', 'bleeders-cut');
     expect(spend(game, 'warrener', 'open-veins')).toEqual({ ok: true });
+    spend(game, 'warrener', 'open-veins');
     expect(spend(game, 'warrener', 'the-long-cut')).toEqual({ ok: false, reason: 'stepLocked' });
     spend(game, 'warrener', 'open-veins');
     expect(spend(game, 'warrener', 'the-long-cut')).toEqual({ ok: true });
@@ -160,10 +162,12 @@ describe('spending points', () => {
   });
 
   it('learning an active skill adds it to the end of the order', () => {
-    const game = atLevel(7);
+    const game = atLevel(8);
     spend(game, 'warrener', 'bleeders-cut');
     expect(heroIn(game, 'warrener').order).toEqual(['bleeders-cut']);
     spend(game, 'warrener', 'bleeders-cut');
+    spend(game, 'warrener', 'bleeders-cut');
+    spend(game, 'warrener', 'open-veins');
     spend(game, 'warrener', 'open-veins');
     spend(game, 'warrener', 'open-veins');
     spend(game, 'warrener', 'the-long-cut');

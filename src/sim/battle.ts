@@ -22,10 +22,13 @@ import { createRng, isRng, nextFloat, nextInt, shuffled, type Rng } from './rng'
 export type TeamId = 'a' | 'b';
 export type Row = 'front' | 'back';
 export type Reach = 'melee' | 'ranged';
-export type DamageType = 'physical' | 'poison';
+export const DAMAGE_TYPES = ['physical', 'fire', 'cold', 'poison', 'holy'] as const;
+export type DamageType = (typeof DAMAGE_TYPES)[number];
 /** Which reachable Row a Unit picks from: the front Row while it lives, or either. */
 export type Targeting = 'frontFirst' | 'any';
-export type DamageEffect = 'bleed' | 'poison';
+export type DamageEffect = 'bleed' | 'poison' | 'burn';
+/** Effects that change how a Unit fights rather than dealing damage. */
+export type StatusEffect = 'slow' | 'curse';
 
 export interface LearnedSkill {
   readonly id: SkillId;
@@ -44,6 +47,12 @@ export interface UnitAction {
   readonly damageType: DamageType;
   /** The damage of a Poison stack added to each target. */
   readonly poisonStack?: number;
+  /** Fire damage a Burn deals to each target over BURN_TICKS. */
+  readonly burn?: number;
+  /** A percentage of speed each target loses for SLOW_DURATION. */
+  readonly slow?: number;
+  /** A percentage less damage each target deals while Cursed, for CURSE_DURATION. */
+  readonly curse?: number;
 }
 
 /** A later stage of a Unit's Battle. Its actions replace the Unit's, on fresh clocks. */
@@ -80,6 +89,8 @@ export interface UnitSpec {
   readonly skills?: readonly LearnedSkill[];
   /** The damage of a Poison stack added with each attack. */
   readonly poisonOnHit?: number;
+  /** A percentage chance that an attack on this Unit misses. Damage over time can't be dodged. */
+  readonly dodgeChance?: number;
   /** When set, the Unit uses these instead of power, actionInterval, and damageType. */
   readonly actions?: readonly UnitAction[];
   /** Needs actions. */
@@ -144,9 +155,17 @@ export type BattleEvent =
       readonly amount: number;
     }
   | {
+      readonly type: 'dodge';
+      readonly tick: number;
+      readonly attackerId: string;
+      readonly attackerName: string;
+      readonly targetId: string;
+      readonly targetName: string;
+    }
+  | {
       readonly type: 'effect';
       readonly tick: number;
-      readonly effect: DamageEffect;
+      readonly effect: DamageEffect | StatusEffect;
       readonly targetId: string;
       readonly targetName: string;
     }
@@ -179,6 +198,12 @@ export interface PoisonStack {
   expiresAt: number;
 }
 
+/** A share of something the Unit loses until a Tick. */
+export interface TimedShare {
+  readonly share: number;
+  readonly expiresAt: number;
+}
+
 export interface WardState {
   amount: number;
   readonly expiresAt: number;
@@ -201,6 +226,12 @@ interface UnitState {
   bleed: BleedState | null;
   poison: PoisonStack[];
   ward: WardState | null;
+  /** Fire damage over time, shaped like a Bleed. Missing in saves from before Burns. */
+  burn?: BleedState | null;
+  /** Speed lost. */
+  slow?: TimedShare | null;
+  /** Damage this Unit deals is cut by the share. One Curse at a time. */
+  curse?: TimedShare | null;
   /** Bar the Way holds until this Tick, and its armour bonus as a percentage. */
   barUntil: number;
   barArmour: number;
@@ -219,6 +250,10 @@ export interface BattleState {
 
 const DEFAULT_MAX_TICKS = 1200;
 const CRIT_MULTIPLIER = 1.5;
+export const BURN_TICKS = 4;
+export const BURN_INTERVAL = 10;
+export const SLOW_DURATION = 40;
+export const CURSE_DURATION = 80;
 const RESISTANCE_CAP = 75;
 const MIN_HIT_DAMAGE = 1;
 const OIL_REGEN_INTERVAL = 5;
@@ -258,6 +293,9 @@ export function createBattle(setup: BattleSetup): BattleState {
       bleed: null,
       poison: [],
       ward: null,
+      burn: null,
+      slow: null,
+      curse: null,
       barUntil: 0,
       barArmour: 0,
     }));
@@ -326,6 +364,9 @@ function settleDeath(battle: BattleState, unit: UnitState, events: BattleEvent[]
   unit.bleed = null;
   unit.poison = [];
   unit.ward = null;
+  unit.burn = null;
+  unit.slow = null;
+  unit.curse = null;
   events.push({ type: 'death', tick: battle.tick, unitId: unit.spec.id, unitName: unit.spec.name });
   stepForwardIfFrontEmpty(battle, unit.team);
 }
@@ -352,8 +393,25 @@ interface Strike {
   readonly hasMinimum: boolean;
 }
 
+const isActive = (battle: BattleState, effect: TimedShare | null | undefined): effect is TimedShare =>
+  effect != null && battle.tick < effect.expiresAt;
+
+/** What a Curse leaves of the damage this Unit deals. */
+const curseFactor = (battle: BattleState, unit: UnitState): number => (isActive(battle, unit.curse) ? 1 - unit.curse.share : 1);
+
+/** Rolls only for a Unit that can dodge, so other Battles draw the same numbers as before. */
+function rollDodge(battle: BattleState, target: UnitState): boolean {
+  const chance = target.spec.dodgeChance ?? 0;
+  return chance > 0 && nextFloat(battle.rng) * 100 < chance;
+}
+
 function landStrike(battle: BattleState, strike: Strike, events: BattleEvent[]): void {
-  const { attacker, target, raw, damageType, crit, ignoresArmour, hasMinimum } = strike;
+  const { attacker, target, damageType, crit, ignoresArmour, hasMinimum } = strike;
+  if (rollDodge(battle, target)) {
+    events.push({ type: 'dodge', tick: battle.tick, attackerId: attacker.spec.id, attackerName: attacker.spec.name, targetId: target.spec.id, targetName: target.spec.name });
+    return;
+  }
+  const raw = strike.raw * curseFactor(battle, attacker);
   const land = (receiver: UnitState, share: number, redirectedFromName: string | null, minimum: number): void => {
     const reduced = Math.max(minimum, reducedDamage(battle, receiver, raw * share, damageType, ignoresArmour));
     const { damage, absorbed } = loseHealth(battle, receiver, reduced);
@@ -377,7 +435,7 @@ function landStrike(battle: BattleState, strike: Strike, events: BattleEvent[]):
   if (burden) land(burden.holder, burden.share, target.spec.name, 0);
 
   const poison = attacker.spec.poisonOnHit;
-  if (poison !== undefined && isAlive(target)) addPoisonStack(battle, target, poison, events);
+  if (poison !== undefined && isAlive(target)) addPoisonStack(battle, target, poison * curseFactor(battle, attacker), events);
   settleDeath(battle, target, events);
   if (burden) settleDeath(battle, burden.holder, events);
 }
@@ -389,6 +447,20 @@ function addPoisonStack(battle: BattleState, target: UnitState, damage: number, 
     target.poison.push({ damage, nextTickAt: battle.tick + POISON_INTERVAL, expiresAt });
   }
   events.push({ type: 'effect', tick: battle.tick, effect: 'poison', targetId: target.spec.id, targetName: target.spec.name });
+}
+
+/** Sets a Burn, replacing any the target holds. */
+function addBurn(battle: BattleState, target: UnitState, total: number, events: BattleEvent[]): void {
+  target.burn = { perTick: total / BURN_TICKS, ticksLeft: BURN_TICKS, nextTickAt: battle.tick + BURN_INTERVAL };
+  events.push({ type: 'effect', tick: battle.tick, effect: 'burn', targetId: target.spec.id, targetName: target.spec.name });
+}
+
+/** Sets a Slow or Curse, replacing any of that kind the target holds. */
+function addStatus(battle: BattleState, target: UnitState, effect: StatusEffect, percent: number, events: BattleEvent[]): void {
+  const timed = { share: percent / 100, expiresAt: battle.tick + (effect === 'slow' ? SLOW_DURATION : CURSE_DURATION) };
+  if (effect === 'slow') target.slow = timed;
+  else target.curse = timed;
+  events.push({ type: 'effect', tick: battle.tick, effect, targetId: target.spec.id, targetName: target.spec.name });
 }
 
 /** Damage over time has no minimum, and only Poison can be shared. */
@@ -426,6 +498,16 @@ function runEffects(battle: BattleState, unit: UnitState, events: BattleEvent[])
     if (bleed.ticksLeft <= 0) unit.bleed = null;
     tickDamage(battle, unit, 'bleed', perTick, 'physical', events);
   }
+  const { burn } = unit;
+  if (burn && isAlive(unit) && battle.tick >= burn.nextTickAt) {
+    burn.ticksLeft--;
+    burn.nextTickAt += BURN_INTERVAL;
+    const { perTick } = burn;
+    if (burn.ticksLeft <= 0) unit.burn = null;
+    tickDamage(battle, unit, 'burn', perTick, 'fire', events);
+  }
+  if (unit.slow && !isActive(battle, unit.slow)) unit.slow = null;
+  if (unit.curse && !isActive(battle, unit.curse)) unit.curse = null;
   if (unit.poison.length === 0) return;
   for (const stack of unit.poison) {
     if (!isAlive(unit)) return;
@@ -559,7 +641,12 @@ function useAction(battle: BattleState, unit: UnitState, action: UnitAction, eve
     if (action.damage > 0) {
       landStrike(battle, { attacker: unit, target, raw: action.damage, damageType: action.damageType, crit: false, ignoresArmour: false, hasMinimum: true }, events);
     }
-    if (action.poisonStack !== undefined && isAlive(target)) addPoisonStack(battle, target, action.poisonStack, events);
+    if (!isAlive(target)) continue;
+    const weakened = curseFactor(battle, unit);
+    if (action.poisonStack !== undefined) addPoisonStack(battle, target, action.poisonStack * weakened, events);
+    if (action.burn !== undefined) addBurn(battle, target, action.burn * weakened, events);
+    if (action.slow !== undefined) addStatus(battle, target, 'slow', action.slow, events);
+    if (action.curse !== undefined) addStatus(battle, target, 'curse', action.curse, events);
   }
 }
 
@@ -619,15 +706,18 @@ export function stepBattle(battle: BattleState): readonly BattleEvent[] {
   for (const unit of battle.units) {
     if (!isAlive(unit)) continue;
     if (enterDuePhase(battle, unit, events)) continue;
+    // A Slow makes each Tick count for less towards the next action.
+    const step = isActive(battle, unit.slow) ? 1 - unit.slow.share : 1;
     if (unit.spec.actions) {
       let due = false;
       for (let i = 0; i < unit.ticksToEachAction.length; i++) {
-        if (--unit.ticksToEachAction[i]! <= 0) due = true;
+        unit.ticksToEachAction[i]! -= step;
+        if (unit.ticksToEachAction[i]! <= 0) due = true;
       }
       if (due) acting.push(unit);
       continue;
     }
-    unit.ticksToAction--;
+    unit.ticksToAction -= step;
     if (unit.ticksToAction <= 0) acting.push(unit);
   }
 
@@ -654,7 +744,7 @@ const isRow = (value: unknown): boolean => value === 'front' || value === 'back'
 const isLearnedSkill = (value: unknown): boolean =>
   isRecord(value) && isSkillId(value['id']) && isRank(value['rank']);
 
-const isDamageType = (value: unknown): boolean => value === 'physical' || value === 'poison';
+const isDamageType = (value: unknown): boolean => (DAMAGE_TYPES as readonly unknown[]).includes(value);
 const isUnitAction = (value: unknown): boolean =>
   isRecord(value) &&
   isString(value['name']) &&
@@ -662,7 +752,10 @@ const isUnitAction = (value: unknown): boolean =>
   (value['target'] === 'oneFront' || value['target'] === 'every') &&
   isNumber(value['damage']) &&
   isDamageType(value['damageType']) &&
-  isOptionalNumber(value['poisonStack']);
+  isOptionalNumber(value['poisonStack']) &&
+  isOptionalNumber(value['burn']) &&
+  isOptionalNumber(value['slow']) &&
+  isOptionalNumber(value['curse']);
 
 const isUnitSpec = (value: unknown): boolean =>
   isRecord(value) &&
@@ -683,6 +776,7 @@ const isUnitSpec = (value: unknown): boolean =>
   isOptionalNumber(value['oil']) &&
   isOptionalNumber(value['maxOil']) &&
   isOptionalNumber(value['poisonOnHit']) &&
+  isOptionalNumber(value['dodgeChance']) &&
   (value['skills'] === undefined || (Array.isArray(value['skills']) && value['skills'].every(isLearnedSkill))) &&
   (value['actions'] === undefined || (Array.isArray(value['actions']) && value['actions'].every(isUnitAction)));
 
@@ -690,6 +784,10 @@ const isBleed = (value: unknown): boolean =>
   isRecord(value) && isNumber(value['perTick']) && isNumber(value['ticksLeft']) && isNumber(value['nextTickAt']);
 const isPoisonStack = (value: unknown): boolean =>
   isRecord(value) && isNumber(value['damage']) && isNumber(value['nextTickAt']) && isNumber(value['expiresAt']);
+const isTimedShare = (value: unknown): boolean =>
+  isRecord(value) && isNumber(value['share']) && isNumber(value['expiresAt']);
+/** Absent in saves from before the effect existed. */
+const isOptional = (value: unknown, guard: (value: unknown) => boolean): boolean => value === undefined || value === null || guard(value);
 const isWard = (value: unknown): boolean =>
   isRecord(value) && isNumber(value['amount']) && isNumber(value['expiresAt']);
 const isSkillTicks = (value: unknown): boolean =>
@@ -719,6 +817,9 @@ const isUnitState = (value: unknown): boolean =>
   Array.isArray(value['poison']) &&
   value['poison'].every(isPoisonStack) &&
   (value['ward'] === null || isWard(value['ward'])) &&
+  isOptional(value['burn'], isBleed) &&
+  isOptional(value['slow'], isTimedShare) &&
+  isOptional(value['curse'], isTimedShare) &&
   isNumber(value['barUntil']) &&
   isNumber(value['barArmour']);
 
