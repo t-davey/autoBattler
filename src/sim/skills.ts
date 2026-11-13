@@ -34,32 +34,28 @@ const rankedActives = (ranks: SkillRanks): SkillId[] =>
 /** The Hero's active skills: the free Class skill and every active learned with points. */
 export const learnedActives = (heroId: HeroId, ranks: SkillRanks): SkillId[] => [...rankedActives(ranks), freeSkillOf(heroId)];
 
-/** A legal order lists each learned active skill exactly once. */
+/** The most active skills a Hero tries in a Battle. */
+export const MAX_ORDERED_SKILLS = 3;
+
+/** A legal order lists up to 3 learned active skills, each once. Learned skills can be left out. */
 export function isLegalOrder(heroId: HeroId, ranks: SkillRanks, order: readonly unknown[]): boolean {
-  const learned = learnedActives(heroId, ranks);
-  return order.length === learned.length && learned.every((id) => order.includes(id));
+  const learned: readonly unknown[] = learnedActives(heroId, ranks);
+  return order.length <= MAX_ORDERED_SKILLS && new Set(order).size === order.length && order.every((id) => learned.includes(id));
 }
+
+/** A new or respecced Hero's order: skills learned with points in step order, then the free Class skill, up to 3. */
+export const defaultOrder = (heroId: HeroId, ranks: SkillRanks): SkillId[] => learnedActives(heroId, ranks).slice(0, MAX_ORDERED_SKILLS);
 
 /**
- * The skill order for these ranks: each learned active once, keeping the order's choices.
- * Newly learned skills go ahead of the free Class skill, which always fires and would starve them,
- * and the free Class skill starts last.
+ * The order once a skill is first learned: it joins if there's room, just ahead of the free Class skill,
+ * which always has a target and would starve it. A full order is left for the player to change.
  */
-export function orderFor(heroId: HeroId, ranks: SkillRanks, order: readonly SkillId[] = []): SkillId[] {
-  const learned = learnedActives(heroId, ranks);
-  const kept = order.filter((id) => learned.includes(id));
-  const free = freeSkillOf(heroId);
-  const added = learned.filter((id) => id !== free && !kept.includes(id));
-  const freeAt = kept.indexOf(free);
-  if (freeAt === -1) return [...kept, ...added, free];
-  return [...kept.slice(0, freeAt), ...added, ...kept.slice(freeAt)];
+export function withNewSkill(heroId: HeroId, order: readonly SkillId[], learned: SkillId): SkillId[] {
+  if (order.includes(learned) || order.length >= MAX_ORDERED_SKILLS) return [...order];
+  const freeAt = order.indexOf(freeSkillOf(heroId));
+  if (freeAt === -1) return [...order, learned];
+  return [...order.slice(0, freeAt), learned, ...order.slice(freeAt)];
 }
-
-/** Part of a legal order: learned actives, each at most once. orderFor completes it. */
-export const isPartialOrder = (heroId: HeroId, ranks: SkillRanks, order: readonly unknown[]): boolean => {
-  const learned: readonly unknown[] = learnedActives(heroId, ranks);
-  return new Set(order).size === order.length && order.every((id) => learned.includes(id));
-};
 
 // Save validation.
 

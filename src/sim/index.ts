@@ -21,6 +21,7 @@ export type { AffixDefinition, AffixId, BaseId, ItemStat, ItemStats, Rarity, Slo
 export { rollItem } from './items';
 export type { ItemId, ItemSpec, ItemView, RolledAffix } from './items';
 export type { HeroId, SkillId, SkillKind, SkillReach } from './content/skills';
+export { MAX_ORDERED_SKILLS } from './skills';
 export type { SpendRefusal } from './skills';
 export {
   advance,

@@ -3,7 +3,8 @@ import { MAX_NAME_LENGTH } from './content/party';
 import type { SkillId } from './content/skills';
 import { clampToMaximums, unspentPoints, type HeroState } from './heroes';
 import { slotOf, type ItemId, type ItemState } from './items';
-import { isLegalOrder, orderFor, spendRefusal, type SpendRefusal } from './skills';
+import { defaultOrder, isLegalOrder, spendRefusal, withNewSkill, type SpendRefusal } from './skills';
+import { SKILLS } from './content/skills';
 
 /** The Party's unequipped items, and a count of their changes. */
 export interface Stash {
@@ -38,8 +39,9 @@ export function renameHero(hero: HeroState, name: string): BuildRefusal | null {
 export function spendSkillPoint(hero: HeroState, skillId: SkillId): BuildRefusal | null {
   const reason = spendRefusal(hero.id, hero.ranks, unspentPoints(hero), skillId);
   if (reason) return reason;
-  hero.ranks[skillId] = (hero.ranks[skillId] ?? 0) + 1;
-  hero.order = orderFor(hero.id, hero.ranks, hero.order);
+  const rank = hero.ranks[skillId] ?? 0;
+  hero.ranks[skillId] = rank + 1;
+  if (rank === 0 && SKILLS[skillId].kind === 'active') hero.order = withNewSkill(hero.id, hero.order, skillId);
   return null;
 }
 
@@ -51,7 +53,7 @@ export function setSkillOrder(hero: HeroState, order: readonly SkillId[]): Build
 
 export function respec(hero: HeroState): void {
   hero.ranks = {};
-  hero.order = orderFor(hero.id, hero.ranks, hero.order);
+  hero.order = defaultOrder(hero.id, hero.ranks);
 }
 
 /** Moves the item from the Stash to the Hero, and whatever it replaces back. */

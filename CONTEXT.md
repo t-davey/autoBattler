@@ -121,7 +121,7 @@ A skill's depth in its Branch, opened by points spent in that Branch.
 _Avoid_: Tier, layer
 
 **Skill order**:
-The order a Hero tries its learned active skills in, set by the player.
+Up to 3 of a Hero's learned active skills, in the order it tries them, set by the player. Skills left out never fire.
 _Avoid_: Priority list, rotation
 
 **Usefulness condition**:

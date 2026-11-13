@@ -186,16 +186,35 @@ describe('skill order and respec', () => {
     expect(heroIn(game, 'warrener').order).toEqual(order);
   });
 
-  it('setSkillOrder is refused unless it lists exactly the learned active skills', () => {
+  it('setSkillOrder takes up to 3 learned active skills, each once, and may leave skills out', () => {
     const game = builtWarrener();
     const refused = { ok: false, reason: 'badOrder' };
     const tryOrder = (order: readonly SkillId[]) => applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order });
-    expect(tryOrder(['bleeders-cut'])).toEqual(refused);
     expect(tryOrder(['bleeders-cut', 'bleeders-cut'])).toEqual(refused);
     expect(tryOrder(['bleeders-cut', 'open-veins'])).toEqual(refused);
-    expect(tryOrder(['bleeders-cut', 'the-long-cut', 'open-veins'])).toEqual(refused);
-    expect(tryOrder(['bleeders-cut', 'the-long-cut'])).toEqual(refused);
+    expect(tryOrder(['bleeders-cut', 'consume-sin'])).toEqual(refused);
+    expect(tryOrder(['bleeders-cut', 'the-long-cut', 'tainted-shaft', 'bleeders-cut'])).toEqual(refused);
     expect(heroIn(game, 'warrener').order).toEqual(['bleeders-cut', 'the-long-cut', 'tainted-shaft']);
+    expect(tryOrder(['bleeders-cut', 'the-long-cut'])).toEqual({ ok: true });
+    expect(tryOrder([])).toEqual({ ok: true });
+  });
+
+  it('a skill left out of the order never fires', () => {
+    const game = builtWarrener();
+    applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order: ['bleeders-cut', 'the-long-cut'] });
+    const used = new Set<SkillId>();
+    advance(game, 600_000, (event) => {
+      if (event.type === 'skill' && event.unitId === 'warrener') used.add(event.skillId);
+    });
+    expect(used.has('bleeders-cut')).toBe(true);
+    expect(used.has('tainted-shaft')).toBe(false);
+  });
+
+  it('a skill learned while the order is full waits outside it', () => {
+    const game = atLevel(9, { skillRanks: { warrener: { 'bleeders-cut': 3, 'open-veins': 3 } } });
+    applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order: ['bleeders-cut'] });
+    spend(game, 'warrener', 'the-long-cut');
+    expect(heroIn(game, 'warrener').order).toEqual(['bleeders-cut', 'the-long-cut']);
   });
 
   it('respec refunds every point and leaves only the free Class skill in the order', () => {
@@ -398,13 +417,20 @@ describe('saves', () => {
 });
 
 describe('saves from before free Class skills', () => {
-  it('load with each free Class skill added to the end of its Hero\'s order', () => {
+  it('load from version 5 with each free Class skill added to the end of its Hero\'s order', () => {
     const game = atLevel(3, { skillRanks: { warrener: { 'bleeders-cut': 2 } } });
-    const saved = JSON.parse(serializeGame(game)) as { game: { heroes: { id: string; order: string[] }[] } };
+    const saved = JSON.parse(serializeGame(game)) as { version: number; game: { heroes: { order: string[] }[] } };
+    saved.version = 5;
     for (const savedHero of saved.game.heroes) savedHero.order = savedHero.order.filter((id) => !['consume-sin', 'tainted-shaft', 'votive-spark'].includes(id));
     const loaded = deserializeGame(JSON.stringify(saved))!;
     expect(heroIn(loaded, 'warrener').order).toEqual(['bleeders-cut', 'tainted-shaft']);
     expect(heroIn(loaded, 'sin-eater').order).toEqual(['consume-sin']);
+  });
+
+  it('keep a free Class skill the player left out in a current save', () => {
+    const game = atLevel(3);
+    applyAction(game, { type: 'setSkillOrder', heroId: 'warrener', order: [] });
+    expect(heroIn(deserializeGame(serializeGame(game))!, 'warrener').order).toEqual([]);
   });
 
   it('refuse a free Class skill bought with points', () => {

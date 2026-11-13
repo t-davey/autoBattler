@@ -6,13 +6,27 @@ import { isNumber, isRecord } from './guards';
 import { isBattleState } from './battle';
 import { isHeroState, type HeroState } from './heroes';
 import { isItem, type ItemState } from './items';
-import { orderFor } from './skills';
+import { freeSkillOf, MAX_ORDERED_SKILLS } from './skills';
+import type { HeroId } from './content/skills';
 import { isPickPriority } from './picks';
 import { isRng } from './rng';
 import { isRunState } from './run';
 import { isWallState } from './wall';
 
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
+
+/**
+ * Version 5 saves come from before every Hero had a free Class skill in its order.
+ * Each gets it at the end, if its order has room.
+ */
+function migrateFrom5(game: unknown): void {
+  if (!isRecord(game) || !Array.isArray(game['heroes'])) return;
+  for (const hero of game['heroes'] as unknown[]) {
+    if (!isRecord(hero) || !HERO_IDS.includes(hero['id'] as HeroId) || !Array.isArray(hero['order'])) continue;
+    const free = freeSkillOf(hero['id'] as HeroId);
+    if (!hero['order'].includes(free) && hero['order'].length < MAX_ORDERED_SKILLS) hero['order'].push(free);
+  }
+}
 
 export function serializeGame(game: Game): string {
   return JSON.stringify({ version: SAVE_VERSION, game: stateOf(game) });
@@ -53,7 +67,7 @@ const isGameState = (value: unknown): boolean =>
   hasSoundItems(value) &&
   (value['battle'] === null || isBattleState(value['battle']));
 
-/** Returns null for bad data or another SAVE_VERSION. */
+/** Returns null for bad data or a SAVE_VERSION it can't read: this one, or 5, which it migrates. */
 export function deserializeGame(text: string): Game | null {
   let parsed: unknown;
   try {
@@ -61,8 +75,9 @@ export function deserializeGame(text: string): Game | null {
   } catch {
     return null;
   }
-  if (!isRecord(parsed) || parsed['version'] !== SAVE_VERSION || !isGameState(parsed['game'])) return null;
-  const state = parsed['game'] as GameState;
-  for (const hero of state.heroes) hero.order = orderFor(hero.id, hero.ranks, hero.order);
-  return gameOf(state);
+  if (!isRecord(parsed)) return null;
+  if (parsed['version'] === 5) migrateFrom5(parsed['game']);
+  else if (parsed['version'] !== SAVE_VERSION) return null;
+  if (!isGameState(parsed['game'])) return null;
+  return gameOf(parsed['game'] as GameState);
 }

@@ -4,7 +4,7 @@ import { ITEM_BASES, type Slot } from './content/items';
 import { actionIntervalFor, CLASSES, HERO_IDS, LEVEL_CAP, xpToNextLevel } from './content/party';
 import { FREE_SKILL_RANK, SKILLS, type HeroId, type SkillId } from './content/skills';
 import { gearStats, isEquipped, slotOf, type ItemState } from './items';
-import { isFreeSkill, isPartialOrder, isRanks, orderFor, spentPoints, type SkillRanks } from './skills';
+import { defaultOrder, isFreeSkill, isLegalOrder, isRanks, spentPoints, type SkillRanks } from './skills';
 
 /** A Hero between Battles, as plain JSON-safe data. */
 export interface HeroState {
@@ -17,7 +17,7 @@ export interface HeroState {
   health: number;
   oil: number;
   ranks: Partial<Record<SkillId, number>>; // Mutable, unlike SkillRanks.
-  /** The learned active skills, first choice first. */
+  /** Up to 3 learned active skills, first choice first. Others sit out. */
   order: SkillId[];
   equipped: Partial<Record<Slot, ItemState>>;
 }
@@ -31,7 +31,7 @@ export interface HeroSetup {
 
 export function createHero(id: HeroId, setup: HeroSetup = {}): HeroState {
   const ranks = { ...setup.ranks };
-  const hero: HeroState = { id, name: CLASSES[id].className, level: setup.level ?? 1, xp: 0, health: 0, oil: CLASSES[id].maxOil, ranks, order: orderFor(id, ranks), equipped: {} };
+  const hero: HeroState = { id, name: CLASSES[id].className, level: setup.level ?? 1, xp: 0, health: 0, oil: CLASSES[id].maxOil, ranks, order: defaultOrder(id, ranks), equipped: {} };
   for (const item of setup.gear ?? []) hero.equipped[slotOf(item)] = item;
   hero.health = heroStats(hero).maxHealth;
   return hero;
@@ -140,8 +140,7 @@ export function isHeroState(value: unknown): boolean {
     isNumber(value['oil']) &&
     isRanks(ranks) &&
     Array.isArray(order) &&
-    // Saves from before free Class skills lack them; loading completes the order.
-    isPartialOrder(value['id'] as HeroId, ranks, order) &&
+    isLegalOrder(value['id'] as HeroId, ranks, order) &&
     isEquipped(value['equipped'])
   );
 }

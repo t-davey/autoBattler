@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { SLOTS, type HeroView, type PickTag, type SkillId } from '../sim';
+import { MAX_ORDERED_SKILLS, SLOTS, type HeroView, type PickTag, type SkillId } from '../sim';
 import { PickRule } from './PickRule';
 import { lockText, REFUSAL_TEXT, skillFacts, skillValues } from './describeHero';
 import { SLOT_TEXT, statSheet } from './describeItem';
@@ -23,30 +23,55 @@ function NameEditor({ hero, dispatch, onRefused }: { hero: HeroView; dispatch: D
   );
 }
 
+/** Up to MAX_ORDERED_SKILLS learned actives, in order. The rest sit out. */
 function SkillOrder({ hero, dispatch, nameOf }: { hero: HeroView; dispatch: Dispatch; nameOf: (id: SkillId) => string }) {
+  const setOrder = (order: SkillId[]) => dispatch({ type: 'setSkillOrder', heroId: hero.id, order });
   const move = (index: number, by: number) => {
     const order = [...hero.order];
     const [skill] = order.splice(index, 1);
     if (!skill) return;
     order.splice(index + by, 0, skill);
-    dispatch({ type: 'setSkillOrder', heroId: hero.id, order });
+    setOrder(order);
   };
-  if (hero.order.length === 0) return <p className="hint">No active skills learned. This Hero uses only the basic attack.</p>;
+  const full = hero.order.length >= MAX_ORDERED_SKILLS;
+  const sittingOut = hero.skills.filter((skill) => skill.kind === 'active' && skill.rank > 0 && !hero.order.includes(skill.id));
   return (
-    <ol className="skill-order" aria-label={`Skill order of ${hero.name}`}>
-      {hero.order.map((id, index) => (
-        <li key={id}>
-          <span>{nameOf(id)}</span>
-          <button type="button" aria-label={`Move ${nameOf(id)} up`} disabled={index === 0} onClick={() => move(index, -1)}>
-            ↑
-          </button>
-          <button type="button" aria-label={`Move ${nameOf(id)} down`} disabled={index === hero.order.length - 1} onClick={() => move(index, 1)}>
-            ↓
-          </button>
-        </li>
-      ))}
-      <li className="hint">then the basic attack</li>
-    </ol>
+    <>
+      {hero.order.length === 0 ? (
+        <p className="hint">No active skills in the order. This Hero uses only the basic attack.</p>
+      ) : (
+        <ol className="skill-order" aria-label={`Skill order of ${hero.name}`}>
+          {hero.order.map((id, index) => (
+            <li key={id}>
+              <span>{nameOf(id)}</span>
+              <button type="button" aria-label={`Move ${nameOf(id)} up`} disabled={index === 0} onClick={() => move(index, -1)}>
+                ↑
+              </button>
+              <button type="button" aria-label={`Move ${nameOf(id)} down`} disabled={index === hero.order.length - 1} onClick={() => move(index, 1)}>
+                ↓
+              </button>
+              <button type="button" aria-label={`Take ${nameOf(id)} out of the order`} onClick={() => setOrder(hero.order.filter((other) => other !== id))}>
+                ✕
+              </button>
+            </li>
+          ))}
+          <li className="hint">then the basic attack</li>
+        </ol>
+      )}
+      {sittingOut.length > 0 && (
+        <ul className="skill-order" aria-label={`Skills ${hero.name} leaves out`}>
+          {sittingOut.map((skill) => (
+            <li key={skill.id} className="hint">
+              <span>{skill.name}, left out</span>
+              <button type="button" aria-label={`Add ${skill.name} to the order`} disabled={full} onClick={() => setOrder([...hero.order, skill.id])}>
+                Add
+              </button>
+            </li>
+          ))}
+          {full && <li className="hint">The order holds {MAX_ORDERED_SKILLS} skills. Take one out to add another.</li>}
+        </ul>
+      )}
+    </>
   );
 }
 
@@ -103,7 +128,7 @@ function HeroCard({ hero, dispatch }: { hero: HeroView; dispatch: Dispatch }) {
         })}
       </ul>
 
-      <h3>Skill order</h3>
+      <h3>Skill order: {hero.order.length} of {MAX_ORDERED_SKILLS}</h3>
       <SkillOrder hero={hero} dispatch={dispatch} nameOf={nameOf} />
 
       <button type="button" className="respec" disabled={hero.pointsSpent === 0} onClick={() => dispatch({ type: 'respec', heroId: hero.id })}>
