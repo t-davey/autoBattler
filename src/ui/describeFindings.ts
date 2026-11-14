@@ -81,10 +81,12 @@ function picksFinding({ guardianPicks }: AwayReport, view: GameView): Finding | 
 function lootFinding({ loot }: AwayReport): Finding | null {
   if (loot.common + loot.magic + loot.rare + loot.unique === 0) return null;
   const notable = loot.notable.map((item) => item.name);
+  const salvaged = loot.salvaged > 0 ? `. ${loot.salvaged} salvaged for ${loot.salvageGained} Salvage` : '';
+  const lost = loot.lostToFullStash.length > 0 ? [`Lost to a full Stash: ${loot.lostToFullStash.map((item) => item.name).join(', ')}`] : [];
   return {
     kind: 'loot',
-    title: `Loot: ${loot.common} common, ${loot.magic} magic, ${loot.rare} rare${loot.unique > 0 ? `, ${loot.unique} unique` : ''}`,
-    details: notable.length > 0 ? [notable.join(', ')] : [],
+    title: `Loot: ${loot.common} common, ${loot.magic} magic, ${loot.rare} rare${loot.unique > 0 ? `, ${loot.unique} unique` : ''}${salvaged}`,
+    details: [...(notable.length > 0 ? [notable.join(', ')] : []), ...lost],
     stat: null,
   };
 }

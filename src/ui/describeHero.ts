@@ -31,6 +31,8 @@ export const REFUSAL_TEXT: Readonly<Record<DispatchRefusal, string>> = {
   belowLevelRequirement: 'This Hero is below the level requirement.',
   classOnlyItem: 'Only its own Class can wear this unique.',
   wrongSlot: 'That item doesn’t fit there.',
+  lockedItem: 'Unlock it before salvaging.',
+  badAutoSalvage: 'No such auto-salvage rule.',
   emptySlot: 'Nothing is equipped there.',
 };
 

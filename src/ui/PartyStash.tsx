@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { itemBlocksLearnedSkill, RARITIES, SLOTS, type HeroView, type ItemStat, type ItemView, type Rarity, type Slot } from '../sim';
+import { AUTO_SALVAGE_RULES, itemBlocksLearnedSkill, RARITIES, SALVAGE_BY_RARITY, SLOTS, type AutoSalvageRule, type GameView, type HeroView, type ItemStat, type ItemView, type Rarity, type Slot } from '../sim';
 import { REFUSAL_TEXT } from './describeHero';
 import { changedStats, formatChange, itemStatsText, SLOT_TEXT, STAT_TEXT, statChange, targetSlot } from './describeItem';
 import { PixelIcon } from './PixelIcon';
@@ -7,6 +7,50 @@ import { groupItems, openingSlot, queryStash, type ItemGroup, type StashQuery, t
 import type { Dispatch } from './store';
 
 const SORTS: readonly (readonly [StashSort, string])[] = [['rarity', 'Rarity'], ['newest', 'Newest'], ['levelRequirement', 'Level']];
+
+const RULE_TEXT: Readonly<Record<AutoSalvageRule, string>> = {
+  keepEverything: 'Keep everything',
+  commons: 'Salvage commons',
+  commonsAndMagics: 'Salvage commons and magics',
+};
+
+/** What the Stash shows of the Party's Salvage and its auto-salvage rule. */
+export type StashRules = Pick<GameView, 'salvage' | 'autoSalvage' | 'keepStat' | 'stashCapacity'>;
+
+function LockToggle({ group, onLock }: { group: ItemGroup; onLock: (group: ItemGroup) => void }) {
+  const label = `${group.locked ? 'Unlock' : 'Lock'} ${group.item.name}${group.count > 1 ? ` ×${group.count}` : ''}`;
+  return (
+    <button type="button" className={group.locked ? 'lock-toggle lock-toggle-on' : 'lock-toggle'} aria-label={label} aria-pressed={group.locked} title={label} onClick={() => onLock(group)}>
+      <PixelIcon name="lock" />
+    </button>
+  );
+}
+
+/** Salvages a group. A rare or unique asks first. */
+function SalvageControl({ group, onSalvage }: { group: ItemGroup; onSalvage: (group: ItemGroup) => void }) {
+  const [asking, setAsking] = useState(false);
+  const { item, count, locked } = group;
+  const amount = SALVAGE_BY_RARITY[item.rarity] * count;
+  if (locked) return <p className="hint salvage-control">Locked: kept from salvage.</p>;
+  const askFirst = item.rarity === 'rare' || item.rarity === 'unique';
+  if (asking) {
+    return (
+      <p className="salvage-control">
+        Salvage {count > 1 ? `all ${count}` : 'this'} {item.rarity} for {amount} Salvage?{' '}
+        <button type="button" onClick={() => onSalvage(group)}>Salvage</button>{' '}
+        <button type="button" onClick={() => setAsking(false)}>Keep</button>
+      </p>
+    );
+  }
+  return (
+    <p className="salvage-control">
+      <button type="button" onClick={() => (askFirst ? setAsking(true) : onSalvage(group))}>
+        Salvage{count > 1 ? ` all ${count}` : ''}
+      </button>{' '}
+      <span className="hint">for {amount} Salvage</span>
+    </p>
+  );
+}
 
 function SlotIcon({ slot, rarity }: { slot: Slot; rarity: Rarity | null }) {
   return <PixelIcon name={slot} className={`slot-icon slot-icon-${rarity ?? 'empty'}`} />;
@@ -90,18 +134,23 @@ interface PartyCompareProps {
   readonly activeHero: HeroView;
   readonly picked: Slot;
   readonly onEquip: (item: ItemView, hero: HeroView) => void;
+  readonly onLock: (group: ItemGroup) => void;
+  readonly onSalvage: (group: ItemGroup) => void;
 }
 
 /** A group's stat changes for each Hero. It never says which Hero or item is better. */
-function PartyCompare({ group, heroes, activeHero, picked, onEquip }: PartyCompareProps) {
+function PartyCompare({ group, heroes, activeHero, picked, onEquip, onLock, onSalvage }: PartyCompareProps) {
   const { item, count, highestLevel } = group;
   const levels = highestLevel > item.levelRequirement ? `Levels ${item.levelRequirement}–${highestLevel}` : `Level ${item.levelRequirement}`;
   return (
     <section className="party-compare" aria-label="Compare across the Party">
-      <h3 className={`rarity-${item.rarity}`}>
-        {item.name}
-        {count > 1 && <span className="hint"> ×{count}</span>}
-      </h3>
+      <div className="compare-head">
+        <h3 className={`rarity-${item.rarity}`}>
+          {item.name}
+          {count > 1 && <span className="hint"> ×{count}</span>}
+        </h3>
+        <LockToggle group={group} onLock={onLock} />
+      </div>
       <p className="hint">{SLOT_TEXT[item.slot]}{item.reach ? ` (${item.reach})` : ''} · {levels}</p>
       <p className="compare-stats">{itemStatsText(item.stats)}</p>
       {item.unique && (
@@ -121,6 +170,7 @@ function PartyCompare({ group, heroes, activeHero, picked, onEquip }: PartyCompa
           {itemBlocksLearnedSkill(item, hero) && <p className="hint skill-blocked">Melee skills stop working</p>}
         </div>
       ))}
+      <SalvageControl key={group.key} group={group} onSalvage={onSalvage} />
     </section>
   );
 }
@@ -133,10 +183,11 @@ export interface PartyStashProps {
   readonly seenItemId: number;
   /** The filters to open with, such as the stat a Finding points to. */
   readonly initial: StashQuery;
+  readonly rules: StashRules;
 }
 
 /** The Party's gear, with the Stash for whichever Slot is picked and that item's changes for the whole Party. */
-export function PartyStash({ stash, heroes, dispatch, seenItemId, initial }: PartyStashProps) {
+export function PartyStash({ stash, heroes, dispatch, seenItemId, initial, rules }: PartyStashProps) {
   const [heroIndex, setHeroIndex] = useState(0);
   const [slot, setSlot] = useState<Slot>(() => openingSlot(stash, initial));
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -158,6 +209,19 @@ export function PartyStash({ stash, heroes, dispatch, seenItemId, initial }: Par
   };
   const unequip = (target: HeroView, from: Slot) => {
     const result = dispatch({ type: 'unequipItem', heroId: target.id, slot: from });
+    setRefusal(result.ok ? '' : REFUSAL_TEXT[result.reason]);
+  };
+  const lock = (group: ItemGroup) => {
+    const result = dispatch({ type: 'lockItems', itemIds: group.ids, locked: !group.locked });
+    setRefusal(result.ok ? '' : REFUSAL_TEXT[result.reason]);
+  };
+  const salvage = (group: ItemGroup) => {
+    const result = dispatch({ type: 'salvageItems', itemIds: group.ids });
+    setRefusal(result.ok ? '' : REFUSAL_TEXT[result.reason]);
+    if (result.ok) setSelectedKey(null);
+  };
+  const setRule = (rule: AutoSalvageRule, keepStat: ItemStat | null) => {
+    const result = dispatch({ type: 'setAutoSalvage', rule, keepStat });
     setRefusal(result.ok ? '' : REFUSAL_TEXT[result.reason]);
   };
   const clearFilters = () => {
@@ -184,11 +248,23 @@ export function PartyStash({ stash, heroes, dispatch, seenItemId, initial }: Par
         ))}
       </div>
       {refusal && <p role="alert" className="refusal">{refusal}</p>}
+      <div className="stash-rules" aria-label="Auto-salvage">
+        <span>
+          {stash.length} of {rules.stashCapacity} in the Stash · <strong>{rules.salvage} Salvage</strong>
+        </span>
+        <select aria-label="Auto-salvage rule" value={rules.autoSalvage} onChange={(event) => setRule(event.target.value as AutoSalvageRule, rules.keepStat)}>
+          {(Object.keys(AUTO_SALVAGE_RULES) as AutoSalvageRule[]).map((id) => <option key={id} value={id}>{RULE_TEXT[id]}</option>)}
+        </select>
+        <select aria-label="Keep items with" value={rules.keepStat ?? 'none'} onChange={(event) => setRule(rules.autoSalvage, event.target.value === 'none' ? null : (event.target.value as ItemStat))}>
+          <option value="none">Keep no stat</option>
+          {(Object.keys(STAT_TEXT) as ItemStat[]).map((id) => <option key={id} value={id}>Keep any {STAT_TEXT[id]}</option>)}
+        </select>
+        <span className="hint">When full, the lowest-level unlocked items go first, rarer ones last. Uniques stay.</span>
+      </div>
       <div className="stash-lower">
         <section className="stash-list" aria-label="Stash">
           <div className="stash-list-head">
             <h2>{SLOT_TEXT[slot]} items for {hero.name}</h2>
-            <span className="hint">{stash.length} in the Stash</span>
             <div className="stash-controls">
               {SORTS.map(([id, label]) => (
                 <button key={id} type="button" aria-pressed={sort === id} onClick={() => setSort(id)}>{label}</button>
@@ -223,6 +299,7 @@ export function PartyStash({ stash, heroes, dispatch, seenItemId, initial }: Par
                       <StatChanges item={item} hero={hero} picked={slot} />
                       {itemBlocksLearnedSkill(item, hero) && <span className="hint skill-blocked stash-row-warning">Melee skills stop working</span>}
                     </button>
+                    <LockToggle group={group} onLock={lock} />
                     <EquipControl item={item} hero={hero} onEquip={equip} />
                   </li>
                 );
@@ -230,7 +307,7 @@ export function PartyStash({ stash, heroes, dispatch, seenItemId, initial }: Par
             </ul>
           )}
         </section>
-        {selected && <PartyCompare group={selected} heroes={heroes} activeHero={hero} picked={slot} onEquip={equip} />}
+        {selected && <PartyCompare group={selected} heroes={heroes} activeHero={hero} picked={slot} onEquip={equip} onLock={lock} onSalvage={salvage} />}
       </div>
     </div>
   );

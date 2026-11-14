@@ -27,7 +27,7 @@ const report = (changes: Partial<AwayReport> = {}): AwayReport => ({
   fellBack: false,
   guardianPicks: [],
   levels: [],
-  loot: { common: 0, magic: 0, rare: 0, unique: 0, notable: [] },
+  loot: { common: 0, magic: 0, rare: 0, unique: 0, salvaged: 0, salvageGained: 0, lostToFullStash: [], notable: [] },
   unspentSkillPoints: 0,
   ...changes,
 });
@@ -127,7 +127,7 @@ describe('describeFindings', () => {
   });
 
   it('keeps the loot Finding the same whatever the player does', () => {
-    const loot = { common: 2, magic: 1, rare: 0, unique: 0, notable: [] };
+    const loot = { common: 2, magic: 1, rare: 0, unique: 0, salvaged: 0, salvageGained: 0, lostToFullStash: [], notable: [] };
     const [finding] = describeFindings(report({ loot }), newView());
     expect(finding?.title).toBe('Loot: 2 common, 1 magic, 0 rare');
   });
@@ -135,7 +135,7 @@ describe('describeFindings', () => {
 
 describe('item comparison', () => {
   const stats = { power: 4, maxHealth: 0, armour: 18, poisonResistance: 24, critChance: 0, speed: 0, maxOil: 0 };
-  const shroud = { id: 1, name: 'Waxed Shroud', slot: 'body', slots: ['body'], unique: null, rarity: 'rare', reach: null, levelRequirement: 1, affixes: [], stats } as const;
+  const shroud = { id: 1, name: 'Waxed Shroud', slot: 'body', slots: ['body'], unique: null, locked: false, rarity: 'rare', reach: null, levelRequirement: 1, affixes: [], stats } as const;
   const hero = newView().heroes[0]!;
 
   it('compares with an empty Slot as the item alone', () => {

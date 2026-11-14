@@ -1,5 +1,5 @@
 import { maxHealthOf, type BattleState, type Reach, type Row, type TeamId } from './battle';
-import { SLOTS, type Slot } from './content/items';
+import { SLOTS, STASH_CAPACITY, type AutoSalvageRule, type ItemStat, type Slot } from './content/items';
 import { FLOORS_PER_LAMP } from './content/world';
 import { GRID_HEIGHT, GRID_WIDTH, lampIndexOf, type Depth, type RoomKind } from './floors';
 import { CLASSES, xpToNextLevel } from './content/party';
@@ -137,6 +137,11 @@ export interface GameView {
   readonly pickPriority: readonly PickTag[];
   /** Changes whenever the Stash does, so a reader can call viewStash only then. */
   readonly stashRevision: number;
+  readonly salvage: number;
+  readonly autoSalvage: AutoSalvageRule;
+  /** Items with this stat are kept whatever the rule. */
+  readonly keepStat: ItemStat | null;
+  readonly stashCapacity: number;
 }
 
 function viewTeam(battle: BattleState, team: TeamId, heroes: readonly HeroState[]): readonly UnitView[] {
@@ -240,7 +245,7 @@ function viewMap({ layout, room }: RunState): FloorMapView | null {
 }
 
 export function viewGame(game: Game): GameView {
-  const { tick, battle, run, walls, stashRevision } = stateOf(game);
+  const { tick, battle, run, walls, stashRevision, salvage, autoSalvage, keepStat } = stateOf(game);
   const ahead = run.floor === null ? runStretch(walls) : lampIndexOf(run.floor);
   const frontier = walls[frontierIndex(walls)]!;
   return {
@@ -262,6 +267,10 @@ export function viewGame(game: Game): GameView {
     picks: run.picks.map(viewPick),
     pickPriority: stateOf(game).pickPriority,
     stashRevision,
+    salvage,
+    autoSalvage,
+    keepStat,
+    stashCapacity: STASH_CAPACITY,
   };
 }
 

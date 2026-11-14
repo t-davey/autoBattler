@@ -339,8 +339,20 @@ The storage where loot lands, shared by all of the player's Parties.
 _Avoid_: Inventory, bank
 
 **Salvage**:
-The crafting material gained by breaking down items.
+The crafting material gained by breaking down items: 1 for a common, 3 for a magic, 8 for a rare, and 20 for a unique. Also the act of breaking one down.
 _Avoid_: Scrap, dust
+
+**Lock**:
+A mark on an Item that keeps it from being salvaged, by hand, by the Auto-salvage rule, or by a full Stash. It stays through equipping.
+_Avoid_: Favourite, pin
+
+**Auto-salvage rule**:
+The Party's setting for which rarities are salvaged as they land, with an optional stat whose Items are always kept. Uniques are never auto-salvaged.
+_Avoid_: Loot filter
+
+**Item value**:
+An Item's level requirement plus a bonus for its Rarity. When the Stash is full, the lowest-value unlocked Item is salvaged first.
+_Avoid_: Item score, gear score
 
 **Belt**:
 The Party's shared, capped supply of consumables.

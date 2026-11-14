@@ -1,6 +1,7 @@
 import type { UnitSpec } from './battle';
-import { equipItem, renameHero, respec, setSkillOrder, spendSkillPoint, unequipItem, type BuildRefusal, type Stash } from './build';
-import type { Slot } from './content/items';
+import { equipItem, renameHero, respec, setSkillOrder, spendSkillPoint, unequipItem, type BuildRefusal } from './build';
+import type { AutoSalvageRule, ItemStat, Slot } from './content/items';
+import { lockItems, salvageItems, setAutoSalvage, type Stash, type StashRefusal } from './stash';
 import { CLASS_IDS, CLASSES, DEFAULT_PARTY, PARTY_SIZE } from './content/party';
 import type { ClassId, HeroId, SkillId } from './content/skills';
 import { GIVEN_NAMES, SURNAMES } from './content/names';
@@ -50,9 +51,12 @@ export type PlayerAction =
   | { readonly type: 'setSkillOrder'; readonly heroId: HeroId; readonly order: readonly SkillId[] }
   | { readonly type: 'respec'; readonly heroId: HeroId }
   | { readonly type: 'equipItem'; readonly heroId: HeroId; readonly itemId: ItemId; readonly slot?: Slot }
-  | { readonly type: 'unequipItem'; readonly heroId: HeroId; readonly slot: Slot };
+  | { readonly type: 'unequipItem'; readonly heroId: HeroId; readonly slot: Slot }
+  | { readonly type: 'lockItems'; readonly itemIds: readonly ItemId[]; readonly locked: boolean }
+  | { readonly type: 'salvageItems'; readonly itemIds: readonly ItemId[] }
+  | { readonly type: 'setAutoSalvage'; readonly rule: AutoSalvageRule; readonly keepStat: ItemStat | null };
 
-export type ActionRefusal = 'notInTown' | 'unknownHero' | 'badPickPriority' | BuildRefusal;
+export type ActionRefusal = 'notInTown' | 'unknownHero' | 'badPickPriority' | BuildRefusal | StashRefusal;
 export type ActionResult = { readonly ok: true } | { readonly ok: false; readonly reason: ActionRefusal };
 
 /** A running game. The UI never reads inside it: reads go through the view functions. */
@@ -94,7 +98,7 @@ export function createGame(setup: GameSetup): Game {
   const rng = createRng(setup.seed);
   // A fixed offset keeps the Pick stream apart from the main one.
   const pickRng = createRng(setup.seed ^ 0x5bd1e995);
-  return gameOf({ rng, pickRng, pickPriority: [...DEFAULT_PICK_PRIORITY], tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), walls: createWalls(lampsLit ?? (lampLit ? 1 : 0), setbacks), battleTicks: battleTicks ?? null, heroes, stash: stashed, nextItemId, stashRevision: 0 });
+  return gameOf({ rng, pickRng, pickPriority: [...DEFAULT_PICK_PRIORITY], tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), walls: createWalls(lampsLit ?? (lampLit ? 1 : 0), setbacks), battleTicks: battleTicks ?? null, heroes, stash: stashed, nextItemId, stashRevision: 0, salvage: 0, autoSalvage: 'keepEverything', keepStat: null });
 }
 
 /** Different names for each Hero, from the provisional pool. */
@@ -133,6 +137,11 @@ export function applyAction(game: Game, action: PlayerAction, sink: EventSink = 
     state.pickPriority = [...action.priority];
     return ACCEPTED;
   }
+  // The Stash's own actions: any time, since loot lands during Runs.
+  if (action.type === 'lockItems' || action.type === 'salvageItems' || action.type === 'setAutoSalvage') {
+    const outcome = stashAction(state, action, sink);
+    return outcome ? refused(outcome) : ACCEPTED;
+  }
   const hero = state.heroes.find((candidate) => candidate.id === action.heroId);
   if (!hero) return refused('unknownHero');
   const outcome = buildAction(hero, state, action);
@@ -142,7 +151,20 @@ export function applyAction(game: Game, action: PlayerAction, sink: EventSink = 
   return ACCEPTED;
 }
 
-function buildAction(hero: HeroState, stash: Stash, action: Exclude<PlayerAction, { readonly type: 'sendParty' | 'setPickPriority' }>): BuildRefusal | null {
+type StashAction = Extract<PlayerAction, { readonly type: 'lockItems' | 'salvageItems' | 'setAutoSalvage' }>;
+
+function stashAction(stash: Stash, action: StashAction, sink: EventSink): StashRefusal | null {
+  switch (action.type) {
+    case 'lockItems':
+      return lockItems(stash, action.itemIds, action.locked);
+    case 'salvageItems':
+      return salvageItems(stash, action.itemIds, sink);
+    case 'setAutoSalvage':
+      return setAutoSalvage(stash, action.rule, action.keepStat);
+  }
+}
+
+function buildAction(hero: HeroState, stash: Stash, action: Exclude<PlayerAction, { readonly type: 'sendParty' | 'setPickPriority' } | StashAction>): BuildRefusal | null {
   switch (action.type) {
     case 'renameHero':
       return renameHero(hero, action.name);

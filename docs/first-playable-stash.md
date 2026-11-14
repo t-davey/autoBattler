@@ -1,6 +1,6 @@
 # First playable: the Stash and Salvage
 
-A draft of the Stash's cap, locks, auto-salvage, and Salvage, for the human to review. Step 8 of [the first playable plan](plans/first-playable.md) builds it once confirmed. Every number is a starting value, and step 10 tunes them. Spending Salvage on rerolls is step 9's, with its price.
+The Stash's cap, locks, auto-salvage, and Salvage. The human chose to build it as drafted on 2026-11-13, so the questions below were answered with the draft's own choices, and step 8 of [the first playable plan](plans/first-playable.md) built it. Every number is a starting value, and step 10 tunes them. Spending Salvage on rerolls is step 9's, with its price.
 
 ## What the design already sets
 
@@ -79,6 +79,8 @@ The loot Finding adds what was salvaged, such as "Loot: 34 common, 16 magic, 8 r
 - **Tests:** the cap's order, locks, each rule and the keep-stat, Salvage amounts, the unique exception, and the save migration.
 
 ## Questions for the human
+
+Answered on 2026-11-13: build as drafted.
 
 1. **Item value:** level requirement plus a rarity bonus of 0, 5, or 10, with uniques exempt.
 2. **The rules:** the 3 presets, Keep everything as the default, and the keep-stat exception.

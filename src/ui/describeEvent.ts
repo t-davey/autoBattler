@@ -1,4 +1,5 @@
 import { ACTS, floorAt, type GameEvent } from '../sim';
+import type { SalvageCause } from '../sim';
 import { floorLabel } from './floorLabel';
 
 const OUTCOME_LINES = {
@@ -38,6 +39,12 @@ const TOWN_LINES = {
 const amount = (damage: number, absorbed: number): string => {
   const warded = absorbed > 0 ? ` (${Math.round(absorbed)} into a Ward)` : '';
   return `${Math.round(damage)}${warded}`;
+};
+
+const SALVAGE_LINES: Readonly<Record<SalvageCause, string>> = {
+  rule: 'Salvaged by the rule:',
+  full: 'The Stash is full. Salvaged',
+  hand: 'Salvaged',
 };
 
 /** One Live Log line for each event the sim reports. */
@@ -93,6 +100,8 @@ export function describeEvent(event: GameEvent): string {
       return event.line;
     case 'itemFound':
       return `Found a ${event.item.rarity}: ${event.item.name}.`;
+    case 'itemSalvaged':
+      return `${SALVAGE_LINES[event.cause]} ${event.item.name}, for ${event.salvage} Salvage.`;
     case 'wipe':
       return `A Wipe on ${floorLabel(event.floor)}, before ${event.enemyName}.`;
     case 'draw':

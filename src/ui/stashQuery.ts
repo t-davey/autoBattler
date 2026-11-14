@@ -40,6 +40,10 @@ export interface ItemGroup {
   /** The one to equip: the lowest level requirement, so any Hero who can use one of these can use it. */
   readonly item: ItemView;
   readonly count: number;
+  /** Every item in the group, for locking or salvaging them together. */
+  readonly ids: readonly number[];
+  /** Whether every item in the group is locked. */
+  readonly locked: boolean;
   readonly newestId: number;
   readonly highestLevel: number;
 }
@@ -57,6 +61,8 @@ export function groupItems(items: readonly ItemView[]): readonly ItemGroup[] {
     key,
     item: group.reduce((lowest, item) => (item.levelRequirement < lowest.levelRequirement ? item : lowest)),
     count: group.length,
+    ids: group.map((item) => item.id),
+    locked: group.every((item) => item.locked),
     newestId: Math.max(...group.map((item) => item.id)),
     highestLevel: Math.max(...group.map((item) => item.levelRequirement)),
   }));

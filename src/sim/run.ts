@@ -10,7 +10,7 @@ import { rankValue, type HeroId } from './content/skills';
 import { depthTuning } from './depth';
 import { generateFloor, isDepth, lampIndexOf, ROOM_KINDS, xpShare, type FloorLayout, type Depth, type RoomKind, type RoomLayout } from './floors';
 import { clampToMaximums, gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
-import { putInStash } from './build';
+import { receiveLoot, type Stash, type StashEvent } from './stash';
 import { rollItemSpec, uniqueSpec, viewItem, type ItemSpec, type ItemState, type ItemView } from './items';
 import { nextFloat, nextInt, type Rng } from './rng';
 import { PICKS, type PickId, type PickMoment, type PickTag } from './content/picks';
@@ -41,7 +41,7 @@ export type RunEvent =
   | { readonly type: 'floorEntered'; readonly floor: Depth }
   | { readonly type: 'roomEntered'; readonly floor: Depth; readonly room: number; readonly kind: RoomKind }
   | { readonly type: 'chestOpened'; readonly line: string }
-  | { readonly type: 'itemFound'; readonly item: ItemView }
+  | StashEvent
   // A Setback. battleEnded comes first and says how the Battle went; only these two count towards falling back.
   | { readonly type: 'wipe' | 'draw'; readonly floor: Depth; readonly enemyName: string; readonly guardianHealthShare: number | null }
   | { readonly type: 'returnedToTown'; readonly reason: TownReason }
@@ -70,7 +70,7 @@ export interface RunState {
 }
 
 /** The part of the Game that Runs read and change. */
-export interface RunWorld {
+export interface RunWorld extends Stash {
   readonly rng: Rng;
   /** Its own stream, so offers don't shift the rest of the Run's rolls. */
   readonly pickRng: Rng;
@@ -81,12 +81,8 @@ export interface RunWorld {
   readonly run: RunState;
   /** One per Lamp, in order. */
   readonly walls: readonly WallState[];
-  /** Unequipped items, in the order they arrived here. */
-  readonly stash: ItemState[];
   /** The id the next item takes. */
   nextItemId: number;
-  /** Counts changes to the Stash. */
-  stashRevision: number;
   /** Set by tests to draw Battles early. Null uses the usual limit. */
   readonly battleTicks: number | null;
 }
@@ -203,8 +199,7 @@ function enterRoom(world: RunWorld, sink: EventSink): void {
 /** Rolls an item for the Party's Floor, straight into the Stash. */
 function dropItem(world: RunWorld, sink: EventSink, rarity?: Exclude<Rarity, 'unique'>, spec: ItemSpec = rollItemSpec(world.rng, world.run.floor!, rarity)): void {
   const item: ItemState = { ...spec, id: world.nextItemId++ };
-  putInStash(world, item);
-  sink({ type: 'itemFound', item: viewItem(item) });
+  receiveLoot(world, item, sink);
 }
 
 const maybeDropItem = (world: RunWorld, chance: number, sink: EventSink): void => {

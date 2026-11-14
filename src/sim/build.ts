@@ -2,31 +2,12 @@ import type { Slot } from './content/items';
 import { MAX_NAME_LENGTH } from './content/party';
 import type { SkillId } from './content/skills';
 import { clampToMaximums, mayWear, slotToFill, unspentPoints, type HeroState } from './heroes';
-import { slotsOf, type ItemId, type ItemState } from './items';
+import { slotsOf, type ItemId } from './items';
+import { putInStash, takeFromStash, type Stash } from './stash';
 import { defaultOrder, isLegalOrder, spendRefusal, withNewSkill, type SpendRefusal } from './skills';
 import { SKILLS } from './content/skills';
 
-/** The Party's unequipped items, and a count of their changes. */
-export interface Stash {
-  /** In the order they arrived. */
-  readonly stash: ItemState[];
-  stashRevision: number;
-}
-
 export type BuildRefusal = 'emptyName' | 'nameTooLong' | 'badOrder' | 'unknownItem' | 'belowLevelRequirement' | 'classOnlyItem' | 'wrongSlot' | 'emptySlot' | SpendRefusal;
-
-/** Every change to the Stash comes through here, so its revision always moves. */
-export function putInStash(stash: Stash, item: ItemState): void {
-  stash.stash.push(item);
-  stash.stashRevision++;
-}
-
-function takeFromStash(stash: Stash, itemId: ItemId): ItemState | undefined {
-  const index = stash.stash.findIndex((item) => item.id === itemId);
-  if (index === -1) return undefined;
-  stash.stashRevision++;
-  return stash.stash.splice(index, 1)[0];
-}
 
 export function renameHero(hero: HeroState, name: string): BuildRefusal | null {
   const trimmed = name.trim();

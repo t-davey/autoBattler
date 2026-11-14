@@ -19,6 +19,7 @@ export function TownMenu({ view, dispatch }: { view: GameView; dispatch: Store['
         <PixelIcon name="lantern" /> Next Run heads for the Lamp at {floorLabel(view.lampFloor)}, which is {lampLit ? 'lit' : 'dark'}.
       </p>
       <p>Lamps relit: {lampsLit} of {LAMPS.length}.</p>
+      <p>Salvage: {view.salvage}. Rerolls come with Town's prices.</p>
       {lampsLit === LAMPS.length && <p>[placeholder] Difficulty Tier 1 complete. Later Tiers aren’t built yet.</p>}
       <p>
         {fallenBack

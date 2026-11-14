@@ -17,8 +17,9 @@ export type {
 export { beginCatchUp, continueCatchUp, mergeAwayReports } from './catchup';
 export type { AwayLevelGain, AwayPickRecord, AwayReport, AwaySetback, CatchUp, GuardianAttempts } from './catchup';
 export { CLASS_IDS } from './content/party';
-export { AFFIXES, RARITIES, SLOTS } from './content/items';
-export type { AffixDefinition, AffixId, BaseId, ItemStat, ItemStats, Rarity, Slot } from './content/items';
+export { AFFIXES, AUTO_SALVAGE_RULES, RARITIES, SALVAGE_BY_RARITY, SLOTS, STASH_CAPACITY } from './content/items';
+export type { AffixDefinition, AffixId, AutoSalvageRule, BaseId, ItemStat, ItemStats, Rarity, Slot } from './content/items';
+export type { SalvageCause } from './stash';
 export { rollItem } from './items';
 export type { ItemId, ItemSpec, ItemView, RolledAffix } from './items';
 export type { ClassId, HeroId, SkillId, SkillKind, SkillReach } from './content/skills';

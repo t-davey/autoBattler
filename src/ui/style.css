@@ -1045,6 +1045,49 @@ select {
   font-size: 0.78rem;
 }
 
+.stash-rules {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.6rem;
+  margin: 0.4rem 0;
+  font-size: 0.8rem;
+}
+
+.stash-rules .hint {
+  font-size: 0.72rem;
+}
+
+.lock-toggle {
+  flex: none;
+  padding: 0.15rem 0.3rem;
+  line-height: 0;
+}
+
+.lock-toggle .pixel-icon {
+  width: 12px;
+  height: 12px;
+  fill: var(--iron-bright);
+}
+
+.lock-toggle-on .pixel-icon {
+  fill: var(--brass-bright);
+}
+
+.compare-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.salvage-control {
+  margin: 0.5rem 0 0;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--iron);
+  font-size: 0.8rem;
+}
+
 .stash-controls button[aria-pressed='true'] {
   color: var(--flame);
   border-color: var(--brass);

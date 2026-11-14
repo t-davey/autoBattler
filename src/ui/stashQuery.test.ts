@@ -13,6 +13,7 @@ const item = (id: number, overrides: Partial<ItemView> = {}): ItemView => ({
   affixes: [],
   stats: NO_STATS,
   unique: null,
+  locked: false,
   ...overrides,
   slots: [overrides.slot ?? 'body'],
 });

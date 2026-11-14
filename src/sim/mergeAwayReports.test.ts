@@ -12,7 +12,7 @@ const setback = (changes: Partial<AwaySetback> = {}): AwaySetback => ({
 
 describe('mergeAwayReports, Guardian attempts', () => {
   it('adds attempts, keeps the lowest health, and keeps the earlier previous best', () => {
-    const base = { damageDealt: 0, healed: 0, elapsedMs: 0, appliedMs: 0, capped: false, floorsCleared: 0, deepestFloor: 0, setbacks: [], guardianKills: 0, lampRelit: false, fellBack: false, guardianPicks: [], levels: [], loot: { common: 0, magic: 0, rare: 0, unique: 0, notable: [] }, unspentSkillPoints: 0 };
+    const base = { damageDealt: 0, healed: 0, elapsedMs: 0, appliedMs: 0, capped: false, floorsCleared: 0, deepestFloor: 0, setbacks: [], guardianKills: 0, lampRelit: false, fellBack: false, guardianPicks: [], levels: [], loot: { common: 0, magic: 0, rare: 0, unique: 0, salvaged: 0, salvageGained: 0, lostToFullStash: [], notable: [] }, unspentSkillPoints: 0 };
     const earlier = { ...base, guardianAttempts: { attempts: 2, reachedSecondPhase: 0, bestHealthShare: 0.6, previousBestHealthShare: 0.8 } };
     const later = { ...base, guardianAttempts: { attempts: 1, reachedSecondPhase: 1, bestHealthShare: 0.4, previousBestHealthShare: 0.6 } };
     expect(mergeAwayReports(earlier, later).guardianAttempts).toEqual({ attempts: 3, reachedSecondPhase: 1, bestHealthShare: 0.4, previousBestHealthShare: 0.8 });
@@ -36,7 +36,7 @@ describe('mergeAwayReports', () => {
     fellBack: false,
     guardianPicks: [],
     levels: [],
-    loot: { common: 1, magic: 1, rare: 0, unique: 0, notable: [] },
+    loot: { common: 1, magic: 1, rare: 0, unique: 0, salvaged: 0, salvageGained: 0, lostToFullStash: [], notable: [] },
     unspentSkillPoints: 1,
     ...changes,
   });

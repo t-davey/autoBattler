@@ -49,6 +49,8 @@ export type ItemId = number;
 
 export interface ItemState extends ItemSpec {
   readonly id: ItemId;
+  /** Kept from the cap, the auto-salvage rule, and salvaging by hand. */
+  locked?: true;
 }
 
 /** What a unique adds, as its item shows it. */
@@ -70,6 +72,7 @@ export interface ItemView {
   /** Set on weapons only. */
   readonly reach: Reach | null;
   readonly levelRequirement: number;
+  readonly locked: boolean;
   readonly affixes: readonly AffixId[];
   /** Built-in stats and Affixes together. */
   readonly stats: ItemStats;
@@ -163,6 +166,7 @@ export function viewItem(item: ItemState): ItemView {
     rarity: item.rarity,
     reach: base.reach,
     levelRequirement: item.levelRequirement,
+    locked: item.locked === true,
     affixes: item.affixes.map(({ id }) => id),
     stats: itemStats(item),
     unique: unique && { classId: unique.classId, className: CLASSES[unique.classId].className, change: unique.change, line: unique.line },
@@ -176,7 +180,8 @@ const isAffix = (value: unknown): boolean =>
 
 export function isItem(value: unknown): value is ItemState {
   if (!isRecord(value) || typeof value['baseId'] !== 'string') return false;
-  const { id, baseId, rarity, affixes, levelRequirement, scale } = value;
+  const { id, baseId, rarity, affixes, levelRequirement, scale, locked } = value;
+  if (locked !== undefined && locked !== true) return false;
   if (!Object.hasOwn(ITEM_BASES, baseId) && !isUniqueId(baseId)) return false;
   // A unique has no Affixes and carries its scale; nothing else does.
   if ((rarity === 'unique') !== isUniqueId(baseId) || (rarity === 'unique') !== isNumber(scale)) return false;

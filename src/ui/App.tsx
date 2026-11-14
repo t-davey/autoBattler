@@ -64,7 +64,7 @@ export function App({ store }: { store: Store }) {
             <PlanningTab heroes={view.heroes} pickPriority={view.pickPriority} dispatch={store.dispatch} />
           </main>
         )}
-        {!awayReport && tab === 'stash' && <StashTab stash={stash} heroes={view.heroes} dispatch={store.dispatch} seenItemId={seenItemId} />}
+        {!awayReport && tab === 'stash' && <StashTab stash={stash} heroes={view.heroes} dispatch={store.dispatch} seenItemId={seenItemId} rules={view} />}
       </div>
       {catchUpProgress !== null && (
         <div className="catch-up" role="status">

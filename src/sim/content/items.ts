@@ -158,3 +158,20 @@ export const RARE_LEVEL_BONUS = 1;
 export const CHEST_DROP_CHANCE = 0.6;
 /** Tripled from the demo's 0.1 for the weekend pace on 2026-11-11. */
 export const BATTLE_DROP_CHANCE = 0.3;
+
+/** How many items the Stash holds. Past it, the lowest-value unlocked items are salvaged. */
+export const STASH_CAPACITY = 300;
+
+/** Added to an item's level requirement for its value, which ranks it for salvaging when the Stash is full. */
+export const VALUE_BONUS: Readonly<Record<Exclude<Rarity, 'unique'>, number>> = { common: 0, magic: 5, rare: 10 };
+
+/** Salvage an item gives when broken down. */
+export const SALVAGE_BY_RARITY: Readonly<Record<Rarity, number>> = { common: 1, magic: 3, rare: 8, unique: 20 };
+
+/** The Party's auto-salvage rule: which rarities are salvaged as they land. Uniques never are. */
+export type AutoSalvageRule = 'keepEverything' | 'commons' | 'commonsAndMagics';
+export const AUTO_SALVAGE_RULES: Readonly<Record<AutoSalvageRule, readonly Rarity[]>> = {
+  keepEverything: [],
+  commons: ['common'],
+  commonsAndMagics: ['common', 'magic'],
+};
