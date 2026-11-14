@@ -7,7 +7,7 @@ export const battleWorth = (depth: number): number => 5 + depth;
 export const GOLD_FROM = { battle: 1, chest: 3, guardian: 10 } as const;
 
 /** A respec costs this much gold for each Hero level. */
-export const RESPEC_GOLD_PER_LEVEL = 10;
+export const RESPEC_GOLD_PER_LEVEL = 50;
 
 /** Salvage to reroll one Affix. Commons and uniques have no Affixes to reroll. */
 export const REROLL_SALVAGE = { magic: 5, rare: 15 } as const;
@@ -22,12 +22,12 @@ export const MERCHANT = {
   rareSharePerLamp: 0.05,
   maxRareShare: 0.6,
   /** Prices in Battles' worth at the item's depth. */
-  price: { magic: 30, rare: 80 },
+  price: { magic: 150, rare: 400 },
 } as const;
 
 export const GAMBLE = {
   /** In Battles' worth at the depth items roll at. */
-  price: 25,
+  price: 125,
   uniqueShare: 0.02,
   rareShare: 0.28,
   rareSharePerLamp: 0.02,

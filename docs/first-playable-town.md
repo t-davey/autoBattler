@@ -2,7 +2,7 @@
 
 Gold, respec cost, Salvage rerolls, the merchant, and the gamble vendor. The human chose to build it as drafted on 2026-11-13, so the questions below were answered with the draft's own choices, and step 9 of [the first playable plan](plans/first-playable.md) built it. Every number is a starting value, and step 10 tunes them.
 
-**Correction, found while building:** the draft misread its pace measurement by a factor of 5. A Party wins about 105 Battles an hour, not 21, so every price below costs about a fifth of the time the draft said. The numbers were built as drafted. The pace and the times below are corrected.
+**Correction, found while building:** the draft misread its pace measurement by a factor of 5. A Party wins about 105 Battles an hour, not 21. On 2026-11-14 the human chose to raise every gold price 5 times, so each costs the time the draft meant. The prices and pace below are the corrected ones.
 
 ## What the design already sets
 
@@ -38,7 +38,7 @@ That comes to about **250 Battles' worth an hour**: about 2,500 gold an hour on 
 
 ## Respecs
 
-**10 gold per Hero level,** so 100 at level 10 and 200 at level 20. That is about 2 minutes of gold at any point in the Tier, since level and depth rise together. The draft said 10. Today respecs are free.
+**50 gold per Hero level,** so 500 at level 10 and 1,000 at level 20. That is about 10 minutes of gold at any point in the Tier, since level and depth rise together.
 
 ## Rerolls
 
@@ -64,10 +64,10 @@ Sells items rolled at **the depth of the deepest relit Lamp**, or Floor 1 before
 |---|---|
 | Stock | 4 items, plus 1 for every 2 Lamps relit, up to 10 |
 | Rarity | Magic or rare. Rare is 20%, plus 5% a Lamp relit, up to 60% |
-| Price | Magic: 30 Battles' worth at the item's depth. Rare: 80 |
+| Price | Magic: 150 Battles' worth at the item's depth. Rare: 400 |
 | Changes | Each time the Party passes through Town |
 
-A rare costs about 20 minutes of gold and a magic about 7. The draft said 1½ hours and 35 minutes. Stock is one of each Slot kind first, then random, so every Slot has a chance. Uniques are never sold.
+A rare costs about 1½ hours of gold and a magic about 35 minutes. Stock is one of each Slot kind first, then random, so every Slot has a chance. Uniques are never sold.
 
 ## The gamble vendor
 
@@ -75,7 +75,7 @@ The player picks a Slot and pays for a hidden item of that Slot, rolled at the d
 
 | | Value |
 |---|---|
-| Price | 25 Battles' worth at that depth |
+| Price | 125 Battles' worth at that depth |
 | Odds | Magic 70%, rare 28%, unique 2% |
 | Better with Lamps | Rare gains 2% a Lamp relit, taken from magic, up to 50% |
 | Uniques | Only one whose Guardian's Lamp is relit, and that fits the Slot. Otherwise the roll is a rare |
@@ -93,11 +93,11 @@ A gamble costs a little less than a merchant's magic and is a rare more than a q
 
 ## Questions for the human
 
-Answered on 2026-11-13: build as drafted. Built before the pace correction above, so whether to raise prices about 5 times, back to the times the draft meant, is open.
+Answered on 2026-11-13: build as drafted. On 2026-11-14, after the pace correction above, the human chose to raise the prices 5 times.
 
 1. **Town open any time,** not only while the Party is in Town.
 2. **Gold:** 5 + depth per Battle, with chests at 3 and Guardians at 10.
-3. **Respec cost:** 10 gold per Hero level.
+3. **Respec cost:** 10 gold per Hero level, raised to 50.
 4. **Rerolls:** the picked Affix becomes a different Affix, at the item's depth, for 5 or 15 Salvage. Or should it keep its kind and only reroll the value?
 5. **The merchant:** its stock, rare share, and prices.
 6. **The gamble vendor:** its price, odds, and selling uniques at 2%.

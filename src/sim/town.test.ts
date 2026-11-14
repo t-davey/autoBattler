@@ -60,17 +60,17 @@ describe('gold', () => {
 describe('respecs', () => {
   const built = (gold: number) => game({ heroLevel: 7, gold, skillRanks: { warrener: { 'bleeders-cut': 1 } } });
 
-  it('cost 10 gold per Hero level, and nothing with no point spent', () => {
-    const played = built(100);
-    expect(viewGame(played).heroes.map((hero) => hero.respecCost)).toEqual([0, 70, 0]);
+  it('cost 50 gold per Hero level, and nothing with no point spent', () => {
+    const played = built(500);
+    expect(viewGame(played).heroes.map((hero) => hero.respecCost)).toEqual([0, 350, 0]);
     expect(applyAction(played, { type: 'respec', heroId: 'warrener' })).toEqual({ ok: true });
-    expect(viewGame(played).gold).toBe(30);
+    expect(viewGame(played).gold).toBe(150);
     expect(applyAction(played, { type: 'respec', heroId: 'sin-eater' })).toEqual({ ok: true });
-    expect(viewGame(played).gold).toBe(30);
+    expect(viewGame(played).gold).toBe(150);
   });
 
   it('are refused without the gold', () => {
-    const played = built(69);
+    const played = built(349);
     expect(applyAction(played, { type: 'respec', heroId: 'warrener' })).toEqual({ ok: false, reason: 'notEnoughGold' });
     expect(viewGame(played).heroes[1]!.pointsSpent).toBe(1);
   });
@@ -118,7 +118,7 @@ describe('the merchant', () => {
     for (const { item, price } of town.merchant) {
       expect(['magic', 'rare']).toContain(item.rarity);
       expect(item.levelRequirement).toBe(depthTuning(lampDepth(8)).levelRequirement + (item.rarity === 'rare' ? 1 : 0));
-      expect(price).toBe((item.rarity === 'rare' ? 80 : 30) * battleWorth(lampDepth(8)));
+      expect(price).toBe((item.rarity === 'rare' ? 400 : 150) * battleWorth(lampDepth(8)));
     }
     expect(new Set(town.merchant.slice(0, 5).map(({ item }) => item.slot === 'secondTrinket' ? 'trinket' : item.slot)).size).toBe(5);
   });
@@ -149,7 +149,7 @@ describe('the gamble vendor', () => {
     const rolls = (lampsLit: number, count: number) => {
       const played = game({ lampsLit, gold: 1e9 });
       const price = viewGame(played).town.gamblePrice;
-      expect(price).toBe(25 * battleWorth(lampsLit === 0 ? 1 : LAMPS[lampsLit - 1]!.depth));
+      expect(price).toBe(125 * battleWorth(lampsLit === 0 ? 1 : LAMPS[lampsLit - 1]!.depth));
       for (let i = 0; i < count; i++) expect(applyAction(played, { type: 'gamble', slot: 'helm' })).toEqual({ ok: true });
       expect(viewGame(played).gold).toBe(1e9 - price * count);
       return viewStash(played);
