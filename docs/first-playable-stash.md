@@ -49,7 +49,7 @@ One Party-wide rule, set in the Stash, that salvages items as they land. The cap
 | **Salvage commons** | Commons |
 | **Salvage commons and magics** | Commons and magics |
 
-Keep everything is the default, since early commons fill the new Slots. A player who sets a rule changes what fills the Stash: at Salvage commons it fills in about 13 hours, and at commons and magics, in about 37.
+Keep everything is the default, since early commons fill the new Slots. A player who sets a rule changes what fills the Stash: at Salvage commons it fills in about 14 hours, and at commons and magics, in about 37.
 
 **A keep-stat exception:** any rule can also keep items with one chosen stat, such as poison resistance, whatever their rarity. It matches how a check-in's Finding points at a stat, so the item a Wall asks for doesn't vanish. Off by default.
 
@@ -64,7 +64,7 @@ Keep everything is the default, since early commons fill the new Slots. A player
 
 - The Party's Salvage is one count, shown in the Stash and in Town.
 - **Salvaging by hand:** the Stash can salvage the picked item, or its whole group, and asks first for a rare or a unique.
-- At today's pace, with Keep everything, a full Stash gives about 110 Salvage an hour. Step 9 prices rerolls against that.
+- At today's pace, with Keep everything, a full Stash salvages about 55 items an hour, mostly old commons, so roughly 60–100 Salvage an hour. Step 9 prices rerolls against that.
 
 ## The Away Report
 
