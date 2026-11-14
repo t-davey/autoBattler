@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { CLASS_IDS, type ClassId } from '../sim';
+import { useUiScale } from './useUiScale';
 
 /** From the design's Classes table: what each Class is for, so the choice is informed. */
 const CLASS_TEXT: Readonly<Record<ClassId, { readonly name: string; readonly line: string }>> = {
@@ -14,6 +15,7 @@ const STARTING_PARTY: readonly ClassId[] = ['sin-eater', 'warrener', 'lamplighte
 /** Picks the Party's 3 Classes, duplicates allowed. A Party is fixed once created. */
 export function NewGame({ onStart }: { onStart: (party: readonly ClassId[]) => void }) {
   const [party, setParty] = useState<readonly ClassId[]>(STARTING_PARTY);
+  useUiScale();
   const choose = (slot: number, classId: ClassId) => setParty(party.map((current, index) => (index === slot ? classId : current)));
   return (
     <main className="new-game">

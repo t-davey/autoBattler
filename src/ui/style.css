@@ -113,14 +113,25 @@ body {
   outline-offset: 1px;
 }
 
+/* Sized in base-window units and grown by the UI scale, like the header, so a large screen gets larger text rather than a wider page. */
 #app {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  max-width: 90rem;
+  max-width: calc(90rem * var(--ui-scale));
   margin: 0 auto;
-  padding: calc(var(--header-height) + 1rem) 1rem 1rem;
-  gap: 1rem;
+  padding: calc(var(--header-height) + 1rem * var(--ui-scale)) calc(1rem * var(--ui-scale)) calc(1rem * var(--ui-scale));
+  gap: calc(1rem * var(--ui-scale));
+}
+
+/* The screens laid out in the page, rather than over the Battle scene, zoom with the UI scale too. */
+.dashboard,
+.planning,
+.town-screen,
+.check-in,
+.new-game,
+.save-banner {
+  zoom: var(--ui-scale);
 }
 
 h1,
@@ -232,7 +243,9 @@ ul {
 }
 
 .town-screen {
-  padding: calc(var(--header-height) + 0.75rem) 1rem 1rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .town-purse,
