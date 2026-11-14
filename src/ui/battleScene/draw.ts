@@ -1,4 +1,4 @@
-import { LANTERNS, RAMPS, SPRITES, WEAPONS, type Rgb } from './art';
+import { CHEST_SPRITES, LANTERNS, RAMPS, SPRITES, WEAPONS, type Rgb } from './art';
 import { ART_HEIGHT, ART_WIDTH, ORIGIN_Y, UNITS_PER_PIXEL, formationPoint } from './iso';
 import { MATERIAL_FOXFIRE, MATERIAL_LAMP, MATERIAL_VOID, MATERIAL_WATER, noise, type BakedRoom } from './roomBake';
 import { NUMBER_SECONDS, type SceneFrame, type UnitFrame } from './scene';
@@ -101,6 +101,8 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
   const lights: SceneLight[] = [...lanterns];
   for (const light of frame.flashes) lights.push({ x: light.x, y: light.y, radius: light.radius, strength: light.strength * (1 - (time - light.bornAt) / light.duration) });
   for (const bullet of frame.bullets) lights.push({ x: bullet.x, y: bullet.y, radius: 40, strength: 0.25 });
+  const chest = frame.look?.kind === 'chest' ? formationPoint(1.2, 0) : null;
+  if (chest && frame.chestOpen) lights.push({ x: chest.x, y: chest.y - 24, radius: 70, strength: 0.35 + 0.05 * Math.sin(time * 5) });
   const flicker = 1 + 0.05 * Math.sin(time * 6.5) + 0.03 * Math.sin(time * 13.7);
   const pulse = 0.85 + 0.15 * Math.sin(time * 1.1);
   const lightAt = (x: number, y: number): number => {
@@ -192,8 +194,6 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
     }
   }
 
-  if (frame.look?.kind === 'chest') drawChest(put, frame.chestOpen);
-
   const litShade = (x: number, y: number): { step: number; cold: number } => {
     const px = clamp(Math.floor(x / UNITS_PER_PIXEL), 0, ART_WIDTH - 1);
     const py = clamp(Math.floor((y - 26) / UNITS_PER_PIXEL), 0, ART_HEIGHT - 1);
@@ -209,14 +209,10 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
     return { step: Math.floor(Math.min(1, light * 1.3) * 3.4), cold: (room.cool[i] ?? 0) * pulse };
   };
 
-  const ordered = [...frame.units].sort((a, b) => a.y - b.y);
-  for (const unit of ordered) {
-    if (unit.dissolve >= 1) continue;
-    const cx = Math.round(unit.x / UNITS_PER_PIXEL);
-    const cy = Math.round(unit.y / UNITS_PER_PIXEL);
-    for (let dy = -3; dy <= 3; dy++) {
-      for (let dx = -8; dx <= 8; dx++) {
-        if ((dx / 8) ** 2 + (dy / 3) ** 2 > 1) continue;
+  const shadow = (cx: number, cy: number, rx: number, ry: number): void => {
+    for (let dy = -ry; dy <= ry; dy++) {
+      for (let dx = -rx; dx <= rx; dx++) {
+        if ((dx / rx) ** 2 + (dy / ry) ** 2 > 1) continue;
         const x = cx + dx;
         const y = cy + dy;
         if (x < 0 || y < 0 || x >= ART_WIDTH || y >= ART_HEIGHT) continue;
@@ -226,6 +222,31 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
         buffer[o + 2] = buffer[o + 2]! * 0.42;
       }
     }
+  };
+
+  if (chest) {
+    const cx = Math.round(chest.x / UNITS_PER_PIXEL);
+    const cy = Math.round(chest.y / UNITS_PER_PIXEL);
+    shadow(cx, cy - 2, 13, 5);
+    const { step, cold } = litShade(chest.x, chest.y);
+    for (const pixel of CHEST_SPRITES[frame.chestOpen ? 'open' : 'shut']) {
+      const x = cx + pixel.x;
+      const y = cy + pixel.y;
+      if (pixel.material === null) put(x, y, OUTLINE);
+      else if (pixel.material === 'glow' || pixel.material === 'eye') put(x, y, Math.sin(time * 4 + pixel.x * 1.7) > 0.2 ? [255, 246, 200] : [255, 206, 110]);
+      else {
+        const colour = RAMPS[pixel.material][clamp(pixel.shade + step, 0, 5)]!;
+        put(x, y, [colour[0] + cold * 10, colour[1] + cold * 36, colour[2] + cold * 40]);
+      }
+    }
+  }
+
+  const ordered = [...frame.units].sort((a, b) => a.y - b.y);
+  for (const unit of ordered) {
+    if (unit.dissolve >= 1) continue;
+    const cx = Math.round(unit.x / UNITS_PER_PIXEL);
+    const cy = Math.round(unit.y / UNITS_PER_PIXEL);
+    shadow(cx, cy, 8, 3);
     const { step, cold } = litShade(unit.x, unit.y);
     const flip = flipOf(unit);
     const hop = unit.hop ? -1 : 0;
@@ -284,26 +305,6 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
 }
 
 type Put = (x: number, y: number, colour: Rgb) => void;
-
-function drawChest(put: Put, open: boolean): void {
-  const spot = formationPoint(1.2, 0);
-  const cx = Math.round(spot.x / UNITS_PER_PIXEL);
-  const cy = Math.round(spot.y / UNITS_PER_PIXEL);
-  const wood = RAMPS.leather;
-  for (let x = -9; x <= 9; x++) {
-    for (let y = -9; y <= 0; y++) {
-      const edge = x === -9 || x === 9 || y === 0;
-      put(cx + x, cy + y, edge ? OUTLINE : y === -5 ? RAMPS.iron[3]! : wood[3]!);
-    }
-  }
-  for (let x = -9; x <= 9; x++) {
-    for (let y = -4; y <= 0; y++) {
-      const edge = x === -9 || x === 9 || y === -4;
-      put(cx + x, cy - (open ? 14 : 10) + y, edge ? OUTLINE : wood[4]!);
-    }
-  }
-  if (open) for (let x = -7; x <= 7; x++) put(cx + x, cy - 10, [255, 206, 110]);
-}
 
 function drawWeapon(put: Put, unit: UnitFrame, cx: number, cy: number, step: number): void {
   const weapon = WEAPONS[unit.figure];

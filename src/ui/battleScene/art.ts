@@ -390,7 +390,68 @@ function bake(parts: readonly Part[]): readonly SpritePixel[] {
 const figureNames = Object.keys(FIGURES) as Figure[];
 export const SPRITES = Object.fromEntries(figureNames.map((figure) => [figure, bake(FIGURES[figure])])) as unknown as Readonly<Record<Figure, readonly SpritePixel[]>>;
 
-const FIGURES_BY_ID: Readonly<Record<string, Figure>> = { 'sin-eater': 'sinEater', warrener: 'warrener', hexer: 'hexer', lamplighter: 'lamplighter', guardian: 'guardian' };
+/** A point on a chest set square to the floor grid: t along its long front, s back from it, h up. */
+const onChest = (t: number, s: number, h: number): [number, number] => [-11 + 2 * t + 2 * s, -5 + t - s - h];
+const CHEST_LONG = 7;
+const CHEST_DEEP = 4;
+const CHEST_BODY = 8;
+const CHEST_LID = 12;
+const CHEST_STRAPS = [1.5, 5.5];
+
+/** A slab of the chest between two heights, along its front (t) or its right end (s). */
+const frontFace = (from: number, to: number, material: Material, brightness: number, left = 0, right = CHEST_LONG): Part =>
+  polygon([onChest(left, 0, from), onChest(right, 0, from), onChest(right, 0, to), onChest(left, 0, to)], material, brightness);
+const endFace = (from: number, to: number, material: Material, brightness: number): Part =>
+  polygon([onChest(CHEST_LONG, 0, from), onChest(CHEST_LONG, CHEST_DEEP, from), onChest(CHEST_LONG, CHEST_DEEP, to), onChest(CHEST_LONG, 0, to)], material, brightness);
+
+const chestBody: readonly Part[] = [
+  frontFace(0, CHEST_BODY, 'leather', 1), endFace(0, CHEST_BODY, 'leather', 0),
+  line(...onChest(0, 0, 4), ...onChest(CHEST_LONG, 0, 4), 1, 'hood', 1), line(...onChest(CHEST_LONG, 0, 4), ...onChest(CHEST_LONG, CHEST_DEEP, 4), 1, 'hood', 0),
+  ...CHEST_STRAPS.map((t) => frontFace(0, CHEST_BODY, 'iron', 1, t - 0.5, t + 0.5)),
+  line(...onChest(CHEST_LONG, 0, 0), ...onChest(CHEST_LONG, 0, CHEST_BODY), 1.5, 'iron', 1),
+  frontFace(0, 1.5, 'iron', 0), endFace(0, 1.5, 'iron', 0),
+];
+
+/** The lock plate on the front, facing the Party. */
+const chestLock = (hasp: boolean): Part[] => {
+  const [x, y] = onChest(3.5, 0, CHEST_BODY);
+  return [box(x - 2, y - 1, x + 2, y + 4, 'brass', 1), dot(x - 0.5, y + 1, 'hood'), hasp ? box(x - 1, y - 3, x + 1, y, 'brass', 2) : dot(x - 0.5, y + 4, 'brass', 2)];
+};
+
+/** The loot chest a chest Room holds: an iron-banded strongbox, shut until the Party searches it. */
+const CHEST_SHUT: readonly Part[] = [
+  ...chestBody,
+  frontFace(CHEST_BODY, CHEST_LID, 'leather', 1), endFace(CHEST_BODY, CHEST_LID, 'leather', 0),
+  polygon([onChest(0, 0, CHEST_LID), onChest(CHEST_LONG, 0, CHEST_LID), onChest(CHEST_LONG, CHEST_DEEP, CHEST_LID), onChest(0, CHEST_DEEP, CHEST_LID)], 'leather', 2),
+  ...CHEST_STRAPS.flatMap((t) => [
+    frontFace(CHEST_BODY, CHEST_LID, 'iron', 1, t - 0.5, t + 0.5),
+    polygon([onChest(t - 0.5, 0, CHEST_LID), onChest(t + 0.5, 0, CHEST_LID), onChest(t + 0.5, CHEST_DEEP, CHEST_LID), onChest(t - 0.5, CHEST_DEEP, CHEST_LID)], 'iron', 2),
+  ]),
+  line(...onChest(CHEST_LONG, 0, CHEST_BODY), ...onChest(CHEST_LONG, 0, CHEST_LID), 1.5, 'iron', 1),
+  line(...onChest(0, 0, CHEST_BODY), ...onChest(CHEST_LONG, 0, CHEST_BODY), 1, 'iron', 2),
+  line(...onChest(CHEST_LONG, 0, CHEST_BODY), ...onChest(CHEST_LONG, CHEST_DEEP, CHEST_BODY), 1, 'iron', 1),
+  ...CHEST_STRAPS.map((t) => dot(...onChest(t, 0, CHEST_BODY + 2), 'brass', 2)),
+  ...chestLock(true),
+];
+
+/** Searched: the lid thrown back on its hinge, and coin heaped inside. */
+const CHEST_OPEN: readonly Part[] = [
+  polygon([onChest(0, CHEST_DEEP, CHEST_BODY), onChest(CHEST_LONG, CHEST_DEEP, CHEST_BODY), onChest(CHEST_LONG, CHEST_DEEP + 2.5, CHEST_BODY + 9), onChest(0, CHEST_DEEP + 2.5, CHEST_BODY + 9)], 'leather', 0),
+  ...CHEST_STRAPS.map((t) => polygon([onChest(t - 0.5, CHEST_DEEP, CHEST_BODY), onChest(t + 0.5, CHEST_DEEP, CHEST_BODY), onChest(t + 0.5, CHEST_DEEP + 2.5, CHEST_BODY + 9), onChest(t - 0.5, CHEST_DEEP + 2.5, CHEST_BODY + 9)], 'iron', 0)),
+  line(...onChest(0, CHEST_DEEP + 2.5, CHEST_BODY + 9), ...onChest(CHEST_LONG, CHEST_DEEP + 2.5, CHEST_BODY + 9), 1.5, 'iron', 1),
+  ...chestBody,
+  polygon([onChest(0, 0, CHEST_BODY), onChest(CHEST_LONG, 0, CHEST_BODY), onChest(CHEST_LONG, CHEST_DEEP, CHEST_BODY), onChest(0, CHEST_DEEP, CHEST_BODY)], 'hood', 0),
+  polygon([onChest(0.6, 0.6, CHEST_BODY), onChest(6.4, 0.6, CHEST_BODY), onChest(6, 3.4, CHEST_BODY + 1.5), onChest(3.5, 3, CHEST_BODY + 3), onChest(1, 3.4, CHEST_BODY + 1.5)], 'brass', 1),
+  ellipse(...onChest(3.5, 2, CHEST_BODY + 2), 4, 1.5, 'brass', 2),
+  ...([[2, 1.5], [4, 1], [5, 2.5], [3, 2.6], [5.6, 1.2]] as const).map(([t, s]) => dot(...onChest(t, s, CHEST_BODY + 1.5), 'glow')),
+  line(...onChest(0, 0, CHEST_BODY), ...onChest(CHEST_LONG, 0, CHEST_BODY), 1, 'iron', 2),
+  line(...onChest(CHEST_LONG, 0, CHEST_BODY), ...onChest(CHEST_LONG, CHEST_DEEP, CHEST_BODY), 1, 'iron', 1),
+  ...chestLock(false),
+];
+
+export const CHEST_SPRITES: Readonly<Record<'shut' | 'open', readonly SpritePixel[]>> = { shut: bake(CHEST_SHUT), open: bake(CHEST_OPEN) };
+
+const FIGURES_BY_ID:Readonly<Record<string, Figure>> = { 'sin-eater': 'sinEater', warrener: 'warrener', hexer: 'hexer', lamplighter: 'lamplighter', guardian: 'guardian' };
 const FIGURES_BY_NAME: Readonly<Record<string, Figure>> = {
   'Sodden Thrall': 'thrall',
   'Tallow Wight': 'wight',
