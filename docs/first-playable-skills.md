@@ -158,4 +158,4 @@ The 28 skills rest on a few sim mechanics that don't exist yet: Oil, cooldowns, 
 
 ## Not in this draft
 
-The 4 Class-specific uniques aren't drafted yet. Enemy resistances, crit multipliers, Class stat rates, and the XP curve are also still to set.
+The 4 Class-specific uniques are drafted in [First playable: gear](first-playable-gear.md#uniques). Enemy resistances, crit multipliers, Class stat rates, and the XP curve are also still to set.
