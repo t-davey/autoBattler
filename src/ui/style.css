@@ -539,6 +539,12 @@ button:disabled {
   text-shadow: 0 0 6px var(--flame-glow);
 }
 
+/* Brass marks what was built on purpose: a unique is hand-made. */
+.rarity-unique {
+  color: var(--brass-bright);
+  text-shadow: 0 0 6px var(--flame-glow);
+}
+
 select {
   font: inherit;
   color: var(--tallow);
@@ -926,6 +932,10 @@ select {
 
 .slot-icon-rare {
   fill: var(--flame);
+}
+
+.slot-icon-unique {
+  fill: var(--brass-bright);
 }
 
 .slot-icon-empty {

@@ -315,16 +315,20 @@ A piece of gear a Hero can equip, or that waits in the Stash.
 _Avoid_: Equipment piece, drop
 
 **Rarity**:
-How rare an Item is: common, magic, or rare. It sets how many Affixes the Item rolls.
+How rare an Item is: common, magic, rare, or unique. It sets how many Affixes the Item rolls.
 _Avoid_: Quality, grade
 
 **Slot**:
-The place on a Hero an Item goes: weapon, body, or trinket.
+The place on a Hero an Item goes: weapon, off-hand, helm, body, trinket, or second trinket. A trinket fits either trinket Slot.
 _Avoid_: Equip location, gear position
 
 **Level requirement**:
 The Hero level an Item needs before it can be equipped.
 _Avoid_: Item level, minimum level
+
+**Unique**:
+A hand-authored Item, with fixed stats and no Affixes. Each one is for one Class, and changes that Class's Free Class skill. A Guardian holds one and may drop it after its first kill.
+_Avoid_: Legendary, artifact
 
 **Affix**:
 A randomly rolled property on an item.

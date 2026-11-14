@@ -1,9 +1,9 @@
 import { isNumber, isRecord, isString } from './guards';
 import type { Reach, UnitSpec } from './battle';
-import { ITEM_BASES, type Slot } from './content/items';
+import { UNIQUES, type Slot } from './content/items';
 import { actionIntervalFor, CLASS_IDS, CLASSES, LEVEL_CAP, xpToNextLevel } from './content/party';
 import { FREE_SKILL_RANK, SKILLS, type ClassId, type HeroId, type SkillId } from './content/skills';
-import { gearStats, isEquipped, slotOf, type ItemState } from './items';
+import { baseOf, classOnly, gearStats, isEquipped, slotsOf, type ItemSpec, type ItemState } from './items';
 import { defaultOrder, isFreeSkill, isLegalOrder, isRanks, spentPoints, type SkillRanks } from './skills';
 
 /** A Hero between Battles, as plain JSON-safe data. */
@@ -23,11 +23,24 @@ export interface HeroState {
   equipped: Partial<Record<Slot, ItemState>>;
 }
 
+/** Where an item goes when no Slot is named: the first empty one it fits, or else the first it fits. */
+export function slotToFill(hero: HeroState, item: ItemSpec): Slot {
+  const slots = slotsOf(item);
+  return slots.find((slot) => !hero.equipped[slot]) ?? slots[0]!;
+}
+
+/** Whether this Hero's Class may wear the item. Only a unique is limited. */
+export const mayWear = (hero: Pick<HeroState, 'classId'>, item: ItemSpec): boolean => (classOnly(item) ?? hero.classId) === hero.classId;
+
+/** The free skills the Hero's worn uniques change. */
+export const uniqueSkills = (hero: HeroState): readonly SkillId[] =>
+  Object.values(hero.equipped).flatMap((item) => (item && item.rarity === 'unique' ? [UNIQUES[item.baseId as keyof typeof UNIQUES].skillId] : []));
+
 export interface HeroSetup {
   readonly name?: string | undefined;
   readonly level?: number | undefined;
   readonly ranks?: SkillRanks | undefined;
-  /** In order: a later item takes the Slot of an earlier one. */
+  /** In order: each takes the first empty Slot it fits, or else the first it fits. */
   readonly gear?: readonly ItemState[] | undefined;
 }
 
@@ -35,7 +48,7 @@ export function createHero(id: HeroId, classId: ClassId, setup: HeroSetup = {}):
   const ranks = { ...setup.ranks };
   const { className, maxOil } = CLASSES[classId];
   const hero: HeroState = { id, classId, name: setup.name ?? className, level: setup.level ?? 1, xp: 0, health: 0, oil: maxOil, ranks, order: defaultOrder(classId, ranks), equipped: {} };
-  for (const item of setup.gear ?? []) hero.equipped[slotOf(item)] = item;
+  for (const item of setup.gear ?? []) hero.equipped[slotToFill(hero, item)] = item;
   hero.health = heroStats(hero).maxHealth;
   return hero;
 }
@@ -83,7 +96,7 @@ export function heroStats(hero: HeroState): HeroStats {
     armour: stats.armour + stats.armourPerLevel * levels + gear.armour,
     actionInterval: actionIntervalFor(stats.speed + gear.speed),
     critChance: stats.critChance + gear.critChance,
-    maxOil: stats.maxOil,
+    maxOil: stats.maxOil + gear.maxOil,
     poisonResistance: gear.poisonResistance,
   };
 }
@@ -91,7 +104,7 @@ export function heroStats(hero: HeroState): HeroStats {
 /** Set by the weapon. A Hero with none fights in melee. */
 export function heroReach(hero: HeroState): Reach {
   const weapon = hero.equipped.weapon;
-  return (weapon && ITEM_BASES[weapon.baseId].reach) ?? 'melee';
+  return (weapon && baseOf(weapon).reach) ?? 'melee';
 }
 
 /** Applies a new maximum to what the Hero carries. */
@@ -122,7 +135,7 @@ export function heroUnitSpec(hero: HeroState): UnitSpec {
     critChance,
     oil: Math.min(hero.oil, maxOil),
     maxOil,
-    skills: [...hero.order, ...passives].map((id) => ({ id, rank: skillRank(hero, id) })),
+    skills: [...hero.order, ...passives].map((id) => ({ id, rank: skillRank(hero, id), ...(uniqueSkills(hero).includes(id) ? { unique: true } : {}) })),
   };
 }
 
@@ -158,6 +171,7 @@ export function isHeroState(value: unknown): boolean {
     isRanks(ranks) &&
     Array.isArray(order) &&
     isLegalOrder(classId, ranks, order) &&
-    isEquipped(value['equipped'])
+    isEquipped(value['equipped']) &&
+    Object.values(value['equipped'] as Record<string, ItemState>).every((item) => mayWear({ classId }, item))
   );
 }

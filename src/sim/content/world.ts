@@ -1,3 +1,5 @@
+import type { UniqueId } from './items';
+
 /** The first Difficulty Tier's map: 3 Acts of 20 Floors, with a Lamp and its Guardian every 5 Floors. */
 
 export const FLOORS_PER_ACT = 20;
@@ -30,17 +32,19 @@ export interface LampDefinition {
   /** The depth the Guardian's stats were tuned at. It scales from there to its own depth. */
   readonly tunedDepth: number;
   readonly placeholder: boolean;
+  /** The unique this Guardian may drop after its first kill. */
+  readonly holds: UniqueId | null;
 }
 
 /** The Warden was tuned for the demo's Floor 5, before the Undercroft moved to Act 2. Placeholders copy its kit. */
 export const WARDEN_TUNED_DEPTH = 5;
 
 /** Real Guardians, by "act-lamp". Every other Lamp gets a placeholder. The Undercroft's later 3 are written at the Warden's strength. */
-const BUILT_GUARDIANS: Readonly<Record<string, { readonly name: string; readonly tunedDepth: number }>> = {
-  '2-1': { name: 'The Mouldering Warden', tunedDepth: WARDEN_TUNED_DEPTH },
-  '2-2': { name: 'The Iron Sexton', tunedDepth: WARDEN_TUNED_DEPTH },
-  '2-3': { name: 'The Knell Engine', tunedDepth: WARDEN_TUNED_DEPTH },
-  '2-4': { name: 'The Reliquary Engine', tunedDepth: WARDEN_TUNED_DEPTH },
+const BUILT_GUARDIANS: Readonly<Record<string, { readonly name: string; readonly tunedDepth: number; readonly holds: UniqueId }>> = {
+  '2-1': { name: 'The Mouldering Warden', tunedDepth: WARDEN_TUNED_DEPTH, holds: 'layer-outs-coif' },
+  '2-2': { name: 'The Iron Sexton', tunedDepth: WARDEN_TUNED_DEPTH, holds: 'wake-platter' },
+  '2-3': { name: 'The Knell Engine', tunedDepth: WARDEN_TUNED_DEPTH, holds: 'ratters-quiver' },
+  '2-4': { name: 'The Reliquary Engine', tunedDepth: WARDEN_TUNED_DEPTH, holds: 'dusk-taper' },
 };
 
 export const depthOf = (act: ActNumber, floor: number): number => (act - 1) * FLOORS_PER_ACT + floor;
@@ -51,8 +55,8 @@ export const LAMPS: readonly LampDefinition[] = ACTS.flatMap(({ act }) =>
     const depth = depthOf(act, lamp * FLOORS_PER_LAMP);
     const built = BUILT_GUARDIANS[`${act}-${lamp}`];
     return built
-      ? { act, lamp, depth, guardianName: built.name, tunedDepth: built.tunedDepth, placeholder: false }
-      : { act, lamp, depth, guardianName: `Placeholder Guardian (Act ${act}, Lamp ${lamp})`, tunedDepth: WARDEN_TUNED_DEPTH, placeholder: true };
+      ? { act, lamp, depth, guardianName: built.name, tunedDepth: built.tunedDepth, placeholder: false, holds: built.holds }
+      : { act, lamp, depth, guardianName: `Placeholder Guardian (Act ${act}, Lamp ${lamp})`, tunedDepth: WARDEN_TUNED_DEPTH, placeholder: true, holds: null };
   }),
 );
 

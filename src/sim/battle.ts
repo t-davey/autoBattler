@@ -25,6 +25,7 @@ import {
   type ActiveSkillId,
   type SkillId,
 } from './content/skills';
+import { COIF_SLOW, COIF_SPLASH, QUIVER_SHAFTS, TAPER_HEAL, WAKE_PLATTER_HIT } from './content/items';
 import { createRng, isRng, nextFloat, nextInt, shuffled, type Rng } from './rng';
 
 export type TeamId = 'a' | 'b';
@@ -43,6 +44,8 @@ export type WeakeningEffect = 'slow' | 'curse';
 export interface LearnedSkill {
   readonly id: SkillId;
   readonly rank: number;
+  /** A worn unique changes this skill. */
+  readonly unique?: boolean;
 }
 
 /** A timed move with its own clock and damage, for a Unit with more than one way to act. */
@@ -339,6 +342,10 @@ export function createBattle(setup: BattleSetup): BattleState {
 
 const rankIn = (unit: UnitState, id: SkillId): number =>
   unit.spec.skills?.find((skill) => skill.id === id)?.rank ?? 0;
+
+/** Whether a worn unique changes this skill. */
+const hasUnique = (unit: UnitState, id: SkillId): boolean =>
+  unit.spec.skills?.some((skill) => skill.id === id && skill.unique === true) ?? false;
 
 /** How much of a skill's numeric effects a Unit gets from where it stands. */
 function rowFactor(unit: UnitState, id: SkillId): number {
@@ -681,10 +688,19 @@ function skillHit(battle: BattleState, unit: UnitState, id: SkillId, rank: numbe
   return skillStrike(battle, unit, id, rank, target, damageType, events) !== null;
 }
 
-/** As skillHit, returning what the target took, or null if it dodged. */
-function skillStrike(battle: BattleState, unit: UnitState, id: SkillId, rank: number, target: UnitState, damageType: DamageType, events: BattleEvent[]): number | null {
+/** As skillHit, returning what the target took, or null if it dodged. A share of power can replace the skill's first value. */
+function skillStrike(
+  battle: BattleState,
+  unit: UnitState,
+  id: SkillId,
+  rank: number,
+  target: UnitState,
+  damageType: DamageType,
+  events: BattleEvent[],
+  fraction = rankFraction(unit, id, rank),
+): number | null {
   const crit = rollCrit(battle, unit, damageType);
-  const raw = skillAmount(unit, id, rank) * (crit ? CRIT_MULTIPLIER : 1);
+  const raw = powerOf(unit) * fraction * (crit ? CRIT_MULTIPLIER : 1);
   return landStrike(battle, { attacker: unit, target, raw, damageType, crit, ignoresArmour: false, hasMinimum: true }, events);
 }
 
@@ -717,24 +733,50 @@ const ACTIVE_RULES: Readonly<Record<ActiveSkillId, ActiveRule>> = {
   'consume-sin': {
     isUseful: (battle, unit) => enemiesInReach(battle, unit, 'melee').length > 0,
     use(battle, unit, rank, events) {
+      const heal = maxHealthOf(unit) * rankFraction(unit, 'consume-sin', rank, 1);
+      if (hasUnique(unit, 'consume-sin')) {
+        // The Wake Platter: every front-Row enemy, healing for each hit.
+        const fraction = WAKE_PLATTER_HIT * rowFactor(unit, 'consume-sin');
+        let hits = 0;
+        for (const target of enemiesInReach(battle, unit, 'melee')) if (skillStrike(battle, unit, 'consume-sin', rank, target, 'holy', events, fraction) !== null) hits++;
+        healUnit(battle, unit, heal * hits, events);
+        return;
+      }
       const target = pick(battle, enemiesInReach(battle, unit, 'melee'));
       if (!target || !skillHit(battle, unit, 'consume-sin', rank, target, 'holy', events)) return;
-      healUnit(battle, unit, maxHealthOf(unit) * rankFraction(unit, 'consume-sin', rank, 1), events);
+      healUnit(battle, unit, heal, events);
     },
   },
   'tainted-shaft': {
     isUseful: (battle, unit) => enemiesInReach(battle, unit, 'ranged').length > 0,
     use(battle, unit, rank, events) {
-      const target = pick(battle, enemiesInReach(battle, unit, 'ranged'));
-      if (!target || !skillHit(battle, unit, 'tainted-shaft', rank, target, 'poison', events) || !isAlive(target)) return;
-      addPoisonStack(battle, target, skillAmount(unit, 'tainted-shaft', rank, 1) * curseFactor(battle, unit), events, unit);
+      const enemies = enemiesInReach(battle, unit, 'ranged');
+      // The Ratter's Quiver: more shafts, each at a different enemy while they last.
+      const order = hasUnique(unit, 'tainted-shaft') ? shuffled(battle.rng, enemies) : [];
+      const targets = order.length > 0 ? Array.from({ length: QUIVER_SHAFTS }, (_, index) => order[index % order.length]) : [pick(battle, enemies)];
+      for (const target of targets) {
+        if (!target || !isAlive(target) || !skillHit(battle, unit, 'tainted-shaft', rank, target, 'poison', events) || !isAlive(target)) continue;
+        addPoisonStack(battle, target, skillAmount(unit, 'tainted-shaft', rank, 1) * curseFactor(battle, unit), events, unit);
+      }
     },
   },
   'chill-word': {
     isUseful: (battle, unit) => enemiesInReach(battle, unit, 'spell').length > 0,
     use(battle, unit, rank, events) {
       const target = pick(battle, enemiesInReach(battle, unit, 'spell'));
-      if (!target || !skillHit(battle, unit, 'chill-word', rank, target, 'cold', events) || !isAlive(target)) return;
+      if (!target) return;
+      if (hasUnique(unit, 'chill-word')) {
+        // The Layer-Out's Coif: a stronger Slow, reaching the target's whole Row, which takes part of the hit.
+        const slow = COIF_SLOW * rowFactor(unit, 'chill-word');
+        const row = enemiesInReach(battle, unit, 'spell').filter((enemy) => enemy !== target && enemy.row === target.row);
+        const struck = [target, ...row].filter((enemy, index) => {
+          const fraction = rankFraction(unit, 'chill-word', rank) * (index === 0 ? 1 : COIF_SPLASH);
+          return skillStrike(battle, unit, 'chill-word', rank, enemy, 'cold', events, fraction) !== null && isAlive(enemy);
+        });
+        for (const enemy of struck) addWeakening(battle, enemy, 'slow', slow, events);
+        return;
+      }
+      if (!skillHit(battle, unit, 'chill-word', rank, target, 'cold', events) || !isAlive(target)) return;
       addWeakening(battle, target, 'slow', rankFraction(unit, 'chill-word', rank, 1) * 100, events);
     },
   },
@@ -804,7 +846,13 @@ const ACTIVE_RULES: Readonly<Record<ActiveSkillId, ActiveRule>> = {
     isUseful: (battle, unit) => enemiesInReach(battle, unit, 'spell').length > 0,
     use(battle, unit, rank, events) {
       const target = pick(battle, enemiesInReach(battle, unit, 'spell'));
-      if (target) skillHit(battle, unit, 'votive-spark', rank, target, 'holy', events);
+      if (!target) return;
+      const dealt = skillStrike(battle, unit, 'votive-spark', rank, target, 'holy', events);
+      if (!dealt || !hasUnique(unit, 'votive-spark')) return;
+      // The Dusk Taper: the most wounded Hero heals for part of the hit.
+      const allies = livingOn(battle, unit.team);
+      const wounded = allies.reduce((lowest, ally) => (healthShare(ally) < healthShare(lowest) ? ally : lowest));
+      healUnit(battle, wounded, dealt * TAPER_HEAL, events);
     },
   },
   'bar-the-way': {
@@ -985,7 +1033,7 @@ const isTeam = (value: unknown): boolean => value === 'a' || value === 'b';
 const isRow = (value: unknown): boolean => value === 'front' || value === 'back';
 
 const isLearnedSkill = (value: unknown): boolean =>
-  isRecord(value) && isSkillId(value['id']) && isRank(value['rank']);
+  isRecord(value) && isSkillId(value['id']) && isRank(value['rank']) && (value['unique'] === undefined || value['unique'] === true);
 
 const isDamageType = (value: unknown): boolean => (DAMAGE_TYPES as readonly unknown[]).includes(value);
 const isUnitAction = (value: unknown): boolean =>

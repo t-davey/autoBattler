@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createGame, viewStash, type ItemView } from '../sim';
 import { emptyStashQuery, groupItems, openingSlot, queryStash, type StashQuery } from './stashQuery';
 
-const NO_STATS = { power: 0, maxHealth: 0, armour: 0, poisonResistance: 0, critChance: 0, speed: 0 };
+const NO_STATS = { power: 0, maxHealth: 0, armour: 0, poisonResistance: 0, critChance: 0, speed: 0, maxOil: 0 };
 const item = (id: number, overrides: Partial<ItemView> = {}): ItemView => ({
   id,
   name: `Item ${id}`,
@@ -12,7 +12,9 @@ const item = (id: number, overrides: Partial<ItemView> = {}): ItemView => ({
   levelRequirement: 1,
   affixes: [],
   stats: NO_STATS,
+  unique: null,
   ...overrides,
+  slots: [overrides.slot ?? 'body'],
 });
 
 const ANY: StashQuery = { sort: 'newest', slot: 'all', rarity: 'all', stat: 'all' };

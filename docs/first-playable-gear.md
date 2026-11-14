@@ -1,6 +1,6 @@
 # First playable: gear
 
-A draft of the bases for the 3 new Slots and of the 4 Class uniques, for the human to review. Step 7 of [the first playable plan](plans/first-playable.md) builds it once confirmed. Every name and number is a starting value, and step 10 tunes them. The uniques' names and lines are provisional, as [the lore rules](lore/README.md#status) mark anything the human hasn't chosen.
+The bases for the 3 new Slots and the 4 Class uniques. The human chose to build it as drafted on 2026-11-13, so the questions below were answered with the draft's own choices, and step 7 of [the first playable plan](plans/first-playable.md) built it. Every name and number is a starting value, and step 10 tunes them. The uniques' names and lines are provisional, as [the lore rules](lore/README.md#status) mark anything the human hasn't chosen.
 
 ## The shape
 
@@ -85,6 +85,8 @@ A unique for a Class the Party lacks still drops, and waits in the Stash for a l
 - **Tests:** each unique's change through `simulateBattle` or a Game, Class-only equipping, the Slot-first drop, and the save migration.
 
 ## Questions for the human
+
+Answered on 2026-11-13: build as drafted. Max Oil is a gear stat, no new resistances join the Affixes, and a unique for a Class the Party lacks still drops.
 
 1. **The bases:** their names, stats, and the 3 per Slot.
 2. **Max Oil on gear,** for the Spare Lantern. The design lists Oil as a stat, but gear doesn't give it yet. Or the Spare Lantern becomes a second power base.

@@ -29,11 +29,13 @@ export interface GameSetup {
     readonly startAt?: StartAt;
     /** Lights the first Lamp. */
     readonly lampLit?: boolean;
+    /** Lights this many Lamps from the first, in place of lampLit. */
+    readonly lampsLit?: number;
     /** Setbacks already counted towards falling back at the frontier Lamp. 3 starts the Game fallen back. */
     readonly setbacks?: number;
     /** Battles draw after this many Ticks, instead of the usual limit. */
     readonly battleTicks?: number;
-    /** Gear each Hero starts with, on top of the starter weapon. An item takes the Slot it names. */
+    /** Gear each Hero starts with, on top of the starter weapon. Each item takes the first empty Slot it fits. */
     readonly equipped?: Readonly<Partial<Record<HeroId, readonly ItemSpec[]>>>;
     /** Items already in the Stash. */
     readonly stash?: readonly ItemSpec[];
@@ -47,7 +49,7 @@ export type PlayerAction =
   | { readonly type: 'spendSkillPoint'; readonly heroId: HeroId; readonly skillId: SkillId }
   | { readonly type: 'setSkillOrder'; readonly heroId: HeroId; readonly order: readonly SkillId[] }
   | { readonly type: 'respec'; readonly heroId: HeroId }
-  | { readonly type: 'equipItem'; readonly heroId: HeroId; readonly itemId: ItemId }
+  | { readonly type: 'equipItem'; readonly heroId: HeroId; readonly itemId: ItemId; readonly slot?: Slot }
   | { readonly type: 'unequipItem'; readonly heroId: HeroId; readonly slot: Slot };
 
 export type ActionRefusal = 'notInTown' | 'unknownHero' | 'badPickPriority' | BuildRefusal;
@@ -73,7 +75,7 @@ function createWalls(lit: number, setbacks: number | undefined): WallState[] {
 }
 
 export function createGame(setup: GameSetup): Game {
-  const { heroLevel, skillRanks, startAt, lampLit, setbacks, battleTicks, equipped, stash } = setup.scenario ?? {};
+  const { heroLevel, skillRanks, startAt, lampLit, lampsLit, setbacks, battleTicks, equipped, stash } = setup.scenario ?? {};
   const classes = setup.party ?? DEFAULT_PARTY;
   // Its own stream, so names never shift the rolls that follow.
   const names = heroNames(createRng(setup.seed ^ 0x3c6ef372), classes.length);
@@ -92,7 +94,7 @@ export function createGame(setup: GameSetup): Game {
   const rng = createRng(setup.seed);
   // A fixed offset keeps the Pick stream apart from the main one.
   const pickRng = createRng(setup.seed ^ 0x5bd1e995);
-  return gameOf({ rng, pickRng, pickPriority: [...DEFAULT_PICK_PRIORITY], tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), walls: createWalls(lampLit ? 1 : 0, setbacks), battleTicks: battleTicks ?? null, heroes, stash: stashed, nextItemId, stashRevision: 0 });
+  return gameOf({ rng, pickRng, pickPriority: [...DEFAULT_PICK_PRIORITY], tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), walls: createWalls(lampsLit ?? (lampLit ? 1 : 0), setbacks), battleTicks: battleTicks ?? null, heroes, stash: stashed, nextItemId, stashRevision: 0 });
 }
 
 /** Different names for each Hero, from the provisional pool. */
@@ -152,7 +154,7 @@ function buildAction(hero: HeroState, stash: Stash, action: Exclude<PlayerAction
       respec(hero);
       return null;
     case 'equipItem':
-      return equipItem(hero, stash, action.itemId);
+      return equipItem(hero, stash, action.itemId, action.slot);
     case 'unequipItem':
       return unequipItem(hero, stash, action.slot);
   }

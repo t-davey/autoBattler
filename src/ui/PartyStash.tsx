@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { itemBlocksLearnedSkill, RARITIES, SLOTS, type HeroView, type ItemStat, type ItemView, type Rarity, type Slot } from '../sim';
 import { REFUSAL_TEXT } from './describeHero';
-import { changedStats, formatChange, itemStatsText, SLOT_TEXT, STAT_TEXT, statChange } from './describeItem';
+import { changedStats, formatChange, itemStatsText, SLOT_TEXT, STAT_TEXT, statChange, targetSlot } from './describeItem';
 import { PixelIcon } from './PixelIcon';
 import { groupItems, openingSlot, queryStash, type ItemGroup, type StashQuery, type StashSort } from './stashQuery';
 import type { Dispatch } from './store';
@@ -12,15 +12,16 @@ function SlotIcon({ slot, rarity }: { slot: Slot; rarity: Rarity | null }) {
   return <PixelIcon name={slot} className={`slot-icon slot-icon-${rarity ?? 'empty'}`} />;
 }
 
-function StatChanges({ item, hero }: { item: ItemView; hero: HeroView }) {
-  const stats = changedStats(item, [hero]);
+function StatChanges({ item, hero, picked }: { item: ItemView; hero: HeroView; picked: Slot }) {
+  const slot = targetSlot(item, hero, picked);
+  const stats = changedStats(item, [hero], picked);
   if (stats.length === 0) return <span className="hint stat-changes">No change</span>;
   // An empty Slot gains everything, so colour would make every item look like a clear win.
-  const emptySlot = !hero.equipment[item.slot];
+  const emptySlot = !hero.equipment[slot];
   return (
     <span className="stat-changes">
       {stats.map((stat) => {
-        const change = statChange(item, hero, stat);
+        const change = statChange(item, hero, stat, slot);
         return (
           <span key={stat} className={emptySlot ? undefined : change > 0 ? 'stat-gain' : 'stat-loss'}>
             {formatChange(stat, change)} {STAT_TEXT[stat]}
@@ -32,6 +33,7 @@ function StatChanges({ item, hero }: { item: ItemView; hero: HeroView }) {
 }
 
 function EquipControl({ item, hero, onEquip }: { item: ItemView; hero: HeroView; onEquip: (item: ItemView, hero: HeroView) => void }) {
+  if (item.unique && item.unique.classId !== hero.classId) return <span className="hint needs-level">{item.unique.className} only</span>;
   if (hero.level < item.levelRequirement) return <span className="hint needs-level">Needs level {item.levelRequirement}</span>;
   return (
     <button type="button" aria-label={`Equip ${item.name} on ${hero.name}`} onClick={() => onEquip(item, hero)}>
@@ -49,11 +51,11 @@ interface HeroGearProps {
 }
 
 function HeroGear({ hero, active, activeSlot, onPick, onUnequip }: HeroGearProps) {
-  const { maxHealth, power, armour, critChance, poisonResistance } = hero.stats;
+  const { maxHealth, power, armour, critChance, poisonResistance, maxOil } = hero.stats;
   return (
     <section className={active ? 'hero-gear hero-gear-active' : 'hero-gear'} aria-label={`Gear of ${hero.name}`}>
       <h3>{hero.name}, {hero.className}: level {hero.level}</h3>
-      <p className="hint">Health {maxHealth} · Power {power} · Armour {armour} · Crit {critChance}% · Poison resistance {poisonResistance}%</p>
+      <p className="hint">Health {maxHealth} · Power {power} · Armour {armour} · Crit {critChance}% · Poison resistance {poisonResistance}% · Oil {maxOil}</p>
       <ul>
         {SLOTS.map((slot) => {
           const worn = hero.equipment[slot];
@@ -86,11 +88,12 @@ interface PartyCompareProps {
   readonly group: ItemGroup;
   readonly heroes: readonly HeroView[];
   readonly activeHero: HeroView;
+  readonly picked: Slot;
   readonly onEquip: (item: ItemView, hero: HeroView) => void;
 }
 
 /** A group's stat changes for each Hero. It never says which Hero or item is better. */
-function PartyCompare({ group, heroes, activeHero, onEquip }: PartyCompareProps) {
+function PartyCompare({ group, heroes, activeHero, picked, onEquip }: PartyCompareProps) {
   const { item, count, highestLevel } = group;
   const levels = highestLevel > item.levelRequirement ? `Levels ${item.levelRequirement}–${highestLevel}` : `Level ${item.levelRequirement}`;
   return (
@@ -101,14 +104,20 @@ function PartyCompare({ group, heroes, activeHero, onEquip }: PartyCompareProps)
       </h3>
       <p className="hint">{SLOT_TEXT[item.slot]}{item.reach ? ` (${item.reach})` : ''} · {levels}</p>
       <p className="compare-stats">{itemStatsText(item.stats)}</p>
+      {item.unique && (
+        <>
+          <p className="compare-unique">{item.unique.className} only. {item.unique.change}</p>
+          <p className="hint item-line">{item.unique.line}</p>
+        </>
+      )}
       {heroes.map((hero) => (
         <div key={hero.id} className={hero.id === activeHero.id ? 'compare-hero compare-hero-active' : 'compare-hero'}>
           <div className="compare-hero-head">
             <span className="compare-hero-name">{hero.name}</span>
             <EquipControl item={item} hero={hero} onEquip={onEquip} />
           </div>
-          <p className="hint">Replaces {hero.equipment[item.slot]?.name ?? 'nothing'}</p>
-          <StatChanges item={item} hero={hero} />
+          <p className="hint">Replaces {hero.equipment[targetSlot(item, hero, picked)]?.name ?? 'nothing'}</p>
+          <StatChanges item={item} hero={hero} picked={picked} />
           {itemBlocksLearnedSkill(item, hero) && <p className="hint skill-blocked">Melee skills stop working</p>}
         </div>
       ))}
@@ -144,7 +153,7 @@ export function PartyStash({ stash, heroes, dispatch, seenItemId, initial }: Par
   const slotName = SLOT_TEXT[slot].toLowerCase();
 
   const equip = (item: ItemView, target: HeroView) => {
-    const result = dispatch({ type: 'equipItem', heroId: target.id, itemId: item.id });
+    const result = dispatch({ type: 'equipItem', heroId: target.id, itemId: item.id, slot: targetSlot(item, target, slot) });
     setRefusal(result.ok ? '' : REFUSAL_TEXT[result.reason]);
   };
   const unequip = (target: HeroView, from: Slot) => {
@@ -211,7 +220,7 @@ export function PartyStash({ stash, heroes, dispatch, seenItemId, initial }: Par
                       <span className={`rarity-${item.rarity}`}>{item.name}</span>
                       {count > 1 && <span className="hint">×{count}</span>}
                       {newestId > seenItemId && <span className="stash-new">new</span>}
-                      <StatChanges item={item} hero={hero} />
+                      <StatChanges item={item} hero={hero} picked={slot} />
                       {itemBlocksLearnedSkill(item, hero) && <span className="hint skill-blocked stash-row-warning">Melee skills stop working</span>}
                     </button>
                     <EquipControl item={item} hero={hero} onEquip={equip} />
@@ -221,7 +230,7 @@ export function PartyStash({ stash, heroes, dispatch, seenItemId, initial }: Par
             </ul>
           )}
         </section>
-        {selected && <PartyCompare group={selected} heroes={heroes} activeHero={hero} onEquip={equip} />}
+        {selected && <PartyCompare group={selected} heroes={heroes} activeHero={hero} picked={slot} onEquip={equip} />}
       </div>
     </div>
   );

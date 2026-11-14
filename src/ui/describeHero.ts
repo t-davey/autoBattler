@@ -29,6 +29,8 @@ export const REFUSAL_TEXT: Readonly<Record<DispatchRefusal, string>> = {
   nameTooLong: 'Names can hold 24 characters at most.',
   unknownItem: 'That item is not in the Stash.',
   belowLevelRequirement: 'This Hero is below the level requirement.',
+  classOnlyItem: 'Only its own Class can wear this unique.',
+  wrongSlot: 'That item doesn’t fit there.',
   emptySlot: 'Nothing is equipped there.',
 };
 

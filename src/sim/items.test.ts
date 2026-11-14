@@ -40,7 +40,7 @@ describe('rolling items', () => {
       for (const item of rolls(floor, 5_000)) {
         const ids = item.affixes.map((affix) => affix.id);
         expect(new Set(ids).size).toBe(ids.length);
-        const [low, high] = { common: [0, 0], magic: [1, 2], rare: [3, 4] }[item.rarity] as [number, number];
+        const [low, high] = { common: [0, 0], magic: [1, 2], rare: [3, 4], unique: [0, 0] }[item.rarity] as [number, number];
         expect(ids.length).toBeGreaterThanOrEqual(low);
         expect(ids.length).toBeLessThanOrEqual(high);
       }
@@ -422,13 +422,14 @@ describe('drops', () => {
     stepUntil(played, 'itemFound');
     const found = revision();
     expect(found).toBeGreaterThan(start);
-    applyAction(played, { type: 'equipItem', heroId: 'warrener', itemId: viewStash(played)[0]!.id });
+    const item = viewStash(played)[0]!;
+    applyAction(played, { type: 'equipItem', heroId: 'warrener', itemId: item.id });
     expect(revision()).toBeGreaterThan(found);
     const equipped = revision();
-    applyAction(played, { type: 'unequipItem', heroId: 'warrener', slot: 'weapon' });
+    applyAction(played, { type: 'unequipItem', heroId: 'warrener', slot: item.slot });
     expect(revision()).toBeGreaterThan(equipped);
     const unequipped = revision();
-    applyAction(played, { type: 'unequipItem', heroId: 'warrener', slot: 'trinket' });
+    applyAction(played, { type: 'unequipItem', heroId: 'warrener', slot: item.slot === 'helm' ? 'offHand' : 'helm' });
     applyAction(played, { type: 'equipItem', heroId: 'warrener', itemId: -1 });
     expect(revision()).toBe(unequipped);
   });

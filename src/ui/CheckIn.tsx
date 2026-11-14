@@ -15,8 +15,8 @@ const FINDING_ICONS: Readonly<Record<FindingKind, IconName>> = { setbacks: 'skul
 function FindingFix({ finding, report, stash, seenItemId, view, dispatch }: { finding: Finding; report: AwayReport; stash: readonly ItemView[]; seenItemId: number; view: GameView; dispatch: Dispatch }) {
   if (finding.kind === 'points') return <div className="check-in-scroll"><PlanningTab heroes={view.heroes} pickPriority={view.pickPriority} dispatch={dispatch} /></div>;
   if (finding.kind === 'picks') return <PickRule priority={view.pickPriority} dispatch={dispatch} />;
-  const rareFound = report.loot.rare > 0;
-  const initial: StashQuery = finding.kind === 'loot' ? { ...emptyStashQuery, rarity: rareFound ? 'rare' : 'all' } : { ...emptyStashQuery, stat: finding.stat ?? 'all' };
+  const notable = report.loot.unique > 0 ? 'unique' : report.loot.rare > 0 ? 'rare' : 'all';
+  const initial: StashQuery = finding.kind === 'loot' ? { ...emptyStashQuery, rarity: notable } : { ...emptyStashQuery, stat: finding.stat ?? 'all' };
   return <PartyStash stash={stash} heroes={view.heroes} dispatch={dispatch} seenItemId={seenItemId} initial={initial} />;
 }
 

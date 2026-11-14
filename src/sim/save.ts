@@ -11,8 +11,12 @@ import { isRng } from './rng';
 import { isRunState } from './run';
 import { isWallState } from './wall';
 
-/** 7: Heroes carry their Class apart from their id. Older saves don't load: the human chose a wipe on 2026-11-13. */
-export const SAVE_VERSION = 7;
+/**
+ * 8: 6 Slots and uniques. A version 7 save is a version 8 save already: its trinket sits in the first trinket Slot.
+ * 7: Heroes carry their Class apart from their id. Older saves don't load: the human chose a wipe on 2026-11-13.
+ */
+export const SAVE_VERSION = 8;
+const LOADS_AS_IS: readonly number[] = [7, SAVE_VERSION];
 
 export function serializeGame(game: Game): string {
   return JSON.stringify({ version: SAVE_VERSION, game: stateOf(game) });
@@ -54,7 +58,7 @@ const isGameState = (value: unknown): boolean =>
   hasSoundItems(value) &&
   (value['battle'] === null || isBattleState(value['battle']));
 
-/** Returns null for bad data or another SAVE_VERSION. */
+/** Returns null for bad data or a version it can't load. */
 export function deserializeGame(text: string): Game | null {
   let parsed: unknown;
   try {
@@ -62,6 +66,6 @@ export function deserializeGame(text: string): Game | null {
   } catch {
     return null;
   }
-  if (!isRecord(parsed) || parsed['version'] !== SAVE_VERSION || !isGameState(parsed['game'])) return null;
+  if (!isRecord(parsed) || !LOADS_AS_IS.includes(parsed['version'] as number) || !isGameState(parsed['game'])) return null;
   return gameOf(parsed['game'] as GameState);
 }

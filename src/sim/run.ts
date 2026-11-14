@@ -5,13 +5,13 @@ import { rollPack } from './content/enemies';
 import { guardianFor } from './content/guardian';
 import { OIL_BETWEEN_ROOMS } from './content/party';
 import type { Rarity } from './content/items';
-import { BATTLE_DROP_CHANCE, CHEST_DROP_CHANCE } from './content/items';
+import { BATTLE_DROP_CHANCE, CHEST_DROP_CHANCE, UNIQUE_DROP_CHANCE } from './content/items';
 import { rankValue, type HeroId } from './content/skills';
 import { depthTuning } from './depth';
 import { generateFloor, isDepth, lampIndexOf, ROOM_KINDS, xpShare, type FloorLayout, type Depth, type RoomKind, type RoomLayout } from './floors';
 import { clampToMaximums, gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
 import { putInStash } from './build';
-import { rollItemSpec, viewItem, type ItemState, type ItemView } from './items';
+import { rollItemSpec, uniqueSpec, viewItem, type ItemSpec, type ItemState, type ItemView } from './items';
 import { nextFloat, nextInt, type Rng } from './rng';
 import { PICKS, type PickId, type PickMoment, type PickTag } from './content/picks';
 import { applyPicks, rollPick, viewPick, type PickView } from './picks';
@@ -201,8 +201,8 @@ function enterRoom(world: RunWorld, sink: EventSink): void {
 }
 
 /** Rolls an item for the Party's Floor, straight into the Stash. */
-function dropItem(world: RunWorld, sink: EventSink, rarity?: Rarity): void {
-  const item: ItemState = { ...rollItemSpec(world.rng, world.run.floor!, rarity), id: world.nextItemId++ };
+function dropItem(world: RunWorld, sink: EventSink, rarity?: Exclude<Rarity, 'unique'>, spec: ItemSpec = rollItemSpec(world.rng, world.run.floor!, rarity)): void {
+  const item: ItemState = { ...spec, id: world.nextItemId++ };
   putInStash(world, item);
   sink({ type: 'itemFound', item: viewItem(item) });
 }
@@ -243,8 +243,11 @@ function reward(world: RunWorld, xp: number, sink: EventSink): void {
 
 function guardianFell(world: RunWorld, sink: EventSink): void {
   const relit = recordGuardianKill(world.walls[lampIndexOf(world.run.floor!)]!, sink);
-  // The Lamp is lit from the first kill on, so the guaranteed rare comes once.
-  dropItem(world, sink, relit ? 'rare' : undefined);
+  // The Lamp is lit from the first kill on, so the guaranteed rare comes once. Later kills may drop the Guardian's unique.
+  const holds = LAMPS[lampIndexOf(world.run.floor!)]!.holds;
+  if (relit) dropItem(world, sink, 'rare');
+  else if (holds && nextFloat(world.rng) < UNIQUE_DROP_CHANCE) dropItem(world, sink, undefined, uniqueSpec(holds, world.run.floor!));
+  else dropItem(world, sink);
   returnToTown(world, relit ? 'lampRelit' : 'guardianFell', sink);
 }
 

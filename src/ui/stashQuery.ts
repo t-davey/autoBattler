@@ -12,7 +12,7 @@ export interface StashQuery {
 
 export const emptyStashQuery: StashQuery = { sort: 'rarity', slot: 'all', rarity: 'all', stat: 'all' };
 
-const RARITY_RANK: Readonly<Record<Rarity, number>> = { rare: 0, magic: 1, common: 2 };
+const RARITY_RANK: Readonly<Record<Rarity, number>> = { unique: 0, rare: 1, magic: 2, common: 3 };
 
 const newestFirst = (a: ItemView, b: ItemView): number => b.id - a.id;
 
@@ -27,7 +27,7 @@ export function queryStash(items: readonly ItemView[], { sort, slot, rarity, sta
   return items
     .filter(
       (item) =>
-        (slot === 'all' || item.slot === slot) &&
+        (slot === 'all' || item.slots.includes(slot)) &&
         (rarity === 'all' || item.rarity === rarity) &&
         (stat === 'all' || item.stats[stat] > 0),
     )

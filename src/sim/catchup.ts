@@ -61,7 +61,8 @@ export interface AwayReport {
     readonly common: number;
     readonly magic: number;
     readonly rare: number;
-    /** The rares. */
+    readonly unique: number;
+    /** The rares and uniques. */
     readonly notable: readonly ItemView[];
   };
   readonly unspentSkillPoints: number;
@@ -119,6 +120,7 @@ export function mergeAwayReports(earlier: AwayReport, later: AwayReport): AwayRe
       common: earlier.loot.common + later.loot.common,
       magic: earlier.loot.magic + later.loot.magic,
       rare: earlier.loot.rare + later.loot.rare,
+      unique: earlier.loot.unique + later.loot.unique,
       notable: [...earlier.loot.notable, ...later.loot.notable],
     },
     unspentSkillPoints: later.unspentSkillPoints,
@@ -142,7 +144,7 @@ interface Tally {
   /** The Picks the current Run holds. */
   runPicks: PickView[];
   levels: AwayLevelGain[];
-  loot: { common: number; magic: number; rare: number; notable: ItemView[] };
+  loot: { common: number; magic: number; rare: number; unique: number; notable: ItemView[] };
   /** Damage the Party has taken in the current Battle. */
   battleDamage: Partial<Record<DamageType, number>>;
 }
@@ -255,7 +257,7 @@ function fold(tally: Tally, event: GameEvent): void {
       return;
     case 'itemFound':
       tally.loot[event.item.rarity]++;
-      if (event.item.rarity === 'rare') tally.loot.notable.push(event.item);
+      if (event.item.rarity === 'rare' || event.item.rarity === 'unique') tally.loot.notable.push(event.item);
       return;
     default:
       return;
@@ -289,7 +291,7 @@ export function beginCatchUp(game: Game, elapsedMs: number): CatchUp {
       guardianPicks: [],
       runPicks: state.run.picks.map(viewPick),
       levels: [],
-      loot: { common: 0, magic: 0, rare: 0, notable: [] },
+      loot: { common: 0, magic: 0, rare: 0, unique: 0, notable: [] },
       battleDamage: {},
     },
   };

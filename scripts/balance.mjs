@@ -230,7 +230,7 @@ const DROP_STEP_MS = 1_000;
 const MIN_DECISION_DROPS_PER_HOUR = 2;
 const MAX_DOMINATED_SHARE = 40;
 const POISON_SHARE_RANGE = [30, 80];
-const EMPTY_SLOT_STATS = { power: 0, maxHealth: 0, armour: 0, poisonResistance: 0, critChance: 0, speed: 0 };
+const EMPTY_SLOT_STATS = { power: 0, maxHealth: 0, armour: 0, poisonResistance: 0, critChance: 0, speed: 0, maxOil: 0 };
 
 const statsOf = (stats) => Object.keys(EMPTY_SLOT_STATS).map((stat) => stats[stat]);
 const atLeastAsGood = (a, b) => statsOf(a).every((value, index) => value >= statsOf(b)[index]);
@@ -254,8 +254,8 @@ function equipUpgrade(game, item) {
     const upgrade = atLeastAsGood(item.stats, held) && !atLeastAsGood(held, item.stats);
     const sameReach = item.reach === null || current === null || item.reach === current.reach;
     if (hero.level >= item.levelRequirement && upgrade && sameReach) {
-      applyAction(game, { type: 'equipItem', heroId: hero.id, itemId: item.id });
-      return;
+      // A unique for another Class is refused, so the next Hero gets a look.
+      if (applyAction(game, { type: 'equipItem', heroId: hero.id, itemId: item.id }).ok) return;
     }
   }
 }
@@ -268,8 +268,8 @@ const isDecision = (game, item) =>
   });
 
 function measureDrops() {
-  const counts = { common: 0, magic: 0, rare: 0 };
-  const raresBySlot = { weapon: [], body: [], trinket: [] };
+  const counts = { common: 0, magic: 0, rare: 0, unique: 0 };
+  const raresBySlot = { weapon: [], offHand: [], helm: [], body: [], trinket: [] };
   let decisions = 0;
   let sallowRares = 0;
   const relitAt = [];

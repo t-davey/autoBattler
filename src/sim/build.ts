@@ -1,8 +1,8 @@
 import type { Slot } from './content/items';
 import { MAX_NAME_LENGTH } from './content/party';
 import type { SkillId } from './content/skills';
-import { clampToMaximums, unspentPoints, type HeroState } from './heroes';
-import { slotOf, type ItemId, type ItemState } from './items';
+import { clampToMaximums, mayWear, slotToFill, unspentPoints, type HeroState } from './heroes';
+import { slotsOf, type ItemId, type ItemState } from './items';
 import { defaultOrder, isLegalOrder, spendRefusal, withNewSkill, type SpendRefusal } from './skills';
 import { SKILLS } from './content/skills';
 
@@ -13,7 +13,7 @@ export interface Stash {
   stashRevision: number;
 }
 
-export type BuildRefusal = 'emptyName' | 'nameTooLong' | 'badOrder' | 'unknownItem' | 'belowLevelRequirement' | 'emptySlot' | SpendRefusal;
+export type BuildRefusal = 'emptyName' | 'nameTooLong' | 'badOrder' | 'unknownItem' | 'belowLevelRequirement' | 'classOnlyItem' | 'wrongSlot' | 'emptySlot' | SpendRefusal;
 
 /** Every change to the Stash comes through here, so its revision always moves. */
 export function putInStash(stash: Stash, item: ItemState): void {
@@ -56,13 +56,15 @@ export function respec(hero: HeroState): void {
   hero.order = defaultOrder(hero.classId, hero.ranks);
 }
 
-/** Moves the item from the Stash to the Hero, and whatever it replaces back. */
-export function equipItem(hero: HeroState, stash: Stash, itemId: ItemId): BuildRefusal | null {
+/** Moves the item from the Stash to the Hero, and whatever it replaces back. With no Slot named, it takes the first empty one it fits. */
+export function equipItem(hero: HeroState, stash: Stash, itemId: ItemId, toSlot?: Slot): BuildRefusal | null {
   const item = stash.stash.find((candidate) => candidate.id === itemId);
   if (!item) return 'unknownItem';
   if (hero.level < item.levelRequirement) return 'belowLevelRequirement';
+  if (!mayWear(hero, item)) return 'classOnlyItem';
+  if (toSlot && !slotsOf(item).includes(toSlot)) return 'wrongSlot';
+  const slot = toSlot ?? slotToFill(hero, item);
   takeFromStash(stash, itemId);
-  const slot = slotOf(item);
   const old = hero.equipped[slot];
   if (old) putInStash(stash, old);
   hero.equipped[slot] = item;

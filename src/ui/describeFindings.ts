@@ -79,11 +79,11 @@ function picksFinding({ guardianPicks }: AwayReport, view: GameView): Finding | 
 }
 
 function lootFinding({ loot }: AwayReport): Finding | null {
-  if (loot.common + loot.magic + loot.rare === 0) return null;
+  if (loot.common + loot.magic + loot.rare + loot.unique === 0) return null;
   const notable = loot.notable.map((item) => item.name);
   return {
     kind: 'loot',
-    title: `Loot: ${loot.common} common, ${loot.magic} magic, ${loot.rare} rare`,
+    title: `Loot: ${loot.common} common, ${loot.magic} magic, ${loot.rare} rare${loot.unique > 0 ? `, ${loot.unique} unique` : ''}`,
     details: notable.length > 0 ? [notable.join(', ')] : [],
     stat: null,
   };

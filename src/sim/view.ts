@@ -1,5 +1,5 @@
 import { maxHealthOf, type BattleState, type Reach, type Row, type TeamId } from './battle';
-import type { Slot } from './content/items';
+import { SLOTS, type Slot } from './content/items';
 import { FLOORS_PER_LAMP } from './content/world';
 import { GRID_HEIGHT, GRID_WIDTH, lampIndexOf, type Depth, type RoomKind } from './floors';
 import { CLASSES, xpToNextLevel } from './content/party';
@@ -221,11 +221,7 @@ function viewHero(hero: HeroState): HeroView {
     unspentPoints: unspentPoints(hero),
     skills: SKILL_IDS.filter((id) => SKILLS[id].classId === hero.classId).map((id) => viewSkill(hero, id)),
     order: [...hero.order],
-    equipment: {
-      weapon: viewEquipped(hero, 'weapon'),
-      body: viewEquipped(hero, 'body'),
-      trinket: viewEquipped(hero, 'trinket'),
-    },
+    equipment: Object.fromEntries(SLOTS.map((slot) => [slot, viewEquipped(hero, slot)])) as Record<Slot, ItemView | null>,
   };
 }
 
