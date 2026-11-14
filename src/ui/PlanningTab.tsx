@@ -145,8 +145,16 @@ function HeroCard({ hero, dispatch }: { hero: HeroView; dispatch: Dispatch }) {
       <h3>Skill order: {hero.order.length} of {MAX_ORDERED_SKILLS}</h3>
       <SkillOrder hero={hero} dispatch={dispatch} nameOf={nameOf} />
 
-      <button type="button" className="respec" disabled={hero.pointsSpent === 0} onClick={() => dispatch({ type: 'respec', heroId: hero.id })}>
-        Respec (free)
+      <button
+        type="button"
+        className="respec"
+        disabled={hero.pointsSpent === 0}
+        onClick={() => {
+          const result = dispatch({ type: 'respec', heroId: hero.id });
+          setRefusal(result.ok ? '' : REFUSAL_TEXT[result.reason]);
+        }}
+      >
+        {hero.respecCost > 0 ? `Respec (${hero.respecCost} gold)` : 'Respec'}
       </button>
     </section>
   );

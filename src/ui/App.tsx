@@ -8,10 +8,11 @@ import { PlanningTab } from './PlanningTab';
 import { StashTab } from './StashTab';
 import type { Store } from './store';
 import { TownMenu } from './TownMenu';
+import { TownTab } from './TownTab';
 import { useGame } from './useGame';
 import { useUiScale } from './useUiScale';
 
-type Tab = 'dashboard' | 'planning' | 'stash';
+type Tab = 'dashboard' | 'planning' | 'stash' | 'town';
 
 export function App({ store }: { store: Store }) {
   const { view, log, stash, seenItemId, catchUpProgress, awayReport, saveNotice, saveWarning } = useGame(store);
@@ -39,8 +40,10 @@ export function App({ store }: { store: Store }) {
               {tabButton('dashboard', 'Dashboard')}
               {tabButton('planning', unspent > 0 ? `Planning (${unspent} unspent)` : 'Planning')}
               {tabButton('stash', `Stash (${stash.length})`)}
+              {tabButton('town', 'Town')}
             </nav>
           )}
+          <span className="header-purse" aria-label="Gold">{view.gold.toLocaleString()} gold</span>
           {import.meta.env.DEV ? <DevTools store={store} /> : null}
         </header>
         {saveWarning && <p className="save-banner" role="alert">{saveWarning}</p>}
@@ -64,6 +67,7 @@ export function App({ store }: { store: Store }) {
             <PlanningTab heroes={view.heroes} pickPriority={view.pickPriority} dispatch={store.dispatch} />
           </main>
         )}
+        {!awayReport && tab === 'town' && <TownTab view={view} dispatch={store.dispatch} />}
         {!awayReport && tab === 'stash' && <StashTab stash={stash} heroes={view.heroes} dispatch={store.dispatch} seenItemId={seenItemId} rules={view} />}
       </div>
       {catchUpProgress !== null && (

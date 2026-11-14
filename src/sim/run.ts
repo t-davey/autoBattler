@@ -11,6 +11,8 @@ import { depthTuning } from './depth';
 import { generateFloor, isDepth, lampIndexOf, ROOM_KINDS, xpShare, type FloorLayout, type Depth, type RoomKind, type RoomLayout } from './floors';
 import { clampToMaximums, gainXp, heroStats, heroUnitSpec, type HeroState } from './heroes';
 import { receiveLoot, type Stash, type StashEvent } from './stash';
+import { restockMerchant, type Purse } from './town';
+import { battleWorth, GOLD_FROM } from './content/town';
 import { rollItemSpec, uniqueSpec, viewItem, type ItemSpec, type ItemState, type ItemView } from './items';
 import { nextFloat, nextInt, type Rng } from './rng';
 import { PICKS, type PickId, type PickMoment, type PickTag } from './content/picks';
@@ -41,6 +43,7 @@ export type RunEvent =
   | { readonly type: 'floorEntered'; readonly floor: Depth }
   | { readonly type: 'roomEntered'; readonly floor: Depth; readonly room: number; readonly kind: RoomKind }
   | { readonly type: 'chestOpened'; readonly line: string }
+  | { readonly type: 'goldFound'; readonly amount: number }
   | StashEvent
   // A Setback. battleEnded comes first and says how the Battle went; only these two count towards falling back.
   | { readonly type: 'wipe' | 'draw'; readonly floor: Depth; readonly enemyName: string; readonly guardianHealthShare: number | null }
@@ -70,7 +73,7 @@ export interface RunState {
 }
 
 /** The part of the Game that Runs read and change. */
-export interface RunWorld extends Stash {
+export interface RunWorld extends Stash, Purse {
   readonly rng: Rng;
   /** Its own stream, so offers don't shift the rest of the Run's rolls. */
   readonly pickRng: Rng;
@@ -130,6 +133,7 @@ function returnToTown(world: RunWorld, reason: TownReason, sink: EventSink): voi
     hero.health = maxHealth;
     hero.oil = maxOil;
   }
+  restockMerchant(world);
   sink({ type: 'returnedToTown', reason });
 }
 
@@ -202,6 +206,13 @@ function dropItem(world: RunWorld, sink: EventSink, rarity?: Exclude<Rarity, 'un
   receiveLoot(world, item, sink);
 }
 
+/** Gold in Battles' worth at the Party's depth. */
+function findGold(world: RunWorld, battles: number, sink: EventSink): void {
+  const amount = battles * battleWorth(world.run.floor!);
+  world.gold += amount;
+  sink({ type: 'goldFound', amount });
+}
+
 const maybeDropItem = (world: RunWorld, chance: number, sink: EventSink): void => {
   if (nextFloat(world.rng) < chance) dropItem(world, sink);
 };
@@ -209,6 +220,7 @@ const maybeDropItem = (world: RunWorld, chance: number, sink: EventSink): void =
 function finishChest(world: RunWorld, sink: EventSink): void {
   const lines = CHEST_LINES_BY_ACT[floorAt(world.run.floor!).act];
   sink({ type: 'chestOpened', line: lines[nextInt(world.rng, lines.length)]! });
+  findGold(world, GOLD_FROM.chest, sink);
   maybeDropItem(world, CHEST_DROP_CHANCE, sink);
   leaveRoom(world, sink);
 }
@@ -274,6 +286,7 @@ function finishBattle(world: RunWorld, battle: BattleState, sink: EventSink): vo
   const { run } = world;
   const isGuardian = currentRoom(run).kind === 'guardian';
   reward(world, isGuardian ? GUARDIAN_XP : depthTuning(run.floor!).battleXp, sink);
+  findGold(world, isGuardian ? GOLD_FROM.guardian : GOLD_FROM.battle, sink);
   if (isGuardian) {
     guardianFell(world, sink);
     return;

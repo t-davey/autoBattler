@@ -225,6 +225,66 @@ ul {
   box-shadow: 0 0 12px var(--flame-glow);
 }
 
+.header-purse {
+  margin-left: auto;
+  color: var(--brass-bright);
+  font-size: 0.85rem;
+}
+
+.town-screen {
+  padding: calc(var(--header-height) + 0.75rem) 1rem 1rem;
+}
+
+.town-purse,
+.town-message {
+  margin: 0 0 0.6rem;
+}
+
+.town-shops {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.town-stock {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.town-stock li {
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--iron);
+}
+
+.town-offer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.town-offer p {
+  margin: 0;
+}
+
+.town-gamble {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.reroll-control {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+}
+
+.reroll-control button {
+  margin: 0 0.2rem 0.2rem 0;
+}
+
 .town-menu {
   flex: 1;
   min-height: 15rem;

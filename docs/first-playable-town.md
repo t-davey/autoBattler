@@ -1,6 +1,8 @@
 # First playable: Town's prices
 
-A draft of gold, respec cost, Salvage rerolls, the merchant, and the gamble vendor, for the human to review. Step 9 of [the first playable plan](plans/first-playable.md) builds it once confirmed. Every number is a starting value, and step 10 tunes them.
+Gold, respec cost, Salvage rerolls, the merchant, and the gamble vendor. The human chose to build it as drafted on 2026-11-13, so the questions below were answered with the draft's own choices, and step 9 of [the first playable plan](plans/first-playable.md) built it. Every number is a starting value, and step 10 tunes them.
+
+**Correction, found while building:** the draft misread its pace measurement by a factor of 5. A Party wins about 105 Battles an hour, not 21, so every price below costs about a fifth of the time the draft said. The numbers were built as drafted. The pace and the times below are corrected.
 
 ## What the design already sets
 
@@ -16,7 +18,7 @@ They leave open how gold drops, every price, how a reroll works, and what the me
 
 ## The pace it has to fit
 
-Today a Party wins about **21 Battles, opens 9 chests, and kills 0.6 Guardians an hour** of Party time, and passes through Town about every 1½ hours. Heroes reach about level 11 by hour 5 and level 17 by hour 30.
+Today a Party wins about **105 Battles and opens 45 chests an hour** of Party time, kills a Guardian 1–3 times an hour while it farms a relit Lamp, and passes through Town about every 20 minutes. Heroes reach about level 11 by hour 5 and level 17 by hour 30.
 
 ## Town is open any time
 
@@ -32,11 +34,11 @@ Gold scales with depth through one number, a Battle's worth at that depth: **5 +
 | A chest | 3 Battles' worth |
 | A Guardian | 10 Battles' worth |
 
-That comes to about **54 Battles' worth an hour**: about 540 gold an hour on Floor 5, 1,600 at depth 25, and 2,400 at depth 40. The Party's gold is one count, shown in Town and the header. It needs no material of its own.
+That comes to about **250 Battles' worth an hour**: about 2,500 gold an hour on Floor 5, 7,500 at depth 25, and 11,000 at depth 40. The first game hour gives about 1,600. The Party's gold is one count, shown in Town and the header. It needs no material of its own.
 
 ## Respecs
 
-**10 gold per Hero level,** so 100 at level 10 and 200 at level 20. That is about 10 minutes of gold at any point in the Tier, since level and depth rise together. Today respecs are free.
+**10 gold per Hero level,** so 100 at level 10 and 200 at level 20. That is about 2 minutes of gold at any point in the Tier, since level and depth rise together. The draft said 10. Today respecs are free.
 
 ## Rerolls
 
@@ -65,7 +67,7 @@ Sells items rolled at **the depth of the deepest relit Lamp**, or Floor 1 before
 | Price | Magic: 30 Battles' worth at the item's depth. Rare: 80 |
 | Changes | Each time the Party passes through Town |
 
-A rare costs about 1½ hours of gold and a magic about 35 minutes. Stock is one of each Slot kind first, then random, so every Slot has a chance. Uniques are never sold.
+A rare costs about 20 minutes of gold and a magic about 7. The draft said 1½ hours and 35 minutes. Stock is one of each Slot kind first, then random, so every Slot has a chance. Uniques are never sold.
 
 ## The gamble vendor
 
@@ -90,6 +92,8 @@ A gamble costs a little less than a merchant's magic and is a rare more than a q
 - **Tests:** gold by source and depth, respec cost, a reroll's new Affix and depth, the merchant's stock by Lamps, gamble odds and its unique rule, and refusals.
 
 ## Questions for the human
+
+Answered on 2026-11-13: build as drafted. Built before the pace correction above, so whether to raise prices about 5 times, back to the times the draft meant, is open.
 
 1. **Town open any time,** not only while the Party is in Town.
 2. **Gold:** 5 + depth per Battle, with chests at 3 and Guardians at 10.

@@ -33,6 +33,10 @@ export const REFUSAL_TEXT: Readonly<Record<DispatchRefusal, string>> = {
   wrongSlot: 'That item doesn’t fit there.',
   lockedItem: 'Unlock it before salvaging.',
   badAutoSalvage: 'No such auto-salvage rule.',
+  notEnoughGold: 'Not enough gold.',
+  notEnoughSalvage: 'Not enough Salvage.',
+  unknownOffer: 'The merchant no longer has that.',
+  noSuchAffix: 'That item has no such Affix to reroll.',
   emptySlot: 'Nothing is equipped there.',
 };
 

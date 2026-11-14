@@ -1,4 +1,5 @@
 import { maxHealthOf, type BattleState, type Reach, type Row, type TeamId } from './battle';
+import { gamblePrice, merchantPrice, respecCost, shopDepth } from './town';
 import { SLOTS, STASH_CAPACITY, type AutoSalvageRule, type ItemStat, type Slot } from './content/items';
 import { FLOORS_PER_LAMP } from './content/world';
 import { GRID_HEIGHT, GRID_WIDTH, lampIndexOf, type Depth, type RoomKind } from './floors';
@@ -73,6 +74,8 @@ export interface SkillView {
 
 export interface HeroView {
   readonly id: HeroId;
+  /** Gold to respec now: nothing with no point spent. */
+  readonly respecCost: number;
   readonly classId: ClassId;
   readonly className: string;
   readonly name: string;
@@ -142,6 +145,16 @@ export interface GameView {
   /** Items with this stat are kept whatever the rule. */
   readonly keepStat: ItemStat | null;
   readonly stashCapacity: number;
+  readonly gold: number;
+  readonly town: TownView;
+}
+
+/** What Town's shops offer now. */
+export interface TownView {
+  readonly merchant: readonly { readonly item: ItemView; readonly price: number }[];
+  readonly gamblePrice: number;
+  /** The Floor depth the merchant and gamble vendor roll at. */
+  readonly shopDepth: number;
 }
 
 function viewTeam(battle: BattleState, team: TeamId, heroes: readonly HeroState[]): readonly UnitView[] {
@@ -211,6 +224,7 @@ function viewEquipped(hero: HeroState, slot: Slot): ItemView | null {
 function viewHero(hero: HeroState): HeroView {
   return {
     id: hero.id,
+    respecCost: respecCost(hero),
     classId: hero.classId,
     className: CLASSES[hero.classId].className,
     name: hero.name,
@@ -245,7 +259,7 @@ function viewMap({ layout, room }: RunState): FloorMapView | null {
 }
 
 export function viewGame(game: Game): GameView {
-  const { tick, battle, run, walls, stashRevision, salvage, autoSalvage, keepStat } = stateOf(game);
+  const { tick, battle, run, walls, stashRevision, salvage, autoSalvage, keepStat, gold, merchant } = stateOf(game);
   const ahead = run.floor === null ? runStretch(walls) : lampIndexOf(run.floor);
   const frontier = walls[frontierIndex(walls)]!;
   return {
@@ -271,6 +285,13 @@ export function viewGame(game: Game): GameView {
     autoSalvage,
     keepStat,
     stashCapacity: STASH_CAPACITY,
+    gold,
+    town: {
+      // Stock isn't in the Stash, so its views take ids below every real item's.
+      merchant: merchant.map((item, index) => ({ item: viewItem({ ...item, id: -1 - index }), price: merchantPrice(item) })),
+      gamblePrice: gamblePrice(walls),
+      shopDepth: shopDepth(walls),
+    },
   };
 }
 

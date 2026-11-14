@@ -14,6 +14,7 @@ const item = (id: number, overrides: Partial<ItemView> = {}): ItemView => ({
   stats: NO_STATS,
   unique: null,
   locked: false,
+  rerollCost: null,
   ...overrides,
   slots: [overrides.slot ?? 'body'],
 });

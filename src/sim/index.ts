@@ -20,6 +20,7 @@ export { CLASS_IDS } from './content/party';
 export { AFFIXES, AUTO_SALVAGE_RULES, RARITIES, SALVAGE_BY_RARITY, SLOTS, STASH_CAPACITY } from './content/items';
 export type { AffixDefinition, AffixId, AutoSalvageRule, BaseId, ItemStat, ItemStats, Rarity, Slot } from './content/items';
 export type { SalvageCause } from './stash';
+export { battleWorth } from './content/town';
 export { rollItem } from './items';
 export type { ItemId, ItemSpec, ItemView, RolledAffix } from './items';
 export type { ClassId, HeroId, SkillId, SkillKind, SkillReach } from './content/skills';
@@ -46,7 +47,7 @@ export type { BattleOutcome, EventSink, GameEvent, Phase, StartAt, TownReason } 
 export { itemBlocksLearnedSkill, viewGame, viewStash } from './view';
 export { createWall, frontierIndex, runStretch, recordGrowth, recordGuardianKill, recordSetback, SETBACKS_TO_FALL_BACK, turnsBackBeforeGuardian } from './wall';
 export type { WallEvent, WallSink, WallState } from './wall';
-export type { BattleView, FloorMapView, GameView, HeroView, RoomView, SkillValueView, SkillView, UnitView, WallView } from './view';
+export type { BattleView, FloorMapView, GameView, HeroView, RoomView, SkillValueView, SkillView, TownView, UnitView, WallView } from './view';
 export { DEFAULT_PICK_PRIORITY, OFFERS_PER_PICK, PICK_IDS, PICK_TAGS, PICKS, picksFor } from './content/picks';
 export type { PickDefinition, PickEffect, PickId, PickKind, PickMoment, PickTag } from './content/picks';
 export type { PickView } from './picks';

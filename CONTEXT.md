@@ -342,6 +342,22 @@ _Avoid_: Inventory, bank
 The crafting material gained by breaking down items: 1 for a common, 3 for a magic, 8 for a rare, and 20 for a unique. Also the act of breaking one down.
 _Avoid_: Scrap, dust
 
+**Gold**:
+The Party's coin, found in Battles, chests, and Guardians in amounts that grow with depth. It pays for respecs, the merchant, and the gamble vendor.
+_Avoid_: Money, coins
+
+**Reroll**:
+Spending Salvage to change one Affix on an Item into another the Item lacks, rolled at the Item's own depth.
+_Avoid_: Reforge, enchant
+
+**Merchant**:
+Town's shop of known magic and rare Items, restocked each time the Party passes through Town and improved by relit Lamps.
+_Avoid_: Vendor, store
+
+**Gamble**:
+Buying a hidden Item for a chosen Slot from Town's gamble vendor. It may be a unique whose Guardian's Lamp is relit.
+_Avoid_: Mystery box
+
 **Lock**:
 A mark on an Item that keeps it from being salvaged, by hand, by the Auto-salvage rule, or by a full Stash. It stays through equipping.
 _Avoid_: Favourite, pin

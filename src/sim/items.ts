@@ -22,6 +22,7 @@ import {
   type UniqueId,
 } from './content/items';
 import { CLASSES } from './content/party';
+import { REROLL_SALVAGE } from './content/town';
 import type { ClassId } from './content/skills';
 import { depthTuning } from './depth';
 import type { Depth } from './floors';
@@ -77,6 +78,8 @@ export interface ItemView {
   /** Built-in stats and Affixes together. */
   readonly stats: ItemStats;
   readonly unique: UniqueView | null;
+  /** Salvage to reroll one Affix, or null for an item with none. */
+  readonly rerollCost: number | null;
 }
 
 const isUniqueId = (id: string): id is UniqueId => Object.hasOwn(UNIQUES, id);
@@ -100,15 +103,35 @@ function rollAffixes(rng: Rng, floor: Depth, rarity: Rarity): RolledAffix[] {
   const { min, max } = AFFIX_COUNTS[rarity];
   const count = min + nextInt(rng, max - min + 1);
   const chosen = new Set(shuffled(rng, AFFIXES).slice(0, count));
-  return AFFIXES.filter((affix) => chosen.has(affix)).map((affix) => {
-    const rolled = affix.min + nextInt(rng, affix.max - affix.min + 1);
-    return { id: affix.id, value: Math.round(rolled * depthTuning(floor).affixScale) };
-  });
+  return AFFIXES.filter((affix) => chosen.has(affix)).map((affix) => ({ id: affix.id, value: rollAffixValue(rng, floor, affix) }));
 }
 
-/** Rolls an item from a Floor's table, or at a set Rarity. The Slot comes first, evenly, so trinkets drop twice as often. */
-export function rollItemSpec(rng: Rng, floor: Depth, rarity: Exclude<Rarity, 'unique'> = rollRarity(rng, floor)): ItemSpec {
-  const slot = SLOTS[nextInt(rng, SLOTS.length)]!;
+/** Salvage to reroll one of the item's Affixes, or null if it has none to reroll. */
+export const rerollCost = (item: ItemSpec): number | null =>
+  item.rarity === 'magic' || item.rarity === 'rare' ? REROLL_SALVAGE[item.rarity] : null;
+
+/** The depth an item came from, read back from its level requirement. */
+export function itemDepth(item: ItemSpec): Depth {
+  const bonus = item.rarity === 'rare' ? RARE_LEVEL_BONUS : 0;
+  return Math.max(1, item.levelRequirement - bonus - 1);
+}
+
+/** The item's Affixes with one replaced by a random Affix it lacks, rolled at the item's depth, in table order. */
+export function rerolledAffixes(rng: Rng, item: ItemSpec, affixId: AffixId): RolledAffix[] {
+  const options = AFFIXES.filter((affix) => !item.affixes.some((held) => held.id === affix.id));
+  const fresh = options[nextInt(rng, options.length)]!;
+  const kept = item.affixes.filter((held) => held.id !== affixId);
+  const added = { id: fresh.id, value: rollAffixValue(rng, itemDepth(item), fresh) };
+  return AFFIXES.flatMap((affix) => [...kept, added].filter((held) => held.id === affix.id));
+}
+
+function rollAffixValue(rng: Rng, floor: Depth, affix: AffixDefinition): number {
+  const rolled = affix.min + nextInt(rng, affix.max - affix.min + 1);
+  return Math.round(rolled * depthTuning(floor).affixScale);
+}
+
+/** Rolls an item from a Floor's table, or at a set Rarity or Slot. The Slot comes first, evenly, so trinkets drop twice as often. */
+export function rollItemSpec(rng: Rng, floor: Depth, rarity: Exclude<Rarity, 'unique'> = rollRarity(rng, floor), slot: Slot = SLOTS[nextInt(rng, SLOTS.length)]!): ItemSpec {
   const bases = (rarity === 'common' ? COMMON_BASE_IDS : BASE_IDS).filter((id) => SLOTS_FOR[ITEM_BASES[id].kind].includes(slot));
   return {
     baseId: bases[nextInt(rng, bases.length)]!,
@@ -169,6 +192,7 @@ export function viewItem(item: ItemState): ItemView {
     locked: item.locked === true,
     affixes: item.affixes.map(({ id }) => id),
     stats: itemStats(item),
+    rerollCost: rerollCost(item),
     unique: unique && { classId: unique.classId, className: CLASSES[unique.classId].className, change: unique.change, line: unique.line },
   };
 }

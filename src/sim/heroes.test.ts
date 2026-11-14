@@ -177,7 +177,7 @@ describe('spending points', () => {
 
 describe('skill order and respec', () => {
   const builtWarrener = (): Game =>
-    atLevel(7, { skillRanks: { warrener: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
+    atLevel(7, { gold: 1_000, skillRanks: { warrener: { 'bleeders-cut': 2, 'open-veins': 2, 'the-long-cut': 1 } } });
 
   it('setSkillOrder changes the order', () => {
     const game = builtWarrener();

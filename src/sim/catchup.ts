@@ -65,6 +65,7 @@ export interface AwayReport {
     /** Items the rule or a full Stash broke down, and the Salvage they gave. */
     readonly salvaged: number;
     readonly salvageGained: number;
+    readonly gold: number;
     /** Rares and uniques a full Stash broke down. */
     readonly lostToFullStash: readonly ItemView[];
     /** The rares and uniques. */
@@ -128,6 +129,7 @@ export function mergeAwayReports(earlier: AwayReport, later: AwayReport): AwayRe
       unique: earlier.loot.unique + later.loot.unique,
       salvaged: earlier.loot.salvaged + later.loot.salvaged,
       salvageGained: earlier.loot.salvageGained + later.loot.salvageGained,
+      gold: earlier.loot.gold + later.loot.gold,
       lostToFullStash: [...earlier.loot.lostToFullStash, ...later.loot.lostToFullStash],
       notable: [...earlier.loot.notable, ...later.loot.notable],
     },
@@ -152,7 +154,7 @@ interface Tally {
   /** The Picks the current Run holds. */
   runPicks: PickView[];
   levels: AwayLevelGain[];
-  loot: { common: number; magic: number; rare: number; unique: number; salvaged: number; salvageGained: number; lostToFullStash: ItemView[]; notable: ItemView[] };
+  loot: { common: number; magic: number; rare: number; unique: number; salvaged: number; salvageGained: number; gold: number; lostToFullStash: ItemView[]; notable: ItemView[] };
   /** Damage the Party has taken in the current Battle. */
   battleDamage: Partial<Record<DamageType, number>>;
 }
@@ -267,6 +269,9 @@ function fold(tally: Tally, event: GameEvent): void {
       tally.loot[event.item.rarity]++;
       if (event.item.rarity === 'rare' || event.item.rarity === 'unique') tally.loot.notable.push(event.item);
       return;
+    case 'goldFound':
+      tally.loot.gold += event.amount;
+      return;
     case 'itemSalvaged':
       if (event.cause === 'hand') return;
       tally.loot.salvaged++;
@@ -305,7 +310,7 @@ export function beginCatchUp(game: Game, elapsedMs: number): CatchUp {
       guardianPicks: [],
       runPicks: state.run.picks.map(viewPick),
       levels: [],
-      loot: { common: 0, magic: 0, rare: 0, unique: 0, salvaged: 0, salvageGained: 0, lostToFullStash: [], notable: [] },
+      loot: { common: 0, magic: 0, rare: 0, unique: 0, salvaged: 0, salvageGained: 0, gold: 0, lostToFullStash: [], notable: [] },
       battleDamage: {},
     },
   };

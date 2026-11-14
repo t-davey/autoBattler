@@ -100,6 +100,8 @@ export function describeEvent(event: GameEvent): string {
       return event.line;
     case 'itemFound':
       return `Found a ${event.item.rarity}: ${event.item.name}.`;
+    case 'goldFound':
+      return `+${event.amount} gold.`;
     case 'itemSalvaged':
       return `${SALVAGE_LINES[event.cause]} ${event.item.name}, for ${event.salvage} Salvage.`;
     case 'wipe':

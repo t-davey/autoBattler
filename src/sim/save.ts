@@ -10,15 +10,17 @@ import { isPickPriority } from './picks';
 import { isRng } from './rng';
 import { isRunState } from './run';
 import { isStashRules, withStashDefaults } from './stash';
+import { isPurse } from './town';
 import { isWallState } from './wall';
 
 /**
+ * 10: Gold and the merchant's stock. Older saves load with no gold and an empty merchant, stocked at the next pass through Town.
  * 9: Salvage, the auto-salvage rule, and locks. Version 7 and 8 saves load with no Salvage and everything kept.
  * 8: 6 Slots and uniques. A version 7 save's trinket sits in the first trinket Slot.
  * 7: Heroes carry their Class apart from their id. Older saves don't load: the human chose a wipe on 2026-11-13.
  */
-export const SAVE_VERSION = 9;
-const LOADABLE: readonly number[] = [7, 8, SAVE_VERSION];
+export const SAVE_VERSION = 10;
+const LOADABLE: readonly number[] = [7, 8, 9, SAVE_VERSION];
 
 export function serializeGame(game: Game): string {
   return JSON.stringify({ version: SAVE_VERSION, game: stateOf(game) });
@@ -59,6 +61,7 @@ const isGameState = (value: unknown): boolean =>
   value['heroes'].every(isHeroState) &&
   hasSoundItems(value) &&
   isStashRules(value) &&
+  isPurse(value) &&
   (value['battle'] === null || isBattleState(value['battle']));
 
 /** Returns null for bad data or a version it can't load. */
@@ -71,6 +74,10 @@ export function deserializeGame(text: string): Game | null {
   }
   if (!isRecord(parsed) || !LOADABLE.includes(parsed['version'] as number)) return null;
   if (parsed['version'] !== SAVE_VERSION) withStashDefaults(parsed['game']);
+  if (isRecord(parsed['game'])) {
+    parsed['game']['gold'] ??= 0;
+    parsed['game']['merchant'] ??= [];
+  }
   if (!isGameState(parsed['game'])) return null;
   return gameOf(parsed['game'] as GameState);
 }

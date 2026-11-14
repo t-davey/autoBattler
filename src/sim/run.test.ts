@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  battleWorth,
   depthTuning,
   advance,
   applyAction,
@@ -76,7 +77,8 @@ describe('Rooms', () => {
       expect(seen).toEqual([]);
       stepTicks(played, 1, seen);
       expect(seen[0]?.type).toBe('chestOpened');
-      expect(seen.slice(1).every((event) => event.type === 'itemFound')).toBe(true);
+      expect(seen[1]).toMatchObject({ type: 'goldFound', amount: battleWorth(1) * 3 });
+      expect(seen.slice(2).every((event) => event.type === 'itemFound')).toBe(true);
       expect(seen[0]).toMatchObject({ line: expect.stringMatching(/\w/) });
       expect(viewGame(played).phase).toBe('travelling');
       return;

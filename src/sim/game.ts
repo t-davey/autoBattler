@@ -2,6 +2,8 @@ import type { UnitSpec } from './battle';
 import { equipItem, renameHero, respec, setSkillOrder, spendSkillPoint, unequipItem, type BuildRefusal } from './build';
 import type { AutoSalvageRule, ItemStat, Slot } from './content/items';
 import { lockItems, salvageItems, setAutoSalvage, type Stash, type StashRefusal } from './stash';
+import { buyItem, gamble, rerollAffix, respecCost, restockMerchant, type TownRefusal, type TownWorld } from './town';
+import type { AffixId } from './content/items';
 import { CLASS_IDS, CLASSES, DEFAULT_PARTY, PARTY_SIZE } from './content/party';
 import type { ClassId, HeroId, SkillId } from './content/skills';
 import { GIVEN_NAMES, SURNAMES } from './content/names';
@@ -40,6 +42,8 @@ export interface GameSetup {
     readonly equipped?: Readonly<Partial<Record<HeroId, readonly ItemSpec[]>>>;
     /** Items already in the Stash. */
     readonly stash?: readonly ItemSpec[];
+    readonly gold?: number;
+    readonly salvage?: number;
   };
 }
 
@@ -54,9 +58,12 @@ export type PlayerAction =
   | { readonly type: 'unequipItem'; readonly heroId: HeroId; readonly slot: Slot }
   | { readonly type: 'lockItems'; readonly itemIds: readonly ItemId[]; readonly locked: boolean }
   | { readonly type: 'salvageItems'; readonly itemIds: readonly ItemId[] }
-  | { readonly type: 'setAutoSalvage'; readonly rule: AutoSalvageRule; readonly keepStat: ItemStat | null };
+  | { readonly type: 'setAutoSalvage'; readonly rule: AutoSalvageRule; readonly keepStat: ItemStat | null }
+  | { readonly type: 'buyItem'; readonly index: number }
+  | { readonly type: 'gamble'; readonly slot: Slot }
+  | { readonly type: 'rerollAffix'; readonly itemId: ItemId; readonly affixId: AffixId };
 
-export type ActionRefusal = 'notInTown' | 'unknownHero' | 'badPickPriority' | BuildRefusal | StashRefusal;
+export type ActionRefusal = 'notInTown' | 'unknownHero' | 'badPickPriority' | BuildRefusal | StashRefusal | TownRefusal;
 export type ActionResult = { readonly ok: true } | { readonly ok: false; readonly reason: ActionRefusal };
 
 /** A running game. The UI never reads inside it: reads go through the view functions. */
@@ -79,7 +86,7 @@ function createWalls(lit: number, setbacks: number | undefined): WallState[] {
 }
 
 export function createGame(setup: GameSetup): Game {
-  const { heroLevel, skillRanks, startAt, lampLit, lampsLit, setbacks, battleTicks, equipped, stash } = setup.scenario ?? {};
+  const { heroLevel, skillRanks, startAt, lampLit, lampsLit, gold, salvage, setbacks, battleTicks, equipped, stash } = setup.scenario ?? {};
   const classes = setup.party ?? DEFAULT_PARTY;
   // Its own stream, so names never shift the rolls that follow.
   const names = heroNames(createRng(setup.seed ^ 0x3c6ef372), classes.length);
@@ -98,7 +105,31 @@ export function createGame(setup: GameSetup): Game {
   const rng = createRng(setup.seed);
   // A fixed offset keeps the Pick stream apart from the main one.
   const pickRng = createRng(setup.seed ^ 0x5bd1e995);
-  return gameOf({ rng, pickRng, pickPriority: [...DEFAULT_PICK_PRIORITY], tick: 0, bankMs: 0, battle: null, run: createRun(rng, startAt), walls: createWalls(lampsLit ?? (lampLit ? 1 : 0), setbacks), battleTicks: battleTicks ?? null, heroes, stash: stashed, nextItemId, stashRevision: 0, salvage: 0, autoSalvage: 'keepEverything', keepStat: null });
+  const state: GameState = {
+    rng,
+    pickRng,
+    pickPriority: [...DEFAULT_PICK_PRIORITY],
+    tick: 0,
+    bankMs: 0,
+    battle: null,
+    run: createRun(rng, startAt),
+    walls: createWalls(lampsLit ?? (lampLit ? 1 : 0), setbacks),
+    battleTicks: battleTicks ?? null,
+    heroes,
+    stash: stashed,
+    nextItemId,
+    stashRevision: 0,
+    salvage: salvage ?? 0,
+    autoSalvage: 'keepEverything',
+    keepStat: null,
+    gold: gold ?? 0,
+    merchant: [],
+  };
+  // The first stock comes from its own stream, so it never shifts the Seed's Floors and loot.
+  const firstStock = { ...state, rng: createRng(setup.seed ^ 0x27d4eb2f) };
+  restockMerchant(firstStock);
+  state.merchant = firstStock.merchant;
+  return gameOf(state);
 }
 
 /** Different names for each Hero, from the provisional pool. */
@@ -142,8 +173,18 @@ export function applyAction(game: Game, action: PlayerAction, sink: EventSink = 
     const outcome = stashAction(state, action, sink);
     return outcome ? refused(outcome) : ACCEPTED;
   }
+  // Town's shops: Town is a menu, open whether or not the Party is there.
+  if (action.type === 'buyItem' || action.type === 'gamble' || action.type === 'rerollAffix') {
+    const outcome = townAction(state, action);
+    return outcome ? refused(outcome) : ACCEPTED;
+  }
   const hero = state.heroes.find((candidate) => candidate.id === action.heroId);
   if (!hero) return refused('unknownHero');
+  if (action.type === 'respec') {
+    const cost = respecCost(hero);
+    if (state.gold < cost) return refused('notEnoughGold');
+    state.gold -= cost;
+  }
   const outcome = buildAction(hero, state, action);
   if (outcome) return refused(outcome);
   // A stronger build may be the answer to the frontier Wall.
@@ -164,7 +205,20 @@ function stashAction(stash: Stash, action: StashAction, sink: EventSink): StashR
   }
 }
 
-function buildAction(hero: HeroState, stash: Stash, action: Exclude<PlayerAction, { readonly type: 'sendParty' | 'setPickPriority' } | StashAction>): BuildRefusal | null {
+type TownAction = Extract<PlayerAction, { readonly type: 'buyItem' | 'gamble' | 'rerollAffix' }>;
+
+function townAction(world: TownWorld, action: TownAction): TownRefusal | null {
+  switch (action.type) {
+    case 'buyItem':
+      return buyItem(world, action.index);
+    case 'gamble':
+      return gamble(world, action.slot);
+    case 'rerollAffix':
+      return rerollAffix(world, action.itemId, action.affixId);
+  }
+}
+
+function buildAction(hero: HeroState, stash: Stash, action: Exclude<PlayerAction, { readonly type: 'sendParty' | 'setPickPriority' } | StashAction | TownAction>): BuildRefusal | null {
   switch (action.type) {
     case 'renameHero':
       return renameHero(hero, action.name);

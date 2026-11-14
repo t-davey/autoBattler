@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import { AUTO_SALVAGE_RULES, itemBlocksLearnedSkill, RARITIES, SALVAGE_BY_RARITY, SLOTS, type AutoSalvageRule, type GameView, type HeroView, type ItemStat, type ItemView, type Rarity, type Slot } from '../sim';
+import { AUTO_SALVAGE_RULES, itemBlocksLearnedSkill, RARITIES, SALVAGE_BY_RARITY, SLOTS, type AffixId, type AutoSalvageRule, type GameView, type HeroView, type ItemStat, type ItemView, type Rarity, type Slot } from '../sim';
 import { REFUSAL_TEXT } from './describeHero';
+import { RerollControl } from './RerollControl';
 import { changedStats, formatChange, itemStatsText, SLOT_TEXT, STAT_TEXT, statChange, targetSlot } from './describeItem';
 import { PixelIcon } from './PixelIcon';
 import { groupItems, openingSlot, queryStash, type ItemGroup, type StashQuery, type StashSort } from './stashQuery';
@@ -136,10 +137,12 @@ interface PartyCompareProps {
   readonly onEquip: (item: ItemView, hero: HeroView) => void;
   readonly onLock: (group: ItemGroup) => void;
   readonly onSalvage: (group: ItemGroup) => void;
+  readonly onReroll: (item: ItemView, affixId: AffixId) => void;
+  readonly salvage: number;
 }
 
 /** A group's stat changes for each Hero. It never says which Hero or item is better. */
-function PartyCompare({ group, heroes, activeHero, picked, onEquip, onLock, onSalvage }: PartyCompareProps) {
+function PartyCompare({ group, heroes, activeHero, picked, onEquip, onLock, onSalvage, onReroll, salvage }: PartyCompareProps) {
   const { item, count, highestLevel } = group;
   const levels = highestLevel > item.levelRequirement ? `Levels ${item.levelRequirement}–${highestLevel}` : `Level ${item.levelRequirement}`;
   return (
@@ -170,6 +173,7 @@ function PartyCompare({ group, heroes, activeHero, picked, onEquip, onLock, onSa
           {itemBlocksLearnedSkill(item, hero) && <p className="hint skill-blocked">Melee skills stop working</p>}
         </div>
       ))}
+      <RerollControl item={item} salvage={salvage} onReroll={(affixId) => onReroll(item, affixId)} />
       <SalvageControl key={group.key} group={group} onSalvage={onSalvage} />
     </section>
   );
@@ -217,6 +221,11 @@ export function PartyStash({ stash, heroes, dispatch, seenItemId, initial, rules
   };
   const salvage = (group: ItemGroup) => {
     const result = dispatch({ type: 'salvageItems', itemIds: group.ids });
+    setRefusal(result.ok ? '' : REFUSAL_TEXT[result.reason]);
+    if (result.ok) setSelectedKey(null);
+  };
+  const reroll = (item: ItemView, affixId: AffixId) => {
+    const result = dispatch({ type: 'rerollAffix', itemId: item.id, affixId });
     setRefusal(result.ok ? '' : REFUSAL_TEXT[result.reason]);
     if (result.ok) setSelectedKey(null);
   };
@@ -307,7 +316,7 @@ export function PartyStash({ stash, heroes, dispatch, seenItemId, initial, rules
             </ul>
           )}
         </section>
-        {selected && <PartyCompare group={selected} heroes={heroes} activeHero={hero} picked={slot} onEquip={equip} onLock={lock} onSalvage={salvage} />}
+        {selected && <PartyCompare group={selected} heroes={heroes} activeHero={hero} picked={slot} onEquip={equip} onLock={lock} onSalvage={salvage} onReroll={reroll} salvage={rules.salvage} />}
       </div>
     </div>
   );
