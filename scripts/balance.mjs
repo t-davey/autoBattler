@@ -1,6 +1,6 @@
 // Headless balance measurements. `builds` measures risk R2 and `drops` measures risk R3, both in
 // docs/plans/poc-demo/risks.md. `wall` measures the first Wall's targets, `demo-seed` finds Seeds that play the
-// demo script, `checkins` plays the Wall on a schedule of check-ins, and `world` plays all 12 Walls of the full-game skeleton. docs/plans/poc-demo-results.md records them. Each exits non-zero if a trigger trips, a target misses, or none is found.
+// demo script, `checkins` plays the Wall on a schedule of check-ins, and `world` plays all 12 Walls with every Class and Branch, tuned to docs/first-playable-tuning.md. docs/plans/poc-demo-results.md records them. Each exits non-zero if a trigger trips, a target misses, or none is found.
 import { createServer } from 'vite';
 
 const SEEDS = Number(process.env.BALANCE_SEEDS ?? 200);
@@ -92,7 +92,7 @@ function buildsFor(heroId) {
 }
 
 const server = await createServer({ configFile: false, server: { middlewareMode: true }, appType: 'custom' });
-const { advance, applyAction, floorAt, LAMPS, beginCatchUp, CATCH_UP_CAP_MS, continueCatchUp, createGame, deserializeGame, partyUnitSpecs, serializeGame, simulateBattle, SLOTS, TICK_MS, viewGame, viewStash } = await server.ssrLoadModule('/src/sim/index.ts');
+const { advance, applyAction, CLASS_IDS, floorAt, LAMPS, beginCatchUp, CATCH_UP_CAP_MS, continueCatchUp, createGame, deserializeGame, partyUnitSpecs, serializeGame, simulateBattle, SLOTS, TICK_MS, viewGame, viewStash } = await server.ssrLoadModule('/src/sim/index.ts');
 
 const referenceRanks = Object.fromEntries(
   Object.entries(REFERENCE_RANKS).map(([heroId, allocation]) => [heroId, ranksFrom(CLASSES[heroId].skills, allocation)]),
@@ -793,27 +793,104 @@ function measureCheckIns(firstSeed) {
 }
 
 const WORLD_SEEDS = Number(process.env.WORLD_SEEDS ?? 10);
-const WORLD_HOURS = 48;
+const WORLD_HOURS = Number(process.env.WORLD_HOURS ?? 48);
 const WORLD_GAP_HOURS = 3;
-/** The design's weekend pace: about 3 hours of Party time per Wall, 30-40 for the first Difficulty Tier. */
-const WALL_HOURS_TARGET = [2, 4];
-const TIER_HOURS_TARGET = [30, 40];
+/** docs/first-playable-tuning.md: the Undercroft at the weekend pace, Act 1 kept quick, Act 3 only beatable. */
+const ACT_LAMPS = { act1: [0, 1, 2, 3], undercroft: [4, 5, 6, 7] };
+const UNDERCROFT_WALL_HOURS = [2, 4];
+const ACT1_HOURS = [4, 5];
+const LEVEL_TARGET = { enteringUndercroft: 12, endingUndercroft: 20 };
 const RUN_MINUTES_TARGET = [15, 30];
+/** A Party this many times the median's Undercroft hours is a trap. */
+const TRAP_FACTOR = 1.5;
 
-/** Plays the whole world with the Routine player checking in every few hours, and records each Lamp's first relight. */
-function playWorld(seed) {
-  const game = createGame({ seed });
+/** Every Class plays: each Party leaves one out. */
+const WORLD_PARTIES = CLASS_IDS.map((left) => CLASS_IDS.filter((id) => id !== left)).filter((_, index) => !process.env.WORLD_PARTY || String(index) === process.env.WORLD_PARTY);
+
+/** A Hero's Branches, each as its skill ids in step order, without the free Class skill. */
+function branchesOf(hero) {
+  const branches = new Map();
+  for (const skill of hero.skills) {
+    if (!skill.free) branches.set(skill.branch, [...(branches.get(skill.branch) ?? []), skill]);
+  }
+  return [...branches.values()].map((skills) => [...skills].sort((a, b) => a.step - b.step).map((skill) => skill.id));
+}
+
+/** Fills one Branch, skill by skill in step order, before the other. */
+function spendBranchFirst(game, branchIndex) {
+  for (const hero of viewGame(game).heroes) {
+    const branches = branchesOf(hero);
+    const ordered = branchIndex === 0 ? branches : [...branches].reverse();
+    for (const skillId of ordered.flat()) {
+      while (applyAction(game, { type: 'spendSkillPoint', heroId: hero.id, skillId }).ok);
+    }
+  }
+}
+
+const noStats = (stats) => Object.fromEntries(Object.keys(stats).map((stat) => [stat, 0]));
+const atLeast = (a, b) => Object.keys(a).every((stat) => a[stat] >= b[stat]);
+const isPlainUpgrade = (item, held) => atLeast(item.stats, held) && !atLeast(held, item.stats);
+
+/** The Hero and Slot a plain upgrade would go to, keeping each Hero's weapon Reach so no skill is lost, or null. */
+function upgradeFor(game, item) {
+  for (const hero of viewGame(game).heroes) {
+    if (hero.level < item.levelRequirement) continue;
+    for (const slot of item.slots) {
+      const worn = hero.equipment[slot];
+      const sameReach = item.reach === null || worn === null || item.reach === worn.reach;
+      if (sameReach && isPlainUpgrade(item, worn?.stats ?? noStats(item.stats))) {
+        if (item.unique && item.unique.classId !== hero.classId) continue;
+        return { heroId: hero.id, toSlot: slot };
+      }
+    }
+  }
+  return null;
+}
+
+function equipUpgradeAnywhere(game, item) {
+  const target = upgradeFor(game, item);
+  if (target) applyAction(game, { type: 'equipItem', heroId: target.heroId, itemId: item.id, toSlot: target.toSlot });
+}
+
+/** Buys the merchant's plain upgrades it can afford, cheapest first, and returns the gold spent. */
+function buyUpgrades(game) {
+  let spent = 0;
+  for (;;) {
+    const { gold, town } = viewGame(game);
+    const offers = town.merchant
+      .map((offer, index) => ({ ...offer, index }))
+      .filter(({ item, price }) => price <= gold && upgradeFor(game, item))
+      .sort((a, b) => a.price - b.price);
+    const offer = offers[0];
+    if (!offer || !applyAction(game, { type: 'buyItem', index: offer.index }).ok) return spent;
+    spent += offer.price;
+  }
+}
+
+/** A steady player: spends points, sets commons to auto-salvage, buys and wears plain upgrades. No respecs, rerolls, or gambles. */
+function steadyCheckIn(game, branchIndex) {
+  spendBranchFirst(game, branchIndex);
+  const spent = buyUpgrades(game);
+  for (const item of viewStash(game)) equipUpgradeAnywhere(game, item);
+  return spent;
+}
+
+/** Plays the whole world, checking in every few hours, and records each Lamp's first relight and the economy. */
+function playWorld(seed, party, branchIndex) {
+  const game = createGame({ seed, party });
+  applyAction(game, { type: 'setAutoSalvage', rule: 'commons', keepStat: null });
   const relitAt = [];
+  const runs = [];
+  const attempts = [];
+  const economy = { gold: 0, goldSpent: 0, salvage: 0, uniques: 0, stashFullAt: null, goldAtHour: {} };
   let deepest = 1;
   let wipes = 0;
-  const runs = [];
   let sentAt = 0;
-  /** Attempts at the frontier Guardian, with the Picks each Run held. */
-  const attempts = [];
   let picks = [];
   let attempting = null;
+  const hoursNow = () => viewGame(game).tick / TICKS_PER_HOUR;
   for (let hour = 0; hour < WORLD_HOURS; hour += WORLD_GAP_HOURS) {
-    CHECK_IN_PLAYERS.Routine(game);
+    economy.goldSpent += steadyCheckIn(game, branchIndex);
     for (let step = 0; step < WORLD_GAP_HOURS * 60; step++) {
       advance(game, 60_000, (event) => {
         if (event.type === 'pickTaken') picks.push(event.taken.id);
@@ -825,24 +902,26 @@ function playWorld(seed) {
           attempting = null;
         }
         if (event.type === 'returnedToTown') picks = [];
-        if (event.type === 'lampRelit') relitAt.push({ hours: viewGame(game).tick / TICKS_PER_HOUR, level: viewGame(game).heroes[0].level });
+        if (event.type === 'lampRelit') relitAt.push({ hours: hoursNow(), level: viewGame(game).heroes[0].level });
         else if (event.type === 'floorEntered') deepest = Math.max(deepest, event.floor);
         else if (event.type === 'wipe') wipes++;
         else if (event.type === 'partySent') sentAt = viewGame(game).tick;
         else if (event.type === 'returnedToTown') runs.push({ minutes: (viewGame(game).tick - sentAt) / (TICKS_PER_HOUR / 60), reason: event.reason });
+        else if (event.type === 'goldFound') economy.gold += event.amount;
+        else if (event.type === 'itemSalvaged') {
+          economy.salvage += event.salvage;
+          if (event.cause === 'full') economy.stashFullAt ??= hoursNow();
+        } else if (event.type === 'itemFound' && event.item.rarity === 'unique') economy.uniques++;
       });
     }
+    economy.goldAtHour[hour + WORLD_GAP_HOURS] = economy.gold;
   }
-  return { relitAt, deepest, wipes, runs, attempts, level: viewGame(game).heroes[0].level };
+  return { relitAt, deepest, wipes, runs, attempts, economy, level: viewGame(game).heroes[0].level };
 }
 
-/**
- * Whether Walls fall to good Runs: tries per first kill, and the frontier Guardian win rate by each Pick held.
- * A Pick that lifts the rate well above the rest makes Runs differ; a Wall that falls on the first try isn't one.
- */
-function reportPicks(attempts) {
-  const rate = (list) => (list.length === 0 ? 'none' : `${((list.filter((attempt) => attempt.won).length / list.length) * 100).toFixed(0)}% of ${list.length}`);
-  const tries = LAMPS.map((_, lamp) => {
+/** Tries per first kill at each Lamp, median across Seeds. */
+function triesPerLamp(attempts) {
+  return LAMPS.map((_, lamp) => {
     const bySeed = [];
     let count = 0;
     for (const attempt of attempts.filter((candidate) => candidate.lamp === lamp)) {
@@ -854,49 +933,89 @@ function reportPicks(attempts) {
     }
     return medianOf(bySeed);
   });
-  console.log(`
-  Guardian tries to the first kill, median per Lamp: ${tries.map((count) => count ?? '-').join(', ')}.`);
+}
+
+function reportPicks(attempts) {
+  const rate = (list) => (list.length === 0 ? 'none' : `${((list.filter((attempt) => attempt.won).length / list.length) * 100).toFixed(0)}% of ${list.length}`);
   console.log(`  Frontier Guardian wins: ${rate(attempts)}. By Pick held:`);
   for (const id of [...new Set(attempts.flatMap((attempt) => attempt.picks))].sort()) {
     console.log(`    ${id.padEnd(16)}with ${rate(attempts.filter((attempt) => attempt.picks.includes(id))).padEnd(14)}without ${rate(attempts.filter((attempt) => !attempt.picks.includes(id)))}`);
   }
 }
 
+const relitHours = (play, lamp) => play.relitAt[lamp]?.hours ?? Infinity;
+const undercroftHours = (play) => relitHours(play, 7) - relitHours(play, 3);
+
 function measureWorld(firstSeed) {
-  console.log(`World: ${WORLD_HOURS} hours of Party time over ${WORLD_SEEDS} Seeds from ${firstSeed}, Routine player checking in every ${WORLD_GAP_HOURS} h.`);
-  console.log(`Target: each Wall takes ${WALL_HOURS_TARGET[0]}-${WALL_HOURS_TARGET[1]} h of Party time, the Tier ${TIER_HOURS_TARGET[0]}-${TIER_HOURS_TARGET[1]} h.
-`);
-  const runs = Array.from({ length: WORLD_SEEDS }, (_, index) => playWorld(firstSeed + index));
-  console.log(`  ${'Lamp'.padEnd(26)}${'relit in'.padEnd(10)}${'median h'.padEnd(10)}${'h since last'.padEnd(14)}${'level'.padEnd(7)}verdict`);
+  const plays = [];
+  for (const party of WORLD_PARTIES) {
+    for (const branchIndex of [0, 1]) {
+      for (let index = 0; index < WORLD_SEEDS; index++) plays.push({ party, branchIndex, ...playWorld(firstSeed + index, party, branchIndex) });
+    }
+  }
+  console.log(`World: ${WORLD_HOURS} hours of Party time, ${WORLD_PARTIES.length} Parties x 2 Branch orders x ${WORLD_SEEDS} Seeds from ${firstSeed}, a steady player checking in every ${WORLD_GAP_HOURS} h.`);
+  console.log(`Target: Act 1 in ${ACT1_HOURS[0]}-${ACT1_HOURS[1]} h, each Undercroft Wall ${UNDERCROFT_WALL_HOURS[0]}-${UNDERCROFT_WALL_HOURS[1]} h and rarely won on the first try, level about ${LEVEL_TARGET.enteringUndercroft} entering the Undercroft and ${LEVEL_TARGET.endingUndercroft} at its end.\n`);
+  const tries = triesPerLamp(plays.flatMap((play) => play.attempts));
+  console.log(`  ${'Lamp'.padEnd(26)}${'relit in'.padEnd(10)}${'median h'.padEnd(10)}${'h since last'.padEnd(14)}${'level'.padEnd(7)}${'tries'.padEnd(7)}verdict`);
   let previous = 0;
   let misses = 0;
   LAMPS.forEach((lamp, index) => {
-    const relit = runs.flatMap(({ relitAt }) => (relitAt[index] ? [relitAt[index]] : []));
-    const hours = medianOf(relit.map((entry) => entry.hours));
-    const gap = hours === null ? null : hours - previous;
-    const verdict = gap === null ? 'STALL' : within(gap, ...WALL_HOURS_TARGET) ? 'PASS' : gap < WALL_HOURS_TARGET[0] ? 'FAST' : 'SLOW';
-    if (verdict !== 'PASS') misses++;
+    const relit = plays.flatMap(({ relitAt }) => (relitAt[index] ? [relitAt[index]] : []));
+    const hours = medianOf(plays.map((play) => relitHours(play, index)));
+    const gap = hours === null || hours === Infinity ? null : hours - previous;
+    let verdict = '-';
+    if (ACT_LAMPS.undercroft.includes(index)) {
+      verdict = gap === null ? 'STALL' : within(gap, ...UNDERCROFT_WALL_HOURS) ? 'PASS' : gap < UNDERCROFT_WALL_HOURS[0] ? 'FAST' : 'SLOW';
+      if (verdict !== 'PASS') misses++;
+    }
     const { act, floor } = floorAt(lamp.depth);
     const name = `Act ${act}, Floor ${floor}${lamp.placeholder ? '' : ' (built)'}`;
-    console.log(`  ${name.padEnd(26)}${`${relit.length}/${runs.length}`.padEnd(10)}${formatted(hours).padEnd(10)}${formatted(gap).padEnd(14)}${String(medianOf(relit.map((entry) => entry.level)) ?? '-').padEnd(7)}${verdict}`);
-    if (hours !== null) previous = hours;
+    console.log(`  ${name.padEnd(26)}${`${relit.length}/${plays.length}`.padEnd(10)}${formatted(gap === null ? null : hours).padEnd(10)}${formatted(gap).padEnd(14)}${String(medianOf(relit.map((entry) => entry.level)) ?? '-').padEnd(7)}${String(tries[index] ?? '-').padEnd(7)}${verdict}`);
+    if (gap !== null) previous = hours;
   });
-  const deepest = medianOf(runs.map((run) => run.deepest));
-  const { act, floor } = floorAt(deepest);
+  const act1 = medianOf(plays.map((play) => relitHours(play, 3)));
+  const act1OnPace = within(act1, ...ACT1_HOURS);
+  if (!act1OnPace) misses++;
+  const level = (lamp) => medianOf(plays.flatMap(({ relitAt }) => (relitAt[lamp] ? [relitAt[lamp].level] : [])));
   console.log(`
-  Median deepest Floor: Act ${act}, Floor ${floor}. Median level at the end: ${medianOf(runs.map((run) => run.level))}. Median Wipes: ${medianOf(runs.map((run) => run.wipes))}.`);
-  reportPicks(runs.flatMap((run) => run.attempts));
-  const allRuns = runs.flatMap((run) => run.runs);
+  Act 1: median ${formatted(act1)} h${act1OnPace ? '' : ', off target'}. Level entering the Undercroft ${level(3) ?? '-'}, at its end ${level(7) ?? '-'}.`);
+  const deepest = medianOf(plays.map((play) => play.deepest));
+  const { act, floor } = floorAt(deepest);
+  console.log(`  Median deepest Floor: Act ${act}, Floor ${floor}. Median level at the end: ${medianOf(plays.map((play) => play.level))}. Median Wipes: ${medianOf(plays.map((play) => play.wipes))}.`);
+
+  const overall = medianOf(plays.map(undercroftHours));
+  console.log(`\n  The Undercroft by Party and Branch order, median hours (overall ${formatted(overall)}):`);
+  let traps = 0;
+  for (const party of WORLD_PARTIES) {
+    for (const branchIndex of [0, 1]) {
+      const mine = plays.filter((play) => play.party === party && play.branchIndex === branchIndex);
+      const hours = medianOf(mine.map(undercroftHours));
+      const trap = overall !== null && hours !== null && hours > TRAP_FACTOR * overall;
+      if (trap) traps++;
+      const walls = ACT_LAMPS.undercroft.map((lamp) => formatted(medianOf(mine.map((play) => relitHours(play, lamp) - relitHours(play, lamp - 1))))).join(' / ');
+      console.log(`    ${party.join(', ').padEnd(34)}${branchIndex === 0 ? 'first Branches first ' : 'second Branches first'}  ${formatted(hours).padEnd(8)}${`by Wall ${walls}`.padEnd(34)}${trap ? 'TRAP' : ''}`);
+    }
+  }
+
+  const goldAt = (hour) => medianOf(plays.map((play) => play.economy.goldAtHour[hour] ?? 0));
+  const perHour = (total) => total / WORLD_HOURS;
+  const stashFull = plays.map((play) => play.economy.stashFullAt).filter((hours) => hours !== null);
+  console.log(`
+  Economy: gold found by hour 3/6/12/24: ${[3, 6, 12, 24].map((hour) => goldAt(hour)?.toLocaleString() ?? '-').join(' / ')}. Median ${medianOf(plays.map((play) => play.economy.goldSpent)).toLocaleString()} spent at the merchant.
+  Salvage ${formatted(medianOf(plays.map((play) => perHour(play.economy.salvage))))} an hour. The Stash filled in ${stashFull.length}/${plays.length} plays, median hour ${formatted(medianOf(stashFull))}. Uniques found: median ${medianOf(plays.map((play) => play.economy.uniques))} in ${WORLD_HOURS} h.`);
+
+  console.log('');
+  reportPicks(plays.flatMap((play) => play.attempts));
+  const allRuns = plays.flatMap((play) => play.runs);
   const runMinutes = allRuns.map((run) => run.minutes).sort((a, b) => a - b);
   const percentile = (share) => runMinutes[Math.floor(share * (runMinutes.length - 1))] ?? null;
   const runShare = (test) => `${((allRuns.filter(test).length / allRuns.length) * 100).toFixed(0)}%`;
   const reasons = [...new Set(allRuns.map((run) => run.reason))].map((reason) => `${reason} ${runShare((run) => run.reason === reason)}`).join(', ');
   console.log(`  Runs: ${allRuns.length}, minutes at the 10th/50th/90th percentile ${formatted(percentile(0.1))}/${formatted(percentile(0.5))}/${formatted(percentile(0.9))}, ${runShare((run) => run.minutes >= RUN_MINUTES_TARGET[0] && run.minutes <= RUN_MINUTES_TARGET[1])} within ${RUN_MINUTES_TARGET[0]}-${RUN_MINUTES_TARGET[1]}. Ended by ${reasons}.`);
-  const tierHours = medianOf(runs.map(({ relitAt }) => (relitAt.length === LAMPS.length ? relitAt.at(-1).hours : Infinity)));
-  const tierOnPace = tierHours !== null && within(tierHours, ...TIER_HOURS_TARGET);
-  console.log(`  Tier finished: ${runs.filter(({ relitAt }) => relitAt.length === LAMPS.length).length}/${runs.length} Seeds, median ${formatted(tierHours)} h${tierOnPace ? '' : ', off target'}.`);
-  console.log(`World: ${misses} of ${LAMPS.length} Walls off the target pace.`);
-  if (misses > 0 || !tierOnPace) process.exitCode = 1;
+  const tier = medianOf(plays.map((play) => relitHours(play, LAMPS.length - 1)));
+  console.log(`  Tier finished: ${plays.filter(({ relitAt }) => relitAt.length === LAMPS.length).length}/${plays.length} plays, median ${formatted(tier === Infinity ? null : tier)} h.`);
+  console.log(`World: ${misses} of 5 targets missed (4 Undercroft Walls and Act 1), ${traps} trap Parties.`);
+  if (misses > 0 || traps > 0) process.exitCode = 1;
 }
 
 const mode = process.argv[2];

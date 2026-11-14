@@ -2,7 +2,7 @@
 
 Build [the first playable](../design.md#first-playable): the full loop, built thin, judged over a few real days of check-ins. The design holds the rules and [First playable skills](../first-playable-skills.md) holds the skills. This plan holds the order of work.
 
-**Status: decided, not built.** The human chose on 2026-11-13:
+**Status: built.** [The playtest note](../first-playable-playtest.md) hands it over and holds every open question. The human chose on 2026-11-13:
 
 - **Act 1 stays first.** A new Game starts in the placeholder Wilderness, as the [full-game skeleton](full-skeleton.md) does, and reaches the Undercroft after Act 1's 4 Walls. At the weekend pace that is about a third of the Tier, so the Undercroft is judged from the second day of check-ins.
 - **The player picks the Party:** 3 Heroes from the 4 Classes, duplicates allowed.
@@ -37,17 +37,8 @@ Rapid prototyping: each piece lands as a commit straight on `main` and leaves th
 | 7 | **Gear.** Draft the off-hand, helm, and second trinket bases and the 4 Class uniques for review. Then build 6 Slots and the unique rarity: **done**, built as drafted in [First playable: gear](../first-playable-gear.md), as the human chose on 2026-11-13. A drop picks its Slot first, so trinkets come twice as often. Max Oil is a gear stat. Each unique changes its Class's free skill, only its Class may wear it, and each Undercroft Guardian drops its own on 10% of kills after the first. Equipping can name a Slot, for the second trinket. `SAVE_VERSION` 8, and version 7 saves load as they are. A scenario's `lampsLit` lights several Lamps for tests |
 | 8 | **The Stash and Salvage.** A 300-item Stash with locks. When it's full, the lowest-value unlocked items are salvaged. Auto-salvage rules, and Salvage as a material: **done**, built as drafted in [First playable: the Stash and Salvage](../first-playable-stash.md), as the human chose on 2026-11-13. A full Stash salvages the lowest-value unlocked item, by level requirement plus a rarity bonus, and never a unique. The Party's rule salvages commons, or commons and magics, as they land, and can keep any item with one stat. The Stash locks and salvages whole groups, asking first for a rare or unique. The Away Report counts what was salvaged and names rares lost to a full Stash. `SAVE_VERSION` 9, and version 7 and 8 saves load with no Salvage and everything kept |
 | 9 | **Town.** Draft prices for review: gold drops, respec cost by level, reroll cost, merchant stock by Lamps lit, and gamble odds. Then build them into Town's menu: **done**, built as drafted in [First playable: Town's prices](../first-playable-town.md), as the human chose on 2026-11-13. Gold drops from Battles, chests, and Guardians by depth. Respecs cost 50 gold per level. Salvage rerolls an Affix into another at the item's depth. A Town tab holds the merchant, the gamble vendor, and rerolls of worn items, open any time, and Stash items reroll from the Stash. `SAVE_VERSION` 10, and older saves load with no gold. Building found the draft had misread the pace by 5 times, since a Party wins about 105 Battles an hour, so on 2026-11-14 the human chose to raise every price 5 times to the times the draft meant |
-| 10 | **Tune and hand over.** Retune the `world` balance mode for the Undercroft's 4 Walls at the weekend pace, with every Class in play. Then the human plays it over a few days: **drafted** in [First playable: tuning and handover](../first-playable-tuning.md), awaiting review |
+| 10 | **Tune and hand over.** Retune the `world` balance mode for the Undercroft's 4 Walls at the weekend pace, with every Class in play. Then the human plays it over a few days: **done**, built as drafted in [First playable: tuning and handover](../first-playable-tuning.md), as the human chose on 2026-11-14. The `world` mode plays every Class and both Branch orders. Floor levels rise 0.28 a Floor past depth 5, so Heroes reach about level 22 at the Undercroft's end, and each Undercroft Guardian has its own strength. Walls 1–3 take 2–4 hours each. Wall 4 falls in under an hour with a Hexer and about 3 without, since no strength suits both. [The playtest note](../first-playable-playtest.md) hands it over |
 
 ## Questions for the human
 
-Each comes up at the step named, and gets confirmed before that step builds it.
-
-- **Step 1, built with defaults:** crits at 150%, a 75% resistance cap, and 0 enemy resistance to fire, cold, and holy. Confirm or change them, and confirm the [effect rules](../first-playable-skills.md#effects) so they can join CONTEXT.md.
-- **Step 3, built with starting values:** the Hexer's stats and its bone sling.
-- **Step 5, built with a provisional value:** the name pool.
-- **Step 6, built as drafted:** the Guardians' names are working names, and the Walls' numbers wait for step 10.
-- **Step 7, built as drafted:** the uniques' names and lines are provisional, and the numbers wait for step 10.
-- **Step 8, built as drafted:** the item value, the rules, and the Salvage amounts wait for step 10.
-- **Step 10:** the balance player, the pace, the levels, and Act 1's pace, in [First playable: tuning and handover](../first-playable-tuning.md#questions-for-the-human).
-- **Not in this plan:** the Belt, Stance, and Elite packs. Confirm they stay out of the first playable.
+They moved to [the playtest note](../first-playable-playtest.md#open-questions) with step 10.

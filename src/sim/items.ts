@@ -25,7 +25,7 @@ import { CLASSES } from './content/party';
 import { REROLL_SALVAGE } from './content/town';
 import type { ClassId } from './content/skills';
 import { depthTuning } from './depth';
-import type { Depth } from './floors';
+import { isDepth, type Depth } from './floors';
 import { createRng, nextFloat, nextInt, shuffled, type Rng } from './rng';
 
 export interface RolledAffix {
@@ -43,6 +43,8 @@ export interface ItemSpec {
   readonly levelRequirement: number;
   /** Uniques only: the Affix scale of the Floor it dropped on, which multiplies its built-in stats. */
   readonly scale?: number;
+  /** The depth it rolled at. Items from before 2026-11-14 lack it and read it from their level requirement. */
+  readonly depth?: Depth;
 }
 
 /** Ids count up as items appear, so a higher id is a newer item. */
@@ -110,8 +112,9 @@ function rollAffixes(rng: Rng, floor: Depth, rarity: Rarity): RolledAffix[] {
 export const rerollCost = (item: ItemSpec): number | null =>
   item.rarity === 'magic' || item.rarity === 'rare' ? REROLL_SALVAGE[item.rarity] : null;
 
-/** The depth an item came from, read back from its level requirement. */
+/** The depth an item came from. An older item reads it from its level requirement, which was then depth + 1. */
 export function itemDepth(item: ItemSpec): Depth {
+  if (item.depth !== undefined) return item.depth;
   const bonus = item.rarity === 'rare' ? RARE_LEVEL_BONUS : 0;
   return Math.max(1, item.levelRequirement - bonus - 1);
 }
@@ -138,6 +141,7 @@ export function rollItemSpec(rng: Rng, floor: Depth, rarity: Exclude<Rarity, 'un
     rarity,
     affixes: rollAffixes(rng, floor, rarity),
     levelRequirement: depthTuning(floor).levelRequirement + (rarity === 'rare' ? RARE_LEVEL_BONUS : 0),
+    depth: floor,
   };
 }
 
@@ -148,6 +152,7 @@ export const uniqueSpec = (uniqueId: UniqueId, floor: Depth): ItemSpec => ({
   affixes: [],
   levelRequirement: depthTuning(floor).levelRequirement,
   scale: depthTuning(floor).affixScale,
+  depth: floor,
 });
 
 /** The item a Seed gives on a Floor, on its own. Play draws from the Game's Seed instead. */
@@ -204,8 +209,9 @@ const isAffix = (value: unknown): boolean =>
 
 export function isItem(value: unknown): value is ItemState {
   if (!isRecord(value) || typeof value['baseId'] !== 'string') return false;
-  const { id, baseId, rarity, affixes, levelRequirement, scale, locked } = value;
+  const { id, baseId, rarity, affixes, levelRequirement, scale, locked, depth } = value;
   if (locked !== undefined && locked !== true) return false;
+  if (depth !== undefined && !isDepth(depth)) return false;
   if (!Object.hasOwn(ITEM_BASES, baseId) && !isUniqueId(baseId)) return false;
   // A unique has no Affixes and carries its scale; nothing else does.
   if ((rarity === 'unique') !== isUniqueId(baseId) || (rarity === 'unique') !== isNumber(scale)) return false;

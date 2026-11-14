@@ -88,13 +88,19 @@ describe('Depth tuning', () => {
     expect(depthTuning(60).enemyScale).toBeCloseTo(3.85 * 1.045 ** 40);
   });
 
+  it('raises Floor levels 0.28 a Floor past depth 5, towards level 20 at the Undercroft’s end and 25 at the Tier’s', () => {
+    expect([20, 40, 60].map((depth) => depthTuning(depth).floorLevel)).toEqual([12, 18, 23]);
+    expect([20, 40, 60].map((depth) => depthTuning(depth).levelRequirement)).toEqual([10, 16, 21]);
+  });
+
   it('keeps growing to depth 60, with valid rarity odds throughout', () => {
     for (let depth = 2; depth <= MAX_DEPTH; depth++) {
       const here = depthTuning(depth);
       const before = depthTuning(depth - 1);
       expect(here.enemyScale).toBeGreaterThan(before.enemyScale);
       expect(here.battleXp).toBeGreaterThan(before.battleXp);
-      expect(here.levelRequirement).toBeGreaterThan(before.levelRequirement);
+      expect(here.levelRequirement).toBeGreaterThanOrEqual(before.levelRequirement);
+      expect(here.floorLevel).toBeGreaterThanOrEqual(before.floorLevel);
       expect(here.rarityOdds.common).toBeLessThanOrEqual(before.rarityOdds.common);
       expect(here.rarityOdds.common + here.rarityOdds.magic).toBeLessThan(100);
     }

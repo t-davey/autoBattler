@@ -42,6 +42,15 @@ const LINEAR_STEP = 0.15;
 /** 4.5% a Floor, the best fit of 3%–10% in `npm run balance -- world` on 2026-11-11. */
 const COMPOUND_RATE = 0.045;
 
+/**
+ * The level a Floor's enemies count as. Depths 1–5 keep the demo's, then it rises 0.28 a Floor, so XP falloff holds
+ * Heroes near level 20 at the Undercroft's end and 25 at the Tier's, as docs/first-playable-tuning.md sets.
+ */
+const DEMO_DEPTHS = 5;
+const LEVELS_PER_FLOOR = 0.28;
+const floorLevel = (depth: number): number =>
+  depth <= DEMO_DEPTHS ? depth + 3 : Math.round(DEMO_DEPTHS + 3 + LEVELS_PER_FLOOR * (depth - DEMO_DEPTHS));
+
 /** Battle XP runs 25% above the demo's, part of the weekend pace measured on 2026-11-11. */
 const XP_RATE = 1.25;
 
@@ -55,9 +64,9 @@ export function depthTuning(depth: number): DepthTuning {
   return {
     enemyScale: enemyScale(depth),
     battleXp: XP_RATE * (10 + 5 * depth),
-    floorLevel: depth + 3,
+    floorLevel: floorLevel(depth),
     rarityOdds: rarityOdds(depth),
     affixScale: 1 + 0.2 * (depth - 1),
-    levelRequirement: depth === 1 ? 1 : depth + 1,
+    levelRequirement: depth === 1 ? 1 : floorLevel(depth) - 2,
   };
 }

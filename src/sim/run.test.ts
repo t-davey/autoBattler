@@ -271,8 +271,8 @@ describe('carrying over', () => {
 
 describe('Enemy scale', () => {
   const firstBattleAt = (floor: number, seed: number) => {
-    // Level 25 wins there and earns full XP: Floor level 24, plus the grace level.
-    const played = game(seed, { heroLevel: 25, startAt: { floor, room: 0 } });
+    // Level 13 earns full XP on all three: Floor levels 12–13, plus the grace level.
+    const played = game(seed, { heroLevel: 13, startAt: { floor, room: 0 } });
     stepUntil(played, 'battleStarted');
     return played;
   };
@@ -462,11 +462,11 @@ describe('falling back', () => {
 });
 
 describe('the Guardian', () => {
-  it('fields the Mouldering Warden at the Undercroft’s first Lamp, at 60% strength, scaled up from the depth it was tuned at', () => {
+  it('fields the Mouldering Warden at the Undercroft’s first Lamp, at its own strength, scaled up from the depth it was tuned at', () => {
     const played = game(1, { startAt: { floor: 25, room: 'guardian' } });
     stepUntil(played, 'battleStarted');
     const scale = depthTuning(25).enemyScale / depthTuning(5).enemyScale;
-    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'The Mouldering Warden', maxHealth: expect.closeTo(1_560 * scale, 6), placeholder: false }]);
+    expect(viewGame(played).battle!.enemies).toMatchObject([{ name: 'The Mouldering Warden', maxHealth: expect.closeTo(2_600 * scale, 6), placeholder: false }]);
   });
 
   it('fields a placeholder Guardian scaled to its depth at a later Lamp', () => {

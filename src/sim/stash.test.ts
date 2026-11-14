@@ -39,10 +39,10 @@ const salvagedIn = (events: readonly GameEvent[]) => events.flatMap((event) => (
 
 describe('the Stash’s cap', () => {
   it('salvages the lowest-value unlocked item when a drop overfills it, by level requirement plus a rarity bonus', () => {
-    // Value: a level 20 common is 20, a level 16 magic is 21, so the common goes first.
-    // Floor 30 finds need level 31, so the new item is worth more than both.
-    const played = game({ heroLevel: 40, startAt: { floor: 30, room: 0 }, stash: [...filler(STASH_CAPACITY - 2), spec({ rarity: 'magic', levelRequirement: 16, affixes: [{ id: 'keen', value: 1 }] }), spec({ levelRequirement: 20 })] });
-    const lowestId = viewStash(played).find((item) => item.levelRequirement === 20)!.id;
+    // Value: a level 10 common is 10, a level 6 magic is 11, so the common goes first.
+    // Floor 30 finds need level 13, so the new item is worth more than both.
+    const played = game({ heroLevel: 40, startAt: { floor: 30, room: 0 }, stash: [...filler(STASH_CAPACITY - 2), spec({ rarity: 'magic', levelRequirement: 6, affixes: [{ id: 'keen', value: 1 }] }), spec({ levelRequirement: 10 })] });
+    const lowestId = viewStash(played).find((item) => item.levelRequirement === 10)!.id;
     const [salvaged] = salvagedIn(untilFound(played));
     expect(salvaged).toMatchObject({ cause: 'full', salvage: 1 });
     expect(salvaged!.item.id).toBe(lowestId);

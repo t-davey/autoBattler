@@ -109,17 +109,17 @@ describe('the one-back-Row-Hero action', () => {
 });
 
 describe('the Undercroft’s Guardians', () => {
-  const scaleAt = (depth: number) => (depthTuning(depth).enemyScale / depthTuning(5).enemyScale) * 0.6;
+  const scaleAt = (depth: number) => depthTuning(depth).enemyScale / depthTuning(5).enemyScale;
 
-  it('fields each Wall’s Guardian at its Lamp, scaled from the Warden’s strength to its depth', () => {
+  it('fields each Wall’s Guardian at its Lamp, at its own tuned strength, scaled to its depth', () => {
     expect([30, 35, 40].map((depth) => [guardianAt(depth).name, guardianAt(depth).placeholder])).toEqual([
       ['The Iron Sexton', false],
       ['The Knell Engine', false],
       ['The Reliquary Engine', false],
     ]);
-    expect(guardianAt(30).maxHealth).toBeCloseTo(2_800 * scaleAt(30), 6);
-    expect(guardianAt(35).maxHealth).toBeCloseTo(2_400 * scaleAt(35), 6);
-    expect(guardianAt(40).maxHealth).toBeCloseTo(3_200 * scaleAt(40), 6);
+    expect(guardianAt(30).maxHealth).toBeCloseTo(2_800 * scaleAt(30) * 1.3, 6);
+    expect(guardianAt(35).maxHealth).toBeCloseTo(2_400 * scaleAt(35) * 1.35, 6);
+    expect(guardianAt(40).maxHealth).toBeCloseTo(3_200 * scaleAt(40) * 0.7, 6);
   });
 
   it('the Reliquary Engine shrugs off physical hits that a Burn ignores', () => {

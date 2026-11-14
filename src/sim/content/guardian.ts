@@ -112,6 +112,14 @@ const GUARDIANS_BY_NAME: Readonly<Record<string, UnitSpec>> = Object.fromEntries
 /** Every Guardian at 60% of the Warden's demo strength, so a Wall takes hours, not days: the weekend pace with Picks, 2026-11-11. */
 const GUARDIAN_STRENGTH = 0.6;
 
+/** The Undercroft's own, tuned in `npm run balance -- world` to 2–4 hours a Wall: docs/first-playable-tuning.md. */
+const STRENGTH_BY_NAME: Readonly<Record<string, number>> = {
+  'The Mouldering Warden': 1.0,
+  'The Iron Sexton': 1.3,
+  'The Knell Engine': 1.35,
+  'The Reliquary Engine': 0.7,
+};
+
 /**
  * A Lamp's Guardian, scaled from the depth it was tuned at to the Lamp's own. A placeholder copies the Warden's
  * actions under a stand-in name.
@@ -121,5 +129,5 @@ export function guardianFor(lamp: LampDefinition): UnitSpec {
   const built = GUARDIANS_BY_NAME[lamp.guardianName];
   if (!lamp.placeholder && !built) throw new Error(`No Guardian is written for ${lamp.guardianName}`);
   const base = built ?? { ...MOULDERING_WARDEN, name: lamp.guardianName, placeholder: true };
-  return scaleUnit(base, scale * GUARDIAN_STRENGTH);
+  return scaleUnit(base, scale * (STRENGTH_BY_NAME[base.name] ?? GUARDIAN_STRENGTH));
 }

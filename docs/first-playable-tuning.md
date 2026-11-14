@@ -1,6 +1,6 @@
 # First playable: tuning and handover
 
-A draft of step 10 of [the first playable plan](plans/first-playable.md), for the human to review: what the balance player learns, what pace the Undercroft is tuned to, which numbers move, and what the human gets to play. Nothing here is built until confirmed.
+Step 10 of [the first playable plan](plans/first-playable.md): what the balance player learns, what pace the Undercroft is tuned to, which numbers move, and what the human gets to play. The human chose to build it as drafted on 2026-11-14, and [What building found](#what-building-found) has the result. [The playtest note](first-playable-playtest.md) is the handover.
 
 ## What the design already sets
 
@@ -13,9 +13,9 @@ A draft of step 10 of [the first playable plan](plans/first-playable.md), for th
 
 They leave open how the balance player plays, how Act 1's placeholders should pace, and which numbers move.
 
-## What today measures
+## What the draft measured
 
-The `world` mode on 10 Seeds, with the Routine player checking in every 3 hours:
+Before step 10, the `world` mode on 10 Seeds, with the Routine player checking in every 3 hours:
 
 | Wall | Hours since the last | Level | Tries to the first kill |
 |---|---|---|---|
@@ -72,7 +72,47 @@ Saves stay at `SAVE_VERSION` 10. Changing numbers doesn't break them, but a Game
 - **The open questions** from steps 1–9 move from the plan into that note.
 - **A release** is the human's to publish, as [pull requests](pull-requests.md) says. The game is ready for one once step 10 lands. Until then, `npm run start:electron` plays the desktop build.
 
+## What building found
+
+`npm run balance -- world` now plays 4 Parties x 2 Branch orders x 10 Seeds for 48 hours. `WORLD_SEEDS`, `WORLD_HOURS`, and `WORLD_PARTY` (0–3, the Class left out) narrow it while tuning.
+
+**Levels follow depth.** Lowering the XP curve alone wouldn't hold: a Party that farms longer would still outlevel the plan. Instead each Floor's level rises 0.28 a Floor past depth 5, so XP falloff holds Heroes near it, and an item's level requirement stays 2 below it. Items now record the depth they rolled at, so rerolls and merchant prices still read it. Older items read it from their level requirement as before.
+
+| | Before | After |
+|---|---|---|
+| Floor level at depth 20 / 40 / 60 | 23 / 43 / 63 | 12 / 18 / 23 |
+| Level requirement at depth 20 / 40 / 60 | 21 / 41 / 61 | 10 / 16 / 21 |
+| Party level entering the Undercroft / at its end | 14 / 29 | 14 / 22 |
+
+Heroes now wear deeper gear sooner, which more than made up for the lost levels, so the Guardians got stronger.
+
+**Each Undercroft Guardian has its own strength,** in place of the shared 60%: the Mouldering Warden 100%, the Iron Sexton 130%, the Knell Engine 135%, the Reliquary Engine 70%. Placeholders keep 60%. Act 1 needed nothing: it takes a median 4.0 hours.
+
+| Wall | Hours since the last | Level | Tries to the first kill | Verdict |
+|---|---|---|---|---|
+| Undercroft 1, poison | 2.2 | 17 | 4 | Pass |
+| Undercroft 2, physical | 3.2 | 19 | 4 | Pass |
+| Undercroft 3, the back Row | 2.7 | 21 | 4 | Pass |
+| Undercroft 4, armour and Curse | 0.5 | 22 | 2 | Fast |
+
+The Undercroft takes a median 8.6 hours, against about 12.
+
+**Wall 4 leans on the Hexer.** With a Hexer, the Reliquary Engine falls in under an hour at 70%. Without one, it takes about 2.5–3 hours at 70%, and at 80% it stalls for 15 hours or more. Halving its armour barely changed that, so the answer the Hexer brings isn't armour. No strength puts every Party at 2–4 hours, so 70% lets every Party through and leaves Wall 4 quick with a Hexer. The Party without one, Sin-Eater, Warrener, and Lamplighter, is the slowest through the Undercroft, at 12–15½ hours against 8.6, and is flagged a trap with its first Branches first.
+
+**Branch order matters at Wall 3.** Parties with a Lamplighter and a Hexer filling their first Branches beat the Knell Engine in under half an hour. With their second Branches first, they take about 3.
+
+**The economy at this pace:**
+
+- **Gold:** about 5,700 by hour 3, 22,000 by hour 6, 77,000 by hour 12, and 275,000 by hour 24. The steady player spends nearly all of it at the merchant, so prices bite.
+- **Salvage:** about 280 an hour with commons auto-salvaged, so a rare reroll costs about 3 minutes of Salvage. The Stash fills by about hour 8.
+- **Uniques:** a median 1 in 48 hours from Guardians, before gambles.
+- **Runs:** a median 17 minutes. 75% fall within 15–30.
+
+Saves stay at `SAVE_VERSION` 10. A Game saved before keeps the levels it earned.
+
 ## Questions for the human
+
+Answered on 2026-11-14: build as drafted. Building left two open, in [the playtest note](first-playable-playtest.md#open-questions): what to do about Wall 4 and the Hexer, and whether rerolls should cost more Salvage.
 
 1. **The balance player:** every Class, both Branches, 6 Slots, commons auto-salvaged, and merchant upgrades bought, but no respecs, rerolls, or gambles.
 2. **The Undercroft's pace:** each Wall 2–4 hours and rarely won on the first try, about 12 hours for the Undercroft.
