@@ -27,10 +27,8 @@ export const MATERIAL_FOXFIRE = 4;
 /** The road's verges: peat grass, and heather in bloom. */
 export const MATERIAL_HEATH = 5;
 export const MATERIAL_HEATHER = 6;
-/** Beyond the road's walls: moor ridges against the last of the light. Albedo is how much of it shows. */
-export const MATERIAL_SKY = 7;
 /** Violet ward-glass with a flame behind it, in a Waymarker or a Barrier Lamp. */
-export const MATERIAL_WARDGLASS = 8;
+export const MATERIAL_WARDGLASS = 7;
 
 export interface Flame {
   readonly x: number;

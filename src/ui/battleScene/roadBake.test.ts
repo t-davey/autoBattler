@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { FloorMapView } from '../../sim';
 import { ART_WIDTH, ORIGIN_Y, SCENE_WIDTH, UNITS_PER_PIXEL } from './iso';
 import { MATERIAL_FOXFIRE, MATERIAL_HEATH, MATERIAL_WARDGLASS, bakeRoom } from './roomBake';
-import { roomLookOf } from './roomLook';
+import { roomLookOf, type RoomLook } from './roomLook';
 
 const guardianFloor: FloorMapView = {
   width: 2,
@@ -40,5 +40,13 @@ describe('a Room on the lamp road', () => {
     expect(count(lit.material, MATERIAL_WARDGLASS)).toBeGreaterThan(0);
     expect(count(out.material, MATERIAL_WARDGLASS)).toBe(0);
     expect(count(lit.material, MATERIAL_FOXFIRE)).toBe(0);
+  });
+
+  it('draws a set piece in the scenery past the walls', () => {
+    const look = roomLookOf(guardianFloor, 5, 1);
+    const piece = (cells: RoomLook['surroundings']): number => bakeRoom({ ...look, surroundings: cells }, false).albedo.reduce((total, value) => total + value, 0);
+    const open = look.surroundings.map((cell) => ({ ...cell, piece: 'moor' as const }));
+    const withHut = open.map((cell) => (cell.dx === -1 && cell.dy === 0 ? { ...cell, piece: 'waystation' as const } : cell));
+    expect(piece(withHut)).toBeGreaterThan(piece(open));
   });
 });

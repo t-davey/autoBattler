@@ -29,6 +29,16 @@ export interface Waymarker {
 /** Where a Room is: the Undercroft's crypts, or Act 1's lamp road. Act 3 borrows the crypts until it has a look. */
 export type Setting = 'crypt' | 'road';
 
+/** Set pieces for the moor's empty cells around the lamp road. */
+export type ScenePiece = 'moor' | 'stones' | 'tarn' | 'waystation' | 'gibbet';
+
+/** One of the 8 cells of scenery around a Room's stage: extra canvas for the world, not another Room. */
+export interface Surrounding {
+  readonly dx: number;
+  readonly dy: number;
+  readonly piece: ScenePiece;
+}
+
 export interface RoomLook {
   /** The same Room always gets the same key and look. */
   readonly key: string;
@@ -43,6 +53,8 @@ export interface RoomLook {
   readonly foxfire: readonly number[];
   /** The road's Waymarkers. Empty in the crypts. */
   readonly waymarkers: readonly Waymarker[];
+  /** The scenery cells around the Room's stage. Empty in the crypts until they draw it. */
+  readonly surroundings: readonly Surrounding[];
 }
 
 const WALLS: readonly BackWall[] = ['backLeft', 'backRight'];
@@ -58,6 +70,8 @@ const WAYMARKER_LIT_LAST = 0.2;
 /** A lone source has to light the Room by itself. */
 const MINIMUM_ALONE = 4;
 const MINIMUM_TOGETHER = 2;
+/** How often each set piece fills an empty cell: open moor most. */
+const PIECES: readonly (readonly [ScenePiece, number])[] = [['moor', 0.35], ['waystation', 0.2], ['stones', 0.15], ['tarn', 0.15], ['gibbet', 0.15]];
 
 const SOURCE_MIXES = [
   { burners: true, candles: false, foxfire: false },
@@ -114,10 +128,30 @@ export function waymarkerLitChance(floorInAct: number): number {
   return WAYMARKER_LIT_FIRST + (WAYMARKER_LIT_LAST - WAYMARKER_LIT_FIRST) * deepness;
 }
 
-/** Decides a Room's ways through and light sources from its Floor layout alone. */
+/** Decides a Room's ways through, light sources, and the scenery around it from its Floor layout alone. */
 export function roomLookOf(map: FloorMapView, floor: Depth, index: number): RoomLook {
-  const room = map.rooms[index]!;
   const layoutSeed = map.rooms.reduce<number>((seed, { x, y }) => mix(mix(seed, x), y), floor);
+  const own = ownLookOf(map, floor, index, layoutSeed);
+  if (own.setting !== 'road') return own;
+  return { ...own, surroundings: surroundingsOf(mix(layoutSeed, index)) };
+}
+
+/** The 8 cells around a Room's stage, each with its own set piece. */
+function surroundingsOf(seed: number): Surrounding[] {
+  const cells: Surrounding[] = [];
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      let pick = roll(seed, 6, dx + 2, dy + 2);
+      const piece = PIECES.find(([, weight]) => (pick -= weight) < 0)?.[0] ?? 'moor';
+      cells.push({ dx, dy, piece });
+    }
+  }
+  return cells;
+}
+
+function ownLookOf(map: FloorMapView, floor: Depth, index: number, layoutSeed: number): RoomLook {
+  const room = map.rooms[index]!;
   const seed = mix(layoutSeed, index);
   const ways = waysOf(map, index);
   const sources = SOURCE_MIXES[Math.floor(roll(seed, 1) * SOURCE_MIXES.length)]!;
@@ -137,7 +171,7 @@ export function roomLookOf(map: FloorMapView, floor: Depth, index: number): Room
   const foxfire = sources.foxfire && setting === 'crypt' ? keep(patches, minimum, (patch) => roll(seed, 4, patch)) : [];
   const waymarkers = sources.foxfire && setting === 'road' ? waymarkersOf(seed, waymarkerLitChance(position.floor), minimum) : [];
 
-  return { key: `${floor}:${index}:${seed}`, setting, kind: room.kind, ways, burners, candles, foxfire, waymarkers };
+  return { key: `${floor}:${index}:${seed}`, setting, kind: room.kind, ways, burners, candles, foxfire, waymarkers, surroundings: [] };
 }
 
 /** Every spot holds a post. Each is lit on its own roll, and the brightest rolls light the minimum however deep the Floor. */

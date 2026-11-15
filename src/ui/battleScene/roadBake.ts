@@ -15,11 +15,10 @@ import {
   type Edge,
   type Point,
 } from './iso';
-import type { RoomLook, Way } from './roomLook';
+import type { RoomLook, ScenePiece, Way, Waymarker } from './roomLook';
 import {
   MATERIAL_HEATH,
   MATERIAL_HEATHER,
-  MATERIAL_SKY,
   MATERIAL_STONE,
   MATERIAL_WARDGLASS,
   MATERIAL_WATER,
@@ -42,19 +41,29 @@ const DRYSTONE_HEIGHT = 20;
 /** The walls fall to rubble before they reach the Room's side corners. */
 const WALL_END = 6.1;
 const WALL_RUBBLE = 0.8;
-/** How far the gloaming reaches above the horizon before the Dark takes it. */
-const GLOAMING_DEPTH = 34;
 /** The road's flagstones, then a stone-lined drainage channel either side. */
 const ROAD_HALF_WIDTH = 0.7;
 const CHANNEL_OUTER = 0.92;
 const KERB = 0.05;
 const GATE_HALF_WIDTH = 0.95;
-/** How far past the Room the heath runs before the Dark takes it, in tiles: further behind the walls than in front. */
-const FADE_FRONT = 1.5;
-const FADE_BACK = 2.2;
+/** How far past the Room the world runs before the Dark takes it all, in tiles. */
+const WORLD_FADE = 5.5;
+/** The scenery around the stage is a little dimmer than the stage. */
+const SCENERY_LIGHT = 0.8;
+/** Ordered thresholds for stippling the Dark's edge. */
+const STIPPLE = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]].map((row) => row.map((value) => value / 16));
 const LAMP_TOP = ORIGIN_Y - 48;
 const LAMP_GLASS_TOP = ORIGIN_Y - 44;
 const LAMP_GLASS_BOTTOM = ORIGIN_Y - 30;
+
+/** Where a set piece stands in a cell around the Room, in the Room's tiles, so it shows past the walls or below the Room. Cells off to the sides show none. */
+const PIECE_SPOTS: Readonly<Record<string, readonly [number, number]>> = {
+  '-1,0': [-1.9, 2.4],
+  '0,-1': [2.4, -1.9],
+  '0,1': [1.6, 8.7],
+  '1,0': [8.7, 1.6],
+  '-1,-1': [-1.7, -1.7],
+};
 
 /** Where each way meets its edge, and a point well past it, so the road runs on out of sight. */
 const WAY_TILES: Readonly<Record<Edge, readonly [number, number, number, number]>> = {
@@ -93,9 +102,6 @@ function fromSegment({ ax, ay, bx, by }: Segment, tx: number, ty: number): numbe
   return Math.hypot(ax + dx * t - tx, ay + dy * t - ty);
 }
 
-/** The far moor's skyline, level across the screen rather than along the Room's edges. In scene units from the top. */
-const horizonAt = (x: number): number => 34 + 7 * Math.sin(x * 0.011 + 1.3) + 4 * Math.sin(x * 0.029 + 0.4) + 1.5 * Math.sin(x * 0.083);
-
 /** How tall the drystone stands at a point along its edge: whole near the far corner, rubble towards the side corners. */
 function wallTop(wall: BackWall, along: number): number {
   const end = WALL_END + noise(wall === 'backLeft' ? 1 : 2, 9) * 0.4;
@@ -112,6 +118,7 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
   const flames: Flame[] = [];
   const warm: Light[] = [];
   const cold: Light[] = [];
+  // The road runs from each way to the middle, and on past each way out of sight.
   const segments: Segment[] = look.ways.flatMap((way) => {
     const [ex, ey, fx, fy] = WAY_TILES[way.edge];
     return [
@@ -119,6 +126,8 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
       { ax: ex, ay: ey, bx: MIDDLE, by: MIDDLE },
     ];
   });
+  /** Pixels the walls cover, so nothing behind them is drawn over them. */
+  const walled = new Uint8Array(PIXELS);
   const gapOn = (wall: BackWall): Way | undefined => look.ways.find((way) => way.edge === wall);
 
   const put = (point: Point, value: number, kind: number = MATERIAL_STONE): void => {
@@ -211,26 +220,17 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
         if (along < 0.08) value = 0.25;
         material[i] = MATERIAL_STONE;
         albedo[i] = value;
+        walled[i] = 1;
         continue;
       }
 
-      // The far moor: a skyline against the last of the light. Nothing on the ground stands above it.
-      const above = horizonAt(x) - y;
-      if (above > 0) {
-        if (above < GLOAMING_DEPTH) {
-          const glow = 1 - above / GLOAMING_DEPTH;
-          material[i] = MATERIAL_SKY;
-          albedo[i] = glow * glow;
-        }
-        continue;
-      }
-
-      // The heath runs on past the Room's edges and fades raggedly into the Dark.
-      const behind = Math.max(0, -tx, -ty);
-      const beyond = Math.max(0, tx - ROOM_TILES, ty - ROOM_TILES);
-      const ragged = behind + beyond > 0 ? (smoothNoise(tx * 2.2, ty * 2.2, 60) - 0.5) * 0.8 + (grain - 0.5) * 0.12 : 0;
-      const fade = Math.min(1, Math.max(0, 1 - behind / FADE_BACK - beyond / FADE_FRONT + ragged));
-      if (fade > 0.06) ground(i, px, py, tx, ty, fade * fade * (3 - 2 * fade));
+      // The scenery runs on past the stage, fading raggedly into the Dark with distance.
+      const outside = Math.max(0, -tx, -ty, tx - ROOM_TILES, ty - ROOM_TILES);
+      const ragged = outside > 0 ? (smoothNoise(tx * 1.6, ty * 1.6, 60) - 0.5) * 0.5 + (grain - 0.5) * 0.08 : 0;
+      const fade = Math.min(1, Math.max(0, 1 - outside / WORLD_FADE + ragged));
+      const light = fade * (outside > 0 ? SCENERY_LIGHT : 1);
+      // The edge of the Dark is stippled, as the pixel art's light is.
+      if (light > 0.04 + STIPPLE[py % 4]![px % 4]! * 0.16) ground(i, px, py, tx, ty, light * light * (3 - 2 * light));
     }
   }
 
@@ -328,22 +328,44 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
     if (lit) warm.push({ ...wallPoint(wall, WALL_WAY_AT, 20), radius: 100, strength: 0.6 });
   }
 
-  // Waymarkers: stone posts with a violet pane under an iron cap.
-  for (const marker of look.waymarkers) {
-    const foot = tilePoint(marker.tx, marker.ty);
+  /** Draws a pixel of the world around the Room, unless a wall stands in front of it. */
+  const putBehind = (px: number, py: number, value: number, kind: number = MATERIAL_STONE): void => {
+    if (px < 0 || py < 0 || px >= ART_WIDTH || py >= ART_HEIGHT || walled[py * ART_WIDTH + px]) return;
+    putPixel(px, py, value, kind);
+  };
+
+  /** A stone post with a violet pane under an iron cap. Dim scales the stone, not the pane's own light. */
+  const drawWaymarker = (marker: Waymarker, ox: number, oy: number, dim: number, draw: Draw): Point => {
+    const foot = tilePoint(marker.tx + ox, marker.ty + oy);
     const fx = Math.floor(foot.x / UNITS_PER_PIXEL);
     const fy = Math.floor(foot.y / UNITS_PER_PIXEL);
-    for (let dx = -2; dx <= 2; dx++) putPixel(fx + dx, fy, 0.3);
+    for (let dx = -2; dx <= 2; dx++) draw(fx + dx, fy, 0.3 * dim);
     for (let dy = 1; dy <= 11; dy++) {
-      putPixel(fx - 1, fy - dy, 0.78);
-      putPixel(fx, fy - dy, 0.62);
-      putPixel(fx + 1, fy - dy, 0.42);
+      draw(fx - 1, fy - dy, 0.78 * dim);
+      draw(fx, fy - dy, 0.62 * dim);
+      draw(fx + 1, fy - dy, 0.42 * dim);
     }
     for (let dy = 8; dy <= 10; dy++) {
-      for (let dx = -1; dx <= 1; dx++) putPixel(fx + dx, fy - dy, marker.lit ? (dx === -1 && dy === 10 ? 0.9 : 0.4) : 0.06, marker.lit ? MATERIAL_WARDGLASS : MATERIAL_STONE);
+      for (let dx = -1; dx <= 1; dx++) draw(fx + dx, fy - dy, marker.lit ? (dx === -1 && dy === 10 ? 0.9 : 0.4) : 0.06, marker.lit ? MATERIAL_WARDGLASS : MATERIAL_STONE);
     }
-    for (let dx = -2; dx <= 2; dx++) putPixel(fx + dx, fy - 12, 0.46);
-    for (let dx = -1; dx <= 1; dx++) putPixel(fx + dx, fy - 13, 0.36);
+    for (let dx = -2; dx <= 2; dx++) draw(fx + dx, fy - 12, 0.46 * dim);
+    for (let dx = -1; dx <= 1; dx++) draw(fx + dx, fy - 13, 0.36 * dim);
+    return foot;
+  };
+
+  // The scenery cells' set pieces.
+  for (const cell of look.surroundings) {
+    const spot = PIECE_SPOTS[`${cell.dx},${cell.dy}`];
+    if (!spot) continue;
+    const foot = tilePoint(spot[0], spot[1]);
+    drawPiece(cell.piece, Math.floor(foot.x / UNITS_PER_PIXEL), Math.floor(foot.y / UNITS_PER_PIXEL), SCENERY_LIGHT, putBehind);
+    // Night on the moor is never quite black: a set piece catches a little of the Act's violet.
+    cold.push({ x: foot.x, y: foot.y - 14, radius: 80, strength: 0.6 });
+  }
+
+  // The Room's own Waymarkers.
+  for (const marker of look.waymarkers) {
+    const foot = drawWaymarker(marker, 0, 0, 1, putPixel);
     if (marker.lit) cold.push({ x: foot.x, y: foot.y - 18, radius: 130, strength: 1 });
   }
 
@@ -375,4 +397,78 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
   }
 
   return { albedo, material, flames, coolTint: WARDGLASS_TINT, ...lightMaps(material, warm, cold) };
+}
+
+type Draw = (px: number, py: number, value: number, kind?: number) => void;
+
+/** Draws a set piece standing at a foot pixel. */
+function drawPiece(piece: ScenePiece, fx: number, fy: number, dim: number, draw: Draw): void {
+  const at = (dx: number, dy: number, value: number, kind?: number): void => draw(fx + dx, fy + dy, value * dim, kind);
+  switch (piece) {
+    case 'stones':
+      // Standing stones in a broken arc.
+      for (const [ox, tall, wide, lift] of [[-11, 7, 3, 0], [-5, 10, 3, -1], [1, 13, 4, -2], [8, 9, 3, -1], [13, 5, 3, 0]] as const) {
+        for (let dy = 0; dy < tall; dy++) {
+          for (let dx = 0; dx < wide; dx++) {
+            if (dy === tall - 1 && wide > 3 && (dx === 0 || dx === wide - 1)) continue;
+            at(ox + dx, lift - dy, dy === tall - 1 ? 0.85 : dx === 0 ? 0.72 : dx === wide - 1 ? 0.38 : 0.56);
+          }
+        }
+      }
+      return;
+    case 'tarn':
+      // A peaty pool, with reeds round its far rim.
+      for (let dy = -6; dy <= 6; dy++) {
+        for (let dx = -15; dx <= 15; dx++) {
+          const d = Math.hypot(dx / 15, dy / 6);
+          if (d > 1) continue;
+          if (d > 0.84) at(dx, dy, 0.3, MATERIAL_HEATH);
+          else at(dx, dy, 0.75, MATERIAL_WATER);
+        }
+      }
+      for (const [rx, tall] of [[-12, 4], [-9, 6], [-6, 5], [8, 5], [11, 7], [13, 4]] as const) {
+        for (let dy = 0; dy < tall; dy++) at(rx, -4 - dy, 0.62, MATERIAL_HEATH);
+      }
+      return;
+    case 'waystation':
+      // A stone hut under slate, with lamp oil tins stacked by the door.
+      for (let dy = 0; dy <= 9; dy++) for (let dx = -8; dx <= 8; dx++) at(dx, -dy, dx < 0 ? 0.66 : 0.48);
+      for (let row = 0; row < 4; row++) for (let dx = -10 + row; dx <= 10 - row; dx++) at(dx, -10 - row, row === 0 ? 0.5 : 0.32);
+      for (let dy = 14; dy <= 16; dy++) for (let dx = 5; dx <= 6; dx++) at(dx, -dy, 0.4);
+      for (let dy = 0; dy <= 5; dy++) for (let dx = -3; dx <= -1; dx++) at(dx, -dy, 0.04);
+      for (const [ox, oy] of [[10, 0], [12, 0], [14, 0], [11, -2], [13, -2], [12, -4]] as const) {
+        at(ox, oy, 0.95);
+        at(ox + 1, oy, 0.7);
+        at(ox, oy - 1, 0.8);
+        at(ox + 1, oy - 1, 0.6);
+      }
+      return;
+    case 'gibbet':
+      // A gibbet at a crossroads: post, arm, and an empty cage on its chain.
+      for (let dx = -3; dx <= 3; dx++) at(dx, 0, 0.3);
+      for (let dy = 1; dy <= 24; dy++) {
+        at(0, -dy, 0.55);
+        at(1, -dy, 0.36);
+      }
+      for (let dx = 0; dx <= 9; dx++) at(dx, -24, 0.55);
+      for (let k = 1; k <= 3; k++) at(1 + k, -20 - k, 0.45);
+      for (let dy = 21; dy <= 23; dy++) at(8, -dy, 0.4);
+      for (let dy = 13; dy <= 20; dy++) {
+        for (let dx = 6; dx <= 10; dx++) {
+          if (dx === 6 || dx === 10 || dx === 8 || dy === 13 || dy === 20) at(dx, -dy, 0.5);
+        }
+      }
+      return;
+    case 'moor':
+      // Open moor: a few boulders in the heath.
+      for (const [ox, oy, wide, tall] of [[-7, 0, 5, 3], [4, 2, 4, 3], [9, -1, 3, 2]] as const) {
+        for (let dy = 0; dy < tall; dy++) {
+          for (let dx = 0; dx < wide; dx++) {
+            if (dy === tall - 1 && (dx === 0 || dx === wide - 1)) continue;
+            at(ox + dx, oy - dy, dy === tall - 1 ? 0.8 : dx === 0 ? 0.62 : 0.42);
+          }
+        }
+      }
+      return;
+  }
 }

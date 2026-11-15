@@ -82,6 +82,25 @@ describe('the lamp road', () => {
   });
 });
 
+describe('the scenery around a stage on the road', () => {
+  const look = roomLookOf(corridor, 2, 5);
+
+  it('fills the 8 cells around the stage with set pieces', () => {
+    expect(look.surroundings).toHaveLength(8);
+    expect(new Set(look.surroundings.map((cell) => `${cell.dx},${cell.dy}`)).size).toBe(8);
+  });
+
+  it('stays the same for the same Room, and varies between Rooms', () => {
+    expect(roomLookOf(corridor, 2, 5).surroundings).toEqual(look.surroundings);
+    const pieces = new Set(looksAt(2).flatMap((each) => each.surroundings.map((cell) => cell.piece)));
+    expect(pieces.size).toBe(5);
+  });
+
+  it('leaves the crypts of the Undercroft as they are', () => {
+    expect(looksAt(22).every((each) => each.surroundings.length === 0)).toBe(true);
+  });
+});
+
 describe('the ways through a Room', () => {
   const facing = { backLeft: 'frontRight', frontRight: 'backLeft', backRight: 'frontLeft', frontLeft: 'backRight' } as const;
 
