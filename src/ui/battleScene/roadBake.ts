@@ -8,7 +8,6 @@ import {
   TILE_HALF_HEIGHT,
   TILE_HALF_WIDTH,
   UNITS_PER_PIXEL,
-  WALL_HEIGHT,
   WALL_WAY_AT,
   tilePoint,
   wallPoint,
@@ -25,7 +24,6 @@ import {
   MATERIAL_WARDGLASS,
   MATERIAL_WATER,
   PIXELS,
-  cutFrontWay,
   lightMaps,
   noise,
   sceneX,
@@ -41,19 +39,29 @@ const WARDGLASS_TINT: CoolTint = { stone: [70, 38, 98], water: [76, 42, 108], un
 
 /** The drystone walls stand low, so the moor shows over them. */
 const DRYSTONE_HEIGHT = 20;
-/** How far the gloaming reaches above the ridges before the Dark takes it. */
-const GLOAMING_DEPTH = 30;
-const ROAD_HALF_WIDTH = 1.05;
-const GATE_HALF_WIDTH = 0.62;
+/** The walls fall to rubble before they reach the Room's side corners. */
+const WALL_END = 6.1;
+const WALL_RUBBLE = 0.8;
+/** How far the gloaming reaches above the horizon before the Dark takes it. */
+const GLOAMING_DEPTH = 34;
+/** The road's flagstones, then a stone-lined drainage channel either side. */
+const ROAD_HALF_WIDTH = 0.7;
+const CHANNEL_OUTER = 0.92;
+const KERB = 0.05;
+const GATE_HALF_WIDTH = 0.95;
+/** How far past the Room the heath runs before the Dark takes it, in tiles: further behind the walls than in front. */
+const FADE_FRONT = 1.5;
+const FADE_BACK = 2.2;
 const LAMP_TOP = ORIGIN_Y - 48;
 const LAMP_GLASS_TOP = ORIGIN_Y - 44;
 const LAMP_GLASS_BOTTOM = ORIGIN_Y - 30;
 
-const WAY_TILES: Readonly<Record<Edge, readonly [number, number]>> = {
-  backLeft: [0, WALL_WAY_AT],
-  backRight: [WALL_WAY_AT, 0],
-  frontLeft: [FRONT_WAY_AT, ROOM_TILES],
-  frontRight: [ROOM_TILES, FRONT_WAY_AT],
+/** Where each way meets its edge, and a point well past it, so the road runs on out of sight. */
+const WAY_TILES: Readonly<Record<Edge, readonly [number, number, number, number]>> = {
+  backLeft: [0, WALL_WAY_AT, -3, WALL_WAY_AT],
+  backRight: [WALL_WAY_AT, 0, WALL_WAY_AT, -3],
+  frontLeft: [FRONT_WAY_AT, ROOM_TILES, FRONT_WAY_AT, ROOM_TILES + 3],
+  frontRight: [ROOM_TILES, FRONT_WAY_AT, ROOM_TILES + 3, FRONT_WAY_AT],
 };
 const MIDDLE = ROOM_TILES / 2;
 
@@ -64,20 +72,38 @@ interface Segment {
   readonly by: number;
 }
 
-/** How far a tile point is from a segment, and which side of it, in tiles. */
-function fromSegment({ ax, ay, bx, by }: Segment, tx: number, ty: number): { distance: number; side: number } {
+/** Value noise that varies smoothly between whole points, for edges that shouldn't step. */
+function smoothNoise(u: number, v: number, salt: number): number {
+  const iu = Math.floor(u);
+  const iv = Math.floor(v);
+  const fu = u - iu;
+  const fv = v - iv;
+  const su = fu * fu * (3 - 2 * fu);
+  const sv = fv * fv * (3 - 2 * fv);
+  const top = noise(iu, iv + salt) * (1 - su) + noise(iu + 1, iv + salt) * su;
+  const bottom = noise(iu, iv + 1 + salt) * (1 - su) + noise(iu + 1, iv + 1 + salt) * su;
+  return top * (1 - sv) + bottom * sv;
+}
+
+/** How far a tile point is from a segment, in tiles. */
+function fromSegment({ ax, ay, bx, by }: Segment, tx: number, ty: number): number {
   const dx = bx - ax;
   const dy = by - ay;
   const t = Math.max(0, Math.min(1, ((tx - ax) * dx + (ty - ay) * dy) / (dx * dx + dy * dy)));
-  const px = ax + dx * t - tx;
-  const py = ay + dy * t - ty;
-  const length = Math.hypot(dx, dy);
-  return { distance: Math.hypot(px, py), side: (dx * (ty - ay) - dy * (tx - ax)) / length };
+  return Math.hypot(ax + dx * t - tx, ay + dy * t - ty);
 }
 
-/** Where the moor's ridges stand above a back edge, as a height over the floor. */
-const ridgeAt = (wall: BackWall, along: number): number =>
-  36 + 8 * Math.sin(along * 0.85 + (wall === 'backLeft' ? 1.2 : 4.1)) + 4 * Math.sin(along * 2.3 + 0.7) + 1.5 * Math.sin(along * 7.1);
+/** The far moor's skyline, level across the screen rather than along the Room's edges. In scene units from the top. */
+const horizonAt = (x: number): number => 34 + 7 * Math.sin(x * 0.011 + 1.3) + 4 * Math.sin(x * 0.029 + 0.4) + 1.5 * Math.sin(x * 0.083);
+
+/** How tall the drystone stands at a point along its edge: whole near the far corner, rubble towards the side corners. */
+function wallTop(wall: BackWall, along: number): number {
+  const end = WALL_END + noise(wall === 'backLeft' ? 1 : 2, 9) * 0.4;
+  const coping = DRYSTONE_HEIGHT + (noise(Math.floor(along * 6), 3) > 0.5 ? 2 : 0);
+  if (along < end - WALL_RUBBLE) return coping;
+  const left = Math.max(0, (end - along) / WALL_RUBBLE);
+  return coping * left * (0.6 + noise(Math.floor(along * 9), 17) * 0.4);
+}
 
 /** Bakes a Room on the lamp road: flagstones from way to way across heath, low drystone walls, and the moor beyond. */
 export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
@@ -86,9 +112,12 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
   const flames: Flame[] = [];
   const warm: Light[] = [];
   const cold: Light[] = [];
-  const segments: Segment[] = look.ways.map((way) => {
-    const [ax, ay] = WAY_TILES[way.edge];
-    return { ax, ay, bx: MIDDLE, by: MIDDLE };
+  const segments: Segment[] = look.ways.flatMap((way) => {
+    const [ex, ey, fx, fy] = WAY_TILES[way.edge];
+    return [
+      { ax: fx, ay: fy, bx: ex, by: ey },
+      { ax: ex, ay: ey, bx: MIDDLE, by: MIDDLE },
+    ];
   });
   const gapOn = (wall: BackWall): Way | undefined => look.ways.find((way) => way.edge === wall);
 
@@ -110,6 +139,49 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
     flames.push({ x: Math.floor(point.x / UNITS_PER_PIXEL), y: Math.floor(point.y / UNITS_PER_PIXEL), big });
   };
 
+  /** The ground at a tile point, inside the Room or past it: road, channel, or heath. */
+  const ground = (i: number, px: number, py: number, tx: number, ty: number, fade: number): void => {
+    const grain = noise(px, py);
+    const distance = segments.reduce((nearest, segment) => Math.min(nearest, fromSegment(segment, tx, ty)), Infinity);
+    if (distance < ROAD_HALF_WIDTH) {
+      const u = tx * 2.4;
+      const v = ty * 2.4 + (Math.floor(u) % 2) * 0.5;
+      const fu = u - Math.floor(u);
+      const fv = v - Math.floor(v);
+      if (fu < 0.1 || fv < 0.1) {
+        // Grass grows up between the flags.
+        material[i] = MATERIAL_HEATH;
+        albedo[i] = (0.35 + grain * 0.2) * fade;
+        return;
+      }
+      let value = 0.6 + noise(Math.floor(u), Math.floor(v) + 7) * 0.3 + (grain - 0.5) * 0.12;
+      if (fu < 0.18 || fv < 0.18) value *= 1.1;
+      // The crown sheds rain to the channels, so the flags darken towards the edges.
+      value *= 1 - (distance / ROAD_HALF_WIDTH) * 0.18;
+      material[i] = MATERIAL_STONE;
+      albedo[i] = value * fade;
+      return;
+    }
+    if (distance < CHANNEL_OUTER) {
+      // A drainage channel: dressed kerbstones either side, running water between.
+      const across = distance - ROAD_HALF_WIDTH;
+      const kerb = across < KERB || across > CHANNEL_OUTER - ROAD_HALF_WIDTH - KERB;
+      material[i] = kerb ? MATERIAL_STONE : MATERIAL_WATER;
+      albedo[i] = (kerb ? 0.78 + grain * 0.12 : 0.7 + grain * 0.12) * fade;
+      return;
+    }
+    // Heath: peat grass in tufts, heather in clumps.
+    const clump = noise(Math.floor(tx * 1.6 + 20), Math.floor(ty * 1.6) + 90);
+    if (clump > 0.45 && grain > 0.7 - (clump - 0.45) * 0.6) {
+      material[i] = MATERIAL_HEATHER;
+      albedo[i] = (0.6 + noise(px + 3, py) * 0.4) * fade;
+      return;
+    }
+    const tuft = noise(Math.floor(px / 2), py);
+    material[i] = MATERIAL_HEATH;
+    albedo[i] = (0.5 + tuft * 0.3 + (grain - 0.5) * 0.15 - (py % 2 ? 0 : 0.04)) * fade;
+  };
+
   for (let py = 0; py < ART_HEIGHT; py++) {
     for (let px = 0; px < ART_WIDTH; px++) {
       const i = py * ART_WIDTH + px;
@@ -121,100 +193,44 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
       const ty = (b - a) / 2;
       const grain = noise(px, py);
 
-      if (tx >= 0 && ty >= 0 && tx < ROOM_TILES && ty < ROOM_TILES) {
-        const near = segments.map((segment) => fromSegment(segment, tx, ty)).sort((p, q) => p.distance - q.distance)[0];
-        const ragged = (noise(Math.floor(tx * 6), Math.floor(ty * 6)) - 0.5) * 0.3;
-        if (near && near.distance < ROAD_HALF_WIDTH + ragged) {
-          // Cart ruts run either side of the crown, and hold rainwater.
-          const inRut = Math.abs(Math.abs(near.side) - 0.48) < 0.09;
-          if (inRut && noise(Math.floor(tx * 3), Math.floor(ty * 3) + 40) > 0.62) {
-            material[i] = MATERIAL_WATER;
-            albedo[i] = 0.75 + grain * 0.1;
-            continue;
-          }
-          const u = tx * 2.4;
-          const v = ty * 2.4 + (Math.floor(u) % 2) * 0.5;
-          const fu = u - Math.floor(u);
-          const fv = v - Math.floor(v);
-          const stone = noise(Math.floor(u), Math.floor(v) + 7);
-          let value = 0.6 + stone * 0.3 + (grain - 0.5) * 0.12;
-          if (fu < 0.1 || fv < 0.1) {
-            // Grass grows up between the flags.
-            material[i] = MATERIAL_HEATH;
-            albedo[i] = 0.35 + grain * 0.2;
-            continue;
-          }
-          if (inRut) value *= 0.62;
-          else if (fu < 0.18 || fv < 0.18) value *= 1.1;
-          material[i] = MATERIAL_STONE;
-          albedo[i] = value;
-          continue;
-        }
-        // Heath: peat grass in tufts, heather in clumps.
-        const clump = noise(Math.floor(tx * 1.6), Math.floor(ty * 1.6) + 90);
-        if (clump > 0.45 && grain > 0.7 - (clump - 0.45) * 0.6) {
-          material[i] = MATERIAL_HEATHER;
-          albedo[i] = 0.6 + noise(px + 3, py) * 0.4;
-          continue;
-        }
-        const tuft = noise(Math.floor(px / 2), py);
-        material[i] = MATERIAL_HEATH;
-        albedo[i] = 0.5 + tuft * 0.3 + (grain - 0.5) * 0.15 - (py % 2 ? 0 : 0.04);
-        continue;
-      }
-
-      // The front bank: the road's earth cut away where the Room ends.
-      const slabB = (y - 10 - ORIGIN_Y) / TILE_HALF_HEIGHT;
-      const slabX = (a + slabB) / 2;
-      const slabY = (slabB - a) / 2;
-      if (slabX >= 0 && slabY >= 0 && slabX < ROOM_TILES && slabY < ROOM_TILES && b > 0) {
-        material[i] = MATERIAL_HEATH;
-        albedo[i] = 0.2 + grain * 0.08 - (Math.floor(y / 5) % 2 ? 0 : 0.05);
-        continue;
-      }
-
+      // A drystone wall along each back edge, broken by its gate and falling to rubble at its end.
       const along = Math.abs(a);
       const wall: BackWall = a < 0 ? 'backLeft' : 'backRight';
       const height = ORIGIN_Y + along * TILE_HALF_HEIGHT - y;
-      if (along >= ROOM_TILES || height <= 0) continue;
-      const shade = a < 0 ? 1 : 0.8;
-      const ridge = ridgeAt(wall, along);
-      const gap = gapOn(wall);
-      const inGap = gap !== undefined && Math.abs(along - WALL_WAY_AT) < GATE_HALF_WIDTH;
-      const course = Math.floor(height / 5);
-      const coping = DRYSTONE_HEIGHT + (noise(Math.floor(along * 6), 3) > 0.5 ? 2 : 0);
-
-      if (!inGap && height < coping) {
-        // Drystone: uneven courses of field stone, no mortar.
+      const inGap = gapOn(wall) !== undefined && Math.abs(along - WALL_WAY_AT) < GATE_HALF_WIDTH;
+      const top = along < ROOM_TILES ? wallTop(wall, along) : 0;
+      if (height > 0 && !inGap && height < top) {
+        // Uneven courses of field stone, no mortar.
+        const shade = a < 0 ? 1 : 0.8;
+        const course = Math.floor(height / 5);
+        const width = 9 + noise(course, 5) * 5;
         const run = along * TILE_HALF_WIDTH + course * 7 + noise(course, 11) * 6;
-        const stone = Math.floor(run / (9 + noise(course, 5) * 5));
-        let value = (0.42 + noise(stone, course) * 0.34 + (grain - 0.5) * 0.1) * shade;
-        if (height % 5 < 1.2 || run % (9 + noise(course, 5) * 5) < 1.3) value = 0.12;
-        if (height > coping - 3) value = (0.7 + noise(Math.floor(along * 6), 4) * 0.2) * shade;
+        let value = (0.42 + noise(Math.floor(run / width), course) * 0.34 + (grain - 0.5) * 0.1) * shade;
+        if (height % 5 < 1.2 || run % width < 1.3) value = 0.12;
+        if (height > top - 3) value = (0.7 + noise(Math.floor(along * 6), 4) * 0.2) * shade;
         if (along < 0.08) value = 0.25;
         material[i] = MATERIAL_STONE;
         albedo[i] = value;
         continue;
       }
-      if (inGap && height < ridge - 6) {
-        // The road runs on through the gate and away into the dark.
-        const fade = Math.max(0, 1 - height / 26);
-        const fromMiddle = Math.abs(along - WALL_WAY_AT);
-        const onRoad = fromMiddle < 0.45 - height * 0.006;
-        material[i] = onRoad ? MATERIAL_STONE : MATERIAL_HEATH;
-        albedo[i] = (onRoad ? 0.6 + noise(px, Math.floor(height / 3)) * 0.2 : 0.35 + grain * 0.15) * fade;
-        if (fade <= 0) material[i] = MATERIAL_SKY;
+
+      // The far moor: a skyline against the last of the light. Nothing on the ground stands above it.
+      const above = horizonAt(x) - y;
+      if (above > 0) {
+        if (above < GLOAMING_DEPTH) {
+          const glow = 1 - above / GLOAMING_DEPTH;
+          material[i] = MATERIAL_SKY;
+          albedo[i] = glow * glow;
+        }
         continue;
       }
-      if (height < ridge) {
-        material[i] = MATERIAL_SKY;
-        albedo[i] = 0;
-        continue;
-      }
-      const glow = 1 - (height - ridge) / GLOAMING_DEPTH;
-      if (glow <= 0 || height > WALL_HEIGHT + 20) continue;
-      material[i] = MATERIAL_SKY;
-      albedo[i] = glow * glow;
+
+      // The heath runs on past the Room's edges and fades raggedly into the Dark.
+      const behind = Math.max(0, -tx, -ty);
+      const beyond = Math.max(0, tx - ROOM_TILES, ty - ROOM_TILES);
+      const ragged = behind + beyond > 0 ? (smoothNoise(tx * 2.2, ty * 2.2, 60) - 0.5) * 0.8 + (grain - 0.5) * 0.12 : 0;
+      const fade = Math.min(1, Math.max(0, 1 - behind / FADE_BACK - beyond / FADE_FRONT + ragged));
+      if (fade > 0.06) ground(i, px, py, tx, ty, fade * fade * (3 - 2 * fade));
     }
   }
 
@@ -238,7 +254,10 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
   }
 
   // Wayside shrines: a niche in the drystone with tallow stubs.
-  for (const { wall, at } of look.candles) {
+  for (const { wall, at: spot } of look.candles) {
+    // A shrine beside a gate steps aside, clear of its gatepost.
+    const besideGate = gapOn(wall) !== undefined && Math.abs(spot - WALL_WAY_AT) < GATE_HALF_WIDTH + 0.3;
+    const at = besideGate ? spot + Math.sign(spot - WALL_WAY_AT) * 0.35 : spot;
     for (let height = 3; height <= 17; height++) {
       for (let offset = -0.2; offset <= 0.2; offset += 0.014) {
         const fromMiddle = Math.abs(offset) * TILE_HALF_WIDTH;
@@ -255,11 +274,20 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
 
   for (const way of look.ways) {
     if (way.edge === 'frontLeft' || way.edge === 'frontRight') {
-      cutFrontWay(way, albedo, material);
       if (way.role !== 'out') continue;
       // The way out is always lit, so the Room always shows where the Party is heading.
       const along = (offset: number): Point => (way.edge === 'frontRight' ? tilePoint(ROOM_TILES + 0.05, FRONT_WAY_AT + offset) : tilePoint(FRONT_WAY_AT + offset, ROOM_TILES + 0.05));
-      for (const offset of [-0.62, 0.62]) {
+      if (way.kind === 'stairs') {
+        // A milestone beside the road where it runs on.
+        const stone = along(1.45);
+        for (let height = 0; height <= 12; height++) {
+          for (let side = -3; side <= 3; side++) {
+            if (height > 9 && Math.abs(side) > 1) continue;
+            put({ x: stone.x + side * 2, y: stone.y - height }, side > 1 ? 0.5 : 0.78);
+          }
+        }
+      }
+      for (const offset of [-1.1, 1.1]) {
         const foot = along(offset);
         for (let height = 0; height < 18; height++) {
           put({ x: foot.x, y: foot.y - height }, 0.7);
