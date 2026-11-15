@@ -1,9 +1,14 @@
 import { CHEST_SPRITES, LANTERNS, RAMPS, SPRITES, WEAPONS, type Rgb } from './art';
 import { ART_HEIGHT, ART_WIDTH, ORIGIN_Y, UNITS_PER_PIXEL, formationPoint } from './iso';
-import { MATERIAL_FOXFIRE, MATERIAL_LAMP, MATERIAL_VOID, MATERIAL_WATER, noise, type BakedRoom } from './roomBake';
+import { MATERIAL_FOXFIRE, MATERIAL_HEATH, MATERIAL_HEATHER, MATERIAL_LAMP, MATERIAL_SKY, MATERIAL_VOID, MATERIAL_WARDGLASS, MATERIAL_WATER, noise, type BakedRoom } from './roomBake';
 import { NUMBER_SECONDS, type SceneFrame, type UnitFrame } from './scene';
 
 const STONE: readonly Rgb[] = [[14, 15, 24], [25, 26, 38], [38, 37, 50], [54, 48, 58], [74, 60, 60], [98, 76, 64], [128, 96, 72], [160, 122, 86], [194, 154, 106]];
+/** The lamp road's verges: peat grass, and heather that shows violet in the light. */
+const HEATH: readonly Rgb[] = [[12, 12, 16], [19, 20, 22], [27, 29, 26], [37, 39, 30], [50, 50, 36], [66, 62, 42], [86, 78, 52], [110, 96, 64], [138, 118, 80]];
+const HEATHER: readonly Rgb[] = [[14, 10, 18], [24, 16, 30], [36, 24, 44], [52, 34, 60], [70, 46, 80], [92, 60, 102], [118, 80, 126], [146, 104, 152], [178, 134, 182]];
+/** Ridge silhouettes, then the gloaming above them fading into the Dark. */
+const GLOAMING: readonly Rgb[] = [[7, 6, 11], [13, 10, 20], [21, 15, 32], [31, 21, 46], [42, 28, 62], [54, 36, 78]];
 const WATER: readonly Rgb[] = [[10, 18, 28], [14, 28, 40], [20, 40, 50], [28, 54, 60], [44, 70, 68], [76, 88, 72], [128, 110, 76], [204, 158, 92], [250, 210, 130]];
 const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]] as const;
 const OUTLINE: Rgb = [10, 10, 16];
@@ -140,6 +145,21 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
         continue;
       }
       const albedo = room.albedo[i]!;
+      if (material === MATERIAL_SKY) {
+        const dither = BAYER[py % 4]![px % 4]! / 16 - 0.47;
+        const colour = GLOAMING[clamp(Math.floor(albedo * (GLOAMING.length - 1) + dither * 0.9 + 0.5), 0, GLOAMING.length - 1)]!;
+        buffer[o] = colour[0];
+        buffer[o + 1] = colour[1];
+        buffer[o + 2] = colour[2];
+        continue;
+      }
+      if (material === MATERIAL_WARDGLASS) {
+        const colour: Rgb = albedo > 0.55 ? [226, 204, 255] : [168, 140, 214];
+        buffer[o] = colour[0] * pulse;
+        buffer[o + 1] = colour[1] * pulse;
+        buffer[o + 2] = colour[2] * pulse;
+        continue;
+      }
       if (material === MATERIAL_FOXFIRE) {
         const colour: Rgb = albedo > 0.55 ? [150, 236, 204] : [74, 176, 164];
         buffer[o] = colour[0] * pulse;
@@ -154,15 +174,18 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
         const ripple = Math.sin(x * 0.09 + y * 0.32 + time * 1.6) * 0.5 + Math.sin(x * 0.04 - y * 0.2 - time) * 0.5;
         const colour = WATER[clamp(Math.floor(light * albedo * 8.6 + ripple * 0.55 + dither * 0.7), 0, 8)]!;
         const coldShare = albedo * 1.3;
-        buffer[o] = colour[0] + cold * 18 * coldShare;
-        buffer[o + 1] = colour[1] + cold * 78 * coldShare;
-        buffer[o + 2] = colour[2] + cold * 84 * coldShare;
+        const tint = room.coolTint.water;
+        buffer[o] = colour[0] + cold * tint[0] * coldShare;
+        buffer[o + 1] = colour[1] + cold * tint[1] * coldShare;
+        buffer[o + 2] = colour[2] + cold * tint[2] * coldShare;
         continue;
       }
-      const colour = STONE[clamp(Math.floor(light * albedo * 10.5 + dither * 0.8), 0, 8)]!;
-      buffer[o] = colour[0] + cold * 16 * albedo;
-      buffer[o + 1] = colour[1] + cold * 66 * albedo;
-      buffer[o + 2] = colour[2] + cold * 68 * albedo;
+      const ramp = material === MATERIAL_HEATH ? HEATH : material === MATERIAL_HEATHER ? HEATHER : STONE;
+      const colour = ramp[clamp(Math.floor(light * albedo * 10.5 + dither * 0.8), 0, 8)]!;
+      const tint = room.coolTint.stone;
+      buffer[o] = colour[0] + cold * tint[0] * albedo;
+      buffer[o + 1] = colour[1] + cold * tint[1] * albedo;
+      buffer[o + 2] = colour[2] + cold * tint[2] * albedo;
     }
   }
 
@@ -236,7 +259,7 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
       else if (pixel.material === 'glow' || pixel.material === 'eye') put(x, y, Math.sin(time * 4 + pixel.x * 1.7) > 0.2 ? [255, 246, 200] : [255, 206, 110]);
       else {
         const colour = RAMPS[pixel.material][clamp(pixel.shade + step, 0, 5)]!;
-        put(x, y, [colour[0] + cold * 10, colour[1] + cold * 36, colour[2] + cold * 40]);
+        put(x, y, [colour[0] + cold * room.coolTint.unit[0], colour[1] + cold * room.coolTint.unit[1], colour[2] + cold * room.coolTint.unit[2]]);
       }
     }
   }
@@ -274,7 +297,7 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
         put(x, y, unit.flash);
       } else {
         const colour = RAMPS[pixel.material][clamp(pixel.shade + step, 0, 5)]!;
-        put(x, y, [colour[0] + cold * 10, colour[1] + cold * 36, colour[2] + cold * 40]);
+        put(x, y, [colour[0] + cold * room.coolTint.unit[0], colour[1] + cold * room.coolTint.unit[1], colour[2] + cold * room.coolTint.unit[2]]);
       }
     }
     drawWeapon(put, unit, cx, cy + hop, step);

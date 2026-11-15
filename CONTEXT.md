@@ -304,6 +304,10 @@ _Avoid_: Votive
 The cold glow of fungal growth in the Undercroft.
 _Avoid_: Glowshroom
 
+**Waymarker**:
+A stone post along Act 1's lamp road, with an Oil wick behind violet ward-glass. It gives light but doesn't hold back the Dark, as a Lamp does.
+_Avoid_: Wardpost, lamp post, Lamp
+
 **Town Council**:
 The body that sends Parties out to relight Lamps.
 _Avoid_: Synod

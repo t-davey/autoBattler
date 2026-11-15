@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { advance, createGame, viewGame, type FloorMapView, type Depth } from '../../sim';
-import { roomLookOf } from './roomLook';
+import { roomLookOf, waymarkerLitChance, type RoomLook } from './roomLook';
 
 /** A real layout, read from a Game when it first reaches a Floor. */
 function mapOf(seed: number): { map: FloorMapView; floor: Depth } {
@@ -17,6 +17,17 @@ const rooms = Array.from({ length: 60 }, (_, seed) => mapOf(seed + 1)).flatMap((
   map.rooms.map((_, index) => ({ map, floor, index, look: roomLookOf(map, floor, index) })),
 );
 
+/** Foxfire in the crypts, lit Waymarkers on the road: the cold light, however it shows. */
+const coldSources = (look: RoomLook): number => look.foxfire.length + look.waymarkers.filter((marker) => marker.lit).length;
+
+/** A long corridor of Rooms, so a Floor yields many looks. */
+const corridor: FloorMapView = {
+  width: 400,
+  height: 1,
+  rooms: Array.from({ length: 400 }, (_, x) => ({ x, y: 0, kind: 'battle' as const, state: 'current' as const })),
+};
+const looksAt = (floor: number): RoomLook[] => corridor.rooms.map((_, index) => roomLookOf(corridor, floor, index));
+
 describe('a Room look', () => {
   it('stays the same for the same Room', () => {
     const { map, floor, index, look } = rooms[3]!;
@@ -26,14 +37,14 @@ describe('a Room look', () => {
   it('always has a light source, and enough of it', () => {
     for (const { look } of rooms) {
       const lit = look.burners.filter((burner) => burner.lit).length;
-      const sources = [lit, look.candles.length, look.foxfire.length].filter((count) => count > 0);
+      const sources = [lit, look.candles.length, coldSources(look)].filter((count) => count > 0);
       expect(sources.length).toBeGreaterThan(0);
       expect(Math.min(...sources)).toBeGreaterThanOrEqual(sources.length === 1 ? 4 : 2);
     }
   });
 
   it('varies between Rooms', () => {
-    const mixes = new Set(rooms.map(({ look }) => `${look.burners.length > 0}${look.candles.length > 0}${look.foxfire.length > 0}`));
+    const mixes = new Set(rooms.map(({ look }) => `${look.burners.length > 0}${look.candles.length > 0}${coldSources(look) > 0}`));
     expect(mixes.size).toBe(7);
   });
 
@@ -43,6 +54,31 @@ describe('a Room look', () => {
         expect(look.burners.some((burner) => burner.wall === way.edge && burner.at === 4)).toBe(false);
       }
     }
+  });
+});
+
+describe('the lamp road', () => {
+  it('is where Act 1 is, and the Undercroft keeps its crypts', () => {
+    expect(looksAt(1).every((look) => look.setting === 'road')).toBe(true);
+    const undercroft = looksAt(21);
+    expect(undercroft.every((look) => look.setting === 'crypt' && look.waymarkers.length === 0)).toBe(true);
+    expect(undercroft.some((look) => look.foxfire.length > 0)).toBe(true);
+  });
+
+  it('lights its Rooms with Waymarkers in place of Foxfire', () => {
+    const road = looksAt(1);
+    expect(road.every((look) => look.foxfire.length === 0)).toBe(true);
+    expect(road.some((look) => look.waymarkers.length > 0)).toBe(true);
+  });
+
+  it('has fewer Waymarkers lit the deeper the Floor', () => {
+    const litShare = (floor: number): number => {
+      const markers = looksAt(floor).flatMap((look) => look.waymarkers);
+      return markers.filter((marker) => marker.lit).length / markers.length;
+    };
+    expect(waymarkerLitChance(1)).toBeGreaterThan(waymarkerLitChance(20));
+    expect(litShare(1)).toBeGreaterThan(litShare(10));
+    expect(litShare(10)).toBeGreaterThan(litShare(20));
   });
 });
 

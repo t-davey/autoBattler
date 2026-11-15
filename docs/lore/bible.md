@@ -105,11 +105,14 @@ The spigots are the physical detail that carries this. They read as plumbing on 
 - **A Room:** worn flagstones across the Room, heather and peat grass on the verges, and rainwater in the cart ruts. Low drystone walls and hedgerow stand where the Undercroft has walls. Beyond them, moor ridges show against a faint violet band of sky, then the Dark.
 - **Ways:** a door is a stile or field gate. Stairs are the road running on past a milestone.
 - **Ward-glass:** the Barrier Lamps burn ordinary Oil behind violet lenses, so a lit Barrier Lamp throws violet light. Relighting one floods its Room violet. This is the Battle scene's light only, and [the palette's](../design.md#palette) rule that flame never tints still holds.
-- **Light in a Room:** waystation lanterns (Oil, amber) and wayside shrines (tallow stubs in a wall niche, rhyming with the Undercroft's candles).
+- **Light in a Room:** waystation lanterns (Oil, amber), wayside shrines (tallow stubs in a wall niche, rhyming with the Undercroft's candles), and Waymarkers.
+- **Waymarkers,** chosen by the human on 2026-11-15 as the everyday violet: knee-high stone posts along the road, each with an Oil wick behind a chip of the Barrier Lamps' ward-glass. They give violet light but don't hold back the Dark, like the Undercroft's spigot burners. Whether each is lit is random per Room, and fewer are lit the deeper the Floor, as the road runs further from Town.
+- **The maker's mark:** each Waymarker's iron cap is stamped with the same mark as the Guardians' plating. It reads as a foundry's mark on civic ironwork, then as the work of the Penitents' ancestors, who built the automata. Nobody explains it.
+- **The Lamplighters' round:** Lamplighters trim the Waymarkers' wicks and top up their reservoirs. A shrine may hold a tin of lamp oil with a delivery tally scratched on its side: road upkeep at first, the supply line reaching the moor once the player knows.
+- **Someone tends them:** some Waymarkers are lit before the Party arrives, and nobody says who lit them.
 
 **Open:**
 
-- **The everyday violet:** a Barrier Lamp stands only in a Guardian's Room, so ordinary Rooms need another violet source, as the Undercroft has Foxfire.
 - **Oil source:** one option is waystations stocked with sealed oil tins, delivered on a schedule from somewhere nobody names. It reads as road supply, then as the Rendering's delivery, and the pipes stay unseen.
 - **Enemies:** options include the gibbet-dead at crossroads and lost travellers the Dark has woken.
 - **The Act's name:** "the Lamp Road" could replace "the Wilderness".
@@ -147,7 +150,7 @@ Each rule keeps working as designed. These are its in-world reasons.
 - **The dead:** the Council wants the corpse supply to the Ember Works uninterrupted, so the dead are still being sent down. How, and by whom? Who handles them in Town?
 - **The Heroes:** the Council sends Parties into the Undercroft with half the truth. What does it do when a Party learns the rest? Does it try to stop them, or does it need them to keep going?
 - **Act 3's Oil source:** what do the Heroes' lanterns get filled from in the Ember Works?
-- **Act 1:** the wilderness and [the lamp road](#the-lamp-road) are settled, but its name, enemies, Oil source, everyday violet light, and part in the Rendering are not.
+- **Act 1:** the wilderness and [the lamp road](#the-lamp-road) are settled, but its name, enemies, Oil source, and part in the Rendering are not.
 - **The first playable's start:** it builds only the Undercroft (Act 2), so how does the story open without Act 1 in play?
 - **The Guardians' names:** what each of the 12 is called.
 - **The central Lamp:** Town's Last Lamp needs a new name, and the Barrier Lamps need a relationship to it. Does the Wipe rule keep the idea that something won't release the Heroes?

@@ -15,6 +15,8 @@ import {
   type BackWall,
   type Point,
 } from './iso';
+import type { Rgb } from './art';
+import { bakeRoad } from './roadBake';
 import type { RoomLook, Way } from './roomLook';
 
 export const MATERIAL_VOID = 0;
@@ -22,6 +24,13 @@ export const MATERIAL_STONE = 1;
 export const MATERIAL_WATER = 2;
 export const MATERIAL_LAMP = 3;
 export const MATERIAL_FOXFIRE = 4;
+/** The road's verges: peat grass, and heather in bloom. */
+export const MATERIAL_HEATH = 5;
+export const MATERIAL_HEATHER = 6;
+/** Beyond the road's walls: moor ridges against the last of the light. Albedo is how much of it shows. */
+export const MATERIAL_SKY = 7;
+/** Violet ward-glass with a flame behind it, in a Waymarker or a Barrier Lamp. */
+export const MATERIAL_WARDGLASS = 8;
 
 export interface Flame {
   readonly x: number;
@@ -37,14 +46,24 @@ export interface BakedRoom {
   readonly warm: Float32Array;
   readonly cool: Float32Array;
   readonly flames: readonly Flame[];
+  /** What the cold light adds to stone, water, and Units at full strength. */
+  readonly coolTint: CoolTint;
 }
 
-interface Light extends Point {
+export interface CoolTint {
+  readonly stone: Rgb;
+  readonly water: Rgb;
+  readonly unit: Rgb;
+}
+
+const FOXFIRE_TINT: CoolTint = { stone: [16, 66, 68], water: [18, 78, 84], unit: [10, 36, 40] };
+
+export interface Light extends Point {
   readonly radius: number;
   readonly strength: number;
 }
 
-const PIXELS = ART_WIDTH * ART_HEIGHT;
+export const PIXELS = ART_WIDTH * ART_HEIGHT;
 const POOLS = [[5.5, 5.5, 1.35], [1.1, 5.9, 0.85], [6.2, 2, 0.7]] as const;
 const FLOOR_FOXFIRE = [[4.3, 6.55, 9], [6.5, 3.5, 8], [2.5, 6.1, 7], [0.45, 3.8, 8], [3.6, 0.4, 7], [0.5, 1.6, 6]] as const;
 const WALL_FOXFIRE = [['backLeft', 4.8, 8], ['backRight', 3.2, 7], ['backRight', 5.5, 11]] as const;
@@ -58,8 +77,8 @@ export const noise = (a: number, b: number): number => {
   return value - Math.floor(value);
 };
 
-const sceneX = (px: number): number => (px + 0.5) * UNITS_PER_PIXEL;
-const sceneY = (py: number): number => (py + 0.5) * UNITS_PER_PIXEL;
+export const sceneX = (px: number): number => (px + 0.5) * UNITS_PER_PIXEL;
+export const sceneY = (py: number): number => (py + 0.5) * UNITS_PER_PIXEL;
 
 function bakeBase(): { albedo: Float32Array; material: Uint8Array } {
   const albedo = new Float32Array(PIXELS);
@@ -124,10 +143,12 @@ function bakeBase(): { albedo: Float32Array; material: Uint8Array } {
   return { albedo, material };
 }
 
-const base = bakeBase();
+let base: { albedo: Float32Array; material: Uint8Array } | null = null;
 
 /** Bakes a Room. A Lamp stands only where a Guardian guards it. */
 export function bakeRoom(look: RoomLook, lampLit: boolean): BakedRoom {
+  if (look.setting === 'road') return bakeRoad(look, lampLit);
+  base ??= bakeBase();
   const albedo = base.albedo.slice();
   const material = base.material.slice();
   const flames: Flame[] = [];
@@ -254,6 +275,11 @@ export function bakeRoom(look: RoomLook, lampLit: boolean): BakedRoom {
     if (lampLit) warm.push({ x: SCENE_WIDTH / 2, y: ORIGIN_Y - 37, radius: 190, strength: 0.85 });
   }
 
+  return { albedo, material, flames, coolTint: FOXFIRE_TINT, ...lightMaps(material, warm, cold) };
+}
+
+/** Works out the light that never moves, for every pixel that isn't the void. */
+export function lightMaps(material: Uint8Array, warm: readonly Light[], cold: readonly Light[]): { warm: Float32Array; cool: Float32Array } {
   const warmMap = new Float32Array(PIXELS);
   const coolMap = new Float32Array(PIXELS);
   const lightAt = (lights: readonly Light[], x: number, y: number): number => {
@@ -276,7 +302,7 @@ export function bakeRoom(look: RoomLook, lampLit: boolean): BakedRoom {
       coolMap[i] = Math.min(1, lightAt(cold, sceneX(px), sceneY(py)));
     }
   }
-  return { albedo, material, warm: warmMap, cool: coolMap, flames };
+  return { warm: warmMap, cool: coolMap };
 }
 
 /** An arch through a back wall. Stairs show as lit treads; a door is a black opening. */
@@ -315,7 +341,7 @@ function cutWallWay(way: Way, wall: BackWall, albedo: Float32Array, material: Ui
 }
 
 /** A front edge has no wall, so its way is a stone landing running off into the dark. */
-function cutFrontWay(way: Way, albedo: Float32Array, material: Uint8Array): void {
+export function cutFrontWay(way: Way, albedo: Float32Array, material: Uint8Array): void {
   const onRight = way.edge === 'frontRight';
   for (let py = 0; py < ART_HEIGHT; py++) {
     for (let px = 0; px < ART_WIDTH; px++) {

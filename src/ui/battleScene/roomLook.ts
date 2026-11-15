@@ -1,4 +1,4 @@
-import type { FloorMapView, Depth, RoomKind } from '../../sim';
+import { FLOORS_PER_ACT, floorAt, type FloorMapView, type Depth, type RoomKind } from '../../sim';
 import { WALL_WAY_AT, type BackWall, type Edge } from './iso';
 
 export interface Way {
@@ -19,17 +19,30 @@ export interface Niche {
   readonly at: number;
 }
 
+/** A stone post on the lamp road, standing in a Room at a tile, with violet ward-glass that may be lit. */
+export interface Waymarker {
+  readonly tx: number;
+  readonly ty: number;
+  readonly lit: boolean;
+}
+
+/** Where a Room is: the Undercroft's crypts, or Act 1's lamp road. Act 3 borrows the crypts until it has a look. */
+export type Setting = 'crypt' | 'road';
+
 export interface RoomLook {
   /** The same Room always gets the same key and look. */
   readonly key: string;
+  readonly setting: Setting;
   readonly kind: RoomKind;
   readonly ways: readonly Way[];
   /** Empty when this Room has no spigot burners. */
   readonly burners: readonly Burner[];
   /** The burial niches holding tallow candles. */
   readonly candles: readonly Niche[];
-  /** Which foxfire patches grow here. */
+  /** Which foxfire patches grow here. Empty on the road. */
   readonly foxfire: readonly number[];
+  /** The road's Waymarkers. Empty in the crypts. */
+  readonly waymarkers: readonly Waymarker[];
 }
 
 const WALLS: readonly BackWall[] = ['backLeft', 'backRight'];
@@ -37,6 +50,11 @@ const BURNER_SPOTS = [2, WALL_WAY_AT, 6];
 const NICHE_SPOTS = [1, 3, 5];
 export const FOXFIRE_PATCHES = 6;
 const CHANCE_OFF = 0.3;
+/** Near the back edges, clear of the ways through at 4 and the Party's path. */
+const WAYMARKER_SPOTS = [[0.5, 1.6], [0.5, 6.1], [1.6, 0.5], [6.1, 0.5], [0.5, 2.7], [2.7, 0.5]] as const;
+/** The chance a Waymarker is lit on an Act's first Floor and on its last: fewer burn the further the road runs from Town. */
+const WAYMARKER_LIT_FIRST = 0.9;
+const WAYMARKER_LIT_LAST = 0.2;
 /** A lone source has to light the Room by itself. */
 const MINIMUM_ALONE = 4;
 const MINIMUM_TOGETHER = 2;
@@ -90,6 +108,12 @@ function waysOf(map: FloorMapView, index: number): Way[] {
   return ways;
 }
 
+/** The chance each Waymarker is lit on this Floor of its Act. */
+export function waymarkerLitChance(floorInAct: number): number {
+  const deepness = (floorInAct - 1) / (FLOORS_PER_ACT - 1);
+  return WAYMARKER_LIT_FIRST + (WAYMARKER_LIT_LAST - WAYMARKER_LIT_FIRST) * deepness;
+}
+
 /** Decides a Room's ways through and light sources from its Floor layout alone. */
 export function roomLookOf(map: FloorMapView, floor: Depth, index: number): RoomLook {
   const room = map.rooms[index]!;
@@ -106,8 +130,20 @@ export function roomLookOf(map: FloorMapView, floor: Depth, index: number): Room
   const litBurners = keep(clearOfWays, minimum, (spot) => roll(seed, 2, spotKey(spot)));
   const burners = sources.burners ? clearOfWays.map((spot) => ({ ...spot, lit: litBurners.includes(spot) })) : [];
   const candles = sources.candles ? keep(onWalls(NICHE_SPOTS), minimum, (spot) => roll(seed, 3, spotKey(spot))) : [];
+  const position = floorAt(floor);
+  const setting: Setting = position.act === 1 ? 'road' : 'crypt';
+  // On the road, the cold light is the Waymarkers' rather than Foxfire's.
   const patches = Array.from({ length: FOXFIRE_PATCHES }, (_, patch) => patch);
-  const foxfire = sources.foxfire ? keep(patches, minimum, (patch) => roll(seed, 4, patch)) : [];
+  const foxfire = sources.foxfire && setting === 'crypt' ? keep(patches, minimum, (patch) => roll(seed, 4, patch)) : [];
+  const waymarkers = sources.foxfire && setting === 'road' ? waymarkersOf(seed, waymarkerLitChance(position.floor), minimum) : [];
 
-  return { key: `${floor}:${index}:${seed}`, kind: room.kind, ways, burners, candles, foxfire };
+  return { key: `${floor}:${index}:${seed}`, setting, kind: room.kind, ways, burners, candles, foxfire, waymarkers };
+}
+
+/** Every spot holds a post. Each is lit on its own roll, and the brightest rolls light the minimum however deep the Floor. */
+function waymarkersOf(seed: number, litChance: number, minimum: number): Waymarker[] {
+  const rolls = WAYMARKER_SPOTS.map((_, spot) => roll(seed, 5, spot));
+  const ranked = rolls.map((value, spot) => ({ value, spot })).sort((a, b) => a.value - b.value);
+  const forced = new Set(ranked.slice(0, minimum).map(({ spot }) => spot));
+  return WAYMARKER_SPOTS.map(([tx, ty], spot) => ({ tx, ty, lit: forced.has(spot) || rolls[spot]! < litChance }));
 }
