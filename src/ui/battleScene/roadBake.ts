@@ -65,14 +65,53 @@ const PIECE_SPOTS: Readonly<Record<string, readonly [number, number]>> = {
   '-1,-1': [-1.7, -1.7],
 };
 
-/** Where each way meets its edge, and a point well past it, so the road runs on out of sight. */
-const WAY_TILES: Readonly<Record<Edge, readonly [number, number, number, number]>> = {
-  backLeft: [0, WALL_WAY_AT, -3, WALL_WAY_AT],
-  backRight: [WALL_WAY_AT, 0, WALL_WAY_AT, -3],
-  frontLeft: [FRONT_WAY_AT, ROOM_TILES, FRONT_WAY_AT, ROOM_TILES + 3],
-  frontRight: [ROOM_TILES, FRONT_WAY_AT, ROOM_TILES + 3, FRONT_WAY_AT],
+/** Where each way meets its edge, and the way into the Room from there, in tiles. */
+const WAY_TILES: Readonly<Record<Edge, readonly [number, number]>> = {
+  backLeft: [0, WALL_WAY_AT],
+  backRight: [WALL_WAY_AT, 0],
+  frontLeft: [FRONT_WAY_AT, ROOM_TILES],
+  frontRight: [ROOM_TILES, FRONT_WAY_AT],
 };
+const INWARD: Readonly<Record<Edge, readonly [number, number]>> = { backLeft: [1, 0], backRight: [0, 1], frontLeft: [0, -1], frontRight: [-1, 0] };
 const MIDDLE = ROOM_TILES / 2;
+/** Past each way the road runs straight on, well beyond the frame. */
+const ROAD_REACH = 24;
+/** How far each way's heading carries into the Room before the road bends, so it turns in a sweep a cart could take. */
+const TURN_REACH = 2.8;
+const TURN_STEPS = 32;
+/** The road keeps some light as it runs on into the Dark, so it reads as carrying on past the frame. */
+const ROAD_LIGHT = 0.55;
+const ROAD_FADE = 14;
+
+/** The road through a Room: straight on past each way, and a smooth curve between the way in and the way out. */
+function roadThrough(ways: readonly Way[]): Segment[] {
+  const segments: Segment[] = ways.map((way) => {
+    const [ex, ey] = WAY_TILES[way.edge];
+    const [ix, iy] = INWARD[way.edge];
+    return { ax: ex - ix * ROAD_REACH, ay: ey - iy * ROAD_REACH, bx: ex, by: ey };
+  });
+  const [first, second] = ways;
+  if (!first) return segments;
+  const [ax, ay] = WAY_TILES[first.edge];
+  if (!second) return [...segments, { ax, ay, bx: MIDDLE, by: MIDDLE }];
+  const [dx, dy] = WAY_TILES[second.edge];
+  const [aix, aiy] = INWARD[first.edge];
+  const [dix, diy] = INWARD[second.edge];
+  const bx = ax + aix * TURN_REACH;
+  const by = ay + aiy * TURN_REACH;
+  const cx = dx + dix * TURN_REACH;
+  const cy = dy + diy * TURN_REACH;
+  const point = (t: number): readonly [number, number] => {
+    const u = 1 - t;
+    return [u * u * u * ax + 3 * u * u * t * bx + 3 * u * t * t * cx + t * t * t * dx, u * u * u * ay + 3 * u * u * t * by + 3 * u * t * t * cy + t * t * t * dy];
+  };
+  for (let step = 0; step < TURN_STEPS; step++) {
+    const [px, py] = point(step / TURN_STEPS);
+    const [qx, qy] = point((step + 1) / TURN_STEPS);
+    segments.push({ ax: px, ay: py, bx: qx, by: qy });
+  }
+  return segments;
+}
 
 interface Segment {
   readonly ax: number;
@@ -118,14 +157,8 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
   const flames: Flame[] = [];
   const warm: Light[] = [];
   const cold: Light[] = [];
-  // The road runs from each way to the middle, and on past each way out of sight.
-  const segments: Segment[] = look.ways.flatMap((way) => {
-    const [ex, ey, fx, fy] = WAY_TILES[way.edge];
-    return [
-      { ax: fx, ay: fy, bx: ex, by: ey },
-      { ax: ex, ay: ey, bx: MIDDLE, by: MIDDLE },
-    ];
-  });
+  const segments = roadThrough(look.ways);
+  const fromRoad = (tx: number, ty: number): number => segments.reduce((nearest, segment) => Math.min(nearest, fromSegment(segment, tx, ty)), Infinity);
   /** Pixels the walls cover, so nothing behind them is drawn over them. */
   const walled = new Uint8Array(PIXELS);
   const gapOn = (wall: BackWall): Way | undefined => look.ways.find((way) => way.edge === wall);
@@ -149,9 +182,8 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
   };
 
   /** The ground at a tile point, inside the Room or past it: road, channel, or heath. */
-  const ground = (i: number, px: number, py: number, tx: number, ty: number, fade: number): void => {
+  const ground = (i: number, px: number, py: number, tx: number, ty: number, fade: number, distance: number): void => {
     const grain = noise(px, py);
-    const distance = segments.reduce((nearest, segment) => Math.min(nearest, fromSegment(segment, tx, ty)), Infinity);
     if (distance < ROAD_HALF_WIDTH) {
       const u = tx * 2.4;
       const v = ty * 2.4 + (Math.floor(u) % 2) * 0.5;
@@ -228,9 +260,11 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
       const outside = Math.max(0, -tx, -ty, tx - ROOM_TILES, ty - ROOM_TILES);
       const ragged = outside > 0 ? (smoothNoise(tx * 1.6, ty * 1.6, 60) - 0.5) * 0.5 + (grain - 0.5) * 0.08 : 0;
       const fade = Math.min(1, Math.max(0, 1 - outside / WORLD_FADE + ragged));
-      const light = fade * (outside > 0 ? SCENERY_LIGHT : 1);
+      const distance = fromRoad(tx, ty);
+      const onRoad = distance < CHANNEL_OUTER ? ROAD_LIGHT * Math.max(0, 1 - outside / ROAD_FADE) : 0;
+      const light = Math.max(onRoad, fade * (outside > 0 ? SCENERY_LIGHT : 1));
       // The edge of the Dark is stippled, as the pixel art's light is.
-      if (light > 0.04 + STIPPLE[py % 4]![px % 4]! * 0.16) ground(i, px, py, tx, ty, light * light * (3 - 2 * light));
+      if (light > 0.04 + STIPPLE[py % 4]![px % 4]! * 0.16) ground(i, px, py, tx, ty, light * light * (3 - 2 * light), distance);
     }
   }
 
