@@ -24,7 +24,7 @@ What is true in the world. Status labels are defined in [the lore guide](README.
 
 | Act | Its part in the Rendering |
 |---|---|
-| 1. The wilderness | **Canon.** The Party ventures through the dark wilderness around Town, relighting the Barrier Lamps. The Barrier Lamps serve as a ward to keep the Dark from reaching the Town |
+| 1. The wilderness | **Canon.** The Party ventures through the dark wilderness around Town, relighting the Barrier Lamps. The Barrier Lamps serve as a ward to keep the Dark from reaching the Town. It travels [the lamp road](#the-lamp-road) |
 | 2. The Undercroft | The supply room: where the dead are stored before being sent on to the Ember Works. The Dark has made its way in |
 | 3. The Ember Works | The refinery Town believes in, where the dead are processed into Oil. The burned workers and slag-creatures are what the trade leaves behind. The Oil pipes to Town start here. The Dark is already inside |
 
@@ -96,6 +96,24 @@ The spigots are the physical detail that carries this. They read as plumbing on 
 - **Tallow candles:** left in the burial niches. They read as offerings, then as a hint of what is being burned.
 - **Foxfire:** the cold glow of the fungal growth, in contrast with the warm Oil.
 
+## The lamp road
+
+**Canon,** chosen by the human on 2026-11-15: Act 1 follows the lamp road, a paved causeway across the dark moor that links the Barrier Lamps around Town. Its signature colour is heather violet, as Act 2's is Foxfire verdigris and Act 3's is slag orange.
+
+**Provisional:**
+
+- **A Room:** worn flagstones across the Room, heather and peat grass on the verges, and rainwater in the cart ruts. Low drystone walls and hedgerow stand where the Undercroft has walls. Beyond them, moor ridges show against a faint violet band of sky, then the Dark.
+- **Ways:** a door is a stile or field gate. Stairs are the road running on past a milestone.
+- **Ward-glass:** the Barrier Lamps burn ordinary Oil behind violet lenses, so a lit Barrier Lamp throws violet light. Relighting one floods its Room violet. This is the Battle scene's light only, and [the palette's](../design.md#palette) rule that flame never tints still holds.
+- **Light in a Room:** waystation lanterns (Oil, amber) and wayside shrines (tallow stubs in a wall niche, rhyming with the Undercroft's candles).
+
+**Open:**
+
+- **The everyday violet:** a Barrier Lamp stands only in a Guardian's Room, so ordinary Rooms need another violet source, as the Undercroft has Foxfire.
+- **Oil source:** one option is waystations stocked with sealed oil tins, delivered on a schedule from somewhere nobody names. It reads as road supply, then as the Rendering's delivery, and the pipes stay unseen.
+- **Enemies:** options include the gibbet-dead at crossroads and lost travellers the Dark has woken.
+- **The Act's name:** "the Lamp Road" could replace "the Wilderness".
+
 ## Rules as story
 
 Each rule keeps working as designed. These are its in-world reasons.
@@ -129,7 +147,7 @@ Each rule keeps working as designed. These are its in-world reasons.
 - **The dead:** the Council wants the corpse supply to the Ember Works uninterrupted, so the dead are still being sent down. How, and by whom? Who handles them in Town?
 - **The Heroes:** the Council sends Parties into the Undercroft with half the truth. What does it do when a Party learns the rest? Does it try to stop them, or does it need them to keep going?
 - **Act 3's Oil source:** what do the Heroes' lanterns get filled from in the Ember Works?
-- **Act 1:** the wilderness is settled, but its name, enemies, Oil source, and part in the Rendering are not.
+- **Act 1:** the wilderness and [the lamp road](#the-lamp-road) are settled, but its name, enemies, Oil source, everyday violet light, and part in the Rendering are not.
 - **The first playable's start:** it builds only the Undercroft (Act 2), so how does the story open without Act 1 in play?
 - **The Guardians' names:** what each of the 12 is called.
 - **The central Lamp:** Town's Last Lamp needs a new name, and the Barrier Lamps need a relationship to it. Does the Wipe rule keep the idea that something won't release the Heroes?

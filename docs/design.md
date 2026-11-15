@@ -104,7 +104,7 @@ There are 3 Acts of 20 floors each. Names are provisional.
 
 | Act | Place | Enemies | Damage leaning |
 |---|---|---|---|
-| 1. The wilderness | The dark wilderness around Town, where the Barrier Lamps stand | Undecided | Undecided |
+| 1. The wilderness | The lamp road: a causeway across the dark moor around Town, where the Barrier Lamps stand | Undecided | Undecided |
 | 2. The Undercroft | Flooded crypts beneath Town | The reanimated dead, fungal growth | Physical, poison |
 | 3. The Ember Works | Foundries that still refine the Lamps' Oil, overseen by automata | Burned workers, slag-creatures | Fire, physical |
 
@@ -234,7 +234,7 @@ During a Run, three accent tokens tint by Act: `--act-accent`, `--act-glow`, and
 
 | Act | Accent | Ground |
 |---|---|---|
-| 1. The wilderness | Lantern green `#9fae7a` | `#0b0e0d` |
+| 1. The wilderness | Heather violet `#a48ad0` | `#0d0b11` |
 | 2. The Undercroft | Verdigris `#7cc4ab` | `#0c0f0d` |
 | 3. The Ember Works | Slag `#d8743a` | `#140c09` |
 

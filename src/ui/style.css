@@ -68,11 +68,11 @@
   scrollbar-width: thin;
 }
 
-/* Act 1, the wilderness: mist and lantern green, cold. Provisional until Act 1 has a look. */
+/* Act 1, the lamp road: heather violet, the complement of the Oil's amber. */
 [data-act='1'] {
-  --act-accent: #9fae7a;
-  --act-glow: color-mix(in srgb, #9fae7a 30%, transparent);
-  --act-ground: #0b0e0d;
+  --act-accent: #a48ad0;
+  --act-glow: color-mix(in srgb, #a48ad0 30%, transparent);
+  --act-ground: #0d0b11;
 }
 
 /* Act 2, the Undercroft: Foxfire and mould. */

@@ -46,7 +46,7 @@ A Run swaps a few accent tokens: an Act's accent, glow, and ground. Shapes, text
 
 | Act | Tint | From | Status |
 |---|---|---|---|
-| 1. The wilderness | Mist grey and lantern green, cold | The Barrier Lamps in the dark | Provisional: Act 1's look is [open](../lore/bible.md#open-questions) |
+| 1. The wilderness | Heather violet, the complement of the Oil's amber | [The lamp road](../lore/bible.md#the-lamp-road) | Colour chosen by the human on 2026-11-15 |
 | 2. The Undercroft | Foxfire verdigris and mould | [Light in the Undercroft](../lore/bible.md#light-in-the-undercroft) | Provisional |
 | 3. The Ember Works | Slag orange and soot. Pipes may appear | The refinery | Provisional: Act 3's Oil source is open |
 
@@ -74,7 +74,7 @@ Rapid prototyping, as in [Roguelite Runs](roguelite-runs.md): each piece lands o
 
 ## Open questions
 
-- **Act 1's look.** Its tint waits on the wilderness's name and enemies.
+- **Act 1's look.** Heather violet is chosen. The Act's name and enemies are still open.
 - **The central Lamp.** If Town's central Lamp gets a role, the header may show it as Town's state.
 - **Picks' name.** The chits' wording waits on what Picks are called.
 - **The ledger Fragment.** How the player reads one is [open](../lore/bible.md#open-questions), and it may want its own frame.
