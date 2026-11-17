@@ -1,4 +1,5 @@
 /** The scene's geometry. Positions are in scene units, 2 to each art pixel. */
+/** The framing the Room is composed for, in art pixels. The view can show more of the world around it. */
 export const ART_WIDTH = 320;
 export const ART_HEIGHT = 170;
 export const UNITS_PER_PIXEL = 2;
@@ -8,6 +9,23 @@ export const TILE_HALF_HEIGHT = 18;
 export const ROOM_TILES = 7;
 export const ORIGIN_Y = 78;
 export const WALL_HEIGHT = 66;
+
+/** The part of the world a scene shows, in art pixels: its size, and where its top-left corner sits relative to the framing's. */
+export interface View {
+  readonly width: number;
+  readonly height: number;
+  readonly left: number;
+  readonly top: number;
+}
+
+/** Exactly the framing. */
+export const FRAMING: View = { width: ART_WIDTH, height: ART_HEIGHT, left: 0, top: 0 };
+
+/** A view of this size, centred on the framing. One shorter than the framing crops mostly from the bottom, the open front of the floor, to keep the walls' tops. */
+export function viewAround(width: number, height: number): View {
+  const spare = height - ART_HEIGHT;
+  return { width, height, left: 0 - Math.floor((width - ART_WIDTH) / 2), top: spare >= 0 ? 0 - Math.floor(spare / 2) : 0 - Math.ceil(spare / 4) };
+}
 
 export type BackWall = 'backLeft' | 'backRight';
 export type Edge = BackWall | 'frontLeft' | 'frontRight';

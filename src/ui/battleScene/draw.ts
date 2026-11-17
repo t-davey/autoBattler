@@ -1,6 +1,7 @@
 import { CHEST_SPRITES, LANTERNS, RAMPS, SPRITES, WEAPONS, type Rgb } from './art';
-import { ART_HEIGHT, ART_WIDTH, ORIGIN_Y, UNITS_PER_PIXEL, formationPoint } from './iso';
-import { MATERIAL_FOXFIRE, MATERIAL_HEATH, MATERIAL_HEATHER, MATERIAL_LAMP, MATERIAL_VOID, MATERIAL_WARDGLASS, MATERIAL_WATER, noise, type BakedRoom } from './roomBake';
+import { ART_HEIGHT, ART_WIDTH, ORIGIN_Y, UNITS_PER_PIXEL, formationPoint, viewAround, type View } from './iso';
+import { MATERIAL_FOXFIRE, MATERIAL_HEATH, MATERIAL_HEATHER, MATERIAL_HILLS, MATERIAL_LAMP, MATERIAL_SKY, MATERIAL_VOID, MATERIAL_WARDGLASS, MATERIAL_WATER, noise, type BakedRoom } from './roomBake';
+import { RIDGE_LAND, hillsColour, skyColour } from './sky';
 import { NUMBER_SECONDS, type SceneFrame, type UnitFrame } from './scene';
 
 const STONE: readonly Rgb[] = [[14, 15, 24], [25, 26, 38], [38, 37, 50], [54, 48, 58], [74, 60, 60], [98, 76, 64], [128, 96, 72], [160, 122, 86], [194, 154, 106]];
@@ -32,10 +33,26 @@ export function chromePixel(uiScale: number, devicePixelRatio: number): number {
   return Math.max(1, Math.round(uiScale * devicePixelRatio)) / devicePixelRatio;
 }
 
-/** The scene's width in its holder, never ahead of the UI scale, or a window just short of the next size would mix the two. */
-export function sceneDisplayWidth(holderWidth: number, holderHeight: number, windowWidth: number, windowHeight: number, devicePixelRatio: number): number {
-  const fits = snappedDisplayWidth(Math.min(holderWidth, (holderHeight * ART_WIDTH) / ART_HEIGHT), devicePixelRatio);
-  return Math.min(fits, uiScale(windowWidth, windowHeight, devicePixelRatio) * BASE_WINDOW_WIDTH);
+/** How far past an exact fit of the framing a scene's scale may round up, cropping a little of the framing to stay larger. */
+const FIT_ROUND_UP = 0.15;
+
+export interface SceneFit {
+  /** Device pixels to each art pixel: always whole, so pixels stay even. */
+  readonly scale: number;
+  /** As much of the world as covers the holder at that scale. */
+  readonly view: View;
+  readonly cssWidth: number;
+  readonly cssHeight: number;
+}
+
+/** Fills a holder with the scene: the whole-number scale that fits the framing, then a view of the world that covers the rest.
+ *  The scene never leaves a margin; a wider or taller holder shows more of the world around the Room. */
+export function sceneFit(holderWidth: number, holderHeight: number, devicePixelRatio: number): SceneFit {
+  const deviceWidth = holderWidth * devicePixelRatio;
+  const deviceHeight = holderHeight * devicePixelRatio;
+  const scale = Math.max(1, Math.floor(Math.min(deviceWidth / ART_WIDTH, deviceHeight / ART_HEIGHT) + FIT_ROUND_UP));
+  const view = viewAround(Math.max(1, Math.ceil(deviceWidth / scale)), Math.max(1, Math.ceil(deviceHeight / scale)));
+  return { scale, view, cssWidth: (view.width * scale) / devicePixelRatio, cssHeight: (view.height * scale) / devicePixelRatio };
 }
 
 /** A Unit is never darker than this, however far it stands from a flame. */
@@ -86,14 +103,20 @@ function lanternLights(frame: SceneFrame): SceneLight[] {
   return lights;
 }
 
-/** Paints one frame into an RGBA buffer of the scene's art size. */
+/** Paints one frame into an RGBA buffer the size of the Room's view. Positions stay in the framing's art pixels. */
 export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: SceneFrame): void {
   const { time } = frame;
+  const { view } = room;
+  /** The buffer index of an art pixel, or -1 off the view. */
+  const indexOf = (px: number, py: number): number => {
+    const vx = px - view.left;
+    const vy = py - view.top;
+    return vx < 0 || vy < 0 || vx >= view.width || vy >= view.height ? -1 : vy * view.width + vx;
+  };
   const put = (x: number, y: number, colour: Rgb): void => {
-    const px = Math.floor(x);
-    const py = Math.floor(y);
-    if (px < 0 || py < 0 || px >= ART_WIDTH || py >= ART_HEIGHT) return;
-    const i = (py * ART_WIDTH + px) * 4;
+    const at = indexOf(Math.floor(x), Math.floor(y));
+    if (at < 0) return;
+    const i = at * 4;
     buffer[i] = colour[0];
     buffer[i + 1] = colour[1];
     buffer[i + 2] = colour[2];
@@ -121,9 +144,11 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
     return total;
   };
 
-  for (let py = 0; py < ART_HEIGHT; py++) {
-    for (let px = 0; px < ART_WIDTH; px++) {
-      const i = py * ART_WIDTH + px;
+  for (let vy = 0; vy < view.height; vy++) {
+    const py = vy + view.top;
+    for (let vx = 0; vx < view.width; vx++) {
+      const px = vx + view.left;
+      const i = vy * view.width + vx;
       const o = i * 4;
       const material = room.material[i]!;
       buffer[o + 3] = 255;
@@ -131,6 +156,13 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
         buffer[o] = BLACK[0];
         buffer[o + 1] = BLACK[1];
         buffer[o + 2] = BLACK[2];
+        continue;
+      }
+      if (material === MATERIAL_SKY || material === MATERIAL_HILLS) {
+        const colour = material === MATERIAL_SKY ? skyColour(px, py, room.albedo[i]!, time) : hillsColour(room.albedo[i]!);
+        buffer[o] = colour[0];
+        buffer[o + 1] = colour[1];
+        buffer[o + 2] = colour[2];
         continue;
       }
       const x = (px + 0.5) * UNITS_PER_PIXEL;
@@ -158,7 +190,7 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
         continue;
       }
       const light = Math.min(1, AMBIENT + room.warm[i]! * flicker + lightAt(x, y));
-      const dither = BAYER[py % 4]![px % 4]! / 16 - 0.47;
+      const dither = BAYER[((py % 4) + 4) % 4]![((px % 4) + 4) % 4]! / 16 - 0.47;
       const cold = room.cool[i]! * pulse;
       if (material === MATERIAL_WATER) {
         const ripple = Math.sin(x * 0.09 + y * 0.32 + time * 1.6) * 0.5 + Math.sin(x * 0.04 - y * 0.2 - time) * 0.5;
@@ -176,6 +208,19 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
       buffer[o] = colour[0] + cold * tint[0] * albedo;
       buffer[o + 1] = colour[1] + cold * tint[1] * albedo;
       buffer[o + 2] = colour[2] + cold * tint[2] * albedo;
+    }
+  }
+
+  // The far moor darkens into the ridge's silhouette at the horizon.
+  const { haze } = room;
+  if (haze) {
+    for (let i = 0; i < haze.length; i++) {
+      const k = haze[i]!;
+      if (k <= 0) continue;
+      const o = i * 4;
+      buffer[o] = buffer[o]! + (RIDGE_LAND[0] - buffer[o]!) * k;
+      buffer[o + 1] = buffer[o + 1]! + (RIDGE_LAND[1] - buffer[o + 1]!) * k;
+      buffer[o + 2] = buffer[o + 2]! + (RIDGE_LAND[2] - buffer[o + 2]!) * k;
     }
   }
 
@@ -202,15 +247,15 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
       const angle = (a / steps) * Math.PI * 2;
       const x = ring.x / UNITS_PER_PIXEL + Math.cos(angle) * radius;
       const y = ring.y / UNITS_PER_PIXEL + (Math.sin(angle) * radius) / 2;
-      const i = Math.floor(y) * ART_WIDTH + Math.floor(x);
-      if (room.material[i]) put(x, y, ring.colour);
+      const i = indexOf(Math.floor(x), Math.floor(y));
+      if (i >= 0 && room.material[i]) put(x, y, ring.colour);
     }
   }
 
   const litShade = (x: number, y: number): { step: number; cold: number } => {
-    const px = clamp(Math.floor(x / UNITS_PER_PIXEL), 0, ART_WIDTH - 1);
-    const py = clamp(Math.floor((y - 26) / UNITS_PER_PIXEL), 0, ART_HEIGHT - 1);
-    const i = py * ART_WIDTH + px;
+    const px = clamp(Math.floor(x / UNITS_PER_PIXEL), view.left, view.left + view.width - 1);
+    const py = clamp(Math.floor((y - 26) / UNITS_PER_PIXEL), view.top, view.top + view.height - 1);
+    const i = indexOf(px, py);
     let light = AMBIENT * 0.7 + (room.warm[i] ?? 0);
     for (const source of lights) {
       const dx = x - source.x;
@@ -226,10 +271,9 @@ export function drawScene(buffer: Uint8ClampedArray, room: BakedRoom, frame: Sce
     for (let dy = -ry; dy <= ry; dy++) {
       for (let dx = -rx; dx <= rx; dx++) {
         if ((dx / rx) ** 2 + (dy / ry) ** 2 > 1) continue;
-        const x = cx + dx;
-        const y = cy + dy;
-        if (x < 0 || y < 0 || x >= ART_WIDTH || y >= ART_HEIGHT) continue;
-        const o = (y * ART_WIDTH + x) * 4;
+        const at = indexOf(cx + dx, cy + dy);
+        if (at < 0) continue;
+        const o = at * 4;
         buffer[o] = buffer[o]! * 0.42;
         buffer[o + 1] = buffer[o + 1]! * 0.42;
         buffer[o + 2] = buffer[o + 2]! * 0.42;

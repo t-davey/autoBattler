@@ -2,14 +2,14 @@
 
 How the animated Room on the Battle screen works, and how to change it. What it should look like is in [Presentation](design.md#presentation), and why it is a Canvas is in [ADR 0004](adr/0004-battle-scene-canvas.md).
 
-The scene is presentation only. It adds no game rules, and it reads the sim only through `GameView` and `GameEvent`. `BattleScreen.tsx` lays the DOM Floor map, Pack bar, Party status, and Live Log over its corners. Those are the readable record of the Party's health, Oil, and Effects. Enemies show theirs on their sprites, with the details in a visually hidden list.
+The scene is presentation only. It adds no game rules, and it reads the sim only through `GameView` and `GameEvent`. `BattleScreen.tsx` sets it in a frame: a rail above with the Act and Floor, Pack bar, and Picks, and a console below with the DOM Floor map, the Heroes' plates, and the Live Log. Those are the readable record of the Party's health, Oil, and Effects. Enemies show theirs on their sprites, with the details in a visually hidden list. The scene fills the space between the rails, as [ADR 0005](adr/0005-battle-scene-fills-its-space.md) records.
 
 ## How a frame gets drawn
 
 1. **Store:** after each step, `store.onPlayed` reports a batch of events and how many Ticks they cover. After catch-up, `ticks` is null.
 2. **Scene:** `scene.play` starts animations from the batch. A batch over `MAX_ANIMATED_TICKS` (20), or a null one, skips them and shows the result.
 3. **Frame loop:** on each animation frame, `BattleScene` calls `scene.advance`, `scene.sync`, and `scene.frame`. It runs outside React's renders, and `sync` picks up anything events didn't cover, such as a new Room.
-4. **Drawing:** `drawScene` paints the frame into an RGBA buffer, which the component copies to the canvas.
+4. **Drawing:** `drawScene` paints the frame into an RGBA buffer the size of the Room's view, which the component copies to the canvas.
 
 The driver owns game time, so the scene never sets game speed. When the window is hidden, the frame loop stops, and the driver makes up the gap when the window returns.
 
@@ -19,20 +19,22 @@ All are in `src/ui/battleScene`. Only `BattleScene.tsx` touches React or the DOM
 
 | File | Holds |
 |---|---|
-| `iso.ts` | Geometry: art size, tile projection, wall points, formation points, way points |
+| `iso.ts` | Geometry: the framing, views of the world, tile projection, wall points, formation points, way points |
 | `roomLook.ts` | A Room's ways through and light sources, decided from its Floor layout |
 | `roomBake.ts` | Turns a look into per-pixel surfaces and fixed light, including arches and landings |
+| `sky.ts` | The lamp road's horizon: near ridge, far hills, night sky, and the haze where the moor meets them |
 | `art.ts` | Colour ramps, figures built from shapes, weapons, lantern positions |
+| `portrait.ts` | A Hero's sprite as a portrait for their plate in the console |
 | `scene.ts` | Unit positions, animation timelines, particles, floating numbers, Room changes |
-| `draw.ts` | Paints a frame, including moving light, sprites, and the display size snap |
+| `draw.ts` | Paints a frame, including moving light and sprites, and fits the scene to its holder |
 | `BattleScene.tsx` | The canvas, the frame loop, and the subscription to the store |
 
 ## Units of measure
 
-- **Art pixels:** the 320 × 170 picture.
-- **Scene units:** what `scene.ts` and `iso.ts` work in, 2 to each art pixel.
-- **Display size:** `snappedDisplayWidth` picks the largest width where each art pixel covers a whole number of device pixels. A window of another shape gets a margin rather than uneven pixels.
-- **UI scale:** `uiScale` finds the largest whole-pixel scene that fits a 16:9 share of the window, compares it with 1280 wide, and sets `--ui-scale`, which zooms the header and overlays with it. It never goes below 1, so a window under 1280 x 720 shrinks the scene but not the text. Size overlays for the base window.
+- **Art pixels:** the framing is 320 × 170, and every position is in its art pixels, so (0, 0) is its top-left corner.
+- **View:** the part of the world a scene shows. `sceneFit` picks the whole-number scale that fits the framing, rounding up a little past an exact fit, then a view that covers the stage at that scale, centred on the framing. A wider or taller window shows more of the world, never a margin. A view shorter than the framing crops mostly from the bottom, the open front of the floor. Bakes and buffers are view-sized, and art past the framing has negative or large art pixels, so anything indexed by `% 4` must wrap negative values.
+- **Scene units:** what `scene.ts` and `iso.ts` work in, 2 to each art pixel. Units keep their positions when the view changes, so a resize only rebakes the Room.
+- **UI scale:** `uiScale` finds the largest whole-pixel framing that fits a 16:9 share of the window, compares it with 1280 wide, and sets `--ui-scale`, which zooms the header, rail, and console. It never goes below 1, so a window under 1280 x 720 shrinks the scene but not the text. Size the rails' contents for the base window.
 
 ## Rooms
 
@@ -44,6 +46,7 @@ All are in `src/ui/battleScene`. Only `BattleScene.tsx` touches React or the DOM
 ## Light
 
 - **Fixed light** is baked per Room in `bakeRoom`: warm from flames, cold from Foxfire.
+- **The horizon** on the lamp road is baked too: past a ridge clear of the Room, pixels become sky or far hills, and `drawScene` colours them each frame for cloud and twinkling stars. The moor darkens into the ridge through the bake's `haze`. The Undercroft has no sky, so a wide view shows more of the Dark around it.
 - **Moving light** is worked out per frame in `drawScene`: lanterns, hit flashes, and shots.
 - **Lanterns** set their radius and strength from `oil / maxOil`. Zero Oil dims a lantern without putting it out.
 - **Minimums:** `AMBIENT` keeps stone readable, and `UNIT_MINIMUM_LIGHT` keeps every Unit readable. Keep both if you tune the look, since the scene was too dark without them.

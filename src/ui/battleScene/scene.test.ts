@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { advance, createGame, viewGame, type Game, type GameEvent, type GameView } from '../../sim';
 import { ART_HEIGHT, ART_WIDTH, wayPoint } from './iso';
-import { chromePixel, drawScene, sceneDisplayWidth, snappedDisplayWidth, uiScale } from './draw';
+import { chromePixel, drawScene, sceneFit, snappedDisplayWidth, uiScale } from './draw';
 import { roomLookOf } from './roomLook';
 import { bakeRoom } from './roomBake';
 import { createScene, type SceneFrame, type Scene, type UnitFrame } from './scene';
@@ -219,10 +219,26 @@ describe('the scene’s display size', () => {
     expect(uiScale(1500, 1440, 1)).toBe(1);
   });
 
-  it('keeps the scene in step with the UI just short of the next size', () => {
-    expect(uiScale(1920, 1079, 1)).toBe(1.25);
-    expect(sceneDisplayWidth(1920, 1029, 1920, 1079, 1)).toBe(1600);
-    expect(sceneDisplayWidth(1920, 1020, 1920, 1080, 1)).toBe(1920);
+  it('fills its holder at a whole-number scale, showing more of the world rather than leaving a margin', () => {
+    const wide = sceneFit(1920, 761, 1);
+    expect(wide.scale).toBe(4);
+    expect(wide.view).toEqual({ width: 480, height: 191, left: -80, top: -10 });
+    expect(wide.cssWidth).toBeGreaterThanOrEqual(1920);
+    expect(wide.cssHeight).toBeGreaterThanOrEqual(761);
+    expect(sceneFit(1280, 494, 1).scale).toBe(3);
+  });
+
+  it('rounds up only a little, cropping mostly the open front of the floor', () => {
+    const fit = sceneFit(1280, 494, 1);
+    expect(fit.view.height).toBe(165);
+    expect(fit.view.top).toBe(1);
+    expect(sceneFit(1280, 450, 1).scale).toBe(2);
+  });
+
+  it('keeps every art pixel whole on a scaled display', () => {
+    const fit = sceneFit(1536, 610, 1.25);
+    expect(Number.isInteger(fit.scale)).toBe(true);
+    expect(fit.cssWidth * 1.25).toBe(fit.view.width * fit.scale);
   });
 
   it('keeps each chrome pixel a whole number of device pixels', () => {

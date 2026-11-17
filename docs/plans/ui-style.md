@@ -56,11 +56,11 @@ Rapid prototyping, as in [Roguelite Runs](roguelite-runs.md): each piece lands o
 
 | # | Work |
 |---|---|
-| 1 | **Tokens.** Act tint tokens on `:root`, set by the Run's Act, and a pixel unit tied to `--ui-scale`. Add the deep shades to [the palette](../design.md#palette) table: **done**. The Battle screen carries `data-act`, which swaps `--act-accent`, `--act-glow`, and `--act-ground`. Nothing reads them until step 5. `--px` rounds the UI scale to whole device pixels, so a chrome pixel is 2 device pixels at 1080p rather than a blurry 1.5 |
+| 1 | **Tokens.** Act tint tokens on `:root`, set by the Run's Act, and a pixel unit tied to `--ui-scale`. Add the deep shades to [the palette](../design.md#palette) table: **done**. The Battle screen carries `data-act`, which swaps `--act-accent`, `--act-glow`, and `--act-ground`. The Battle screen's frame reads them, as step 5 says. `--px` rounds the UI scale to whole device pixels, so a chrome pixel is 2 device pixels at 1080p rather than a blurry 1.5 |
 | 2 | **Chrome kit.** Plate, notice, chit, and ledger frames as 9-slice pixel SVGs, with brass push-plate buttons and index tabs. The shelved [Council desk mockup](council-desk.md) tried painted pixel art instead, and its painters remain in `mockups/` |
 | 3 | **Icons.** One die-stamp set on a 16-pixel grid, replacing mismatched icons |
 | 4 | **Town.** The menu as hanging signs, one per place |
-| 5 | **Run.** The Battle screen's overlays take the Act tint |
+| 5 | **Run.** The Battle screen's frame takes the Act tint: **started**. Since 2026-11-16 the scene sits between an iron rail and console ([ADR 0005](../adr/0005-battle-scene-fills-its-space.md)), whose edges, nameplate, levels, and portrait wells read the Act tokens. The plates themselves still use today's `plate.svg` until step 2's kit |
 | 6 | **Picks and Findings.** Pick offers as chits, and Findings as Council notices |
 
 ## The Council desk

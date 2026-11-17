@@ -1,6 +1,4 @@
 import {
-  ART_HEIGHT,
-  ART_WIDTH,
   FRONT_WAY_AT,
   ORIGIN_Y,
   ROOM_TILES,
@@ -14,15 +12,16 @@ import {
   type BackWall,
   type Edge,
   type Point,
+  type View,
 } from './iso';
 import type { RoomLook, SceneDetail, Way, Waymarker } from './roomLook';
+import { hazeAt, skylineAt } from './sky';
 import {
   MATERIAL_HEATH,
   MATERIAL_HEATHER,
   MATERIAL_STONE,
   MATERIAL_WARDGLASS,
   MATERIAL_WATER,
-  PIXELS,
   lightMaps,
   noise,
   sceneX,
@@ -147,29 +146,32 @@ function wallTop(wall: BackWall, along: number): number {
 }
 
 /** Bakes a Room on the lamp road: flagstones from way to way across heath, low drystone walls, and the moor beyond. */
-export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
-  const albedo = new Float32Array(PIXELS);
-  const material = new Uint8Array(PIXELS);
+export function bakeRoad(look: RoomLook, lampLit: boolean, view: View): BakedRoom {
+  const albedo = new Float32Array(view.width * view.height);
+  const material = new Uint8Array(view.width * view.height);
   const flames: Flame[] = [];
   const warm: Light[] = [];
   const cold: Light[] = [];
   const segments = roadThrough(look.ways);
   const fromRoad = (tx: number, ty: number): number => segments.reduce((nearest, segment) => Math.min(nearest, fromSegment(segment, tx, ty)), Infinity);
   /** Pixels the walls cover, so nothing behind them is drawn over them. */
-  const walled = new Uint8Array(PIXELS);
+  const walled = new Uint8Array(view.width * view.height);
+  const haze = new Float32Array(view.width * view.height);
   const gapOn = (wall: BackWall): Way | undefined => look.ways.find((way) => way.edge === wall);
 
   const put = (point: Point, value: number, kind: number = MATERIAL_STONE): void => {
-    const px = Math.floor(point.x / UNITS_PER_PIXEL);
-    const py = Math.floor(point.y / UNITS_PER_PIXEL);
-    if (px < 0 || py < 0 || px >= ART_WIDTH || py >= ART_HEIGHT) return;
-    const i = py * ART_WIDTH + px;
+    const vx = Math.floor(point.x / UNITS_PER_PIXEL) - view.left;
+    const vy = Math.floor(point.y / UNITS_PER_PIXEL) - view.top;
+    if (vx < 0 || vy < 0 || vx >= view.width || vy >= view.height) return;
+    const i = vy * view.width + vx;
     material[i] = kind;
     albedo[i] = value;
   };
   const putPixel = (px: number, py: number, value: number, kind: number = MATERIAL_STONE): void => {
-    if (px < 0 || py < 0 || px >= ART_WIDTH || py >= ART_HEIGHT) return;
-    const i = py * ART_WIDTH + px;
+    const vx = px - view.left;
+    const vy = py - view.top;
+    if (vx < 0 || vy < 0 || vx >= view.width || vy >= view.height) return;
+    const i = vy * view.width + vx;
     material[i] = kind;
     albedo[i] = value;
   };
@@ -219,9 +221,11 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
     albedo[i] = (0.5 + tuft * 0.3 + (grain - 0.5) * 0.15 - (py % 2 ? 0 : 0.04)) * fade;
   };
 
-  for (let py = 0; py < ART_HEIGHT; py++) {
-    for (let px = 0; px < ART_WIDTH; px++) {
-      const i = py * ART_WIDTH + px;
+  for (let vy = 0; vy < view.height; vy++) {
+    const py = vy + view.top;
+    for (let vx = 0; vx < view.width; vx++) {
+      const px = vx + view.left;
+      const i = vy * view.width + vx;
       const x = sceneX(px);
       const y = sceneY(py);
       const a = (x - SCENE_WIDTH / 2) / TILE_HALF_WIDTH;
@@ -254,13 +258,21 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
 
       // The scenery runs on past the stage, fading raggedly into the Dark with distance.
       const outside = Math.max(0, -tx, -ty, tx - ROOM_TILES, ty - ROOM_TILES);
+      // Far out, the land rises to a ridge against the night sky.
+      const skyline = skylineAt(px, py, outside);
+      if (skyline) {
+        material[i] = skyline.material;
+        albedo[i] = skyline.value;
+        continue;
+      }
+      haze[i] = hazeAt(px, py, outside);
       const ragged = outside > 0 ? (smoothNoise(tx * 1.6, ty * 1.6, 60) - 0.5) * 0.5 + (grain - 0.5) * 0.08 : 0;
       const fade = Math.min(1, Math.max(0, 1 - outside / WORLD_FADE + ragged));
       const distance = fromRoad(tx, ty);
       const onRoad = distance < CHANNEL_OUTER ? ROAD_LIGHT * Math.max(0, 1 - outside / ROAD_FADE) : 0;
       const light = Math.max(onRoad, fade * (outside > 0 ? SCENERY_LIGHT : 1));
       // The edge of the Dark is stippled, as the pixel art's light is.
-      if (light > 0.04 + STIPPLE[py % 4]![px % 4]! * 0.16) ground(i, px, py, tx, ty, light * light * (3 - 2 * light), distance);
+      if (light > 0.04 + STIPPLE[((py % 4) + 4) % 4]![((px % 4) + 4) % 4]! * 0.16) ground(i, px, py, tx, ty, light * light * (3 - 2 * light), distance);
     }
   }
 
@@ -360,7 +372,9 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
 
   /** Draws a pixel of the world around the Room, unless a wall stands in front of it. */
   const putBehind = (px: number, py: number, value: number, kind: number = MATERIAL_STONE): void => {
-    if (px < 0 || py < 0 || px >= ART_WIDTH || py >= ART_HEIGHT || walled[py * ART_WIDTH + px]) return;
+    const vx = px - view.left;
+    const vy = py - view.top;
+    if (vx < 0 || vy < 0 || vx >= view.width || vy >= view.height || walled[vy * view.width + vx]) return;
     putPixel(px, py, value, kind);
   };
 
@@ -403,11 +417,13 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
 
   // A Barrier Lamp stands where a Guardian guards it, in ward-glass.
   if (look.kind === 'guardian') {
-    for (let py = 0; py < ART_HEIGHT; py++) {
-      for (let px = 0; px < ART_WIDTH; px++) {
+    for (let vy = 0; vy < view.height; vy++) {
+      const py = vy + view.top;
+      for (let vx = 0; vx < view.width; vx++) {
+        const px = vx + view.left;
         const fromCorner = Math.abs(sceneX(px) - SCENE_WIDTH / 2);
         const y = sceneY(py);
-        const i = py * ART_WIDTH + px;
+        const i = vy * view.width + vx;
         if (fromCorner < 2.5 && y > LAMP_GLASS_BOTTOM && y < ORIGIN_Y + 3) {
           material[i] = MATERIAL_STONE;
           albedo[i] = 0.42;
@@ -428,7 +444,7 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
     }
   }
 
-  return { albedo, material, flames, coolTint: WARDGLASS_TINT, ...lightMaps(material, warm, cold) };
+  return { albedo, material, flames, coolTint: WARDGLASS_TINT, view, haze, ...lightMaps(view, material, warm, cold) };
 }
 
 type Draw = (px: number, py: number, value: number, kind?: number) => void;

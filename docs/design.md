@@ -181,7 +181,7 @@ A Pick is a choice of 2–3 offers that lasts until the Run ends. Its name is a 
 ## Presentation
 
 - UI-first: panels, text, icons, and a simple tile map, plus an animated Battle scene as the main element of the Dashboard during a Run. [ADR 0003](adr/0003-react-panels-dom-map.md) and [ADR 0004](adr/0004-battle-scene-canvas.md) record the rendering stack.
-- **Battle scene:** low-resolution pixel art at 320 × 170, showing an isometric Room with the Party and Pack in their Rows. Sprites are generated from simple shapes in code for now, and hand-drawn art can replace them later. Its animation is presentation only, and catch-up jumps to the current state. [The Battle scene guide](battle-scene.md) covers how it works.
+- **Battle scene:** low-resolution pixel art composed for a 320 × 170 framing, which grows to show more of the world rather than leave black margins, showing an isometric Room with the Party and Pack in their Rows. Sprites are generated from simple shapes in code for now, and hand-drawn art can replace them later. Its animation is presentation only, and catch-up jumps to the current state. [The Battle scene guide](battle-scene.md) covers how it works.
 - **Light:** every Room's shadows are lifted enough to read, and a Unit is never drawn darker than a set minimum. Each Room then rolls a random mix of Spigot burners, Tallow candles, and Foxfire, with at least 4 of a lone source or 2 of each in a mix. The look stays the same for that Room. A Hero's lantern dims as their Oil falls, which changes only the picture.
 - **Ways through:** a Room shows its way in and way out, on the edges that match the Floor map. A way out is always flame-lit, and stairs lead onto a Floor and out of its Stairs Room.
 - A dashboard while the Party runs, tabs for planning, and a [check-in](#check-ins) built around the Away Report.
@@ -196,7 +196,7 @@ A Pick is a choice of 2–3 offers that lasts until the Run ends. Its name is a 
 - Audio starts silent, with a few key effects such as a rare drop added later.
 - "autoBattler" is the working title.
 - The window is usually large, with a minimum of 1280x720, so panels can sit side by side.
-- **During a Run,** the Battle scene fills the window under the header. The Floor map, Pack bar, Party status, and Live Log lie over its corners without panels, and grow with it so the layout holds on any screen. The top-right corner is kept for the Belt, Run calls, and rules. Town keeps its own menu.
+- **During a Run,** the Battle screen sets the scene in an iron frame, chosen by the human on 2026-11-16. A rail above holds the Act and Floor, the Pack bar, and Picks, and its right end is kept for the Belt, Run calls, and rules. A console below holds the Floor map, a plate per Hero with their sprite as a portrait, and the Live Log as a ledger. The scene fills the space between, and the rails grow with the window so the layout holds on any screen. Town keeps its own menu.
 
 ### Check-ins
 

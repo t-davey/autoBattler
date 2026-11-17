@@ -1,6 +1,5 @@
 import {
-  ART_HEIGHT,
-  ART_WIDTH,
+  FRAMING,
   FRONT_WAY_AT,
   ORIGIN_Y,
   ROOM_TILES,
@@ -14,6 +13,7 @@ import {
   wallPoint,
   type BackWall,
   type Point,
+  type View,
 } from './iso';
 import type { Rgb } from './art';
 import { bakeRoad } from './roadBake';
@@ -29,6 +29,9 @@ export const MATERIAL_HEATH = 5;
 export const MATERIAL_HEATHER = 6;
 /** Violet ward-glass with a flame behind it, in a Waymarker or a Barrier Lamp. */
 export const MATERIAL_WARDGLASS = 7;
+/** Behind the lamp road's near ridge: the night sky, and the far hills against it. */
+export const MATERIAL_SKY = 8;
+export const MATERIAL_HILLS = 9;
 
 export interface Flame {
   readonly x: number;
@@ -46,6 +49,10 @@ export interface BakedRoom {
   readonly flames: readonly Flame[];
   /** What the cold light adds to stone, water, and Units at full strength. */
   readonly coolTint: CoolTint;
+  /** The part of the world these maps cover. Flames are in the framing's art pixels. */
+  readonly view: View;
+  /** How far each pixel darkens into a ridge's silhouette at the horizon, where there is one. */
+  readonly haze?: Float32Array;
 }
 
 export interface CoolTint {
@@ -61,7 +68,6 @@ export interface Light extends Point {
   readonly strength: number;
 }
 
-export const PIXELS = ART_WIDTH * ART_HEIGHT;
 const POOLS = [[5.5, 5.5, 1.35], [1.1, 5.9, 0.85], [6.2, 2, 0.7]] as const;
 const FLOOR_FOXFIRE = [[4.3, 6.55, 9], [6.5, 3.5, 8], [2.5, 6.1, 7], [0.45, 3.8, 8], [3.6, 0.4, 7], [0.5, 1.6, 6]] as const;
 const WALL_FOXFIRE = [['backLeft', 4.8, 8], ['backRight', 3.2, 7], ['backRight', 5.5, 11]] as const;
@@ -69,6 +75,8 @@ const PIPE_HEIGHT = 51;
 const LAMP_TOP = ORIGIN_Y - 48;
 const LAMP_GLASS_TOP = ORIGIN_Y - 44;
 const LAMP_GLASS_BOTTOM = ORIGIN_Y - 30;
+
+export const sameView = (a: View, b: View): boolean => a.width === b.width && a.height === b.height && a.left === b.left && a.top === b.top;
 
 export const noise = (a: number, b: number): number => {
   const value = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
@@ -78,12 +86,14 @@ export const noise = (a: number, b: number): number => {
 export const sceneX = (px: number): number => (px + 0.5) * UNITS_PER_PIXEL;
 export const sceneY = (py: number): number => (py + 0.5) * UNITS_PER_PIXEL;
 
-function bakeBase(): { albedo: Float32Array; material: Uint8Array } {
-  const albedo = new Float32Array(PIXELS);
-  const material = new Uint8Array(PIXELS);
-  for (let py = 0; py < ART_HEIGHT; py++) {
-    for (let px = 0; px < ART_WIDTH; px++) {
-      const i = py * ART_WIDTH + px;
+function bakeBase(view: View): { albedo: Float32Array; material: Uint8Array } {
+  const albedo = new Float32Array(view.width * view.height);
+  const material = new Uint8Array(view.width * view.height);
+  for (let vy = 0; vy < view.height; vy++) {
+    const py = vy + view.top;
+    for (let vx = 0; vx < view.width; vx++) {
+      const px = vx + view.left;
+      const i = vy * view.width + vx;
       const x = sceneX(px);
       const y = sceneY(py);
       const a = (x - SCENE_WIDTH / 2) / TILE_HALF_WIDTH;
@@ -141,12 +151,13 @@ function bakeBase(): { albedo: Float32Array; material: Uint8Array } {
   return { albedo, material };
 }
 
-let base: { albedo: Float32Array; material: Uint8Array } | null = null;
+/** The crypt's stonework, which every crypt Room shares, for the last view it was baked for. */
+let base: { view: View; albedo: Float32Array; material: Uint8Array } | null = null;
 
-/** Bakes a Room. A Lamp stands only where a Guardian guards it. */
-export function bakeRoom(look: RoomLook, lampLit: boolean): BakedRoom {
-  if (look.setting === 'road') return bakeRoad(look, lampLit);
-  base ??= bakeBase();
+/** Bakes a Room for a view of the world. A Lamp stands only where a Guardian guards it. */
+export function bakeRoom(look: RoomLook, lampLit: boolean, view: View = FRAMING): BakedRoom {
+  if (look.setting === 'road') return bakeRoad(look, lampLit, view);
+  if (!base || !sameView(base.view, view)) base = { view, ...bakeBase(view) };
   const albedo = base.albedo.slice();
   const material = base.material.slice();
   const flames: Flame[] = [];
@@ -154,10 +165,10 @@ export function bakeRoom(look: RoomLook, lampLit: boolean): BakedRoom {
   const cold: Light[] = [];
 
   const put = (point: Point, value: number, kind: number = MATERIAL_STONE): void => {
-    const px = Math.floor(point.x / UNITS_PER_PIXEL);
-    const py = Math.floor(point.y / UNITS_PER_PIXEL);
-    if (px < 0 || py < 0 || px >= ART_WIDTH || py >= ART_HEIGHT) return;
-    const i = py * ART_WIDTH + px;
+    const vx = Math.floor(point.x / UNITS_PER_PIXEL) - view.left;
+    const vy = Math.floor(point.y / UNITS_PER_PIXEL) - view.top;
+    if (vx < 0 || vy < 0 || vx >= view.width || vy >= view.height) return;
+    const i = vy * view.width + vx;
     material[i] = kind;
     albedo[i] = value;
   };
@@ -206,8 +217,10 @@ export function bakeRoom(look: RoomLook, lampLit: boolean): BakedRoom {
       const distance = noise(k, salt + 3) * spread;
       const px = Math.floor(centre.x / UNITS_PER_PIXEL + Math.cos(angle) * distance);
       const py = Math.floor(centre.y / UNITS_PER_PIXEL + Math.sin(angle) * distance * 0.5);
-      const i = py * ART_WIDTH + px;
-      if (i >= 0 && i < PIXELS && material[i] === MATERIAL_STONE) {
+      const vx = px - view.left;
+      const vy = py - view.top;
+      const i = vy * view.width + vx;
+      if (vx >= 0 && vy >= 0 && vx < view.width && vy < view.height && material[i] === MATERIAL_STONE) {
         material[i] = MATERIAL_FOXFIRE;
         albedo[i] = noise(px, py);
       }
@@ -228,8 +241,8 @@ export function bakeRoom(look: RoomLook, lampLit: boolean): BakedRoom {
   }
 
   for (const way of look.ways) {
-    if (way.edge === 'backLeft' || way.edge === 'backRight') cutWallWay(way, way.edge, albedo, material);
-    else cutFrontWay(way, albedo, material);
+    if (way.edge === 'backLeft' || way.edge === 'backRight') cutWallWay(way, way.edge, view, albedo, material);
+    else cutFrontWay(way, view, albedo, material);
     if (way.role !== 'out') continue;
     // The way out is always lit, so the Room always shows where the Party is heading.
     if (way.edge === 'backLeft' || way.edge === 'backRight') {
@@ -251,11 +264,13 @@ export function bakeRoom(look: RoomLook, lampLit: boolean): BakedRoom {
   }
 
   if (look.kind === 'guardian') {
-    for (let py = 0; py < ART_HEIGHT; py++) {
-      for (let px = 0; px < ART_WIDTH; px++) {
+    for (let vy = 0; vy < view.height; vy++) {
+      const py = vy + view.top;
+      for (let vx = 0; vx < view.width; vx++) {
+        const px = vx + view.left;
         const fromCorner = Math.abs(sceneX(px) - SCENE_WIDTH / 2);
         const y = sceneY(py);
-        const i = py * ART_WIDTH + px;
+        const i = vy * view.width + vx;
         if (fromCorner < 2.5 && y > LAMP_GLASS_BOTTOM && y < ORIGIN_Y + 3) {
           material[i] = MATERIAL_STONE;
           albedo[i] = 0.42;
@@ -273,13 +288,13 @@ export function bakeRoom(look: RoomLook, lampLit: boolean): BakedRoom {
     if (lampLit) warm.push({ x: SCENE_WIDTH / 2, y: ORIGIN_Y - 37, radius: 190, strength: 0.85 });
   }
 
-  return { albedo, material, flames, coolTint: FOXFIRE_TINT, ...lightMaps(material, warm, cold) };
+  return { albedo, material, flames, coolTint: FOXFIRE_TINT, view, ...lightMaps(view, material, warm, cold) };
 }
 
 /** Works out the light that never moves, for every pixel that isn't the void. */
-export function lightMaps(material: Uint8Array, warm: readonly Light[], cold: readonly Light[]): { warm: Float32Array; cool: Float32Array } {
-  const warmMap = new Float32Array(PIXELS);
-  const coolMap = new Float32Array(PIXELS);
+export function lightMaps(view: View, material: Uint8Array, warm: readonly Light[], cold: readonly Light[]): { warm: Float32Array; cool: Float32Array } {
+  const warmMap = new Float32Array(view.width * view.height);
+  const coolMap = new Float32Array(view.width * view.height);
   const lightAt = (lights: readonly Light[], x: number, y: number): number => {
     let total = 0;
     for (const light of lights) {
@@ -292,10 +307,12 @@ export function lightMaps(material: Uint8Array, warm: readonly Light[], cold: re
     }
     return total;
   };
-  for (let py = 0; py < ART_HEIGHT; py++) {
-    for (let px = 0; px < ART_WIDTH; px++) {
-      const i = py * ART_WIDTH + px;
-      if (material[i] === MATERIAL_VOID) continue;
+  for (let vy = 0; vy < view.height; vy++) {
+    const py = vy + view.top;
+    for (let vx = 0; vx < view.width; vx++) {
+      const px = vx + view.left;
+      const i = vy * view.width + vx;
+      if (material[i] === MATERIAL_VOID || material[i] === MATERIAL_SKY || material[i] === MATERIAL_HILLS) continue;
       warmMap[i] = lightAt(warm, sceneX(px), sceneY(py));
       coolMap[i] = Math.min(1, lightAt(cold, sceneX(px), sceneY(py)));
     }
@@ -304,12 +321,14 @@ export function lightMaps(material: Uint8Array, warm: readonly Light[], cold: re
 }
 
 /** An arch through a back wall. Stairs show as lit treads; a door is a black opening. */
-function cutWallWay(way: Way, wall: BackWall, albedo: Float32Array, material: Uint8Array): void {
+function cutWallWay(way: Way, wall: BackWall, view: View, albedo: Float32Array, material: Uint8Array): void {
   const frameValue = way.role === 'out' ? 0.95 : 0.62;
   const onLeft = wall === 'backLeft';
-  for (let py = 0; py < ART_HEIGHT; py++) {
-    for (let px = 0; px < ART_WIDTH; px++) {
-      const i = py * ART_WIDTH + px;
+  for (let vy = 0; vy < view.height; vy++) {
+    const py = vy + view.top;
+    for (let vx = 0; vx < view.width; vx++) {
+      const px = vx + view.left;
+      const i = vy * view.width + vx;
       const x = sceneX(px);
       const y = sceneY(py);
       const a = (x - SCENE_WIDTH / 2) / TILE_HALF_WIDTH;
@@ -339,11 +358,13 @@ function cutWallWay(way: Way, wall: BackWall, albedo: Float32Array, material: Ui
 }
 
 /** A front edge has no wall, so its way is a stone landing running off into the dark. */
-export function cutFrontWay(way: Way, albedo: Float32Array, material: Uint8Array): void {
+export function cutFrontWay(way: Way, view: View, albedo: Float32Array, material: Uint8Array): void {
   const onRight = way.edge === 'frontRight';
-  for (let py = 0; py < ART_HEIGHT; py++) {
-    for (let px = 0; px < ART_WIDTH; px++) {
-      const i = py * ART_WIDTH + px;
+  for (let vy = 0; vy < view.height; vy++) {
+    const py = vy + view.top;
+    for (let vx = 0; vx < view.width; vx++) {
+      const px = vx + view.left;
+      const i = vy * view.width + vx;
       const a = (sceneX(px) - SCENE_WIDTH / 2) / TILE_HALF_WIDTH;
       const b = (sceneY(py) - ORIGIN_Y) / TILE_HALF_HEIGHT;
       const tx = (a + b) / 2;

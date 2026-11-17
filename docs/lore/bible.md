@@ -102,7 +102,7 @@ The spigots are the physical detail that carries this. They read as plumbing on 
 
 **Provisional:**
 
-- **A Room:** a cambered flagstone road with stone-lined drainage channels either side, across open heath and heather. Broken drystone walls stand where the Undercroft has walls. The moor runs on past the Room and fades into the Dark. The scenery around it only adds detail to the stage, at the stage's own scale: boulders, mounds of heather, fallen drystone, and wind-bent thorns behind the walls. It never shows a landmark, a building, or water in miniature, nor a glimpse of the Floor's other Rooms.
+- **A Room:** a cambered flagstone road with stone-lined drainage channels either side, across open heath and heather. Broken drystone walls stand where the Undercroft has walls. The moor runs on past the Room and fades into the Dark, rising far off to a ridge, paler hills, and a night sky with low cloud and stars. The scenery around it only adds detail to the stage, at the stage's own scale: boulders, mounds of heather, fallen drystone, and wind-bent thorns behind the walls. It never shows a landmark, a building, or water in miniature, nor a glimpse of the Floor's other Rooms.
 - **Ways:** a door is a stile or field gate. Stairs are the road running on past a milestone.
 - **Ward-glass:** the Barrier Lamps burn ordinary Oil behind violet lenses, so a lit Barrier Lamp throws violet light. Relighting one floods its Room violet. This is the Battle scene's light only, and [the palette's](../design.md#palette) rule that flame never tints still holds.
 - **Light in a Room:** waystation lanterns (Oil, amber), wayside shrines (tallow stubs in a wall niche, rhyming with the Undercroft's candles), and Waymarkers.
