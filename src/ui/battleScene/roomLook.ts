@@ -1,5 +1,5 @@
 import { FLOORS_PER_ACT, floorAt, type FloorMapView, type Depth, type RoomKind } from '../../sim';
-import { WALL_WAY_AT, type BackWall, type Edge } from './iso';
+import { ROOM_TILES, WALL_WAY_AT, type BackWall, type Edge } from './iso';
 
 export interface Way {
   readonly edge: Edge;
@@ -29,14 +29,21 @@ export interface Waymarker {
 /** Where a Room is: the Undercroft's crypts, or Act 1's lamp road. Act 3 borrows the crypts until it has a look. */
 export type Setting = 'crypt' | 'road';
 
-/** Set pieces for the moor's empty cells around the lamp road. */
-export type ScenePiece = 'moor' | 'stones' | 'tarn' | 'waystation' | 'gibbet';
+/** Ground detail for the moor around the lamp road, drawn at the stage's own scale. */
+export type SceneDetail = 'boulder' | 'heather' | 'rubble' | 'thorn';
 
-/** One of the 8 cells of scenery around a Room's stage: extra canvas for the world, not another Room. */
+/** One detail in the scenery, at a point in the Room's tiles. */
+export interface PlacedDetail {
+  readonly kind: SceneDetail;
+  readonly tx: number;
+  readonly ty: number;
+}
+
+/** One of the 8 cells of scenery around a Room's stage: more of the moor it stands on, not another place or Room. */
 export interface Surrounding {
   readonly dx: number;
   readonly dy: number;
-  readonly piece: ScenePiece;
+  readonly details: readonly PlacedDetail[];
 }
 
 export interface RoomLook {
@@ -70,8 +77,13 @@ const WAYMARKER_LIT_LAST = 0.2;
 /** A lone source has to light the Room by itself. */
 const MINIMUM_ALONE = 4;
 const MINIMUM_TOGETHER = 2;
-/** How often each set piece fills an empty cell: open moor most. */
-const PIECES: readonly (readonly [ScenePiece, number])[] = [['moor', 0.35], ['waystation', 0.2], ['stones', 0.15], ['tarn', 0.15], ['gibbet', 0.15]];
+/** How often each detail turns up in the scenery. */
+const DETAILS: readonly (readonly [SceneDetail, number])[] = [['boulder', 0.35], ['heather', 0.3], ['rubble', 0.2], ['thorn', 0.15]];
+/** Each scenery cell holds this many details, or one more. */
+const DETAILS_PER_CELL = 2;
+/** Details keep close to the stage, where the moor is still lit: from the stage's edge out to this far, in tiles. */
+const DETAIL_NEAR = 0.5;
+const DETAIL_FAR = 2.8;
 
 const SOURCE_MIXES = [
   { burners: true, candles: false, foxfire: false },
@@ -136,15 +148,26 @@ export function roomLookOf(map: FloorMapView, floor: Depth, index: number): Room
   return { ...own, surroundings: surroundingsOf(mix(layoutSeed, index)) };
 }
 
-/** The 8 cells around a Room's stage, each with its own set piece. */
+/** Where along one axis of a cell a detail stands: past the stage's edge on that side, or anywhere along it. */
+const acrossCell = (side: number, value: number): number =>
+  side < 0 ? -(DETAIL_NEAR + value * (DETAIL_FAR - DETAIL_NEAR)) : side > 0 ? ROOM_TILES + DETAIL_NEAR + value * (DETAIL_FAR - DETAIL_NEAR) : value * ROOM_TILES;
+
+/** The 8 cells around a Room's stage, each scattered with a few details. */
 function surroundingsOf(seed: number): Surrounding[] {
   const cells: Surrounding[] = [];
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
       if (dx === 0 && dy === 0) continue;
-      let pick = roll(seed, 6, dx + 2, dy + 2);
-      const piece = PIECES.find(([, weight]) => (pick -= weight) < 0)?.[0] ?? 'moor';
-      cells.push({ dx, dy, piece });
+      const cell = (dx + 2) * 4 + dy + 2;
+      const count = DETAILS_PER_CELL + Math.floor(roll(seed, 6, cell) * 2);
+      const details = Array.from({ length: count }, (_, index): PlacedDetail => {
+        let pick = roll(seed, 7, cell, index);
+        const drawn = DETAILS.find(([, weight]) => (pick -= weight) < 0)?.[0] ?? 'boulder';
+        // A thorn grows tall, so it only stands behind a back wall: never over the stage, nor past the far corner, where the frame would cut its crown.
+        const kind = drawn === 'thorn' && dx + dy !== -1 ? 'boulder' : drawn;
+        return { kind, tx: acrossCell(dx, roll(seed, 8, cell, index)), ty: acrossCell(dy, roll(seed, 9, cell, index)) };
+      });
+      cells.push({ dx, dy, details });
     }
   }
   return cells;

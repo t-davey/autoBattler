@@ -85,15 +85,26 @@ describe('the lamp road', () => {
 describe('the scenery around a stage on the road', () => {
   const look = roomLookOf(corridor, 2, 5);
 
-  it('fills the 8 cells around the stage with set pieces', () => {
+  it('scatters ground detail through the 8 cells around the stage', () => {
     expect(look.surroundings).toHaveLength(8);
     expect(new Set(look.surroundings.map((cell) => `${cell.dx},${cell.dy}`)).size).toBe(8);
+    expect(look.surroundings.every((cell) => cell.details.length >= 2)).toBe(true);
+  });
+
+  it('keeps every detail off the stage and close to it, and thorns behind a back wall', () => {
+    const details = looksAt(2).flatMap((each) => each.surroundings.flatMap((cell) => cell.details.map((detail) => ({ ...detail, cell }))));
+    for (const { tx, ty, kind, cell } of details) {
+      const outside = Math.max(-tx, -ty, tx - 7, ty - 7);
+      expect(outside).toBeGreaterThan(0);
+      expect(outside).toBeLessThan(3);
+      if (kind === 'thorn') expect(cell.dx + cell.dy).toBe(-1);
+    }
   });
 
   it('stays the same for the same Room, and varies between Rooms', () => {
     expect(roomLookOf(corridor, 2, 5).surroundings).toEqual(look.surroundings);
-    const pieces = new Set(looksAt(2).flatMap((each) => each.surroundings.map((cell) => cell.piece)));
-    expect(pieces.size).toBe(5);
+    const kinds = new Set(looksAt(2).flatMap((each) => each.surroundings.flatMap((cell) => cell.details.map((detail) => detail.kind))));
+    expect(kinds.size).toBe(4);
   });
 
   it('leaves the crypts of the Undercroft as they are', () => {

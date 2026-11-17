@@ -42,11 +42,14 @@ describe('a Room on the lamp road', () => {
     expect(count(lit.material, MATERIAL_FOXFIRE)).toBe(0);
   });
 
-  it('draws a set piece in the scenery past the walls', () => {
+  it('draws ground detail in the scenery past the walls, and none on the road', () => {
     const look = roomLookOf(guardianFloor, 5, 1);
-    const piece = (cells: RoomLook['surroundings']): number => bakeRoom({ ...look, surroundings: cells }, false).albedo.reduce((total, value) => total + value, 0);
-    const open = look.surroundings.map((cell) => ({ ...cell, piece: 'moor' as const }));
-    const withHut = open.map((cell) => (cell.dx === -1 && cell.dy === 0 ? { ...cell, piece: 'waystation' as const } : cell));
-    expect(piece(withHut)).toBeGreaterThan(piece(open));
+    const bare = look.surroundings.map((cell) => ({ ...cell, details: [] }));
+    const plain = bakeRoom({ ...look, surroundings: bare }, false).albedo;
+    const changed = (cells: RoomLook['surroundings']): number => bakeRoom({ ...look, surroundings: cells }, false).albedo.reduce((total, value, i) => total + Number(value !== plain[i]), 0);
+    const withBoulder = bare.map((cell) => (cell.dx === -1 && cell.dy === 0 ? { ...cell, details: [{ kind: 'boulder' as const, tx: -1.2, ty: 1.5 }] } : cell));
+    expect(changed(withBoulder)).toBeGreaterThan(40);
+    const onRoad = bare.map((cell) => (cell.dx === -1 && cell.dy === 0 ? { ...cell, details: [{ kind: 'boulder' as const, tx: -1.2, ty: 4 }] } : cell));
+    expect(changed(onRoad)).toBe(0);
   });
 });

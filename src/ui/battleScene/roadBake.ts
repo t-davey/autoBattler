@@ -15,7 +15,7 @@ import {
   type Edge,
   type Point,
 } from './iso';
-import type { RoomLook, ScenePiece, Way, Waymarker } from './roomLook';
+import type { RoomLook, SceneDetail, Way, Waymarker } from './roomLook';
 import {
   MATERIAL_HEATH,
   MATERIAL_HEATHER,
@@ -56,14 +56,10 @@ const LAMP_TOP = ORIGIN_Y - 48;
 const LAMP_GLASS_TOP = ORIGIN_Y - 44;
 const LAMP_GLASS_BOTTOM = ORIGIN_Y - 30;
 
-/** Where a set piece stands in a cell around the Room, in the Room's tiles, so it shows past the walls or below the Room. Cells off to the sides show none. */
-const PIECE_SPOTS: Readonly<Record<string, readonly [number, number]>> = {
-  '-1,0': [-1.9, 2.4],
-  '0,-1': [2.4, -1.9],
-  '0,1': [1.6, 8.7],
-  '1,0': [8.7, 1.6],
-  '-1,-1': [-1.7, -1.7],
-};
+/** Details keep clear of the road and its channels by this much, in tiles. */
+const DETAIL_ROAD_CLEARANCE = 0.45;
+/** The dark rim round each detail, so it reads against the heath. */
+const DETAIL_RIM = 0.03;
 
 /** Where each way meets its edge, and the way into the Room from there, in tiles. */
 const WAY_TILES: Readonly<Record<Edge, readonly [number, number]>> = {
@@ -387,14 +383,16 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
     return foot;
   };
 
-  // The scenery cells' set pieces.
-  for (const cell of look.surroundings) {
-    const spot = PIECE_SPOTS[`${cell.dx},${cell.dy}`];
-    if (!spot) continue;
-    const foot = tilePoint(spot[0], spot[1]);
-    drawPiece(cell.piece, Math.floor(foot.x / UNITS_PER_PIXEL), Math.floor(foot.y / UNITS_PER_PIXEL), SCENERY_LIGHT, putBehind);
-    // Night on the moor is never quite black: a set piece catches a little of the Act's violet.
-    cold.push({ x: foot.x, y: foot.y - 14, radius: 80, strength: 0.6 });
+  // The scenery's ground detail, back to front so nearer detail overlaps farther.
+  const details = look.surroundings.flatMap((cell) => cell.details).sort((p, q) => p.tx + p.ty - (q.tx + q.ty));
+  for (const [index, detail] of details.entries()) {
+    if (fromRoad(detail.tx, detail.ty) < CHANNEL_OUTER + DETAIL_ROAD_CLEARANCE) continue;
+    const outside = Math.max(0, -detail.tx, -detail.ty, detail.tx - ROOM_TILES, detail.ty - ROOM_TILES);
+    const fade = Math.max(0, 1 - outside / WORLD_FADE);
+    const foot = tilePoint(detail.tx, detail.ty);
+    drawDetail(detail.kind, Math.floor(foot.x / UNITS_PER_PIXEL), Math.floor(foot.y / UNITS_PER_PIXEL), SCENERY_LIGHT * (0.6 + 0.4 * fade), index, putBehind);
+    // Night on the moor is never quite black: the detail catches a little of the Act's violet.
+    cold.push({ x: foot.x, y: foot.y - 10, radius: 80, strength: 0.6 + 0.5 * fade });
   }
 
   // The Room's own Waymarkers.
@@ -435,74 +433,103 @@ export function bakeRoad(look: RoomLook, lampLit: boolean): BakedRoom {
 
 type Draw = (px: number, py: number, value: number, kind?: number) => void;
 
-/** Draws a set piece standing at a foot pixel. */
-function drawPiece(piece: ScenePiece, fx: number, fy: number, dim: number, draw: Draw): void {
-  const at = (dx: number, dy: number, value: number, kind?: number): void => draw(fx + dx, fy + dy, value * dim, kind);
-  switch (piece) {
-    case 'stones':
-      // Standing stones in a broken arc.
-      for (const [ox, tall, wide, lift] of [[-11, 7, 3, 0], [-5, 10, 3, -1], [1, 13, 4, -2], [8, 9, 3, -1], [13, 5, 3, 0]] as const) {
-        for (let dy = 0; dy < tall; dy++) {
-          for (let dx = 0; dx < wide; dx++) {
-            if (dy === tall - 1 && wide > 3 && (dx === 0 || dx === wide - 1)) continue;
-            at(ox + dx, lift - dy, dy === tall - 1 ? 0.85 : dx === 0 ? 0.72 : dx === wide - 1 ? 0.38 : 0.56);
-          }
+/** Draws a piece of ground detail standing at a foot pixel, at the stage's own scale. Salt varies its shape. */
+function drawDetail(kind: SceneDetail, fx: number, fy: number, dim: number, salt: number, draw: Draw): void {
+  // Drawn into a sketch first, so the detail can take a dark rim, as the figures do.
+  const sketch = new Map<string, readonly [number, number, number, number | undefined]>();
+  const at = (dx: number, dy: number, value: number, material?: number): void => {
+    sketch.set(`${dx},${dy}`, [dx, dy, value, material]);
+  };
+  const vary = (n: number): number => noise(salt * 7 + n, 31);
+  sketchDetail(kind, fx, fy, salt, at, vary);
+  for (const [dx, dy] of sketch.values()) {
+    for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1]] as const) {
+      if (!sketch.has(`${dx + ox},${dy + oy}`)) draw(fx + dx + ox, fy + dy + oy, DETAIL_RIM);
+    }
+  }
+  for (const [dx, dy, value, material] of sketch.values()) draw(fx + dx, fy + dy, Math.min(1, value * dim), material);
+}
+
+function sketchDetail(kind: SceneDetail, fx: number, fy: number, salt: number, at: (dx: number, dy: number, value: number, material?: number) => void, vary: (n: number) => number): void {
+  switch (kind) {
+    case 'boulder': {
+      // A weathered lump of moor stone, lit from the left, half sunk in the heath.
+      const half = 4 + Math.floor(vary(1) * 4);
+      const tall = 4 + Math.floor(vary(2) * 4);
+      for (let dx = -half - 1; dx <= half + 1; dx++) at(dx, 1, 0.22, MATERIAL_HEATH);
+      for (let dx = -half; dx <= half; dx++) {
+        const across = dx / half;
+        const top = Math.round(tall * Math.sqrt(Math.max(0, 1 - across * across)) * (0.85 + noise(dx + salt, 5) * 0.25));
+        for (let dy = 0; dy <= top; dy++) {
+          const value = dy >= top - 1 ? 0.82 : across < -0.35 ? 0.68 : across > 0.45 ? 0.36 : 0.52;
+          at(dx, -dy, value + (noise(dx + fx, dy + fy) - 0.5) * 0.1);
+        }
+      }
+      // A crack and a lichen fleck.
+      const crack = Math.floor((vary(3) - 0.5) * half);
+      for (let dy = 0; dy < tall - 2; dy++) at(crack + (dy % 3 === 0 ? 1 : 0), -dy, 0.2);
+      at(-Math.floor(half / 2), -tall + 2, 0.6, MATERIAL_HEATH);
+      return;
+    }
+    case 'heather': {
+      // A raised mound of heather, darker at its foot.
+      const half = 6 + Math.floor(vary(1) * 5);
+      const tall = 3 + Math.floor(vary(2) * 3);
+      for (let dx = -half; dx <= half; dx++) {
+        const across = dx / half;
+        const top = Math.round(tall * Math.sqrt(Math.max(0, 1 - across * across)));
+        for (let dy = 0; dy <= top; dy++) {
+          const speck = noise(dx + fx, dy + fy);
+          if (dy === top && speck < 0.35) continue;
+          at(dx, -dy, dy === 0 ? 0.35 : 0.55 + speck * 0.4, speck > 0.3 || dy === 0 ? MATERIAL_HEATHER : MATERIAL_HEATH);
         }
       }
       return;
-    case 'tarn':
-      // A peaty pool, with reeds round its far rim.
-      for (let dy = -6; dy <= 6; dy++) {
-        for (let dx = -15; dx <= 15; dx++) {
-          const d = Math.hypot(dx / 15, dy / 6);
+    }
+    case 'rubble': {
+      // A run of drystone, long fallen, lying along the grain of the land.
+      const length = 4 + Math.floor(vary(1) * 4);
+      const slope = vary(2) > 0.5 ? 1 : -1;
+      for (let stone = 0; stone < length; stone++) {
+        const sx = stone * 4 - length * 2;
+        const sy = Math.round((stone * 2 - length) * slope);
+        const wide = 3 + Math.floor(noise(stone, salt) * 2);
+        const tall = 2 + Math.floor(noise(stone, salt + 9) * 3);
+        for (let dx = 0; dx < wide; dx++) {
+          at(sx + dx, sy + 1, 0.2, MATERIAL_HEATH);
+          for (let dy = 0; dy < tall; dy++) at(sx + dx, sy - dy, dy === tall - 1 ? 0.8 : dx === 0 ? 0.64 : dx === wide - 1 ? 0.34 : 0.5);
+        }
+      }
+      return;
+    }
+    case 'thorn': {
+      // A hawthorn bent by the wind, its crown streaming one way.
+      const tall = 22 + Math.floor(vary(1) * 10);
+      const lean = vary(2) > 0.5 ? 1 : -1;
+      for (let dx = -3; dx <= 3; dx++) at(dx, 0, 0.25, MATERIAL_HEATH);
+      for (let dy = 0; dy <= tall; dy++) {
+        const x = Math.round(lean * (dy / tall) ** 2 * 7);
+        at(x, -dy, 0.34);
+        if (dy < tall * 0.6) at(x + 1, -dy, 0.2);
+      }
+      for (const [from, reach] of [[0.45, 6], [0.65, 8], [0.8, 5]] as const) {
+        const ry = Math.round(tall * from);
+        const rx = Math.round(lean * from * from * 7);
+        for (let k = 1; k <= reach; k++) at(rx - lean * Math.round(k * 0.6), -ry - Math.round(k * 0.5), 0.3);
+        for (let k = 1; k <= reach + 2; k++) at(rx + lean * k, -ry - Math.round(k * 0.4), 0.3);
+      }
+      // The crown: tangled twigs with leaf in knots.
+      const crownX = Math.round(lean * 7);
+      for (let dy = -6; dy <= 4; dy++) {
+        for (let dx = -10; dx <= 12; dx++) {
+          const d = ((dx - lean * 2) / 11) ** 2 + (dy / 5) ** 2;
           if (d > 1) continue;
-          if (d > 0.84) at(dx, dy, 0.3, MATERIAL_HEATH);
-          else at(dx, dy, 0.75, MATERIAL_WATER);
-        }
-      }
-      for (const [rx, tall] of [[-12, 4], [-9, 6], [-6, 5], [8, 5], [11, 7], [13, 4]] as const) {
-        for (let dy = 0; dy < tall; dy++) at(rx, -4 - dy, 0.62, MATERIAL_HEATH);
-      }
-      return;
-    case 'waystation':
-      // A stone hut under slate, with lamp oil tins stacked by the door.
-      for (let dy = 0; dy <= 9; dy++) for (let dx = -8; dx <= 8; dx++) at(dx, -dy, dx < 0 ? 0.66 : 0.48);
-      for (let row = 0; row < 4; row++) for (let dx = -10 + row; dx <= 10 - row; dx++) at(dx, -10 - row, row === 0 ? 0.5 : 0.32);
-      for (let dy = 14; dy <= 16; dy++) for (let dx = 5; dx <= 6; dx++) at(dx, -dy, 0.4);
-      for (let dy = 0; dy <= 5; dy++) for (let dx = -3; dx <= -1; dx++) at(dx, -dy, 0.04);
-      for (const [ox, oy] of [[10, 0], [12, 0], [14, 0], [11, -2], [13, -2], [12, -4]] as const) {
-        at(ox, oy, 0.95);
-        at(ox + 1, oy, 0.7);
-        at(ox, oy - 1, 0.8);
-        at(ox + 1, oy - 1, 0.6);
-      }
-      return;
-    case 'gibbet':
-      // A gibbet at a crossroads: post, arm, and an empty cage on its chain.
-      for (let dx = -3; dx <= 3; dx++) at(dx, 0, 0.3);
-      for (let dy = 1; dy <= 24; dy++) {
-        at(0, -dy, 0.55);
-        at(1, -dy, 0.36);
-      }
-      for (let dx = 0; dx <= 9; dx++) at(dx, -24, 0.55);
-      for (let k = 1; k <= 3; k++) at(1 + k, -20 - k, 0.45);
-      for (let dy = 21; dy <= 23; dy++) at(8, -dy, 0.4);
-      for (let dy = 13; dy <= 20; dy++) {
-        for (let dx = 6; dx <= 10; dx++) {
-          if (dx === 6 || dx === 10 || dx === 8 || dy === 13 || dy === 20) at(dx, -dy, 0.5);
+          const leaf = noise(dx + fx * 3, dy + salt);
+          if (leaf > 0.62) at(crownX + lean * dx, -tall + dy, 0.4 + leaf * 0.35, MATERIAL_HEATH);
+          else if (leaf < 0.12) at(crownX + lean * dx, -tall + dy, 0.28);
         }
       }
       return;
-    case 'moor':
-      // Open moor: a few boulders in the heath.
-      for (const [ox, oy, wide, tall] of [[-7, 0, 5, 3], [4, 2, 4, 3], [9, -1, 3, 2]] as const) {
-        for (let dy = 0; dy < tall; dy++) {
-          for (let dx = 0; dx < wide; dx++) {
-            if (dy === tall - 1 && (dx === 0 || dx === wide - 1)) continue;
-            at(ox + dx, oy - dy, dy === tall - 1 ? 0.8 : dx === 0 ? 0.62 : 0.42);
-          }
-        }
-      }
-      return;
+    }
   }
 }
